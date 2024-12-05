@@ -1,16 +1,17 @@
 syntax = "proto3";
-package packets;
+
+// Compile to the pkg/packets folder and use "packets" as the go package
 option go_package = "pkg/packets";
 
-// Define your messages
-message ChatMessage { string msg = 1; }
-message IdMessage { uint64 id = 1; } // For when the server sents a client its ID
+// Define your packet types
+message Chat { string text = 1; }
+message ClientId { uint64 id = 1; } // For when the server sends a client its ID
 
 // Define the main Packet message
 message Packet {
   uint64 sender_id = 1;
-  oneof msg {
-    ChatMessage chat = 2;
-    IdMessage id = 3;
+  oneof payload { // Generates a field called Payload of type isPacket_Payload interface
+    Chat chat_message = 2;
+    ClientId client_id = 3;
   }
 }

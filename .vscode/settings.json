@@ -3,7 +3,7 @@
     "path": "protoc",
     "compile_on_save": true,
     "options": [
-      "-I=c:\\Users\\Draicor\\Documents\\Draicor\\Godot\\mmo\\shared",
+      "-I=c:\\Users\\Draicor\\Documents\\Draicor\\mmo\\shared",
       "--go_out=server",
     ]
   }

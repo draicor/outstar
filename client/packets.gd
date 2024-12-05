@@ -661,25 +661,25 @@ class PBPacker:
 ############### USER DATA BEGIN ################
 
 
-class ChatMessage:
+class Chat:
 	func _init():
 		var service
 		
-		_msg = PBField.new("msg", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		_text = PBField.new("text", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _msg
-		data[_msg.tag] = service
+		service.field = _text
+		data[_text.tag] = service
 		
 	var data = {}
 	
-	var _msg: PBField
-	func get_msg() -> String:
-		return _msg.value
-	func clear_msg() -> void:
+	var _text: PBField
+	func get_text() -> String:
+		return _text.value
+	func clear_text() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_msg.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
-	func set_msg(value : String) -> void:
-		_msg.value = value
+		_text.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_text(value : String) -> void:
+		_text.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -702,7 +702,7 @@ class ChatMessage:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
-class IdMessage:
+class ClientId:
 	func _init():
 		var service
 		
@@ -752,17 +752,17 @@ class Packet:
 		service.field = _sender_id
 		data[_sender_id.tag] = service
 		
-		_chat = PBField.new("chat", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		_chat_message = PBField.new("chat_message", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _chat
-		service.func_ref = Callable(self, "new_chat")
-		data[_chat.tag] = service
+		service.field = _chat_message
+		service.func_ref = Callable(self, "new_chat_message")
+		data[_chat_message.tag] = service
 		
-		_id = PBField.new("id", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		_client_id = PBField.new("client_id", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _id
-		service.func_ref = Callable(self, "new_id")
-		data[_id.tag] = service
+		service.field = _client_id
+		service.func_ref = Callable(self, "new_client_id")
+		data[_client_id.tag] = service
 		
 	var data = {}
 	
@@ -775,35 +775,35 @@ class Packet:
 	func set_sender_id(value : int) -> void:
 		_sender_id.value = value
 	
-	var _chat: PBField
-	func has_chat() -> bool:
+	var _chat_message: PBField
+	func has_chat_message() -> bool:
 		return data[2].state == PB_SERVICE_STATE.FILLED
-	func get_chat() -> ChatMessage:
-		return _chat.value
-	func clear_chat() -> void:
+	func get_chat_message() -> Chat:
+		return _chat_message.value
+	func clear_chat_message() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_chat() -> ChatMessage:
+		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_chat_message() -> Chat:
 		data[2].state = PB_SERVICE_STATE.FILLED
-		_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_client_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_chat.value = ChatMessage.new()
-		return _chat.value
+		_chat_message.value = Chat.new()
+		return _chat_message.value
 	
-	var _id: PBField
-	func has_id() -> bool:
+	var _client_id: PBField
+	func has_client_id() -> bool:
 		return data[3].state == PB_SERVICE_STATE.FILLED
-	func get_id() -> IdMessage:
-		return _id.value
-	func clear_id() -> void:
+	func get_client_id() -> ClientId:
+		return _client_id.value
+	func clear_client_id() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_id() -> IdMessage:
-		_chat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_client_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_client_id() -> ClientId:
+		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		data[3].state = PB_SERVICE_STATE.FILLED
-		_id.value = IdMessage.new()
-		return _id.value
+		_client_id.value = ClientId.new()
+		return _client_id.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
