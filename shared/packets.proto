@@ -1,13 +1,16 @@
 syntax = "proto3";
 
+// This directive gets ignored for Golang generated code, but other languages may need it
+package packets;
+
 // Compile to the pkg/packets folder and use "packets" as the go package
 option go_package = "pkg/packets";
 
-// Define your packet types
+// Packet types
 message Chat { string text = 1; }
 message ClientId { uint64 id = 1; } // For when the server sends a client its ID
 
-// Define the main Packet message
+// Main Packet container
 message Packet {
   uint64 sender_id = 1;
   oneof payload { // Generates a field called Payload of type isPacket_Payload interface
