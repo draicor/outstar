@@ -1,12 +1,44 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"server/pkg/packets"
-	// "google.golang.org/protobuf/proto" // Marshal & Unmarshal packets
+	"log"
+	"net/http"
+	"server/internal/server"
+	"server/internal/server/clients"
 )
 
+var (
+	port = flag.Int("port", 31591, "Port to listen on")
+)
+
+// Generic TCP server
 func main() {
+	// Reads the OS command-line flags
+	flag.Parse()
+
+	hub := server.NewHub()
+
+	// Handler that upgrades to a WebSocket connection
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		hub.Serve(clients.NewWebSocketClient, w, r)
+	})
+
+	// Starts the server
+	go hub.Run()
+
+	addr := fmt.Sprintf(":%d", *port)
+	log.Printf("Starting server on port %s", addr)
+
+	err := http.ListenAndServe(addr, nil)
+
+	if err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+/*
 	packet := &packets.Packet{
 		SenderId: 1,
 		Payload:  packets.NewChatMessage("Hello, world"),
@@ -26,11 +58,8 @@ func main() {
 		fmt.Println("Invalid payload.")
 	}
 
-	// [8 1 18 14 10 12 72 101 108 108 111 32 87 111 114 108 100 33]
-	// [8 1 26 3 8 244 3]
-	//data := []byte{8, 1, 18, 14, 10, 12, 72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33}
-	//packet := &packets.Packet{}
-	//proto.Unmarshal(data, packet)
-	//fmt.Println(packet)
-
-}
+	data := []byte{8, 1, 18, 14, 10, 12, 72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33}
+	packet := &packets.Packet{}
+	proto.Unmarshal(data, packet)
+	fmt.Println(packet)
+*/

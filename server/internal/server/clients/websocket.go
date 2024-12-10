@@ -8,6 +8,7 @@ import (
 	"server/pkg/packets"
 
 	"github.com/gorilla/websocket"
+	"google.golang.org/protobuf/proto"
 )
 
 type WebSocketClient struct {
@@ -54,4 +55,145 @@ func (c *WebSocketClient) Initialize(id uint64) {
 	c.id = id
 	// Prefix our logger with with the client's ID for debugging
 	c.logger.SetPrefix(fmt.Sprintf("Client %d: ", c.id))
+}
+
+// Handles the packet that comes from the client
+func (c *WebSocketClient) ProcessMessage(senderId uint64, message packets.Payload) {
+	// Empty for now
+}
+
+// Sends a message to the client
+func (c *WebSocketClient) SocketSend(message packets.Payload) {
+	c.SocketSendAs(message, c.id)
+}
+
+// This is useful when we want to forward a message we received from another client
+func (c *WebSocketClient) SocketSendAs(message packets.Payload, senderId uint64) {
+	select {
+	// We queue messages up to send to the client
+	case c.sendChannel <- &packets.Packet{
+		SenderId: senderId,
+		Payload:  message,
+	}:
+	// If the client's channel is full, we drop the message and log a warning
+	default:
+		c.logger.Printf("Client %d send channel full, dropping message: %T", c.id, message)
+	}
+}
+
+// Forward message to a specific client by ID
+func (c *WebSocketClient) PassToPeer(message packets.Payload, peerId uint64) {
+	// We look for the peer in the server's map of clients
+	peer, found := c.hub.Clients[peerId]
+	if found {
+		peer.ProcessMessage(c.id, message)
+	}
+}
+
+// Convenience function to queue a message up to be passed to every client except the sender by the hub
+func (c *WebSocketClient) Broadcast(message packets.Payload) {
+	c.hub.BroadcastChannel <- &packets.Packet{
+		SenderId: c.id,
+		Payload:  message,
+	}
+}
+
+// Directly interfaces with the websocket from Godot
+// Responsible for reading and processing messages from the client
+func (c *WebSocketClient) ReadPump() {
+	// We defer closing this connection so we can clean up if an error occurs or the loop breaks
+	defer func() {
+		c.logger.Println("Closing read pump")
+		c.Close("Read pump closed")
+	}()
+
+	// Infinite loop
+	for {
+		_, data, err := c.connection.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				c.logger.Printf("error: %v", err)
+			}
+			break
+		}
+
+		// We convert raw bytes into a packet
+		packet := &packets.Packet{}
+		err = proto.Unmarshal(data, packet)
+		// If an error occurs, we drop the packet and try to read the next one
+		if err != nil {
+			c.logger.Printf("Error unmarshaling data: %v", err)
+			continue
+		}
+
+		// Allows the client to lazily not set the sender ID when sending a message to the server
+		if packet.SenderId == 0 {
+			packet.SenderId = c.id
+		}
+
+		c.ProcessMessage(packet.SenderId, packet.Payload)
+	}
+}
+
+// Directly interfaces with the websocket from Godot
+// Responsible for reading packets we've queued in the send channel, serialize and send them to the Godot client
+func (c *WebSocketClient) WritePump() {
+	// We defer closing this connection so we can clean up if an error occurs or the loop breaks
+	defer func() {
+		c.logger.Println("Closing write pump")
+		c.Close("Write pump closed")
+	}()
+
+	// Go over every message in the client's send channel
+	for packet := range c.sendChannel {
+		// Create a binary writer since Protobuf messages are binary
+		writer, err := c.connection.NextWriter(websocket.BinaryMessage)
+		// If we find an error, break out of this loop
+		if err != nil {
+			c.logger.Printf("Error getting writer for %T packet, closing client: %v", packet.Payload, err)
+			return
+		}
+
+		// We convert the packet into raw bytes
+		data, marshallErr := proto.Marshal(packet)
+		// If we fail to serialize, we drop the packet and read the next one
+		if marshallErr != nil {
+			c.logger.Printf("Error marshalling %T packet, dropping: %v", packet.Payload, marshallErr)
+			continue
+		}
+
+		// We write the data to the websocket
+		_, writeErr := writer.Write(data)
+
+		// If we fail to write this data to the websocket, we drop the packet and read the next one
+		if writeErr != nil {
+			c.logger.Printf("Error writing %T packet: %v", packet.Payload, writeErr)
+			continue
+		}
+
+		// Append a newline to the end of every message
+		writer.Write([]byte{'\n'})
+
+		// There can be at most, one open writer per connection, so we try to close this writer
+		closeErr := writer.Close()
+		if closeErr != nil {
+			c.logger.Printf("Error closing writer, dropping %T packet: %v", packet.Payload, closeErr)
+			continue
+		}
+	}
+}
+
+// Responsible for cleaning up the client's connection and unregistering the client from the hub
+func (c *WebSocketClient) Close(reason string) {
+	c.logger.Printf("Closing client connection because: %s", reason)
+
+	// Remove the client from the hub and close the client's websocket connection
+	c.hub.UnregisterChannel <- c
+	c.connection.Close()
+
+	// We check if the client's send channel is closed, if its not, we close it
+	_, closed := <-c.sendChannel
+	if !closed {
+		close(c.sendChannel)
+	}
 }

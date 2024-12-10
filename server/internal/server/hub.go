@@ -66,7 +66,7 @@ func NewHub() *Hub {
 
 // Listens for messages on each channel
 func (h *Hub) Run() {
-	log.Println("Awaiting client registrations...")
+	log.Println("Awaiting new client connections...")
 
 	// Infinite for loop
 	for {
