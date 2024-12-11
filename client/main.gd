@@ -3,18 +3,43 @@ extends Node
 const packets := preload("res://packets.gd")
 
 func _ready() -> void:
-	var new_packet := packets.Packet.new()
+	# Connecting signals
+	WebSocket.connected_to_server.connect(_on_websocket_connected_to_server)
+	WebSocket.connection_closed.connect(_on_websocket_connection_closed)
+	WebSocket.packet_received.connect(_on_websocket_packet_received)
+	
+	print("Connecting to server...")
+	WebSocket.connect_to_url("ws://localhost:2000/ws")
+	
+	# var new_packet := packets.Packet.new()
 	# new_packet.from_bytes([8, 69, 18, 15, 10, 13, 72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33])
-	new_packet.set_sender_id(1)
-	new_packet.new_chat_message().set_text("Hey there")
+	# new_packet.set_sender_id(1)
+	# new_packet.new_chat_message().set_text("Hey there")
 	
-	print(new_packet)
-	print(new_packet.has_chat_message())
-	print(new_packet.to_bytes())
+	# print(new_packet)
+	# print(new_packet.has_chat_message())
+	# print(new_packet.to_bytes())
 	
-	if new_packet.has_chat_message():
-		pass
-	elif new_packet.has_client_id():
-		pass
+	# if new_packet.has_chat_message():
+		# pass
+	# elif new_packet.has_client_id():
+		# pass
+	# else:
+		# pass
+
+func _on_websocket_connected_to_server() -> void:
+	var packet := packets.Packet.new()
+	var chat_message := packet.new_chat_message()
+	chat_message.set_text("Hello, Golang!")
+	
+	var err := WebSocket.send(packet)
+	if err:
+		print("Error sending packet")
 	else:
-		pass
+		print("Sent packet")
+
+func _on_websocket_connection_closed() -> void:
+	print("Connection closed")
+
+func _on_websocket_packet_received(packet: packets.Packet) -> void:
+	print("Received packet from the server: %s" % packet)

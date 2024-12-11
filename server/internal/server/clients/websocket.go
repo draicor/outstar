@@ -59,7 +59,9 @@ func (c *WebSocketClient) Initialize(id uint64) {
 
 // Handles the packet that comes from the client
 func (c *WebSocketClient) ProcessMessage(senderId uint64, message packets.Payload) {
-	// Empty for now
+	c.logger.Printf("Received message: %T from client", message)
+	// Echo this back to the client
+	c.SocketSend(message)
 }
 
 // Sends a message to the client
