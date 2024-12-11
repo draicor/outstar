@@ -86,7 +86,7 @@ func (c *WebSocketClient) SocketSendAs(message packets.Payload, senderId uint64)
 // Forward message to a specific client by ID
 func (c *WebSocketClient) PassToPeer(message packets.Payload, peerId uint64) {
 	// We look for the peer in the server's map of clients
-	peer, found := c.hub.Clients[peerId]
+	peer, found := c.hub.Clients.Get(peerId)
 	if found {
 		peer.ProcessMessage(c.id, message)
 	}

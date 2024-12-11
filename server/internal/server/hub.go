@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net/http"
+	"server/internal/server/objects"
 	"server/pkg/packets"
 )
 
@@ -42,7 +43,7 @@ type ClientInterfacer interface {
 // The hub is the central point of communication between all connected clients
 type Hub struct {
 	// Map of all the connected clients
-	Clients map[uint64]ClientInterfacer
+	Clients *objects.SharedCollection[ClientInterfacer]
 
 	// Packets in this channel will be processed by all connected clients except the sender
 	BroadcastChannel chan *packets.Packet
@@ -57,7 +58,7 @@ type Hub struct {
 // Creates a new empty hub object
 func NewHub() *Hub {
 	return &Hub{
-		Clients:           make(map[uint64]ClientInterfacer),
+		Clients:           objects.NewSharedCollection[ClientInterfacer](),
 		BroadcastChannel:  make(chan *packets.Packet),
 		RegisterChannel:   make(chan ClientInterfacer),
 		UnregisterChannel: make(chan ClientInterfacer),
@@ -66,7 +67,7 @@ func NewHub() *Hub {
 
 // Listens for messages on each channel
 func (h *Hub) Run() {
-	log.Println("Awaiting new client connections...")
+	log.Println("Awaiting client connections...")
 
 	// Infinite for loop
 	for {
@@ -75,19 +76,20 @@ func (h *Hub) Run() {
 		select {
 		// If we get a new client, register it to the hub
 		case client := <-h.RegisterChannel:
-			client.Initialize(uint64(len(h.Clients))) // FIX THIS, THIS WILL CAUSE BUGS
+			// The Add method returns an ID, which we use to Initialize the client
+			client.Initialize(h.Clients.Add(client))
 		// If a client disconnects, remove him from the hub
 		case client := <-h.UnregisterChannel:
-			h.Clients[client.Id()] = nil
+			h.Clients.Remove(client.Id())
 		// If we get a packet from the broadcast channel
 		case packet := <-h.BroadcastChannel:
 			// Go over every registered client in the hub
-			for id, client := range h.Clients {
+			h.Clients.ForEach(func(clientId uint64, client ClientInterfacer) {
 				// Check that the sender does not send the message to itself
-				if id != packet.SenderId {
+				if clientId != packet.SenderId {
 					client.ProcessMessage(packet.SenderId, packet.Payload)
 				}
-			}
+			})
 		}
 	}
 }
