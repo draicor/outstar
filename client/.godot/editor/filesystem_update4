@@ -1,3 +1,4 @@
+res://classes/log/log.tscn
+res://classes/log/log.gd
 res://main.tscn
-res://websocket.gd
 res://main.gd

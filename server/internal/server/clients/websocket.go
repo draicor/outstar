@@ -55,13 +55,21 @@ func (c *WebSocketClient) Initialize(id uint64) {
 	c.id = id
 	// Prefix our logger with with the client's ID for debugging
 	c.logger.SetPrefix(fmt.Sprintf("Client %d: ", c.id))
+	// When a new client connects, they get sent their ID
+	c.SocketSend(packets.NewClientId(c.id))
+	c.logger.Print("Sent ID to client ", c.id)
 }
 
 // Handles the packet that comes from the client
 func (c *WebSocketClient) ProcessMessage(senderId uint64, message packets.Payload) {
-	c.logger.Printf("Received message: %T from client", message)
-	// Echo this back to the client
-	c.SocketSend(message)
+	// If this message was sent by this client
+	if senderId == c.id {
+		// Broadcast it to everyone else
+		c.Broadcast(message)
+	} else {
+		// If another client or the hub passed us this message, forward it to this client
+		c.SocketSendAs(message, senderId)
+	}
 }
 
 // Sends a message to the client

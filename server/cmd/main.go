@@ -25,12 +25,13 @@ func main() {
 		hub.Serve(clients.NewWebSocketClient, w, r)
 	})
 
-	// Starts the server
+	// Starts the server on a goroutine
 	go hub.Run()
 
 	addr := fmt.Sprintf(":%d", *port)
 	log.Printf("Starting server on port %s", addr)
 
+	// Starts to listen for incoming connections and upgrades them into websocket connections
 	err := http.ListenAndServe(addr, nil)
 
 	if err != nil {
