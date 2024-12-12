@@ -38,6 +38,23 @@ type ClientInterfacer interface {
 
 	// Close the client's connection and cleanup
 	Close(reason string)
+
+	// Updates the state of this client
+	SetState(newState ClientStateHandler)
+}
+
+// A structure for a state machine to process the client's messages
+type ClientStateHandler interface {
+	Name() string
+
+	// Inject the client into the state handler, so we can access the client's data
+	SetClient(client ClientInterfacer)
+
+	OnEnter()
+	HandleMessage(senderId uint64, payload packets.Payload)
+
+	// Cleanup the state handler
+	OnExit()
 }
 
 // The hub is the central point of communication between all connected clients
@@ -76,7 +93,7 @@ func (h *Hub) Run() {
 		select {
 		// If we get a new client, register it to the hub
 		case client := <-h.RegisterChannel:
-			// The Add method returns an ID, which we use to Initialize the client
+			// The Add method returns an ID, which we use to Initialize the WebSocket Client's ID
 			client.Initialize(h.Clients.Add(client))
 		// If a client disconnects, remove him from the hub
 		case client := <-h.UnregisterChannel:

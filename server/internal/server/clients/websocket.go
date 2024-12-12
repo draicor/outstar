@@ -1,10 +1,10 @@
 package clients
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"server/internal/server"
+	"server/internal/server/states"
 	"server/pkg/packets"
 
 	"github.com/gorilla/websocket"
@@ -17,6 +17,7 @@ type WebSocketClient struct {
 	hub         *server.Hub          // Hub that created this client
 	sendChannel chan *packets.Packet // Channel that holds packets to be sent to the client
 	logger      *log.Logger
+	state       server.ClientStateHandler // Knows in what state the client is in
 }
 
 // Called from Hub.serve()
@@ -52,24 +53,15 @@ func (c *WebSocketClient) Id() uint64 {
 
 // Initializes the client connection
 func (c *WebSocketClient) Initialize(id uint64) {
+	// We store the new id as this client's ID
 	c.id = id
-	// Prefix our logger with with the client's ID for debugging
-	c.logger.SetPrefix(fmt.Sprintf("Client %d: ", c.id))
 	// When a new client connects, they get sent their ID
-	c.SocketSend(packets.NewClientId(c.id))
-	c.logger.Print("Sent ID to client ", c.id)
+	c.SetState(&states.Connected{})
 }
 
 // Handles the packet that comes from the client
-func (c *WebSocketClient) ProcessMessage(senderId uint64, message packets.Payload) {
-	// If this message was sent by this client
-	if senderId == c.id {
-		// Broadcast it to everyone else
-		c.Broadcast(message)
-	} else {
-		// If another client or the hub passed us this message, forward it to this client
-		c.SocketSendAs(message, senderId)
-	}
+func (c *WebSocketClient) ProcessMessage(senderId uint64, payload packets.Payload) {
+	c.state.HandleMessage(senderId, payload)
 }
 
 // Sends a message to the client
@@ -201,9 +193,42 @@ func (c *WebSocketClient) Close(reason string) {
 	c.hub.UnregisterChannel <- c
 	c.connection.Close()
 
+	// Remove the client's state after disconnection
+	c.SetState(nil)
+
 	// We check if the client's send channel is closed, if its not, we close it
 	_, closed := <-c.sendChannel
 	if !closed {
 		close(c.sendChannel)
+	}
+}
+
+func (c *WebSocketClient) SetState(state server.ClientStateHandler) {
+	// State names are used for debugging purposes
+	lastStateName := "None"
+	newStateName := "None"
+
+	// If our current state is valid
+	if c.state != nil {
+		// call the OnExit code for the current state
+		lastStateName = c.state.Name()
+		c.state.OnExit()
+	}
+
+	// If the new state is valid
+	if state != nil {
+		newStateName = state.Name()
+	}
+
+	// CHECK THIS
+	// Probably a bug here, even if the state is INVALID, it will attempt to switch to it
+	c.logger.Printf("Switching from state %s to %s", lastStateName, newStateName)
+	c.state = state
+
+	// If the client's new state is valid
+	if c.state != nil {
+		// Inject the client's data into the state and call the OnEnter code for the new state
+		c.state.SetClient(c)
+		c.state.OnEnter()
 	}
 }
