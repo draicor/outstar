@@ -1,31 +1,15 @@
 [gd_scene load_steps=3 format=3 uid="uid://x0epwfo5cr8"]
 
-[ext_resource type="Script" path="res://classes/log/log.gd" id="1_o7bf7"]
 [ext_resource type="Script" path="res://states/lobby/lobby.gd" id="1_y2blm"]
+[ext_resource type="PackedScene" uid="uid://c0e51fcsnsimq" path="res://components/chat/chat.tscn" id="2_xdbmw"]
 
 [node name="Lobby" type="Node"]
 script = ExtResource("1_y2blm")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="Log" type="RichTextLabel" parent="UI"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 124.0
-offset_bottom = -32.0
-grow_horizontal = 2
-grow_vertical = 2
-bbcode_enabled = true
-scroll_following = true
-script = ExtResource("1_o7bf7")
-
-[node name="LineEdit" type="LineEdit" parent="UI"]
+[node name="Chat" parent="UI" instance=ExtResource("2_xdbmw")]
 anchors_preset = 12
 anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -31.0
-grow_horizontal = 2
+offset_top = -169.0
 grow_vertical = 0
-max_length = 32

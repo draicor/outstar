@@ -1,9 +1,2 @@
-res://classes/log/log.tscn
-res://classes/log/log.gd
-res://main.tscn
-res://main.gd
-res://game_manager.gd
 res://states/lobby/lobby.tscn
-res://states/start/start.tscn
-res://states/start/start.gd
-res://states/lobby/lobby.gd
+res://components/chat/chat.tscn
