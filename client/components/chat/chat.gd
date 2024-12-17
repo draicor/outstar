@@ -1,28 +1,42 @@
 extends Control
 
+@onready var scroll_container: ScrollContainer = $ScrollContainer
 @onready var v_box_container: VBoxContainer = $ScrollContainer/VBoxContainer
 
 func info(message: String) -> void:
-	var _m = Message.new()
-	v_box_container.add_child(_m)
-	_m.info(message)
+	_instantiate_message().info(message)
 
 func warning(message: String) -> void:
-	var _m = Message.new()
-	v_box_container.add_child(_m)
-	_m.warning(message)
+	_instantiate_message().warning(message)
 
 func error(message: String) -> void:
-	var _m = Message.new()
-	v_box_container.add_child(_m)
-	_m.error(message)
+	_instantiate_message().error(message)
 
 func success(message: String) -> void:
-	var _m = Message.new()
-	v_box_container.add_child(_m)
-	_m.success(message)
+	_instantiate_message().success(message)
 
 func public(sender_name: String, message: String) -> void:
-	var _m = Message.new()
-	v_box_container.add_child(_m, false)
-	_m.public(sender_name, message)
+	_instantiate_message().public(sender_name, message)
+
+func _instantiate_message() -> Message:
+	var m = Message.new()
+	# We add it to the VBoxContainer with force readable name set to false
+	v_box_container.add_child(m, false)
+	
+	# If we are at the bottom of the chat window, we auto scroll down
+	if _should_auto_scroll():
+		_scroll_to_bottom()
+	
+	return m
+
+func _should_auto_scroll() -> bool:
+	# We subtract the height of the container from the scrolls bar height
+	# and we compare it to the current vertical scroll, it has to be >=
+	# because at first it will always return false, preventing it from
+	# auto scrolling once the scroll bar appears.
+	return scroll_container.scroll_vertical >= (scroll_container.get_v_scroll_bar().max_value - scroll_container.get_rect().size.y)
+
+func _scroll_to_bottom() -> void:
+	# Await here to give the engine time to catch up
+	await scroll_container.get_v_scroll_bar().changed
+	scroll_container.scroll_vertical =  int(scroll_container.get_v_scroll_bar().max_value)

@@ -1,7 +1,7 @@
 class_name Message
 extends RichTextLabel
 
-func _ready() -> void:
+func _init() -> void:
 	# This makes this label visible inside a container
 	set_fit_content(true)
 
