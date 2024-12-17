@@ -11,5 +11,5 @@ script = ExtResource("1_y2blm")
 [node name="Chat" parent="UI" instance=ExtResource("2_xdbmw")]
 anchors_preset = 12
 anchor_top = 1.0
-offset_top = -169.0
+offset_top = -162.0
 grow_vertical = 0

@@ -4,12 +4,10 @@ const packets := preload("res://packets.gd")
 
 # User Interface
 @onready var chat: Control = $UI/Chat
-var chat_log: Log
 var chat_line_edit: LineEdit
 
 func _ready() -> void:
 	# Get access to the child nodes of the chat UI
-	chat_log = chat.find_child("Log")
 	chat_line_edit = chat.find_child("LineEdit")
 	
 	# Connecting signals
@@ -20,7 +18,7 @@ func _ready() -> void:
 	
 
 func _on_websocket_connection_closed() -> void:
-	chat_log.error("Connection closed")
+	chat.error("Connection closed")
 
 func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()
@@ -30,7 +28,7 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 
 # We print the message into our chat window
 func _handle_packet_chat_message(sender_id: int, packet_chat_message: packets.Chat) -> void:
-	chat_log.public_chat("Client %d" % sender_id, packet_chat_message.get_text())
+	chat.public("Client %d" % sender_id, packet_chat_message.get_text())
 
 # To send messages
 func _on_line_edit_text_submitted(text: String) -> void:
@@ -45,9 +43,9 @@ func _on_line_edit_text_submitted(text: String) -> void:
 	# This serializes and sends our message
 	var err := WebSocket.send(packet)
 	if err:
-		chat_log.error("Error sending chat message")
+		chat.error("Error sending chat message")
 	else:
-		chat_log.public_chat("Localhost", text)
+		chat.public("Localhost", text)
 	
 	# We clear the line edit
 	chat_line_edit.text = ""

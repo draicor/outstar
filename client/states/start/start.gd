@@ -3,7 +3,7 @@ extends Node
 const packets := preload("res://packets.gd")
 
 # User Interface
-@onready var _log: Log = $UI/Log
+@onready var chat: Control = $UI/Chat
 
 func _ready() -> void:
 	# Connecting signals
@@ -12,14 +12,14 @@ func _ready() -> void:
 	WebSocket.packet_received.connect(_on_websocket_packet_received)
 	
 	# Try to open the websocket connection
-	_log.info("Connecting to server...")
+	chat.info("Connecting to server...")
 	WebSocket.connect_to_url("ws://localhost:2000/ws")
 
 func _on_websocket_connected_to_server() -> void:
-	_log.success("Connected to the server")
+	chat.success("Connected to the server")
 
 func _on_websocket_connection_closed() -> void:
-	_log.error("Connection closed")
+	chat.error("Connection closed")
 
 func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()

@@ -1,2 +1,11 @@
-res://states/lobby/lobby.tscn
 res://components/chat/chat.tscn
+res://classes/log/log.gd
+res://components/chat/chat.gd
+res://states/lobby/lobby.gd
+res://states/lobby/lobby.tscn
+res://classes/log/log.tscn
+res://states/start/start.gd
+res://classes/log/message.tscn
+res://classes/message/message.tscn
+res://classes/message/message.gd
+res://states/start/start.tscn
