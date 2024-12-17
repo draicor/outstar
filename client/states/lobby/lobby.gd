@@ -4,18 +4,18 @@ const packets := preload("res://packets.gd")
 
 # User Interface
 @onready var chat: Control = $UI/Chat
-var chat_line_edit: LineEdit
+var chat_input: LineEdit
 
 func _ready() -> void:
 	# Get access to the child nodes of the chat UI
-	chat_line_edit = chat.find_child("LineEdit")
+	chat_input = chat.find_child("Input")
 	
 	# Connecting signals
 	WebSocket.connection_closed.connect(_on_websocket_connection_closed)
 	WebSocket.packet_received.connect(_on_websocket_packet_received)
 	# User Interface signals
-	chat_line_edit.text_submitted.connect(_on_line_edit_text_submitted)
-	
+	chat_input.text_submitted.connect(_on_chat_input_text_submitted)
+
 
 func _on_websocket_connection_closed() -> void:
 	chat.error("Connection closed")
@@ -31,9 +31,9 @@ func _handle_packet_chat_message(sender_id: int, packet_chat_message: packets.Ch
 	chat.public("Client %d" % sender_id, packet_chat_message.get_text())
 
 # To send messages
-func _on_line_edit_text_submitted(text: String) -> void:
+func _on_chat_input_text_submitted(text: String) -> void:
 	# Ignore this is the message was empty!
-	if chat_line_edit.text.is_empty():
+	if chat_input.text.is_empty():
 		return
 	
 	var packet := packets.Packet.new()
@@ -48,4 +48,4 @@ func _on_line_edit_text_submitted(text: String) -> void:
 		chat.public("Localhost", text)
 	
 	# We clear the line edit
-	chat_line_edit.text = ""
+	chat_input.text = ""

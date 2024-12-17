@@ -13,7 +13,8 @@ func _ready() -> void:
 	
 	# Try to open the websocket connection
 	chat.info("Connecting to server...")
-	WebSocket.connect_to_url("ws://localhost:2000/ws")
+	#WebSocket.connect_to_url("ws://localhost:2000/ws")
+	WebSocket.connect_to_url("ws://190.120.248.130:2000/ws")
 
 func _on_websocket_connected_to_server() -> void:
 	chat.success("Connected to the server")

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="127.99998"
+   height="127.99998"
+   viewBox="0 0 33.86666 33.866661"
+   version="1.1"
+   id="svg255"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   sodipodi:docname="icon.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview257"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="px"
+     showgrid="false"
+     inkscape:zoom="1.8707912"
+     inkscape:cx="27.52846"
+     inkscape:cy="74.300114"
+     inkscape:window-width="1360"
+     inkscape:window-height="705"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs252">
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3060"
+       id="radialGradient3062"
+       cx="86.240639"
+       cy="116.55084"
+       fx="86.240639"
+       fy="116.55084"
+       r="10.974257"
+       gradientTransform="matrix(0,1.4697258,-1.1394781,0,236.2138,-22.849732)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient3060">
+      <stop
+         style="stop-color:#ff00ff;stop-opacity:1;"
+         offset="0"
+         id="stop3056" />
+      <stop
+         style="stop-color:#aa00aa;stop-opacity:1;"
+         offset="1"
+         id="stop3058" />
+    </linearGradient>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-86.487909,-86.9679)">
+    <path
+       style="fill:url(#radialGradient3062);fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.416897;stroke-dasharray:none;stroke-opacity:1"
+       d="m 107.92581,120.58985 c -4.1e-4,-0.13461 -1.61791,-2.30063 -3.59447,-4.81338 -1.97654,-2.51275 -4.31316,-5.62646 -5.19249,-6.91936 l -1.598775,-2.35076 1.515297,-2.38104 c 3.015678,-4.738639 4.781988,-6.827295 5.684118,-6.721448 0.88428,0.103727 4.18345,3.974728 6.52364,7.654268 l 1.27742,2.00852 -0.87394,1.34942 c -1.49097,2.30217 -3.55256,2.54396 -4.96673,0.58248 -0.50627,-0.70221 -0.51664,-0.96997 -0.0634,-1.63712 0.48399,-0.71239 0.40785,-0.98249 -0.71267,-2.52798 l -1.25456,-1.73035 -0.94363,1.52999 -0.94363,1.52997 1.58173,2.5224 c 2.41992,3.85904 4.78707,6.92809 5.34171,6.92563 0.59712,-0.002 1.68497,-1.25945 3.97725,-4.59493 l 1.70163,-2.47599 -1.98562,-3.07162 c -1.611,-2.49211 -8.04931,-11.419935 -8.6848,-12.042986 -0.09,-0.08831 -0.33274,0.05858 -0.53939,0.326338 -1.47198,1.907006 -9.026952,12.284498 -10.342838,14.206868 l -1.621964,2.36956 2.404281,-0.17174 c 3.201733,-0.22869 4.200659,0.19948 4.192298,1.79699 -0.01048,2.02182 -0.121516,2.05907 -5.826093,1.95698 l -5.14567,-0.0921 -0.673303,-1.06173 -0.673302,-1.06174 2.906625,-4.32272 c 3.120219,-4.64037 9.012663,-12.976748 12.461346,-17.62979 1.34195,-1.810581 2.34699,-2.830557 2.73164,-2.772206 0.3347,0.05082 1.33807,1.119533 2.22968,2.375022 0.89164,1.255489 3.30761,4.558861 5.36883,7.340823 4.6549,6.282551 8.16854,11.412101 8.16854,11.925311 0,0.21425 -1.44478,2.2899 -3.21059,4.61256 -1.76581,2.32269 -3.48476,4.63235 -3.81989,5.13262 -0.90462,1.35035 -2.80974,2.47795 -4.18655,2.47795 -0.66607,0 -1.21134,-0.11014 -1.21177,-0.24475 z m -15.845012,-1.32699 c -1.367667,-0.12398 -1.430642,-0.61496 -0.302281,-2.35721 l 0.836958,-1.29232 4.237824,0.005 c 2.33081,0.002 4.463631,0.11803 4.739601,0.25619 0.72746,0.36416 1.89368,2.71671 1.49433,3.01443 -0.35139,0.26195 -9.000031,0.55578 -11.006432,0.37393 z"
+       id="path469"
+       sodipodi:nodetypes="csscssscsssscccscscsccscscccccssssssssscccsccsscc"
+       inkscape:label="rune"
+       inkscape:export-filename="icon.png"
+       inkscape:export-xdpi="203.2"
+       inkscape:export-ydpi="203.2" />
+  </g>
+</svg>
