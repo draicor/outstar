@@ -1,8 +1,11 @@
-res://components/chat/chat.tscn
-res://autoloads/signals.gd
-res://autoloads/game_manager.gd
-res://assets/shaders/blur.gdshader
-res://components/escape_menu/escape_menu.gd
 res://components/escape_menu/escape_menu.tscn
+res://assets/shaders/blur.gdshader
+res://states/lobby/lobby.gd
 res://main.gd
+res://autoloads/signals.gd
 res://states/lobby/lobby.tscn
+res://components/chat/chat.tscn
+res://states/start/start.tscn
+res://states/start/start.gd
+res://components/escape_menu/lobby/escape_menu.tscn
+res://components/escape_menu/lobby/lobby_escape_menu.tscn

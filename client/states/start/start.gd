@@ -2,8 +2,7 @@ extends Node
 
 const packets := preload("res://packets.gd")
 
-# User Interface
-@onready var chat: Control = $UI/Chat
+@export var address : String = "localhost:2000"
 
 func _ready() -> void:
 	# Connecting signals
@@ -12,16 +11,16 @@ func _ready() -> void:
 	WebSocket.packet_received.connect(_on_websocket_packet_received)
 	
 	# Try to open the websocket connection
-	chat.info("Connecting to server...")
+	print("Connecting to server at " + address)
 	
-	WebSocket.connect_to_url("ws://localhost:2000/ws")
+	WebSocket.connect_to_url("ws://"+address+"/ws")
 	# WebSocket.connect_to_url("ws://190.120.248.130:2000/ws")
 
 func _on_websocket_connected_to_server() -> void:
-	chat.success("Connected to the server")
+	print("Connected to the server")
 
 func _on_websocket_connection_closed() -> void:
-	chat.error("Connection closed")
+	print("Connection closed")
 
 func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()

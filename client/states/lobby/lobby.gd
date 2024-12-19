@@ -1,12 +1,19 @@
 extends Node
 
+# Preload resources
 const packets := preload("res://packets.gd")
+const lobby_escape_menu_scene: PackedScene = preload("res://components/escape_menu/lobby/lobby_escape_menu.tscn")
 
-# User Interface
+# User Interface Variables
+@onready var ui_canvas: CanvasLayer = $UI
 @onready var chat: Control = $UI/Chat
 var chat_input: LineEdit
+var lobby_escape_menu
 
 func _ready() -> void:
+	_initialize()
+
+func _initialize() -> void:
 	# Get access to the child nodes of the chat UI
 	chat_input = chat.find_child("Input")
 	
@@ -14,8 +21,12 @@ func _ready() -> void:
 	WebSocket.connection_closed.connect(_on_websocket_connection_closed)
 	WebSocket.packet_received.connect(_on_websocket_packet_received)
 	# User Interface signals
+	Signals.ui_escape_menu_toggle.connect(_on_ui_escape_menu_toggle)
 	chat_input.text_submitted.connect(_on_chat_input_text_submitted)
-
+	
+	# Create and add the escape menu to the UI canvas layer
+	lobby_escape_menu = lobby_escape_menu_scene.instantiate()
+	ui_canvas.add_child(lobby_escape_menu)
 
 func _on_websocket_connection_closed() -> void:
 	chat.error("Connection closed")
@@ -49,3 +60,7 @@ func _on_chat_input_text_submitted(text: String) -> void:
 	
 	# We clear the line edit
 	chat_input.text = ""
+
+# If the ui_escape key is pressed, toggle the escape menu
+func _on_ui_escape_menu_toggle() -> void:
+	lobby_escape_menu.toggle()
