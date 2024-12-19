@@ -12,6 +12,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+mouse_filter = 1
 script = ExtResource("1_6nsy3")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="."]
@@ -28,9 +29,9 @@ follow_focus = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 10
-mouse_filter = 2
 
 [node name="Input" type="LineEdit" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0

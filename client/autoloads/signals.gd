@@ -11,4 +11,5 @@ extends Node
 
 # Input signals
 signal ui_escape_menu_toggle
+signal ui_chat_input_toggle
 #signal ui_disconnect

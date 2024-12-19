@@ -2,7 +2,19 @@ extends Node
 
 const packets := preload("res://packets.gd")
 
-@export var address : String = "localhost:2000"
+enum Server {
+	LOCAL,
+	REMOTE
+}
+# We have a dictionary connected to the enum above to switch
+# between local and remote testing
+var ip: Dictionary = {
+	Server.LOCAL: "localhost",
+	Server.REMOTE: "190.120.248.130",
+}
+# We make the enum and port easily accesible for testing
+@export var server : Server
+@export var port : int = 2000
 
 func _ready() -> void:
 	# Connecting signals
@@ -10,11 +22,13 @@ func _ready() -> void:
 	WebSocket.connection_closed.connect(_on_websocket_connection_closed)
 	WebSocket.packet_received.connect(_on_websocket_packet_received)
 	
+	# Construct the ip address and port at runtime
+	var address = ip[server] + ":" + str(port)
+	
 	# Try to open the websocket connection
 	print("Connecting to server at " + address)
 	
 	WebSocket.connect_to_url("ws://"+address+"/ws")
-	# WebSocket.connect_to_url("ws://190.120.248.130:2000/ws")
 
 func _on_websocket_connected_to_server() -> void:
 	print("Connected to the server")

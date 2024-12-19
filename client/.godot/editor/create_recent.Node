@@ -1,8 +1,8 @@
+PanelContainer
 ScrollContainer
 VScrollBar
 Container
 VBoxContainer
-Log
 Control
 RichTextLabel
 Node

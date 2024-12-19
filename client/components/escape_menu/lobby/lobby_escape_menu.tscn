@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://c3dndr4w4euk5"]
+[gd_scene load_steps=5 format=3 uid="uid://c3dndr4w4euk5"]
 
 [ext_resource type="Script" path="res://components/escape_menu/lobby/lobby_escape_menu.gd" id="1_a5j54"]
 [ext_resource type="Shader" path="res://assets/shaders/blur.gdshader" id="2_0pl3q"]
+[ext_resource type="StyleBox" uid="uid://nvug1cqa5843" path="res://themes/style_box_flat.tres" id="3_53op5"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fycqk"]
 shader = ExtResource("2_0pl3q")
@@ -25,7 +26,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="Version" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -59.0
+offset_bottom = 23.0
+grow_horizontal = 0
+text = "v0.0.0.0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -33,42 +46,36 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -47.0
-offset_top = -33.0
+offset_top = -50.5
 offset_right = 47.0
-offset_bottom = 33.0
+offset_bottom = 50.5
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = ExtResource("3_53op5")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
 layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
 
-[node name="Resume" type="Button" parent="MarginContainer/VBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Resume" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Resume"
 
-[node name="Disconnect" type="Button" parent="MarginContainer/VBoxContainer"]
+[node name="Disconnect" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Disconnect"
 
-[node name="Quit" type="Button" parent="MarginContainer/VBoxContainer"]
+[node name="Quit" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Quit"
 
-[node name="Version" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -94.0
-offset_top = -23.0
-grow_horizontal = 0
-grow_vertical = 0
-text = "v0.0.0.0"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[connection signal="pressed" from="MarginContainer/VBoxContainer/Resume" to="." method="_on_resume_pressed"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer/Disconnect" to="." method="_on_disconnect_pressed"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer/Quit" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/Resume" to="." method="_on_resume_pressed"]
+[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/Disconnect" to="." method="_on_disconnect_pressed"]
+[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/Quit" to="." method="_on_quit_pressed"]

@@ -22,6 +22,8 @@ func _initialize() -> void:
 	WebSocket.packet_received.connect(_on_websocket_packet_received)
 	# User Interface signals
 	Signals.ui_escape_menu_toggle.connect(_on_ui_escape_menu_toggle)
+	# Chat signals
+	Signals.ui_chat_input_toggle.connect(_on_ui_chat_input_toggle)
 	chat_input.text_submitted.connect(_on_chat_input_text_submitted)
 	
 	# Create and add the escape menu to the UI canvas layer
@@ -43,8 +45,9 @@ func _handle_packet_chat_message(sender_id: int, packet_chat_message: packets.Ch
 
 # To send messages
 func _on_chat_input_text_submitted(text: String) -> void:
-	# Ignore this is the message was empty!
+	# Ignore this is the message was empty and release focus!
 	if chat_input.text.is_empty():
+		chat_input.release_focus()
 		return
 	
 	var packet := packets.Packet.new()
@@ -64,3 +67,9 @@ func _on_chat_input_text_submitted(text: String) -> void:
 # If the ui_escape key is pressed, toggle the escape menu
 func _on_ui_escape_menu_toggle() -> void:
 	lobby_escape_menu.toggle()
+
+# If the ui_enter key is pressed, toggle the chat input
+func _on_ui_chat_input_toggle() -> void:
+	chat_input.visible = !chat_input.visible
+	if chat_input.visible:
+		chat_input.grab_focus()
