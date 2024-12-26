@@ -4,17 +4,19 @@ const packets := preload("res://packets.gd")
 
 enum Server {
 	LOCAL,
-	REMOTE
+	PROXY,
+	TOR,
 }
 # We have a dictionary connected to the enum above to switch
 # between local and remote testing
 var ip: Dictionary = {
 	Server.LOCAL: "localhost",
-	Server.REMOTE: "190.120.248.130",
+	Server.PROXY: "64.223.161.129",
+	Server.TOR: "n2qrpuhgfkf2rsz75vcupzlouarkywuqkxohybxjdxy4ge3w4ap3fsqd.onion"
 }
 # We make the enum and port easily accesible for testing
 @export var server : Server
-@export var port : int = 2000
+@export var port : int = 31591
 
 func _ready() -> void:
 	# Connecting signals
@@ -26,15 +28,16 @@ func _ready() -> void:
 	var address = ip[server] + ":" + str(port)
 	
 	# Try to open the websocket connection
-	print("Connecting to server at " + address)
+	var url_address = "ws://"+address+"/ws"
+	print("Connecting to server at " + url_address)
 	
-	WebSocket.connect_to_url("ws://"+address+"/ws")
+	WebSocket.connect_to_url(url_address)
 
 func _on_websocket_connected_to_server() -> void:
 	print("Connected to the server")
 
-func _on_websocket_connection_closed() -> void:
-	print("Connection closed")
+func _on_websocket_connection_closed(close_code: int, close_reason: String) -> void:
+	print("Connection closed, Code: ", close_code, ", Reason: ", close_reason)
 
 func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()

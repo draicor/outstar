@@ -6,7 +6,7 @@ var socket := WebSocketPeer.new()
 var last_state := WebSocketPeer.STATE_CLOSED
 
 signal connected_to_server()
-signal connection_closed()
+signal connection_closed(close_code: int, close_reason: String)
 signal packet_received(packet: packets.Packet)
 
 func connect_to_url(url: String, tls_options: TLSOptions = null) -> int:
@@ -15,6 +15,7 @@ func connect_to_url(url: String, tls_options: TLSOptions = null) -> int:
 		return err
 	
 	last_state = socket.get_ready_state()
+	print(socket.supported_protocols)
 	return OK
 
 func send(packet: packets.Packet) -> int:
@@ -63,7 +64,9 @@ func poll() -> void:
 		if state == socket.STATE_OPEN:
 			connected_to_server.emit()
 		elif state == socket.STATE_CLOSED:
-			connection_closed.emit()
+			var close_code := socket.get_close_code()
+			var close_reason := socket.get_close_reason()
+			connection_closed.emit(close_code, close_reason)
 	
 	# Loop through every packet available
 	while socket.get_ready_state() == socket.STATE_OPEN and socket.get_available_packet_count():

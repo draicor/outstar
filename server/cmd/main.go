@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	port = flag.Int("port", 2000, "Port to listen on")
+	port = flag.Int("port", 31591, "Port to listen on")
 )
 
 // Generic TCP server
