@@ -3,4 +3,3 @@ res://assets/shaders/blur.gdshader
 res://themes/style_box_flat.tres
 res://states/start/start.gd
 res://states/lobby/lobby.tscn
-res://autoloads/websocket.gd

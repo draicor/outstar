@@ -1,0 +1,117 @@
+Install Putty and connect to remote proxy public ip:
+xx.xxx.xxx.xxx:22
+login as username, password
+
+Inside the Putty cmd window:
+# switch to root user (if not logged in as root)
+sudo su -
+
+# install dependencies
+apt update
+apt install -y certbot nginx socat tor
+
+# Navigate into the systemd folder and create a new config file
+cd /etc/systemd/system
+touch http-to-socks-proxy@.service
+nano http-to-socks-proxy@.service
+
+# Add the following lines to the config file
+[Unit]
+Description=HTTP-to-SOCKS proxy
+After=network.target
+
+[Service]
+EnvironmentFile=/etc/http-to-socks-proxy/%i.conf
+ExecStart=/usr/bin/socat tcp4-LISTEN:${LOCAL_PORT},reuseaddr,fork,keepalive,bind=127.0.0.1 SOCKS4A:${PROXY_HOST}:${REMOTE_HOST}:${REMOTE_PORT},socksport=${PROXY_PORT}
+
+[Install]
+WantedBy=multi-user.target
+
+# Save the file by doing control+O and then enter, then close # nano by doing control+X
+
+# create the directory
+mkdir -p /etc/http-to-socks-proxy/
+
+# create the file with the content below
+nano /etc/http-to-socks-proxy/mmo-server.conf
+
+PROXY_HOST=127.0.0.1
+PROXY_PORT=9050
+LOCAL_PORT=31590
+REMOTE_HOST=n2qrpuhgfkf2rsz75vcupzlouarkywuqkxohybxjdxy4ge3w4ap3fsqd.onion.onion
+REMOTE_PORT=31591
+
+# Create a symlink to enable the service and start it
+ln -s /etc/systemd/system/http-to-socks-proxy\@.service /etc/systemd/system/multi-user.target.wants/http-to-socks-proxy\@mmo-server.service
+
+# Start it
+systemctl start http-to-socks-proxy@mmo-server
+
+# Check service status
+systemctl status http-to-socks-proxy@mmo-server
+
+# Check if tunnel is active
+netstat -tulpn | grep socat
+# should output something like
+# tcp 0 0 127.0.0.1:31590 0.0.0.0:* LISTEN 30840/socat
+
+# Create a config file for the domain
+cd /etc/nginx/sites-available
+touch mmo-server.conf
+nano mmo-server.conf
+
+# Add the following code to mmo-server.conf
+server {
+  listen 2000;
+
+  location / {
+    proxy_pass http://127.0.0.1:31590/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+  }
+
+  location /ws {
+    proxy_pass http://127.0.0.1:31590/ws;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+  }
+}
+
+# Create a variable mapping to check if the upgrade header is sent by the client
+cd /etc/nginx/conf.d
+touch map.conf
+nano map.conf
+
+# Add the following code to map.conf:
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
+# Enable the web server config by creating a symlink
+ln -s /etc/nginx/sites-available/mmo-server.conf /etc/nginx/sites-enabled/mmo-server.conf
+
+# Restart nginx
+systemctl restart nginx
+
+# To stop apache2 service do
+systemctl stop apache2
+systemctl disable apache2
+
+# To check if tor service is running
+netstat -tulpn | grep 9050
+
+# To restart tor
+systemctl restart tor
+
+# To log out type:
+logout
+

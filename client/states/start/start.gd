@@ -5,18 +5,16 @@ const packets := preload("res://packets.gd")
 enum Server {
 	LOCAL,
 	PROXY,
-	TOR,
 }
 # We have a dictionary connected to the enum above to switch
 # between local and remote testing
 var ip: Dictionary = {
 	Server.LOCAL: "localhost",
-	Server.PROXY: "64.223.161.129",
-	Server.TOR: "n2qrpuhgfkf2rsz75vcupzlouarkywuqkxohybxjdxy4ge3w4ap3fsqd.onion"
+	Server.PROXY: "64.223.161.129"
 }
 # We make the enum and port easily accesible for testing
 @export var server : Server
-@export var port : int = 31591
+@export var port : int = 2000
 
 func _ready() -> void:
 	# Connecting signals

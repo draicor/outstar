@@ -4,6 +4,6 @@
 
 [node name="Start" type="Node"]
 script = ExtResource("1_xfs5y")
-server = 2
+server = 1
 
 [node name="UI" type="CanvasLayer" parent="."]
