@@ -1,0 +1,32 @@
+1. Download Tor Expert Bundle, extract to desktop, run tor.exe once, wait for tor to connect and then close the window.
+2. Copy the contents of the bundle into the new folder created in app data without the folders, all in the tor folder. [C:\Users\Draicor\AppData\Roaming\tor]
+3. Create a torrc file with the following data:
+SOCKSPort 9050
+
+EntryNodes {us}
+ExitNodes {us} 
+StrictNodes 1
+
+HiddenServiceDir "C:/Users/Draicor/AppData/Roaming/tor/hidden_mmo"
+HiddenServicePort 31591 127.0.0.1:31591
+
+4. To start the service once, execute the tor.exe file. The tor process window cannot be closed or the connection will be terminated.
+
+5. Check if the process is running by typing in cmd:
+netstat -ano | findstr ":9050"
+default ip and port are 127.0.0.1:9050
+
+6. Add this to your torrc file to setup entry and exit nodes!
+EntryNodes {us},{ve}
+ExitNodes {us},{ve} 
+StrictNodes 1
+
+7. To install the tor service so it connects to the protocol on start up, use a command prompt as admin and type:
+
+C:\Users\Draicor\AppData\Roaming\tor\tor.exe --service install -f "C:\Users\Draicor\AppData\Roaming\tor\torrc" 
+This will install it as a service but fail to start it due to lack of permissions.
+Open Services in windows, look for Tor Win32 Service and right click, properties, Log On, log on as: and change it to local system account.
+
+Then type C:\Users\Draicor\AppData\Roaming\tor\tor.exe --service start and it should work okay!
+
+8. Running tor.exe after adding the hidden service under the torrc file will create a folder with a public and private key in it, and a hostname.
