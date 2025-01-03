@@ -6,6 +6,9 @@ Inside the Putty cmd window:
 # switch to root user (if not logged in as root)
 sudo su -
 
+# To change the password type:
+passwd
+
 # install dependencies
 apt update
 apt install -y certbot nginx socat tor
@@ -38,7 +41,7 @@ nano /etc/http-to-socks-proxy/mmo-server.conf
 PROXY_HOST=127.0.0.1
 PROXY_PORT=9050
 LOCAL_PORT=31590
-REMOTE_HOST=n2qrpuhgfkf2rsz75vcupzlouarkywuqkxohybxjdxy4ge3w4ap3fsqd.onion.onion
+REMOTE_HOST=n2qrpuhgfkf2rsz75vcupzlouarkywuqkxohybxjdxy4ge3w4ap3fsqd.onion
 REMOTE_PORT=31591
 
 # Create a symlink to enable the service and start it
@@ -63,6 +66,10 @@ nano mmo-server.conf
 # Add the following code to mmo-server.conf
 server {
   listen 2000;
+  proxy_connect_timeout 60s;
+  proxy_send_timeout 300s;
+  proxy_read_timeout 300s;
+  keepalive_timeout 60s;
 
   location / {
     proxy_pass http://127.0.0.1:31590/;
@@ -108,6 +115,9 @@ systemctl disable apache2
 
 # To check if tor service is running
 netstat -tulpn | grep 9050
+
+# To check if tor service is enabled on boot
+systemctl status tor.service
 
 # To restart tor
 systemctl restart tor

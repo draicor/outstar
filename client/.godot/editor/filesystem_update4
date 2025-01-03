@@ -1,5 +1,8 @@
-res://states/start/start.tscn
+res://states/lobby/lobby.tscn
 res://assets/shaders/blur.gdshader
 res://themes/style_box_flat.tres
 res://states/start/start.gd
-res://states/lobby/lobby.tscn
+res://states/start/start.tscn
+res://autoloads/websocket.gd
+res://autoloads/signals.gd
+res://states/lobby/lobby.gd

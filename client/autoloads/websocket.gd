@@ -5,17 +5,12 @@ const packets := preload("res://packets.gd")
 var socket := WebSocketPeer.new()
 var last_state := WebSocketPeer.STATE_CLOSED
 
-signal connected_to_server()
-signal connection_closed(close_code: int, close_reason: String)
-signal packet_received(packet: packets.Packet)
-
 func connect_to_url(url: String, tls_options: TLSOptions = null) -> int:
 	var err := socket.connect_to_url(url, tls_options)
 	if err != OK:
 		return err
 	
 	last_state = socket.get_ready_state()
-	print(socket.supported_protocols)
 	return OK
 
 func send(packet: packets.Packet) -> int:
@@ -62,16 +57,16 @@ func poll() -> void:
 		last_state = state
 		# Send some signals
 		if state == socket.STATE_OPEN:
-			connected_to_server.emit()
+			Signals.connected_to_server.emit()
+		# FIX THIS -> changes to STATE_CLOSED when the server goes offline,
+		# but it doesn't seem to trigger when the proxy goes offline.
 		elif state == socket.STATE_CLOSED:
-			var close_code := socket.get_close_code()
-			var close_reason := socket.get_close_reason()
-			connection_closed.emit(close_code, close_reason)
+			Signals.connection_closed.emit()
 	
 	# Loop through every packet available
 	while socket.get_ready_state() == socket.STATE_OPEN and socket.get_available_packet_count():
 		# Get the packet and then emit it
-		packet_received.emit(get_packet())
+		Signals.packet_received.emit(get_packet())
 
 func _process(_delta: float) -> void:
 	poll()

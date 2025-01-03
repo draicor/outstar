@@ -18,8 +18,8 @@ func _initialize() -> void:
 	chat_input = chat.find_child("Input")
 	
 	# Connecting signals
-	WebSocket.connection_closed.connect(_on_websocket_connection_closed)
-	WebSocket.packet_received.connect(_on_websocket_packet_received)
+	Signals.connection_closed.connect(_on_websocket_connection_closed)
+	Signals.packet_received.connect(_on_websocket_packet_received)
 	# User Interface signals
 	Signals.ui_escape_menu_toggle.connect(_on_ui_escape_menu_toggle)
 	# Chat signals
@@ -31,7 +31,7 @@ func _initialize() -> void:
 	ui_canvas.add_child(lobby_escape_menu)
 
 func _on_websocket_connection_closed() -> void:
-	chat.error("Connection closed")
+	chat.error("You have been disconnected from the server")
 
 func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()
@@ -57,8 +57,9 @@ func _on_chat_input_text_submitted(text: String) -> void:
 	# This serializes and sends our message
 	var err := WebSocket.send(packet)
 	if err:
-		chat.error("Error sending chat message")
+		chat.error("You have been disconnected from the server")
 	else:
+		# FIX THIS -> Replace Localhost with nickname!
 		chat.public("Localhost", text)
 	
 	# We clear the line edit
