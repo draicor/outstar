@@ -9,6 +9,10 @@ import (
 	"server/internal/server/clients"
 )
 
+// ADD A VERSION VARIABLE THAT SHOULD MATCH WITH THE CLIENT VARIABLE
+// The client should send this variable upon connection attempt and it
+// should match with the server's version to allow connection!
+
 var (
 	port = flag.Int("port", 31591, "Port to listen on")
 )
@@ -38,29 +42,3 @@ func main() {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
-
-/*
-	packet := &packets.Packet{
-		SenderId: 1,
-		Payload:  packets.NewChatMessage("Hello, world"),
-	}
-
-	fmt.Println(packet)
-
-	// Determines the type of payload at runtime
-	switch packet.GetPayload().(type) {
-	case *packets.Packet_ChatMessage:
-		fmt.Println("Its a chat message.")
-	case *packets.Packet_ClientId:
-		fmt.Println("It's a client ID message.")
-	case nil:
-		fmt.Println("The payload was not set.")
-	default:
-		fmt.Println("Invalid payload.")
-	}
-
-	data := []byte{8, 1, 18, 14, 10, 12, 72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33}
-	packet := &packets.Packet{}
-	proto.Unmarshal(data, packet)
-	fmt.Println(packet)
-*/

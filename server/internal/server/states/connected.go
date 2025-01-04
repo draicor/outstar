@@ -30,8 +30,19 @@ func (c *Connected) OnEnter() {
 func (c *Connected) HandleMessage(senderId uint64, payload packets.Payload) {
 	// If this message was sent by this client
 	if senderId == c.client.Id() {
-		// Broadcast it to everyone else
-		c.client.Broadcast(payload)
+		// Check the type of packet
+		switch payload.(type) {
+		// chat_message packet
+		case *packets.Packet_ChatMessage:
+			// Broadcast it to everyone else
+			c.client.Broadcast(payload)
+		case *packets.Packet_Heartbeat:
+			// Heartbeat received from the client
+			c.client.SocketSend(packets.NewHeartbeat(true))
+		case nil:
+		default:
+		}
+
 	} else {
 		// If another client or the hub passed us this message, forward it to this client
 		c.client.SocketSendAs(payload, senderId)
@@ -39,5 +50,5 @@ func (c *Connected) HandleMessage(senderId uint64, payload packets.Payload) {
 }
 
 func (c *Connected) OnExit() {
-
+	// TO FIX -> We are not handling the close yet!
 }

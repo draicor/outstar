@@ -1,9 +1,9 @@
+VBoxContainer
 Label
 PanelContainer
 ScrollContainer
 VScrollBar
 Container
-VBoxContainer
 Control
 RichTextLabel
 Node

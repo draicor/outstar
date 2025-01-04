@@ -14,9 +14,12 @@ var ip: Dictionary = {
 	Server.LOCAL: "localhost",
 	Server.PROXY: "64.223.161.129"
 }
-# We make the enum and port easily accesible for testing
+var port: Dictionary = {
+	Server.LOCAL: 31591,
+	Server.PROXY: 2000
+}
+# We make the enum easily accesible for testing
 @export var server : Server
-@export var port : int = 2000
 
 func _ready() -> void:
 	# Connecting signals
@@ -25,7 +28,7 @@ func _ready() -> void:
 	Signals.packet_received.connect(_on_websocket_packet_received)
 	
 	# Construct the ip address and port at runtime
-	var address = ip[server] + ":" + str(port)
+	var address = ip[server] + ":" + str(port[server])
 	
 	# Try to open the websocket connection
 	var url_address = "ws://"+address+"/ws"

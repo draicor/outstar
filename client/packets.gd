@@ -743,6 +743,47 @@ class ClientId:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
+class Heartbeat:
+	func _init():
+		var service
+		
+		_heartbeat = PBField.new("heartbeat", PB_DATA_TYPE.BOOL, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL])
+		service = PBServiceField.new()
+		service.field = _heartbeat
+		data[_heartbeat.tag] = service
+		
+	var data = {}
+	
+	var _heartbeat: PBField
+	func get_heartbeat() -> bool:
+		return _heartbeat.value
+	func clear_heartbeat() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL]
+	func set_heartbeat(value : bool) -> void:
+		_heartbeat.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
 class Packet:
 	func _init():
 		var service
@@ -763,6 +804,12 @@ class Packet:
 		service.field = _client_id
 		service.func_ref = Callable(self, "new_client_id")
 		data[_client_id.tag] = service
+		
+		_heartbeat = PBField.new("heartbeat", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _heartbeat
+		service.func_ref = Callable(self, "new_heartbeat")
+		data[_heartbeat.tag] = service
 		
 	var data = {}
 	
@@ -787,6 +834,8 @@ class Packet:
 		data[2].state = PB_SERVICE_STATE.FILLED
 		_client_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
 		_chat_message.value = Chat.new()
 		return _chat_message.value
 	
@@ -802,8 +851,27 @@ class Packet:
 		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		data[3].state = PB_SERVICE_STATE.FILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
 		_client_id.value = ClientId.new()
 		return _client_id.value
+	
+	var _heartbeat: PBField
+	func has_heartbeat() -> bool:
+		return data[4].state == PB_SERVICE_STATE.FILLED
+	func get_heartbeat() -> Heartbeat:
+		return _heartbeat.value
+	func clear_heartbeat() -> void:
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_heartbeat() -> Heartbeat:
+		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_client_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		data[4].state = PB_SERVICE_STATE.FILLED
+		_heartbeat.value = Heartbeat.new()
+		return _heartbeat.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

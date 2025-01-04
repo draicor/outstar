@@ -17,9 +17,10 @@ func _initialize() -> void:
 	# Get access to the child nodes of the chat UI
 	chat_input = chat.find_child("Input")
 	
-	# Connecting signals
+	# Websocket signals
 	Signals.connection_closed.connect(_on_websocket_connection_closed)
 	Signals.packet_received.connect(_on_websocket_packet_received)
+	Signals.heartbeat_attempt.connect(_on_websocket_heartbeat_attempt)
 	# User Interface signals
 	Signals.ui_escape_menu_toggle.connect(_on_ui_escape_menu_toggle)
 	# Chat signals
@@ -38,6 +39,20 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	
 	if packet.has_chat_message():
 		_handle_packet_chat_message(sender_id, packet.get_chat_message())
+	elif packet.has_heartbeat():
+		Signals.heartbeat_received.emit()
+
+func _on_websocket_heartbeat_attempt() -> void:
+	# We create a new packet of type heartbeat
+	var packet := packets.Packet.new()
+	var heartbeat := packet.new_heartbeat()
+	heartbeat.set_heartbeat(true)
+	
+	# This serializes and sends our message
+	var err := WebSocket.send(packet)
+	# If we sent the packet, emit it
+	if !err:
+		Signals.heartbeat_sent.emit()
 
 # We print the message into our chat window
 func _handle_packet_chat_message(sender_id: int, packet_chat_message: packets.Chat) -> void:
