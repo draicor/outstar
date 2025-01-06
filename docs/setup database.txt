@@ -1,0 +1,3 @@
+To generate the go files for the database,
+in the root folder for the project run in CMD.exe:
+sqlc generate -f server/internal/server/db/config/sqlc.yml

@@ -18,6 +18,7 @@ type WebSocketClient struct {
 	sendChannel chan *packets.Packet // Channel that holds packets to be sent to the client
 	logger      *log.Logger
 	state       server.ClientStateHandler // Knows in what state the client is in
+	DBTX        *server.DBTX
 }
 
 // Called from Hub.serve()
@@ -41,6 +42,7 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 		connection:  conn,
 		sendChannel: make(chan *packets.Packet, 256), // Buffered channel that can hold up to 256 packets before it blocks
 		logger:      log.New(log.Writer(), "Client unknown: ", log.LstdFlags),
+		DBTX:        hub.NewDBTX(),
 	}
 
 	return client, nil
@@ -231,4 +233,9 @@ func (c *WebSocketClient) SetState(state server.ClientStateHandler) {
 		c.state.SetClient(c)
 		c.state.OnEnter()
 	}
+}
+
+// Returns the database transaction context from this client
+func (c *WebSocketClient) GetDBTX() *server.DBTX {
+	return c.DBTX
 }
