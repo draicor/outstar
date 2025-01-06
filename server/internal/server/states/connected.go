@@ -40,7 +40,9 @@ func (c *Connected) HandleMessage(senderId uint64, payload packets.Payload) {
 			// Heartbeat received from the client
 			c.client.SocketSend(packets.NewHeartbeat(true))
 		case nil:
+			// Ignore packet if not a valid payload type
 		default:
+			// Ignore packet if no payload was sent
 		}
 
 	} else {

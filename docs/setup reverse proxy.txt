@@ -26,9 +26,14 @@ After=network.target
 [Service]
 EnvironmentFile=/etc/http-to-socks-proxy/%i.conf
 ExecStart=/usr/bin/socat tcp4-LISTEN:${LOCAL_PORT},reuseaddr,fork,keepalive,bind=127.0.0.1 SOCKS4A:${PROXY_HOST}:${REMOTE_HOST}:${REMOTE_PORT},socksport=${PROXY_PORT}
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=10s
 
 [Install]
 WantedBy=multi-user.target
+
+#the connect-timeout=30 directive can't be used with the keepalive one!
 
 # Save the file by doing control+O and then enter, then close # nano by doing control+X
 
@@ -66,6 +71,8 @@ nano mmo-server.conf
 # Add the following code to mmo-server.conf
 server {
   listen 2000;
+  listen [::]:2000;
+
   proxy_connect_timeout 30s;
   proxy_send_timeout 120s;
   proxy_read_timeout 120s;
@@ -73,23 +80,25 @@ server {
   keepalive_time 4h;
 
   location / {
-    proxy_pass http://127.0.0.1:31590/;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection $connection_upgrade;
+    proxy_pass http://127.0.0.1:31590/;
   }
 
   location /ws {
-    proxy_pass http://127.0.0.1:31590/ws;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection $connection_upgrade;
+    proxy_pass http://127.0.0.1:31590/ws;
   }
 }
 
