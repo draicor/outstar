@@ -1,0 +1,71 @@
+[gd_scene load_steps=2 format=3 uid="uid://d0cnml7abwrk2"]
+
+[ext_resource type="Script" path="res://states/authentication/authentication.gd" id="1_k6pie"]
+
+[node name="Authentication" type="Node"]
+script = ExtResource("1_k6pie")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="MarginContainer" type="MarginContainer" parent="UI"]
+anchors_preset = 13
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -180.0
+offset_right = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/separation = 3
+
+[node name="Username" type="LineEdit" parent="UI/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+placeholder_text = "Username"
+alignment = 1
+max_length = 32
+
+[node name="Password" type="LineEdit" parent="UI/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+placeholder_text = "Password"
+alignment = 1
+max_length = 64
+
+[node name="Nickname" type="LineEdit" parent="UI/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+placeholder_text = "Nickname"
+alignment = 1
+max_length = 20
+
+[node name="Status" type="Label" parent="UI/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 10
+
+[node name="LoginButton" type="Button" parent="UI/MarginContainer/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "Login"
+
+[node name="RegisterButton" type="Button" parent="UI/MarginContainer/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "Register"
+
+[connection signal="pressed" from="UI/MarginContainer/VBoxContainer/HBoxContainer/LoginButton" to="." method="_on_login_button_pressed"]
+[connection signal="pressed" from="UI/MarginContainer/VBoxContainer/HBoxContainer/RegisterButton" to="." method="_on_register_button_pressed"]

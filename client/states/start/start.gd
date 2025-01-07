@@ -37,6 +37,7 @@ func _ready() -> void:
 	WebSocket.connect_to_url(url_address)
 
 func _on_websocket_connected_to_server() -> void:
+	# We don't do anything because we change states immediately
 	pass
 
 func _on_websocket_connection_closed() -> void:
@@ -49,7 +50,7 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_packet_handshake(packet.get_sender_id())
 
 func _handle_packet_handshake(sender_id: int) -> void:
-	# We are setting the client ID in the GameManager Global when we receive it
+	# We save the client ID in the GameManager Autoload
 	GameManager.client_id = sender_id
-	# We can then transition into the Lobby scene
-	GameManager.set_state(GameManager.State.LOBBY)
+	# We can then transition into the Authentication scene
+	GameManager.set_state(GameManager.State.AUTHENTICATION)

@@ -59,11 +59,12 @@ func _handle_packet_chat_message(sender_id: int, packet_chat_message: packets.Ch
 
 # To send messages
 func _on_chat_input_text_submitted(text: String) -> void:
-	# Ignore this is the message was empty and release focus!
+	# Ignore this if the message was empty and release focus!
 	if chat_input.text.is_empty():
 		chat_input.release_focus()
 		return
 	
+	# Create the chat_message packet
 	var packet := packets.Packet.new()
 	var chat_message := packet.new_chat_message()
 	chat_message.set_text(text)

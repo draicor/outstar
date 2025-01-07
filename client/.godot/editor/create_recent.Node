@@ -1,5 +1,10 @@
-VBoxContainer
+MarginContainer
 Label
+Button
+HBoxContainer
+LineEdit
+VBoxContainer
+CanvasLayer
 PanelContainer
 ScrollContainer
 VScrollBar
@@ -7,5 +12,3 @@ Container
 Control
 RichTextLabel
 Node
-CanvasLayer
-LineEdit

@@ -7,9 +7,13 @@ package packets;
 option go_package = "pkg/packets";
 
 // Packet types
-message Chat { string text = 1; }
+message Chat { string text = 1; } // Sent by client to communicate with other clients
 message Handshake {} // Sent by server after client connects
 message Heartbeat {} // Used to keep connection alive
+message Granted {} // Sent by server if request was successful
+message Denied { string reason = 1; } // Sent by server if request was unsuccessful
+message LoginRequest { string username = 1; string password = 2; } // Sent by client to login
+message RegisterRequest { string username = 1; string nickname = 2; string password = 3; } // Sent by client to register
 
 // Main Packet container
 message Packet {
@@ -18,5 +22,9 @@ message Packet {
     Chat chat_message = 2;
     Handshake handshake = 3;
     Heartbeat heartbeat = 4;
+    Granted request_granted = 5;
+    Denied request_denied = 6;
+    LoginRequest login_request = 7;
+    RegisterRequest register_request = 8;
   }
 }

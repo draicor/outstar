@@ -3,16 +3,18 @@ extends Node
 # Game States
 enum State {
 	START,
+	AUTHENTICATION,
 	LOBBY
 }
 
 # Replace with Dictionary[State, String] in new version of Godot v4.4+
 var _states_scenes: Dictionary = {
 	State.START: "res://states/start/start.tscn",
+	State.AUTHENTICATION: "res://states/authentication/authentication.tscn",
 	State.LOBBY: "res://states/lobby/lobby.tscn",
 }
 
-# Expose the client's ID globally
+# Expose the client's data globally
 var client_id: int
 var _current_scene_root: Node
 
