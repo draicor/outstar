@@ -18,18 +18,14 @@ func NewChatMessage(text string) Payload {
 	}
 }
 
-func NewClientId(id uint64) Payload {
-	return &Packet_ClientId{
-		ClientId: &ClientId{
-			Id: id,
-		},
+func NewHandshake() Payload {
+	return &Packet_Handshake{
+		Handshake: &Handshake{},
 	}
 }
 
-func NewHeartbeat(heartbeat bool) Payload {
+func NewHeartbeat() Payload {
 	return &Packet_Heartbeat{
-		Heartbeat: &Heartbeat{
-			Heartbeat: heartbeat,
-		},
+		Heartbeat: &Heartbeat{},
 	}
 }

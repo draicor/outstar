@@ -702,25 +702,11 @@ class Chat:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
-class ClientId:
+class Handshake:
 	func _init():
 		var service
 		
-		_id = PBField.new("id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
-		service = PBServiceField.new()
-		service.field = _id
-		data[_id.tag] = service
-		
 	var data = {}
-	
-	var _id: PBField
-	func get_id() -> int:
-		return _id.value
-	func clear_id() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_id(value : int) -> void:
-		_id.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -747,21 +733,7 @@ class Heartbeat:
 	func _init():
 		var service
 		
-		_heartbeat = PBField.new("heartbeat", PB_DATA_TYPE.BOOL, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL])
-		service = PBServiceField.new()
-		service.field = _heartbeat
-		data[_heartbeat.tag] = service
-		
 	var data = {}
-	
-	var _heartbeat: PBField
-	func get_heartbeat() -> bool:
-		return _heartbeat.value
-	func clear_heartbeat() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL]
-	func set_heartbeat(value : bool) -> void:
-		_heartbeat.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -799,11 +771,11 @@ class Packet:
 		service.func_ref = Callable(self, "new_chat_message")
 		data[_chat_message.tag] = service
 		
-		_client_id = PBField.new("client_id", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		_handshake = PBField.new("handshake", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _client_id
-		service.func_ref = Callable(self, "new_client_id")
-		data[_client_id.tag] = service
+		service.field = _handshake
+		service.func_ref = Callable(self, "new_handshake")
+		data[_handshake.tag] = service
 		
 		_heartbeat = PBField.new("heartbeat", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
@@ -832,29 +804,29 @@ class Packet:
 		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_chat_message() -> Chat:
 		data[2].state = PB_SERVICE_STATE.FILLED
-		_client_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
 		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
 		_chat_message.value = Chat.new()
 		return _chat_message.value
 	
-	var _client_id: PBField
-	func has_client_id() -> bool:
+	var _handshake: PBField
+	func has_handshake() -> bool:
 		return data[3].state == PB_SERVICE_STATE.FILLED
-	func get_client_id() -> ClientId:
-		return _client_id.value
-	func clear_client_id() -> void:
+	func get_handshake() -> Handshake:
+		return _handshake.value
+	func clear_handshake() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_client_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_client_id() -> ClientId:
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_handshake() -> Handshake:
 		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		data[3].state = PB_SERVICE_STATE.FILLED
 		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_client_id.value = ClientId.new()
-		return _client_id.value
+		_handshake.value = Handshake.new()
+		return _handshake.value
 	
 	var _heartbeat: PBField
 	func has_heartbeat() -> bool:
@@ -867,7 +839,7 @@ class Packet:
 	func new_heartbeat() -> Heartbeat:
 		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_client_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
 		data[4].state = PB_SERVICE_STATE.FILLED
 		_heartbeat.value = Heartbeat.new()

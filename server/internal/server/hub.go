@@ -133,7 +133,7 @@ func (h *Hub) Run() {
 		select {
 		// If we get a new client, register it to the hub
 		case client := <-h.RegisterChannel:
-			// The Add method returns an ID, which we use to Initialize the WebSocket Client's ID
+			// The Add method returns a client ID, which we use to Initialize the WebSocket Client's ID
 			client.Initialize(h.Clients.Add(client))
 		// If a client disconnects, remove him from the hub
 		case client := <-h.UnregisterChannel:
@@ -153,6 +153,7 @@ func (h *Hub) Run() {
 
 // Creates a client for the new connection and begins the concurrent read and write pumps
 func (h *Hub) Serve(getNewClient func(*Hub, http.ResponseWriter, *http.Request) (ClientInterfacer, error), writer http.ResponseWriter, request *http.Request) {
+	// Because the connection goes through the onion protocol, the IP gets anonymized, we can only see the port
 	log.Println("New client connected from", request.RemoteAddr)
 
 	// Executes the function that was passed as a parameter

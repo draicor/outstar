@@ -8,15 +8,15 @@ option go_package = "pkg/packets";
 
 // Packet types
 message Chat { string text = 1; }
-message ClientId { uint64 id = 1; } // Server sends client the client's ID
-message Heartbeat { bool heartbeat = 1; } // Client sends heartbeat to server every X amount of time
+message Handshake {} // Sent by server after client connects
+message Heartbeat {} // Used to keep connection alive
 
 // Main Packet container
 message Packet {
   uint64 sender_id = 1;
   oneof payload { // Generates a field called Payload of type isPacket_Payload interface
     Chat chat_message = 2;
-    ClientId client_id = 3;
+    Handshake handshake = 3;
     Heartbeat heartbeat = 4;
   }
 }

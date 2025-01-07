@@ -45,8 +45,7 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 func _on_websocket_heartbeat_attempt() -> void:
 	# We create a new packet of type heartbeat
 	var packet := packets.Packet.new()
-	var heartbeat := packet.new_heartbeat()
-	heartbeat.set_heartbeat(true)
+	packet.new_heartbeat()
 	
 	# This serializes and sends our message
 	var err := WebSocket.send(packet)

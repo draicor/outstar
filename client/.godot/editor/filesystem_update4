@@ -4,3 +4,4 @@ res://themes/style_box_flat.tres
 res://states/start/start.gd
 res://states/start/start.tscn
 res://components/escape_menu/lobby/lobby_escape_menu.tscn
+res://states/lobby/lobby.gd

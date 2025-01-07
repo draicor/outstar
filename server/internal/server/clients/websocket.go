@@ -27,7 +27,7 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
-		CheckOrigin:     func(_ *http.Request) bool { return true }, // FIX: Validate request origin
+		CheckOrigin:     func(_ *http.Request) bool { return true }, // TO FIX -> Validate request origin
 	}
 
 	// Upgrades the HTTP connection to a websocket connection
@@ -41,7 +41,7 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 		hub:         hub,
 		connection:  conn,
 		sendChannel: make(chan *packets.Packet, 256), // Buffered channel that can hold up to 256 packets before it blocks
-		logger:      log.New(log.Writer(), "Client unknown: ", log.LstdFlags),
+		logger:      log.New(log.Writer(), "", log.LstdFlags),
 		DBTX:        hub.NewDBTX(),
 	}
 
@@ -57,7 +57,7 @@ func (c *WebSocketClient) Id() uint64 {
 func (c *WebSocketClient) Initialize(id uint64) {
 	// We store the new id as this client's ID
 	c.id = id
-	// When a new client connects, they get sent their ID
+	// When a new client connects, we switch to the connected state
 	c.SetState(&states.Connected{})
 }
 
@@ -107,7 +107,6 @@ func (c *WebSocketClient) Broadcast(message packets.Payload) {
 func (c *WebSocketClient) ReadPump() {
 	// We defer closing this connection so we can clean up if an error occurs or the loop breaks
 	defer func() {
-		c.logger.Println("Closing read pump")
 		c.Close("Read pump closed")
 	}()
 
@@ -144,7 +143,6 @@ func (c *WebSocketClient) ReadPump() {
 func (c *WebSocketClient) WritePump() {
 	// We defer closing this connection so we can clean up if an error occurs or the loop breaks
 	defer func() {
-		c.logger.Println("Closing write pump")
 		c.Close("Write pump closed")
 	}()
 
@@ -189,7 +187,7 @@ func (c *WebSocketClient) WritePump() {
 
 // Responsible for cleaning up the client's connection and unregistering the client from the hub
 func (c *WebSocketClient) Close(reason string) {
-	c.logger.Printf("Closing client connection because: %s", reason)
+	c.logger.Printf("Closing client connection: %s", reason)
 
 	// Remove the client from the hub and close the client's websocket connection
 	c.hub.UnregisterChannel <- c
