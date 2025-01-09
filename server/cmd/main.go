@@ -24,18 +24,18 @@ func main() {
 
 	hub := server.NewHub()
 
-	// Handler that upgrades to a WebSocket connection
+	// Connect handler function that upgrades connection into a WebSocket connection
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		hub.Serve(clients.NewWebSocketClient, w, r)
 	})
 
-	// Starts the server on a goroutine
+	// Starts the main hub on a goroutine
 	go hub.Run()
 
 	addr := fmt.Sprintf(":%d", *port)
 	log.Printf("Starting server on port %s", addr)
 
-	// Starts to listen for incoming connections and upgrades them into websocket connections
+	// Starts the web server to listen for incoming TCP connections
 	err := http.ListenAndServe(addr, nil)
 
 	if err != nil {

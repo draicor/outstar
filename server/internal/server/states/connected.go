@@ -9,7 +9,6 @@ import (
 	"server/internal/server/db"
 	"strings"
 
-	//"server/internal/server/db"
 	"server/pkg/packets"
 
 	"golang.org/x/crypto/bcrypt"

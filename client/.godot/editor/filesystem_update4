@@ -1,6 +1,0 @@
-res://states/lobby/lobby.tscn
-res://assets/shaders/blur.gdshader
-res://themes/style_box_flat.tres
-res://states/start/start.gd
-res://states/start/start.tscn
-res://states/authentication/authentication.tscn
