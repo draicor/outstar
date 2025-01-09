@@ -2,25 +2,13 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"server/internal/server/db"
 	"server/internal/server/objects"
 	"server/pkg/packets"
-
-	_ "embed"
-
-	"database/sql"
-
-	_ "modernc.org/sqlite" // registers itself with the sql package
 )
-
-// Embed the database schema to be used when creating the database tables
-// the go:embed directive tells the compiler to include the contents of the
-// schema.sql file in the binary when it is built, so we can access it at runtime.
-
-//go:embed db/config/schema.sql
-var schemaGenSql string
 
 // Each client interfacer will have its own database transaction context.
 type DBTX struct {
@@ -99,31 +87,19 @@ type Hub struct {
 	dbPool *sql.DB
 }
 
-// Creates a new empty hub object
-func NewHub() *Hub {
-	// Attempt to open the db connection
-	dbPool, err := sql.Open("sqlite", "db.sqlite")
-	if err != nil {
-		log.Fatal(err)
-	}
-
+// Creates a new empty hub object, we have to pass a valid DB connection
+func NewHub(databasePool *sql.DB) *Hub {
 	return &Hub{
 		Clients:           objects.NewSharedCollection[ClientInterfacer](),
 		BroadcastChannel:  make(chan *packets.Packet),  // unbuffered channel
 		RegisterChannel:   make(chan ClientInterfacer), // unbuffered channel
 		UnregisterChannel: make(chan ClientInterfacer), // unbuffered channel
-		dbPool:            dbPool,
+		dbPool:            databasePool,
 	}
 }
 
 // Listens for packets on each channel
 func (h *Hub) Run() {
-	log.Println("Initializing database...")
-	_, err := h.dbPool.ExecContext(context.Background(), schemaGenSql)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	log.Println("Awaiting client connections...")
 
 	// Infinite for loop

@@ -206,7 +206,6 @@ func (c *WebSocketClient) Close(reason string) {
 func (c *WebSocketClient) SetState(state server.ClientStateHandler) {
 	// State names are used for debugging purposes
 	lastStateName := "None"
-	newStateName := "None"
 
 	// If our current state is valid
 	if c.state != nil {
@@ -215,6 +214,7 @@ func (c *WebSocketClient) SetState(state server.ClientStateHandler) {
 		c.state.OnExit()
 	}
 
+	newStateName := "None"
 	// If the new state is valid
 	if state != nil {
 		newStateName = state.Name()
