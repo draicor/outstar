@@ -171,7 +171,13 @@ func (state *Connected) HandleRegisterRequest(senderId uint64, payload *packets.
 	}
 
 	// We store nicknames in lowercase except the first character to avoid case-sensitivity issues
-	nickname = capitalize(nickname)
+	nickname, err = capitalize(nickname)
+	if err != nil {
+		reason := fmt.Sprintf("Invalid nickname: %v", err)
+		state.logger.Println(reason)
+		state.client.SocketSend(packets.NewRequestDenied(reason))
+		return
+	}
 
 	// Check if the nickname already exists in the database
 	_, err = state.queries.GetUserByNickname(state.dbCtx, nickname)
@@ -224,6 +230,7 @@ func (state *Connected) HandleRegisterRequest(senderId uint64, payload *packets.
 	state.client.SocketSend(packets.NewRequestGranted())
 }
 
+// TO FIX -> No symbols on the username
 // Validate username before registration
 func validateUsername(username string) error {
 	if len(username) <= 0 {
@@ -238,6 +245,7 @@ func validateUsername(username string) error {
 	return nil
 }
 
+// TO FIX -> No symbols on the username
 // Validate nickname before registration
 func validateNickname(nickname string) error {
 	if len(nickname) <= 0 {
@@ -271,13 +279,13 @@ func validatePassword(password string) error {
 }
 
 // Gets the first character and make it a capital letter, append the rest as lowercase
-func capitalize(text string) string {
+func capitalize(text string) (string, error) {
 	// If we pass an empty string to this function it will crash!
 	if len(text) <= 0 {
-		return "capitalize error"
+		return "", errors.New("can't be empty")
 	}
 
-	return strings.ToUpper(string(text[0])) + strings.ToLower(string(text[1:]))
+	return strings.ToUpper(string(text[0])) + strings.ToLower(string(text[1:])), nil
 }
 
 func (state *Connected) OnExit() {

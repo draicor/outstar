@@ -12,9 +12,9 @@ import (
 )
 
 type WebSocketClient struct {
-	id          uint64
+	id          uint64 // Ephemeral ID for this connection
 	connection  *websocket.Conn
-	hub         *server.Hub          // Hub that created this client
+	hub         *server.Hub          // Hub that handles this client
 	sendChannel chan *packets.Packet // Channel that holds packets to be sent to the client
 	logger      *log.Logger
 	state       server.ClientStateHandler // Knows in what state the client is in

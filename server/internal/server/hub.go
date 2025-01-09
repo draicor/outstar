@@ -109,9 +109,9 @@ func NewHub() *Hub {
 
 	return &Hub{
 		Clients:           objects.NewSharedCollection[ClientInterfacer](),
-		BroadcastChannel:  make(chan *packets.Packet),
-		RegisterChannel:   make(chan ClientInterfacer),
-		UnregisterChannel: make(chan ClientInterfacer),
+		BroadcastChannel:  make(chan *packets.Packet),  // unbuffered channel
+		RegisterChannel:   make(chan ClientInterfacer), // unbuffered channel
+		UnregisterChannel: make(chan ClientInterfacer), // unbuffered channel
 		dbPool:            dbPool,
 	}
 }
