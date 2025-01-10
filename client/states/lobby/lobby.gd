@@ -9,9 +9,12 @@ const lobby_escape_menu_scene: PackedScene = preload("res://components/escape_me
 @onready var chat: Control = $UI/Chat
 var chat_input: LineEdit
 var lobby_escape_menu
+@onready var button: Button = $Button
 
 func _ready() -> void:
 	_initialize()
+	# Send a packet to the server to let everyone know we joined
+	_send_packet_client_entered()
 
 func _initialize() -> void:
 	# Get access to the child nodes of the chat UI
@@ -41,7 +44,17 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_packet_chat_message(sender_id, packet.get_chat_message())
 	elif packet.has_heartbeat():
 		Signals.heartbeat_received.emit()
+	elif packet.has_client_entered():
+		print(packet.get_client_entered().get_nickname())
+		_handle_packet_client_entered(packet.get_client_entered().get_nickname())
+	elif packet.has_client_left():
+		_handle_packet_client_left(packet.get_client_left())
 
+# We print the message into our chat window
+func _handle_packet_chat_message(sender_id: int, packet_chat_message: packets.Chat) -> void:
+	chat.public("Client %d" % sender_id, packet_chat_message.get_text())
+
+# We send a heartbeat packet to the server every time the timer timeouts
 func _on_websocket_heartbeat_attempt() -> void:
 	# We create a new packet of type heartbeat
 	var packet := packets.Packet.new()
@@ -53,10 +66,15 @@ func _on_websocket_heartbeat_attempt() -> void:
 	if !err:
 		Signals.heartbeat_sent.emit()
 
-# We print the message into our chat window
-func _handle_packet_chat_message(sender_id: int, packet_chat_message: packets.Chat) -> void:
-	chat.public("Client %d" % sender_id, packet_chat_message.get_text())
+# When a new client connects, we print the message into our chat window
+func _handle_packet_client_entered(nickname: String) -> void:
+	print(nickname)
+	chat.info("%s has joined" % nickname)
 
+# When a client leaves, we print the message into our chat window
+func _handle_packet_client_left(packet_client_left: packets.ClientLeft) -> void:
+	chat.info("%s left" % packet_client_left.get_nickname())
+	
 # To send messages
 func _on_chat_input_text_submitted(text: String) -> void:
 	# Ignore this if the message was empty and release focus!
@@ -89,3 +107,36 @@ func _on_ui_chat_input_toggle() -> void:
 	chat_input.visible = !chat_input.visible
 	if chat_input.visible:
 		chat_input.grab_focus()
+
+func _send_packet_client_entered() -> bool:
+	# We create a new packet
+	var packet := packets.Packet.new()
+	# We send the packet with no data because the server will fill it up
+	packet.new_client_entered()
+	
+	# Serialize and send our message
+	var err := WebSocket.send(packet)
+	# Report if we succeeded or failed
+	if err:
+		return false
+	else:
+		return true
+
+func _send_packet_switch_request(zone_id: int) -> bool:
+	# We create a new packet
+	var packet := packets.Packet.new()
+	# We send the packet with the zone_id we want to access
+	var switch_request_packet := packet.new_switch_request()
+	switch_request_packet.set_zone_id(zone_id)
+
+	# Serialize and send our message
+	var err := WebSocket.send(packet)
+	# Report if we succeeded or failed
+	if err:
+		return false
+	else:
+		return true
+
+func _on_button_pressed() -> void:
+	print(_send_packet_switch_request(1))
+	button.hide()

@@ -49,11 +49,20 @@ func (state *Connected) HandleMessage(senderId uint64, payload packets.Payload) 
 		switch casted_payload := payload.(type) {
 		// chat_message packet
 		case *packets.Packet_ChatMessage:
-			// Broadcast it to everyone else
+			// If we get a public message, broadcast it
 			state.client.Broadcast(payload)
 		case *packets.Packet_Heartbeat:
 			// Heartbeat received from the client
 			state.client.SocketSend(packets.NewHeartbeat())
+		case *packets.Packet_ClientEntered:
+			// If a new client entered
+			state.HandleClientEntered(state.client.GetNickname())
+		case *packets.Packet_ClientLeft:
+			// If a client left
+			state.client.Broadcast(payload)
+		case *packets.Packet_SwitchRequest:
+			// If this client requested to switch to a zone!
+			state.HandleSwitchRequest(casted_payload)
 
 		// On this state, we handle login and register requests
 		case *packets.Packet_LoginRequest:
@@ -123,6 +132,8 @@ func (state *Connected) HandleLoginRequest(senderId uint64, payload *packets.Pac
 		return
 	}
 
+	// Store this client's nickname in memory
+	state.client.SetNickname(user.Nickname)
 	state.logger.Printf("%s logged in as %s", username, user.Nickname)
 	state.client.SocketSend(packets.NewRequestGranted())
 }
@@ -229,6 +240,16 @@ func (state *Connected) HandleRegisterRequest(senderId uint64, payload *packets.
 	state.client.SocketSend(packets.NewRequestGranted())
 }
 
+// We send this message to everybody
+func (state *Connected) HandleClientEntered(nickname string) {
+	state.client.Broadcast(packets.NewClientEntered(nickname))
+}
+
+// We send this message to everybody
+func (state *Connected) HandleClientLeft(nickname string) {
+	state.client.Broadcast(packets.NewClientLeft(nickname))
+}
+
 // TO FIX -> No symbols on the username
 // Validate username before registration
 func validateUsername(username string) error {
@@ -288,5 +309,11 @@ func capitalize(text string) (string, error) {
 }
 
 func (state *Connected) OnExit() {
-	// TO FIX -> We are not handling the close yet!
+	// We broadcast to everyone that this client left
+	state.HandleClientLeft(state.client.GetNickname())
+}
+
+func (state *Connected) HandleSwitchRequest(payload *packets.Packet_SwitchRequest) {
+	state.logger.Println(payload.SwitchRequest.ZoneId)
+
 }

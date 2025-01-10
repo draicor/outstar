@@ -48,3 +48,21 @@ func NewRequestDenied(reason string) Payload {
 		},
 	}
 }
+
+// Sent by the client once he arrives and broadcasted to everyone
+func NewClientEntered(nickname string) Payload {
+	return &Packet_ClientEntered{
+		ClientEntered: &ClientEntered{
+			Nickname: nickname,
+		},
+	}
+}
+
+// Sent by the client once he leaves, broadcasted to everyone
+func NewClientLeft(nickname string) Payload {
+	return &Packet_ClientLeft{
+		ClientLeft: &ClientLeft{
+			Nickname: nickname,
+		},
+	}
+}

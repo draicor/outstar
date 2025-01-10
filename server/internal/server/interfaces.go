@@ -1,0 +1,91 @@
+package server
+
+import (
+	"server/pkg/packets"
+)
+
+// A structure for the connected client to interface with the server
+type ClientInterfacer interface {
+	// Returns the client's ID
+	Id() uint64
+
+	// Handles the client's message
+	ProcessMessage(senderId uint64, message packets.Payload)
+
+	// Sets the client's ID
+	Initialize(id uint64)
+
+	// Puts data from the client into the write pump
+	SocketSend(message packets.Payload)
+
+	// Puts data from another client in the write pump
+	SocketSendAs(message packets.Payload, senderId uint64)
+
+	// Forward message to another client for processing
+	PassToPeer(message packets.Payload, peerId uint64)
+
+	// Forward message to all other clients for processing
+	Broadcast(message packets.Payload)
+
+	// Pump data from the connected socket directly to the client
+	ReadPump()
+
+	// Pump data from the client directly to the connected socket
+	WritePump()
+
+	// Close the client's connection and cleanup
+	Close(reason string)
+
+	// Updates the state of this client
+	SetState(newState ClientStateHandler)
+
+	// Get reference to the database transaction context for this client
+	GetDBTX() *DBTX
+
+	// Updates the nickname of this client on login
+	SetNickname(nickname string)
+
+	// Returns this client's nickname
+	GetNickname() string
+
+	// Switches this client's zone
+	SetZone(zone_id uint64)
+}
+
+// A structure for a state machine to process the client's messages
+type ClientStateHandler interface {
+	Name() string
+
+	// Inject the client into the state handler, so we can access the client's data
+	SetClient(client ClientInterfacer)
+
+	// Triggers once a client switches to this state
+	OnEnter()
+
+	// Handles the packets received in this state
+	HandleMessage(senderId uint64, payload packets.Payload)
+
+	// Triggers once a client leaves this state
+	OnExit()
+}
+
+// A structure for the Hub and Zones that will interact with the clients
+type ServerInterfacer interface {
+	// Returns the ID of this zone
+	GetId() uint64
+
+	// Infinite loop that listens for packets on each channel
+	Start()
+
+	// Retrieves the client (if found) in the Clients collection
+	GetClient(id uint64) (ClientInterfacer, bool)
+
+	// Returns the channel that can broadcast packets
+	GetBroadcastChannel() chan *packets.Packet
+
+	// Returns the channel that registers new clients
+	GetAddClientChannel() chan ClientInterfacer
+
+	// Returns the channel that removes clients
+	GetRemoveClientChannel() chan ClientInterfacer
+}

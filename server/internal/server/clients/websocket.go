@@ -14,10 +14,11 @@ import (
 type WebSocketClient struct {
 	id          uint64 // Ephemeral ID for this connection
 	connection  *websocket.Conn
-	hub         *server.Hub          // Hub that handles this client
-	sendChannel chan *packets.Packet // Channel that holds packets to be sent to the client
+	hub         server.ServerInterfacer // Hub that this client connected to
+	sendChannel chan *packets.Packet    // Channel that holds packets to be sent to the client
 	logger      *log.Logger
 	state       server.ClientStateHandler // Knows in what state the client is in
+	nickname    string                    // Seen by every other client
 	DBTX        *server.DBTX
 }
 
@@ -88,7 +89,7 @@ func (c *WebSocketClient) SocketSendAs(message packets.Payload, senderId uint64)
 // Forward message to a specific client by ID
 func (c *WebSocketClient) PassToPeer(message packets.Payload, peerId uint64) {
 	// We look for the peer in the server's map of clients
-	peer, found := c.hub.Clients.Get(peerId)
+	peer, found := c.hub.GetClient(peerId)
 	if found {
 		peer.ProcessMessage(c.id, message)
 	}
@@ -96,14 +97,14 @@ func (c *WebSocketClient) PassToPeer(message packets.Payload, peerId uint64) {
 
 // Convenience function to queue a message up to be passed to every client except the sender by the hub
 func (c *WebSocketClient) Broadcast(message packets.Payload) {
-	c.hub.BroadcastChannel <- &packets.Packet{
+	c.hub.GetBroadcastChannel() <- &packets.Packet{
 		SenderId: c.id,
 		Payload:  message,
 	}
 }
 
 // Directly interfaces with the websocket from Godot
-// Responsible for reading and processing messages from the client
+// Responsible for reading and processing messages from the Godot client
 func (c *WebSocketClient) ReadPump() {
 	// We defer closing this connection so we can clean up if an error occurs or the loop breaks
 	defer func() {
@@ -189,8 +190,10 @@ func (c *WebSocketClient) WritePump() {
 func (c *WebSocketClient) Close(reason string) {
 	c.logger.Printf("Closing client connection: %s", reason)
 
-	// Remove the client from the hub and close the client's websocket connection
-	c.hub.UnregisterChannel <- c
+	// Remove the client from this zone
+	c.hub.GetRemoveClientChannel() <- c
+
+	// close the client's websocket connection
 	c.connection.Close()
 
 	// Remove the client's state after disconnection
@@ -236,4 +239,22 @@ func (c *WebSocketClient) SetState(state server.ClientStateHandler) {
 // Returns the database transaction context from this client
 func (c *WebSocketClient) GetDBTX() *server.DBTX {
 	return c.DBTX
+}
+
+// Called after a client successfuly logins to store the nickname in memory
+func (c *WebSocketClient) SetNickname(nickname string) {
+	c.nickname = nickname
+}
+
+// Called by the server to form the packet it will broadcast
+func (c *WebSocketClient) GetNickname() string {
+	return c.nickname
+}
+
+func (c *WebSocketClient) SetZone(zone_id uint64) {
+	// c.hub = 1
+	// SERVER INTERFACE WAS USELESS, I HAVE TO REMOVE IT
+	// I need to have the websocket client have a hub and a zone reference (if any)
+	// If he joins a zone, he unregisters himself from the hub
+	// If he leaves a zone, he goes back to the hub again!
 }

@@ -10,120 +10,57 @@ import (
 	"server/pkg/packets"
 )
 
-// Each client interfacer will have its own database transaction context.
-type DBTX struct {
-	Ctx     context.Context
-	Queries *db.Queries
-}
-
-// A structure for the connected client to interface with the hub
-type ClientInterfacer interface {
-	// Returns the client's ID
-	Id() uint64
-
-	// Handles the client's message
-	ProcessMessage(senderId uint64, message packets.Payload)
-
-	// Sets the client's ID
-	Initialize(id uint64)
-
-	// Puts data from the client into the write pump
-	SocketSend(message packets.Payload)
-
-	// Puts data from another client in the write pump
-	SocketSendAs(message packets.Payload, senderId uint64)
-
-	// Forward message to another client for processing
-	PassToPeer(message packets.Payload, peerId uint64)
-
-	// Forward message to all other clients for processing
-	Broadcast(message packets.Payload)
-
-	// Pump data from the connected socket directly to the client
-	ReadPump()
-
-	// Pump data from the client directly to the connected socket
-	WritePump()
-
-	// Close the client's connection and cleanup
-	Close(reason string)
-
-	// Updates the state of this client
-	SetState(newState ClientStateHandler)
-
-	// Get reference to the database transaction context for this client
-	GetDBTX() *DBTX
-}
-
-// A structure for a state machine to process the client's messages
-type ClientStateHandler interface {
-	Name() string
-
-	// Inject the client into the state handler, so we can access the client's data
-	SetClient(client ClientInterfacer)
-
-	OnEnter()
-	HandleMessage(senderId uint64, payload packets.Payload)
-
-	// Cleanup the state handler
-	OnExit()
-}
-
-// The hub is the central point of communication between all connected clients
+// The hub is the entry point for all connected clients and the only go routine
+// that should write to the database. It also keeps track of every available zone
+// within the server.
 type Hub struct {
-	// Map of all the connected clients
+	Id uint64 // Since this is the Hub, should always have ID zero!
+
+	// Map of all the connected clients in the server
 	Clients *objects.SharedCollection[ClientInterfacer]
 
-	// Packets in this channel will be processed by all connected clients except the sender
+	// Packets in this channel will be processed by all connected clients
 	BroadcastChannel chan *packets.Packet
 
-	// Clients in this channel will be registered to the hub
-	RegisterChannel chan ClientInterfacer
+	// Clients connected will be added to the Hub
+	AddClientChannel chan ClientInterfacer
 
-	// Clients in this channel will be unregistered from the hub
-	UnregisterChannel chan ClientInterfacer
+	// Clients that disconnect will be removed from the Hub
+	RemoveClientChannel chan ClientInterfacer
 
-	// Database connection pool
-	dbPool *sql.DB
+	// Map of every available zones
+	Zones *objects.SharedCollection[Zone]
+
+	// Zones received in this channel will be added to the collection
+	AddZoneChannel chan *Zone
+
+	// Zones received in this channel will be removed from the collection
+	RemoveZoneChannel chan *Zone
+
+	// Every new zone will get a reference to the database connection pool
+	DatabasePool *sql.DB
+
+	// Database write queries received on this channel will be queued for execution
+	// Only zones should request the hub to write something
+	DatabaseChannel chan *db.Queries
 }
 
 // Creates a new empty hub object, we have to pass a valid DB connection
-func NewHub(databasePool *sql.DB) *Hub {
+func CreateHub(databasePool *sql.DB) *Hub {
 	return &Hub{
-		Clients:           objects.NewSharedCollection[ClientInterfacer](),
-		BroadcastChannel:  make(chan *packets.Packet),  // unbuffered channel
-		RegisterChannel:   make(chan ClientInterfacer), // unbuffered channel
-		UnregisterChannel: make(chan ClientInterfacer), // unbuffered channel
-		dbPool:            databasePool,
-	}
-}
-
-// Listens for packets on each channel
-func (h *Hub) Run() {
-	log.Println("Awaiting client connections...")
-
-	// Infinite for loop
-	for {
-		// If there is no default case, the "select" statement blocks
-		// until at least one of the communications can proceed
-		select {
-		// If we get a new client, register it to the hub
-		case client := <-h.RegisterChannel:
-			// The Add method returns a client ID, which we use to Initialize the WebSocket Client's ID
-			client.Initialize(h.Clients.Add(client))
-		// If a client disconnects, remove him from the hub
-		case client := <-h.UnregisterChannel:
-			h.Clients.Remove(client.Id())
-		// If we get a packet from the broadcast channel
-		case packet := <-h.BroadcastChannel:
-			// Go over every registered client in the hub
-			h.Clients.ForEach(func(clientId uint64, client ClientInterfacer) {
-				// Check that the sender does not send the message to itself
-				if clientId != packet.SenderId {
-					client.ProcessMessage(packet.SenderId, packet.Payload)
-				}
-			})
-		}
+		Id: 0,
+		// Collection of every connected client in the server
+		Clients:             objects.NewSharedCollection[ClientInterfacer](),
+		AddClientChannel:    make(chan ClientInterfacer),
+		RemoveClientChannel: make(chan ClientInterfacer),
+		BroadcastChannel:    make(chan *packets.Packet),
+		// Collection of every available zone in the server
+		Zones:             objects.NewSharedCollection[Zone](),
+		AddZoneChannel:    make(chan *Zone),
+		RemoveZoneChannel: make(chan *Zone),
+		// Database connection
+		DatabasePool:    databasePool,
+		DatabaseChannel: make(chan *db.Queries),
 	}
 }
 
@@ -140,19 +77,84 @@ func (h *Hub) Serve(getNewClient func(*Hub, http.ResponseWriter, *http.Request) 
 		return
 	}
 
-	// Send the client to the register channel
-	h.RegisterChannel <- client
+	// Send this client to the add client channel
+	h.AddClientChannel <- client
 
-	// Reads messages from the outbounds messages channel and writes them to the websocket
+	// Sends packets to the godot websocket client
 	go client.WritePump()
-	// Reads messages from the websocket and process them
+	// Reads packets from the godot websocket client and process them
 	go client.ReadPump()
+}
+
+// Listens for packets on each channel
+func (h *Hub) Start() {
+	log.Println("Hub created, awaiting client connections...")
+
+	// Infinite for loop
+	for {
+		// If there is no default case, the "select" statement blocks
+		// until at least one of the communications can proceed
+		select {
+		// If we get a new client, add it to the Hub
+		case client := <-h.AddClientChannel:
+			// The Add method returns a client ID, which we use to Initialize the WebSocket Client's ID
+			client.Initialize(h.Clients.Add(client))
+		// If a client disconnects, remove him from the Hub
+		case client := <-h.RemoveClientChannel:
+			h.Clients.Remove(client.Id())
+		// If we get a packet from the broadcast channel
+		case packet := <-h.BroadcastChannel:
+			// Go over every registered client in the Hub (whole server)
+			h.Clients.ForEach(func(clientId uint64, client ClientInterfacer) {
+				// Check that the sender does not send the message to itself
+				if clientId != packet.SenderId {
+					client.ProcessMessage(packet.SenderId, packet.Payload)
+				}
+			})
+		// If we create a new zone, we use this channel to keep track of all zones in the Hub
+		case zone := <-h.AddZoneChannel:
+			h.Zones.Add(*zone)
+		// If a zone gets destroyed, remove it from the Hub
+		case zone := <-h.RemoveZoneChannel:
+			h.Zones.Remove(zone.GetId())
+		}
+	}
+}
+
+// Each client interfacer will have its own database transaction context.
+type DBTX struct {
+	Ctx     context.Context
+	Queries *db.Queries
 }
 
 // Creates a basic context and holds a reference to the SQL Queries generated by sqlc.
 func (h *Hub) NewDBTX() *DBTX {
 	return &DBTX{
 		Ctx:     context.Background(),
-		Queries: db.New(h.dbPool),
+		Queries: db.New(h.DatabasePool),
 	}
+}
+
+func (h *Hub) GetId() uint64 {
+	return h.Id
+}
+
+// Retrieves the client (if found) in the Clients collection
+func (h *Hub) GetClient(id uint64) (ClientInterfacer, bool) {
+	return h.Clients.Get(id)
+}
+
+// Returns the channel that can broadcast packets
+func (h *Hub) GetBroadcastChannel() chan *packets.Packet {
+	return h.BroadcastChannel
+}
+
+// Returns the channel that registers new clients
+func (h *Hub) GetAddClientChannel() chan ClientInterfacer {
+	return h.AddClientChannel
+}
+
+// Returns the channel that removes clients
+func (h *Hub) GetRemoveClientChannel() chan ClientInterfacer {
+	return h.RemoveClientChannel
 }
