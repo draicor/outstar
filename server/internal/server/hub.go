@@ -14,10 +14,11 @@ import (
 // that should write to the database. It also keeps track of every available zone
 // within the server.
 type Hub struct {
-	Id uint64 // Since this is the Hub, should always have ID zero!
-
 	// Map of all the connected clients in the server
 	Clients *objects.SharedCollection[ClientInterfacer]
+
+	// Players connected counter
+	PlayersOnline uint16
 
 	// Packets in this channel will be processed by all connected clients
 	BroadcastChannel chan *packets.Packet
@@ -48,9 +49,9 @@ type Hub struct {
 // Creates a new empty hub object, we have to pass a valid DB connection
 func CreateHub(databasePool *sql.DB) *Hub {
 	return &Hub{
-		Id: 0,
 		// Collection of every connected client in the server
 		Clients:             objects.NewSharedCollection[ClientInterfacer](),
+		PlayersOnline:       0,
 		AddClientChannel:    make(chan ClientInterfacer),
 		RemoveClientChannel: make(chan ClientInterfacer),
 		BroadcastChannel:    make(chan *packets.Packet),
@@ -59,7 +60,8 @@ func CreateHub(databasePool *sql.DB) *Hub {
 		AddZoneChannel:    make(chan *Zone),
 		RemoveZoneChannel: make(chan *Zone),
 		// Database connection
-		DatabasePool:    databasePool,
+		DatabasePool: databasePool,
+		// TO FIX -> CHANGE THE TYPE OF THE CHANNELs
 		DatabaseChannel: make(chan *db.Queries),
 	}
 }
@@ -84,6 +86,9 @@ func (h *Hub) Serve(getNewClient func(*Hub, http.ResponseWriter, *http.Request) 
 	go client.WritePump()
 	// Reads packets from the godot websocket client and process them
 	go client.ReadPump()
+
+	// We increase the number of players online by 1
+	h.PlayersOnline++
 }
 
 // Listens for packets on each channel
@@ -135,13 +140,14 @@ func (h *Hub) NewDBTX() *DBTX {
 	}
 }
 
-func (h *Hub) GetId() uint64 {
-	return h.Id
-}
-
 // Retrieves the client (if found) in the Clients collection
 func (h *Hub) GetClient(id uint64) (ClientInterfacer, bool) {
 	return h.Clients.Get(id)
+}
+
+// Retrieves the zone (if found) in the Zones collection
+func (h *Hub) GetZone(id uint64) (Zone, bool) {
+	return h.Zones.Get(id)
 }
 
 // Returns the channel that can broadcast packets

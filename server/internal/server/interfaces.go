@@ -68,24 +68,3 @@ type ClientStateHandler interface {
 	// Triggers once a client leaves this state
 	OnExit()
 }
-
-// A structure for the Hub and Zones that will interact with the clients
-type ServerInterfacer interface {
-	// Returns the ID of this zone
-	GetId() uint64
-
-	// Infinite loop that listens for packets on each channel
-	Start()
-
-	// Retrieves the client (if found) in the Clients collection
-	GetClient(id uint64) (ClientInterfacer, bool)
-
-	// Returns the channel that can broadcast packets
-	GetBroadcastChannel() chan *packets.Packet
-
-	// Returns the channel that registers new clients
-	GetAddClientChannel() chan ClientInterfacer
-
-	// Returns the channel that removes clients
-	GetRemoveClientChannel() chan ClientInterfacer
-}

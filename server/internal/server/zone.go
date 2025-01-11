@@ -14,6 +14,9 @@ type Zone struct {
 	// Map of all the connected clients inside this zone
 	Clients *objects.SharedCollection[ClientInterfacer]
 
+	// Players connected counter
+	PlayersOnline uint16
+
 	// Packets in this channel will be processed by all connected clients except the sender
 	BroadcastChannel chan *packets.Packet
 
@@ -46,7 +49,7 @@ func CreateZone(databasePool *sql.DB, id uint64) *Zone {
 
 // Listens for packets on each channel
 func (z *Zone) Start() {
-	log.Println("New zone created, awaiting client connections...")
+	log.Println("Zone", z.Id, "instatiated...")
 
 	// Infinite for loop
 	for {

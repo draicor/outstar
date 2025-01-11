@@ -39,6 +39,8 @@ func (state *Connected) SetClient(client server.ClientInterfacer) {
 func (state *Connected) OnEnter() {
 	// A newly connected client will receive its own ID
 	state.client.SocketSend(packets.NewHandshake())
+	// We don't broadcast this client's arrival here because
+	// we are doing it from the Godot client
 }
 
 func (state *Connected) HandleMessage(senderId uint64, payload packets.Payload) {
@@ -47,26 +49,32 @@ func (state *Connected) HandleMessage(senderId uint64, payload packets.Payload) 
 		// Switch based on the type of packet
 		// We also save the casted packet in case we need to access specific fields
 		switch casted_payload := payload.(type) {
-		// chat_message packet
+
+		// PUBLIC MESSAGE
 		case *packets.Packet_ChatMessage:
-			// If we get a public message, broadcast it
 			state.client.Broadcast(payload)
+
+		// HEARTBEAT
 		case *packets.Packet_Heartbeat:
-			// Heartbeat received from the client
 			state.client.SocketSend(packets.NewHeartbeat())
+
+		// CLIENT ENTERED
 		case *packets.Packet_ClientEntered:
-			// If a new client entered
 			state.HandleClientEntered(state.client.GetNickname())
+
+		// CLIENT LEFT
 		case *packets.Packet_ClientLeft:
-			// If a client left
-			state.client.Broadcast(payload)
+			state.HandleClientLeft(state.client.GetNickname())
+
+		// SWITCH ZONE
 		case *packets.Packet_SwitchRequest:
-			// If this client requested to switch to a zone!
 			state.HandleSwitchRequest(casted_payload)
 
-		// On this state, we handle login and register requests
+		// LOGIN
 		case *packets.Packet_LoginRequest:
 			state.HandleLoginRequest(senderId, casted_payload)
+
+		// REGISTER
 		case *packets.Packet_RegisterRequest:
 			state.HandleRegisterRequest(senderId, casted_payload)
 
@@ -309,11 +317,9 @@ func capitalize(text string) (string, error) {
 }
 
 func (state *Connected) OnExit() {
-	// We broadcast to everyone that this client left
-	state.HandleClientLeft(state.client.GetNickname())
+	// pass
 }
 
 func (state *Connected) HandleSwitchRequest(payload *packets.Packet_SwitchRequest) {
-	state.logger.Println(payload.SwitchRequest.ZoneId)
-
+	state.client.SetZone(payload.SwitchRequest.GetZoneId())
 }

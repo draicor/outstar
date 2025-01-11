@@ -12,10 +12,11 @@ import (
 )
 
 type WebSocketClient struct {
-	id          uint64 // Ephemeral ID for this connection
-	connection  *websocket.Conn
-	hub         server.ServerInterfacer // Hub that this client connected to
-	sendChannel chan *packets.Packet    // Channel that holds packets to be sent to the client
+	id          uint64               // Ephemeral ID for this connection
+	connection  *websocket.Conn      // Websocket connection to the godot client
+	hub         *server.Hub          // Hub that this client connected to
+	zone        *server.Zone         // Zone that this client is at
+	sendChannel chan *packets.Packet // Channel that holds packets to be sent to the client
 	logger      *log.Logger
 	state       server.ClientStateHandler // Knows in what state the client is in
 	nickname    string                    // Seen by every other client
@@ -23,7 +24,7 @@ type WebSocketClient struct {
 }
 
 // Called from Hub.serve()
-// Static function used to create a new websocket client from an HTTP connection (which is what Godot will use)
+// Static function used to create a new WebSocket client from an HTTP connection (which is what Godot will use)
 func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *http.Request) (server.ClientInterfacer, error) {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -31,17 +32,20 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 		CheckOrigin:     func(_ *http.Request) bool { return true }, // TO FIX -> Validate request origin
 	}
 
-	// Upgrades the HTTP connection to a websocket connection
+	// Upgrades the HTTP connection to a WebSocket connection
 	conn, err := upgrader.Upgrade(writer, request, nil)
 
+	// If we found an error creating the WebSocket connection, return the error
 	if err != nil {
 		return nil, err
 	}
 
+	// If no errors were found, create a new WebSocketClient
 	client := &WebSocketClient{
-		hub:         hub,
-		connection:  conn,
-		sendChannel: make(chan *packets.Packet, 256), // Buffered channel that can hold up to 256 packets before it blocks
+		hub:         hub,                             // Entry point for all connected clients
+		zone:        nil,                             // At creation, the client is not registered into any zones
+		connection:  conn,                            // Underlying WebSocket connection
+		sendChannel: make(chan *packets.Packet, 256), // Buffered channel of 256 packets, if full, drops packets
 		logger:      log.New(log.Writer(), "", log.LstdFlags),
 		DBTX:        hub.NewDBTX(),
 	}
@@ -54,7 +58,7 @@ func (c *WebSocketClient) Id() uint64 {
 	return c.id
 }
 
-// Initializes the client connection
+// Initializes the client's state within the server
 func (c *WebSocketClient) Initialize(id uint64) {
 	// We store the new id as this client's ID
 	c.id = id
@@ -72,34 +76,56 @@ func (c *WebSocketClient) SocketSend(message packets.Payload) {
 	c.SocketSendAs(message, c.id)
 }
 
-// This is useful when we want to forward a message we received from another client
-func (c *WebSocketClient) SocketSendAs(message packets.Payload, senderId uint64) {
+// This is useful when we want to forward a packet we received from another client
+func (c *WebSocketClient) SocketSendAs(payload packets.Payload, senderId uint64) {
 	select {
 	// We queue messages up to send to the client
 	case c.sendChannel <- &packets.Packet{
 		SenderId: senderId,
-		Payload:  message,
+		Payload:  payload,
 	}:
 	// If the client's channel is full, we drop the message and log a warning
+	// This is to prevent the server from blocking waiting for this client
 	default:
-		c.logger.Printf("Client %d send channel full, dropping message: %T", c.id, message)
+		c.logger.Printf("Client %d send channel full, dropping message: %T", c.id, payload)
 	}
 }
 
-// Forward message to a specific client by ID
-func (c *WebSocketClient) PassToPeer(message packets.Payload, peerId uint64) {
-	// We look for the peer in the server's map of clients
-	peer, found := c.hub.GetClient(peerId)
-	if found {
-		peer.ProcessMessage(c.id, message)
+// Forward packet's payload to a specific client by ID
+func (c *WebSocketClient) PassToPeer(payload packets.Payload, peerId uint64) {
+	// If this client is currently in a zone
+	if c.zone != nil {
+		// We look for the peer in the current zone
+		peer, found := c.zone.GetClient(peerId)
+		if found {
+			peer.ProcessMessage(c.id, payload)
+		}
+
+	} else {
+		// We look for the peer in the server's map of clients
+		peer, found := c.hub.GetClient(peerId)
+		if found {
+			peer.ProcessMessage(c.id, payload)
+		}
 	}
 }
 
-// Convenience function to queue a message up to be passed to every client except the sender by the hub
-func (c *WebSocketClient) Broadcast(message packets.Payload) {
-	c.hub.GetBroadcastChannel() <- &packets.Packet{
-		SenderId: c.id,
-		Payload:  message,
+// Convenience function to queue a packet up to be passed to every client except the sender
+func (c *WebSocketClient) Broadcast(payload packets.Payload) {
+	// If this client is currently in a zone
+	if c.zone != nil {
+		// We send it to the broadcast channel of that zone
+		c.zone.GetBroadcastChannel() <- &packets.Packet{
+			SenderId: c.id,
+			Payload:  payload,
+		}
+
+	} else {
+		// We send it to the Hub's broadcast channel
+		c.hub.GetBroadcastChannel() <- &packets.Packet{
+			SenderId: c.id,
+			Payload:  payload,
+		}
 	}
 }
 
@@ -190,8 +216,22 @@ func (c *WebSocketClient) WritePump() {
 func (c *WebSocketClient) Close(reason string) {
 	c.logger.Printf("Closing client connection: %s", reason)
 
-	// Remove the client from this zone
-	c.hub.GetRemoveClientChannel() <- c
+	// Broadcast to everyone that this client left before we remove it form the hub/zone
+	c.Broadcast(packets.NewClientLeft(c.GetNickname()))
+
+	// If we were at a zone, remove the client from this zone
+	if c.zone != nil {
+		c.zone.GetRemoveClientChannel() <- c
+		// Decrease the number of players in that zone by 1
+		c.zone.PlayersOnline--
+
+		// If we were at the Hub
+	} else {
+		// Remove the client from the Hub
+		c.hub.GetRemoveClientChannel() <- c
+		// Remove this client from the hub's players online counter
+		c.hub.PlayersOnline--
+	}
 
 	// close the client's websocket connection
 	c.connection.Close()
@@ -251,10 +291,41 @@ func (c *WebSocketClient) GetNickname() string {
 	return c.nickname
 }
 
+// Moves the client to a new zone
 func (c *WebSocketClient) SetZone(zone_id uint64) {
-	// c.hub = 1
-	// SERVER INTERFACE WAS USELESS, I HAVE TO REMOVE IT
-	// I need to have the websocket client have a hub and a zone reference (if any)
-	// If he joins a zone, he unregisters himself from the hub
-	// If he leaves a zone, he goes back to the hub again!
+	// The Hub has a reference to all available zones
+	zone, found := c.hub.GetZone(zone_id)
+	if found {
+		// If the client was at another zone
+		if c.zone != nil {
+			// Broadcast to everyone that this client left this zone!
+			c.Broadcast(packets.NewClientLeft(c.GetNickname()))
+			// Unregister the client from that zone
+			c.zone.GetRemoveClientChannel() <- c
+			// Decrease the number of players in that zone by 1
+			c.zone.PlayersOnline--
+
+		} else {
+			// If the client was at the lobby, he unregisters himself from the hub
+			// The underlying connection to the websocket will remain, but he won't
+			// be sending packets directly to the hub, only to the zone hes at
+			c.hub.GetRemoveClientChannel() <- c
+		}
+
+		// Save a reference to the pointer to the zone this client is at
+		c.zone = &zone
+		// Register the client to the new zone
+		c.zone.GetAddClientChannel() <- c
+		// Broadcast to everyone that this client joined
+		c.Broadcast(packets.NewClientEntered(c.GetNickname()))
+		// Increase the number of players in that zone by 1
+		c.zone.PlayersOnline++
+	}
 }
+
+/*
+func (c *WebSocketClient) LeaveZone() {
+
+	// If the client leaves a zone, he goes back to the hub again!
+
+*/

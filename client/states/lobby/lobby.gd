@@ -45,7 +45,6 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	elif packet.has_heartbeat():
 		Signals.heartbeat_received.emit()
 	elif packet.has_client_entered():
-		print(packet.get_client_entered().get_nickname())
 		_handle_packet_client_entered(packet.get_client_entered().get_nickname())
 	elif packet.has_client_left():
 		_handle_packet_client_left(packet.get_client_left())
@@ -68,7 +67,6 @@ func _on_websocket_heartbeat_attempt() -> void:
 
 # When a new client connects, we print the message into our chat window
 func _handle_packet_client_entered(nickname: String) -> void:
-	print(nickname)
 	chat.info("%s has joined" % nickname)
 
 # When a client leaves, we print the message into our chat window
@@ -138,5 +136,5 @@ func _send_packet_switch_request(zone_id: int) -> bool:
 		return true
 
 func _on_button_pressed() -> void:
-	print(_send_packet_switch_request(1))
+	_send_packet_switch_request(1)
 	button.hide()
