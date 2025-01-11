@@ -67,8 +67,8 @@ func (state *Connected) HandleMessage(senderId uint64, payload packets.Payload) 
 			state.HandleClientLeft(state.client.GetNickname())
 
 		// SWITCH ZONE
-		case *packets.Packet_SwitchRequest:
-			state.HandleSwitchRequest(casted_payload)
+		case *packets.Packet_SwitchZoneRequest:
+			state.HandleSwitchZoneRequest(casted_payload)
 
 		// LOGIN
 		case *packets.Packet_LoginRequest:
@@ -320,6 +320,7 @@ func (state *Connected) OnExit() {
 	// pass
 }
 
-func (state *Connected) HandleSwitchRequest(payload *packets.Packet_SwitchRequest) {
-	state.client.SetZone(payload.SwitchRequest.GetZoneId())
+// Sent by the client to request joining a new zone
+func (state *Connected) HandleSwitchZoneRequest(payload *packets.Packet_SwitchZoneRequest) {
+	state.client.SetZone(payload.SwitchZoneRequest.GetZoneId())
 }

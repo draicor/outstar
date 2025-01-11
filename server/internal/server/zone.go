@@ -1,7 +1,6 @@
 package server
 
 import (
-	"database/sql"
 	"log"
 	"server/internal/server/objects"
 	"server/pkg/packets"
@@ -15,7 +14,7 @@ type Zone struct {
 	Clients *objects.SharedCollection[ClientInterfacer]
 
 	// Players connected counter
-	PlayersOnline uint16
+	PlayersOnline uint64
 
 	// Packets in this channel will be processed by all connected clients except the sender
 	BroadcastChannel chan *packets.Packet
@@ -25,9 +24,6 @@ type Zone struct {
 
 	// Clients received in this channel will be removed from this zone
 	RemoveClientChannel chan ClientInterfacer
-
-	// Database connection pool
-	DatabasePool *sql.DB
 }
 
 // Returns this zone's ID
@@ -35,15 +31,14 @@ func (z *Zone) GetId() uint64 {
 	return z.Id
 }
 
-// Creates a new zone, we have to pass a valid DB connection FOR NOW
-func CreateZone(databasePool *sql.DB, id uint64) *Zone {
+// Creates a new zone
+func CreateZone(id uint64) *Zone {
 	return &Zone{
 		Id:                  id,
 		Clients:             objects.NewSharedCollection[ClientInterfacer](),
-		BroadcastChannel:    make(chan *packets.Packet),  // unbuffered channel
-		AddClientChannel:    make(chan ClientInterfacer), // unbuffered channel
-		RemoveClientChannel: make(chan ClientInterfacer), // unbuffered channel
-		DatabasePool:        databasePool,
+		BroadcastChannel:    make(chan *packets.Packet),
+		AddClientChannel:    make(chan ClientInterfacer),
+		RemoveClientChannel: make(chan ClientInterfacer),
 	}
 }
 
@@ -53,15 +48,18 @@ func (z *Zone) Start() {
 
 	// Infinite for loop
 	for {
+		log.Println("Entering zone loop")
 		// If there is no default case, the "select" statement blocks
 		// until at least one of the communications can proceed
 		select {
 		// If we get a new client, add it to this zone
 		case client := <-z.AddClientChannel:
 			z.Clients.Add(client)
+			z.PlayersOnline++
 		// If a client leaves, remove him from this zone
 		case client := <-z.RemoveClientChannel:
 			z.Clients.Remove(client.Id())
+			z.PlayersOnline--
 		// If we get a packet from the broadcast channel
 		case packet := <-z.BroadcastChannel:
 			// Go over every registered client in this zone
@@ -93,4 +91,8 @@ func (z *Zone) GetAddClientChannel() chan ClientInterfacer {
 // Returns the channel that removes clients
 func (z *Zone) GetRemoveClientChannel() chan ClientInterfacer {
 	return z.RemoveClientChannel
+}
+
+func (z *Zone) GetPlayersOnline() uint64 {
+	return z.PlayersOnline
 }

@@ -1030,7 +1030,7 @@ class ClientLeft:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
-class SwitchRequest:
+class SwitchZoneRequest:
 	func _init():
 		var service
 		
@@ -1134,11 +1134,11 @@ class Packet:
 		service.func_ref = Callable(self, "new_client_left")
 		data[_client_left.tag] = service
 		
-		_switch_request = PBField.new("switch_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 11, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		_switch_zone_request = PBField.new("switch_zone_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 11, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _switch_request
-		service.func_ref = Callable(self, "new_switch_request")
-		data[_switch_request.tag] = service
+		service.field = _switch_zone_request
+		service.func_ref = Callable(self, "new_switch_zone_request")
+		data[_switch_zone_request.tag] = service
 		
 	var data = {}
 	
@@ -1177,7 +1177,7 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_chat_message.value = Chat.new()
 		return _chat_message.value
@@ -1208,7 +1208,7 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = Handshake.new()
 		return _handshake.value
@@ -1239,7 +1239,7 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_heartbeat.value = Heartbeat.new()
 		return _heartbeat.value
@@ -1270,7 +1270,7 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_request_granted.value = Granted.new()
 		return _request_granted.value
@@ -1301,7 +1301,7 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_request_denied.value = Denied.new()
 		return _request_denied.value
@@ -1332,7 +1332,7 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_login_request.value = LoginRequest.new()
 		return _login_request.value
@@ -1363,7 +1363,7 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_register_request.value = RegisterRequest.new()
 		return _register_request.value
@@ -1394,7 +1394,7 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.FILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_client_entered.value = ClientEntered.new()
 		return _client_entered.value
@@ -1425,20 +1425,20 @@ class Packet:
 		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		data[10].state = PB_SERVICE_STATE.FILLED
-		_switch_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = ClientLeft.new()
 		return _client_left.value
 	
-	var _switch_request: PBField
-	func has_switch_request() -> bool:
+	var _switch_zone_request: PBField
+	func has_switch_zone_request() -> bool:
 		return data[11].state == PB_SERVICE_STATE.FILLED
-	func get_switch_request() -> SwitchRequest:
-		return _switch_request.value
-	func clear_switch_request() -> void:
+	func get_switch_zone_request() -> SwitchZoneRequest:
+		return _switch_zone_request.value
+	func clear_switch_zone_request() -> void:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_switch_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_switch_request() -> SwitchRequest:
+		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_switch_zone_request() -> SwitchZoneRequest:
 		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -1458,8 +1458,8 @@ class Packet:
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		data[11].state = PB_SERVICE_STATE.FILLED
-		_switch_request.value = SwitchRequest.new()
-		return _switch_request.value
+		_switch_zone_request.value = SwitchZoneRequest.new()
+		return _switch_zone_request.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

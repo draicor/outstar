@@ -18,7 +18,7 @@ type Hub struct {
 	Clients *objects.SharedCollection[ClientInterfacer]
 
 	// Players connected counter
-	PlayersOnline uint16
+	PlayersOnline uint64
 
 	// Packets in this channel will be processed by all connected clients
 	BroadcastChannel chan *packets.Packet
@@ -33,10 +33,10 @@ type Hub struct {
 	Zones *objects.SharedCollection[Zone]
 
 	// Zones received in this channel will be added to the collection
-	AddZoneChannel chan *Zone
+	AddZoneChannel chan Zone
 
 	// Zones received in this channel will be removed from the collection
-	RemoveZoneChannel chan *Zone
+	RemoveZoneChannel chan Zone
 
 	// Every new zone will get a reference to the database connection pool
 	DatabasePool *sql.DB
@@ -57,8 +57,8 @@ func CreateHub(databasePool *sql.DB) *Hub {
 		BroadcastChannel:    make(chan *packets.Packet),
 		// Collection of every available zone in the server
 		Zones:             objects.NewSharedCollection[Zone](),
-		AddZoneChannel:    make(chan *Zone),
-		RemoveZoneChannel: make(chan *Zone),
+		AddZoneChannel:    make(chan Zone),
+		RemoveZoneChannel: make(chan Zone),
 		// Database connection
 		DatabasePool: databasePool,
 		// TO FIX -> CHANGE THE TYPE OF THE CHANNELs
@@ -104,9 +104,11 @@ func (h *Hub) Start() {
 		case client := <-h.AddClientChannel:
 			// The Add method returns a client ID, which we use to Initialize the WebSocket Client's ID
 			client.Initialize(h.Clients.Add(client))
+			h.PlayersOnline++
 		// If a client disconnects, remove him from the Hub
 		case client := <-h.RemoveClientChannel:
 			h.Clients.Remove(client.Id())
+			h.PlayersOnline--
 		// If we get a packet from the broadcast channel
 		case packet := <-h.BroadcastChannel:
 			// Go over every registered client in the Hub (whole server)
@@ -118,7 +120,8 @@ func (h *Hub) Start() {
 			})
 		// If we create a new zone, we use this channel to keep track of all zones in the Hub
 		case zone := <-h.AddZoneChannel:
-			h.Zones.Add(*zone)
+			h.Zones.Add(zone)
+			go zone.Start()
 		// If a zone gets destroyed, remove it from the Hub
 		case zone := <-h.RemoveZoneChannel:
 			h.Zones.Remove(zone.GetId())

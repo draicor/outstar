@@ -120,12 +120,12 @@ func _send_packet_client_entered() -> bool:
 	else:
 		return true
 
-func _send_packet_switch_request(zone_id: int) -> bool:
+func _send_packet_switch_zone_request(zone_id: int) -> bool:
 	# We create a new packet
 	var packet := packets.Packet.new()
 	# We send the packet with the zone_id we want to access
-	var switch_request_packet := packet.new_switch_request()
-	switch_request_packet.set_zone_id(zone_id)
+	var switch_zone_request_packet := packet.new_switch_zone_request()
+	switch_zone_request_packet.set_zone_id(zone_id)
 
 	# Serialize and send our message
 	var err := WebSocket.send(packet)
@@ -136,5 +136,5 @@ func _send_packet_switch_request(zone_id: int) -> bool:
 		return true
 
 func _on_button_pressed() -> void:
-	_send_packet_switch_request(1)
+	_send_packet_switch_zone_request(1)
 	button.hide()

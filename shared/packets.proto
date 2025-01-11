@@ -21,7 +21,7 @@ message LoginRequest { string username = 1; string password = 2; } // Sent by cl
 message RegisterRequest { string username = 1; string nickname = 2; string password = 3; } // Sent by client to register
 message ClientEntered { string nickname = 1; } // Sent by the client once he arrives and broadcasted to everyone
 message ClientLeft { string nickname = 1; } // Sent by the client once he leaves, broadcasted to everyone
-message SwitchRequest { uint64 zone_id = 1; } // Sent by the client to request joining a new zone
+message SwitchZoneRequest { uint64 zone_id = 1; } // Sent by the client to request joining a new zone
 
 // Main Packet container
 message Packet {
@@ -36,6 +36,6 @@ message Packet {
     RegisterRequest register_request = 8;
     ClientEntered client_entered = 9;
     ClientLeft client_left = 10;
-    SwitchRequest switch_request = 11;
+    SwitchZoneRequest switch_zone_request = 11;
   }
 }

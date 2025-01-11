@@ -222,15 +222,11 @@ func (c *WebSocketClient) Close(reason string) {
 	// If we were at a zone, remove the client from this zone
 	if c.zone != nil {
 		c.zone.GetRemoveClientChannel() <- c
-		// Decrease the number of players in that zone by 1
-		c.zone.PlayersOnline--
 
 		// If we were at the Hub
 	} else {
 		// Remove the client from the Hub
 		c.hub.GetRemoveClientChannel() <- c
-		// Remove this client from the hub's players online counter
-		c.hub.PlayersOnline--
 	}
 
 	// close the client's websocket connection
@@ -293,34 +289,51 @@ func (c *WebSocketClient) GetNickname() string {
 
 // Moves the client to a new zone
 func (c *WebSocketClient) SetZone(zone_id uint64) {
+	log.Println("Triggering SetZone()")
+
+	// If the client was at another zone
+	if c.zone != nil {
+		// Broadcast to everyone that this client left this zone!
+		c.Broadcast(packets.NewClientLeft(c.GetNickname()))
+		// Unregister the client from that zone
+		c.zone.GetRemoveClientChannel() <- c
+
+		// If the client was at the lobby
+	} else {
+		// Unregister the client from the hub
+		// The underlying connection to the websocket will remain, but he won't
+		// be sending packets directly to the hub, only to the zone hes at
+		c.hub.GetRemoveClientChannel() <- c
+	}
+
 	// The Hub has a reference to all available zones
 	zone, found := c.hub.GetZone(zone_id)
+
+	// If the zone is already created
 	if found {
-		// If the client was at another zone
-		if c.zone != nil {
-			// Broadcast to everyone that this client left this zone!
-			c.Broadcast(packets.NewClientLeft(c.GetNickname()))
-			// Unregister the client from that zone
-			c.zone.GetRemoveClientChannel() <- c
-			// Decrease the number of players in that zone by 1
-			c.zone.PlayersOnline--
-
-		} else {
-			// If the client was at the lobby, he unregisters himself from the hub
-			// The underlying connection to the websocket will remain, but he won't
-			// be sending packets directly to the hub, only to the zone hes at
-			c.hub.GetRemoveClientChannel() <- c
-		}
-
 		// Save a reference to the pointer to the zone this client is at
 		c.zone = &zone
 		// Register the client to the new zone
 		c.zone.GetAddClientChannel() <- c
 		// Broadcast to everyone that this client joined
 		c.Broadcast(packets.NewClientEntered(c.GetNickname()))
-		// Increase the number of players in that zone by 1
-		c.zone.PlayersOnline++
+
+	} else { // If the zone doesn't exist
+		// create one!
+		zone = *server.CreateZone(zone_id)
+
+		// Save a reference to the pointer to the zone this client is at
+		c.zone = &zone
+
+		// Send the new zone to the Hub so it can register it and start it
+		c.hub.AddZoneChannel <- *c.zone
+
+		// Register the client to the new zone
+		c.zone.GetAddClientChannel() <- c
+		// Broadcast to everyone that this client joined
+		c.Broadcast(packets.NewClientEntered(c.GetNickname()))
 	}
+
 }
 
 /*

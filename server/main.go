@@ -50,9 +50,6 @@ func main() {
 	// Spawn the main hub that will take new websocket connections
 	hub := server.CreateHub(database)
 
-	// Spawn a zone with id 1
-	zone := server.CreateZone(database, 1)
-
 	// Connect handler function that upgrades connection into a WebSocket connection
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		hub.Serve(clients.NewWebSocketClient, w, r)
@@ -60,10 +57,6 @@ func main() {
 
 	// Starts the main hub on a goroutine
 	go hub.Start()
-
-	// Start a zone as a test
-	go zone.Start()
-	hub.AddZoneChannel <- zone
 
 	addr := fmt.Sprintf(":%d", *port)
 	log.Printf("Server running on port %s", addr)
