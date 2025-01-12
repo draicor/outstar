@@ -32,12 +32,6 @@ type Hub struct {
 	// Map of every available zones
 	Zones *objects.SharedCollection[Zone]
 
-	// Zones received in this channel will be added to the collection
-	AddZoneChannel chan Zone
-
-	// Zones received in this channel will be removed from the collection
-	RemoveZoneChannel chan Zone
-
 	// Every new zone will get a reference to the database connection pool
 	DatabasePool *sql.DB
 
@@ -56,9 +50,7 @@ func CreateHub(databasePool *sql.DB) *Hub {
 		RemoveClientChannel: make(chan ClientInterfacer),
 		BroadcastChannel:    make(chan *packets.Packet),
 		// Collection of every available zone in the server
-		Zones:             objects.NewSharedCollection[Zone](),
-		AddZoneChannel:    make(chan Zone),
-		RemoveZoneChannel: make(chan Zone),
+		Zones: objects.NewSharedCollection[Zone](),
 		// Database connection
 		DatabasePool: databasePool,
 		// TO FIX -> CHANGE THE TYPE OF THE CHANNELs
@@ -100,31 +92,30 @@ func (h *Hub) Start() {
 		// If there is no default case, the "select" statement blocks
 		// until at least one of the communications can proceed
 		select {
-		// If we get a new client, add it to the Hub
+
+		// If a client connects to the server, add it to the Hub
 		case client := <-h.AddClientChannel:
 			// The Add method returns a client ID, which we use to Initialize the WebSocket Client's ID
 			client.Initialize(h.Clients.Add(client))
 			h.PlayersOnline++
-		// If a client disconnects, remove him from the Hub
+
+			// If a client disconnects, remove him from the Hub
 		case client := <-h.RemoveClientChannel:
 			h.Clients.Remove(client.Id())
 			h.PlayersOnline--
-		// If we get a packet from the broadcast channel
+
+			// If we get a packet from the broadcast channel
 		case packet := <-h.BroadcastChannel:
-			// Go over every registered client in the Hub (whole server)
-			h.Clients.ForEach(func(clientId uint64, client ClientInterfacer) {
-				// Check that the sender does not send the message to itself
-				if clientId != packet.SenderId {
-					client.ProcessMessage(packet.SenderId, packet.Payload)
-				}
-			})
-		// If we create a new zone, we use this channel to keep track of all zones in the Hub
-		case zone := <-h.AddZoneChannel:
-			h.Zones.Add(zone)
-			go zone.Start()
-		// If a zone gets destroyed, remove it from the Hub
-		case zone := <-h.RemoveZoneChannel:
-			h.Zones.Remove(zone.GetId())
+			// If there is more than one person connected to the Hub
+			if h.Clients.Len() > 1 {
+				// Go over every registered client in the Hub (whole server)
+				h.Clients.ForEach(func(id uint64, client ClientInterfacer) {
+					// Check that the sender does not send the message to itself
+					if client.Id() != packet.SenderId {
+						client.ProcessMessage(packet.SenderId, packet.Payload)
+					}
+				})
+			} // Only 1 client connected, ignore broadcast
 		}
 	}
 }
@@ -151,6 +142,43 @@ func (h *Hub) GetClient(id uint64) (ClientInterfacer, bool) {
 // Retrieves the zone (if found) in the Zones collection
 func (h *Hub) GetZone(id uint64) (Zone, bool) {
 	return h.Zones.Get(id)
+}
+
+// Registers the client to the new zone
+// Returns a boolean to make the client interfacer wait before attempting to join
+func (h *Hub) JoinZone(clientId uint64, zoneId uint64) (*Zone, bool) {
+	// Search for this client by id
+	_, clientExists := h.GetClient(clientId)
+	// If the client is online and exists
+	if clientExists {
+		// Unregister the client from the hub
+		// The underlying connection to the websocket will remain, but he won't
+		// be sending packets directly to the hub, only to the zone hes at
+		h.Clients.Remove(clientId)
+		// Search for this zone by id
+		zone, zoneExists := h.GetZone(zoneId)
+		// If the zone is already created
+		if zoneExists {
+			// Pass a pointer of this zone to the client
+			// Return true to let the client know he can join immediately
+			return &zone, true
+
+		} else { // If the zone does not exist
+			// Create it
+			zone := CreateZone()
+			// Add it to the Hub's avaliable zones
+			zone.SetId(h.Zones.Add(*zone))
+			// Start the zone in a goroutine
+			go zone.Start()
+
+			// Pass the pointer of this zone to the client
+			// Return false to make the client wait 2 seconds before joining
+			return zone, false
+		}
+	}
+
+	// If the client is not online in the Hub, we return nil
+	return nil, false
 }
 
 // Returns the channel that can broadcast packets

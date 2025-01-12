@@ -31,10 +31,14 @@ func (z *Zone) GetId() uint64 {
 	return z.Id
 }
 
+// Sets the ID for this zone after creation
+func (z *Zone) SetId(zoneId uint64) {
+	z.Id = zoneId
+}
+
 // Creates a new zone
-func CreateZone(id uint64) *Zone {
+func CreateZone() *Zone {
 	return &Zone{
-		Id:                  id,
 		Clients:             objects.NewSharedCollection[ClientInterfacer](),
 		BroadcastChannel:    make(chan *packets.Packet),
 		AddClientChannel:    make(chan ClientInterfacer),
@@ -48,27 +52,33 @@ func (z *Zone) Start() {
 
 	// Infinite for loop
 	for {
-		log.Println("Entering zone loop")
 		// If there is no default case, the "select" statement blocks
 		// until at least one of the communications can proceed
 		select {
+
 		// If we get a new client, add it to this zone
 		case client := <-z.AddClientChannel:
-			z.Clients.Add(client)
+			// WE HAVE TO PASS THE SAME ID AS THE HUB ID!!!
+			z.Clients.Add(client, client.Id()) // CAUTION HERE <-
 			z.PlayersOnline++
 		// If a client leaves, remove him from this zone
+
 		case client := <-z.RemoveClientChannel:
 			z.Clients.Remove(client.Id())
 			z.PlayersOnline--
 		// If we get a packet from the broadcast channel
+
 		case packet := <-z.BroadcastChannel:
-			// Go over every registered client in this zone
-			z.Clients.ForEach(func(clientId uint64, client ClientInterfacer) {
-				// Check that the sender does not send the message to itself
-				if clientId != packet.SenderId {
-					client.ProcessMessage(packet.SenderId, packet.Payload)
-				}
-			})
+			// If there is more than one person connected in this zone
+			if z.Clients.Len() > 1 {
+				// Go over every registered client in this zone
+				z.Clients.ForEach(func(id uint64, client ClientInterfacer) {
+					// Check that the sender does not send the message to itself
+					if client.Id() != packet.SenderId {
+						client.ProcessMessage(packet.SenderId, packet.Payload)
+					}
+				})
+			} // Only 1 client connected in this zone, ignore broadcast
 		}
 	}
 }

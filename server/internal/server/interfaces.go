@@ -48,7 +48,7 @@ type ClientInterfacer interface {
 	// Returns this client's nickname
 	GetNickname() string
 
-	// Switches this client's zone
+	// Triggers the start of swithing this client's zone [called from state]
 	SetZone(zone_id uint64)
 }
 

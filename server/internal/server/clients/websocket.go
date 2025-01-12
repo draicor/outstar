@@ -6,6 +6,7 @@ import (
 	"server/internal/server"
 	"server/internal/server/states"
 	"server/pkg/packets"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
@@ -229,11 +230,11 @@ func (c *WebSocketClient) Close(reason string) {
 		c.hub.GetRemoveClientChannel() <- c
 	}
 
+	// Remove the client's state before disconnection
+	c.SetState(nil)
+
 	// close the client's websocket connection
 	c.connection.Close()
-
-	// Remove the client's state after disconnection
-	c.SetState(nil)
 
 	// We check if the client's send channel is closed, if its not, we close it
 	_, closed := <-c.sendChannel
@@ -289,51 +290,42 @@ func (c *WebSocketClient) GetNickname() string {
 
 // Moves the client to a new zone
 func (c *WebSocketClient) SetZone(zone_id uint64) {
-	log.Println("Triggering SetZone()")
-
-	// If the client was at another zone
+	// If the client was already at another zone
 	if c.zone != nil {
 		// Broadcast to everyone that this client left this zone!
 		c.Broadcast(packets.NewClientLeft(c.GetNickname()))
 		// Unregister the client from that zone
 		c.zone.GetRemoveClientChannel() <- c
-
-		// If the client was at the lobby
-	} else {
-		// Unregister the client from the hub
-		// The underlying connection to the websocket will remain, but he won't
-		// be sending packets directly to the hub, only to the zone hes at
-		c.hub.GetRemoveClientChannel() <- c
 	}
 
-	// The Hub has a reference to all available zones
-	zone, found := c.hub.GetZone(zone_id)
+	// Delegate the work to the Hub
+	zone, ready := c.hub.JoinZone(c.id, zone_id)
 
-	// If the zone is already created
-	if found {
-		// Save a reference to the pointer to the zone this client is at
-		c.zone = &zone
-		// Register the client to the new zone
-		c.zone.GetAddClientChannel() <- c
-		// Broadcast to everyone that this client joined
-		c.Broadcast(packets.NewClientEntered(c.GetNickname()))
-
-	} else { // If the zone doesn't exist
-		// create one!
-		zone = *server.CreateZone(zone_id)
-
-		// Save a reference to the pointer to the zone this client is at
-		c.zone = &zone
-
-		// Send the new zone to the Hub so it can register it and start it
-		c.hub.AddZoneChannel <- *c.zone
-
-		// Register the client to the new zone
-		c.zone.GetAddClientChannel() <- c
-		// Broadcast to everyone that this client joined
-		c.Broadcast(packets.NewClientEntered(c.GetNickname()))
+	// If the zone is valid
+	if zone != nil {
+		// We attempt to have this client connection register itself to the zone
+		c.RegisterToZone(zone, ready)
 	}
+}
 
+// Attempts to register this client into the new zone
+func (c *WebSocketClient) RegisterToZone(zone *server.Zone, ready bool) {
+	// If the zone was not created, we wait
+	if !ready {
+		log.Println("Zone just got created, Wait 2 seconds until zone is up and running...")
+		// Wait 2 seconds so the zone gets created
+		time.Sleep(2 * time.Second)
+	}
+	log.Println(zone)
+	// Save a pointer to the zone this client is at
+	c.zone = zone
+	// Register the client to the new zone
+	c.zone.GetAddClientChannel() <- c
+
+	// Wait 2 seconds before I use the zone's channel
+	time.Sleep(2 * time.Second)
+	// Broadcast to everyone that this client joined
+	c.Broadcast(packets.NewClientEntered(c.GetNickname()))
 }
 
 /*
