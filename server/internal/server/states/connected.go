@@ -32,7 +32,7 @@ func (state *Connected) SetClient(client server.ClientInterfacer) {
 	state.dbCtx = client.GetDBTX().Ctx
 
 	// Logging data in the server console
-	prefix := fmt.Sprintf("Client %d [%s]: ", client.Id(), state.Name())
+	prefix := fmt.Sprintf("Client %d [%s]: ", client.GetId(), state.Name())
 	state.logger = log.New(log.Writer(), prefix, log.LstdFlags)
 }
 
@@ -45,7 +45,7 @@ func (state *Connected) OnEnter() {
 
 func (state *Connected) HandleMessage(senderId uint64, payload packets.Payload) {
 	// If this message was sent by our client
-	if senderId == state.client.Id() {
+	if senderId == state.client.GetId() {
 		// Switch based on the type of packet
 		// We also save the casted packet in case we need to access specific fields
 		switch casted_payload := payload.(type) {
@@ -70,15 +70,19 @@ func (state *Connected) HandleMessage(senderId uint64, payload packets.Payload) 
 		case *packets.Packet_ClientLeft:
 			state.HandleClientLeft(state.client.GetNickname())
 
-		// SWITCH ZONE
-		case *packets.Packet_SwitchZoneRequest:
-			state.HandleSwitchZoneRequest(casted_payload)
+		// JOIN ROOM REQUEST
+		case *packets.Packet_JoinRoomRequest:
+			state.HandleJoinRoomRequest(casted_payload)
 
-		// LOGIN
+		// LEAVE ROOM REQUEST
+		case *packets.Packet_LeaveRoomRequest:
+			state.HandleLeaveRoomRequest(casted_payload)
+
+		// LOGIN REQUEST
 		case *packets.Packet_LoginRequest:
 			state.HandleLoginRequest(senderId, casted_payload)
 
-		// REGISTER
+		// REGISTER REQUEST
 		case *packets.Packet_RegisterRequest:
 			state.HandleRegisterRequest(senderId, casted_payload)
 
@@ -96,8 +100,8 @@ func (state *Connected) HandleMessage(senderId uint64, payload packets.Payload) 
 
 func (state *Connected) HandleLoginRequest(senderId uint64, payload *packets.Packet_LoginRequest) {
 	// If client used a different ID than his own ID, ignore this packet
-	if senderId != state.client.Id() {
-		state.logger.Printf("Unauthorized login packet: ID#%d != ID#%d", senderId, state.client.Id())
+	if senderId != state.client.GetId() {
+		state.logger.Printf("Unauthorized login packet: ID#%d != ID#%d", senderId, state.client.GetId())
 		return
 	}
 
@@ -153,8 +157,8 @@ func (state *Connected) HandleLoginRequest(senderId uint64, payload *packets.Pac
 
 func (state *Connected) HandleRegisterRequest(senderId uint64, payload *packets.Packet_RegisterRequest) {
 	// If client used a different ID than his own ID, ignore this packet
-	if senderId != state.client.Id() {
-		state.logger.Printf("Unauthorized register packet: ID#%d != ID#%d", senderId, state.client.Id())
+	if senderId != state.client.GetId() {
+		state.logger.Printf("Unauthorized register packet: ID#%d != ID#%d", senderId, state.client.GetId())
 		return
 	}
 
@@ -325,7 +329,12 @@ func (state *Connected) OnExit() {
 	// pass
 }
 
-// Sent by the client to request joining a new zone
-func (state *Connected) HandleSwitchZoneRequest(payload *packets.Packet_SwitchZoneRequest) {
-	state.client.SetZone(payload.SwitchZoneRequest.GetZoneId())
+// Sent by the client to request joining a new join
+func (state *Connected) HandleJoinRoomRequest(payload *packets.Packet_JoinRoomRequest) {
+	state.client.JoinRoom(payload.JoinRoomRequest.GetRoomId())
+}
+
+// Sent by the cient to request leaving a room
+func (state *Connected) HandleLeaveRoomRequest(payload *packets.Packet_LeaveRoomRequest) {
+	state.client.LeaveRoom()
 }

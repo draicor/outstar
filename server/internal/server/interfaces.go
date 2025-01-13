@@ -7,7 +7,7 @@ import (
 // A structure for the connected client to interface with the server
 type ClientInterfacer interface {
 	// Returns the client's ID
-	Id() uint64
+	GetId() uint64
 
 	// Handles the client's message
 	ProcessMessage(senderId uint64, message packets.Payload)
@@ -48,8 +48,14 @@ type ClientInterfacer interface {
 	// Returns this client's nickname
 	GetNickname() string
 
-	// Triggers the start of swithing this client's zone [called from state]
-	SetZone(zone_id uint64)
+	// Attempts to join a room by id [called from state]
+	JoinRoom(roomId uint64)
+
+	// Leaves the current room and goes back to the Hub [called from state]
+	LeaveRoom()
+
+	// Returns true if this client has already been initialized by the server (has id)
+	HasId() bool
 }
 
 // A structure for a state machine to process the client's messages

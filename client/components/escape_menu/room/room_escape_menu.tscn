@@ -1,24 +1,24 @@
-[gd_scene load_steps=5 format=3 uid="uid://c3dndr4w4euk5"]
+[gd_scene load_steps=5 format=3 uid="uid://cfej37klsooo2"]
 
-[ext_resource type="Script" path="res://components/escape_menu/lobby/lobby_escape_menu.gd" id="1_a5j54"]
-[ext_resource type="Shader" path="res://assets/shaders/blur.gdshader" id="2_0pl3q"]
-[ext_resource type="StyleBox" uid="uid://nvug1cqa5843" path="res://themes/style_box_flat.tres" id="3_53op5"]
+[ext_resource type="Shader" path="res://assets/shaders/blur.gdshader" id="1_0t1c3"]
+[ext_resource type="Script" path="res://components/escape_menu/room/room_escape_menu.gd" id="1_8ltqe"]
+[ext_resource type="StyleBox" uid="uid://nvug1cqa5843" path="res://themes/style_box_flat.tres" id="2_ppdac"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_fycqk"]
-shader = ExtResource("2_0pl3q")
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wm5gx"]
+shader = ExtResource("1_0t1c3")
 shader_parameter/amount = 1.0
 
-[node name="LobbyEscapeMenu" type="Control"]
+[node name="RoomEscapeMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_a5j54")
+script = ExtResource("1_8ltqe")
 
 [node name="Background" type="ColorRect" parent="."]
-material = SubResource("ShaderMaterial_fycqk")
+material = SubResource("ShaderMaterial_wm5gx")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -61,7 +61,7 @@ offset_right = 47.0
 offset_bottom = 50.5
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = ExtResource("3_53op5")
+theme_override_styles/panel = ExtResource("2_ppdac")
 
 [node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
 layout_mode = 2

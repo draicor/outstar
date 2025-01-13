@@ -11,7 +11,7 @@ import (
 )
 
 // The hub is the entry point for all connected clients and the only go routine
-// that should write to the database. It also keeps track of every available zone
+// that should write to the database. It also keeps track of every available room
 // within the server.
 type Hub struct {
 	// Map of all the connected clients in the server
@@ -29,14 +29,14 @@ type Hub struct {
 	// Clients that disconnect will be removed from the Hub
 	RemoveClientChannel chan ClientInterfacer
 
-	// Map of every available zones
-	Zones *objects.SharedCollection[Zone]
+	// Map of every available room
+	Rooms *objects.SharedCollection[Room]
 
-	// Every new zone will get a reference to the database connection pool
+	// Every new room will get a reference to the database connection pool
 	DatabasePool *sql.DB
 
 	// Database write queries received on this channel will be queued for execution
-	// Only zones should request the hub to write something
+	// Only rooms should request the hub to write something
 	DatabaseChannel chan *db.Queries
 }
 
@@ -49,8 +49,8 @@ func CreateHub(databasePool *sql.DB) *Hub {
 		AddClientChannel:    make(chan ClientInterfacer),
 		RemoveClientChannel: make(chan ClientInterfacer),
 		BroadcastChannel:    make(chan *packets.Packet),
-		// Collection of every available zone in the server
-		Zones: objects.NewSharedCollection[Zone](),
+		// Collection of every available room in the server
+		Rooms: objects.NewSharedCollection[Room](),
 		// Database connection
 		DatabasePool: databasePool,
 		// TO FIX -> CHANGE THE TYPE OF THE CHANNELs
@@ -78,9 +78,6 @@ func (h *Hub) Serve(getNewClient func(*Hub, http.ResponseWriter, *http.Request) 
 	go client.WritePump()
 	// Reads packets from the godot websocket client and process them
 	go client.ReadPump()
-
-	// We increase the number of players online by 1
-	h.PlayersOnline++
 }
 
 // Listens for packets on each channel
@@ -95,27 +92,35 @@ func (h *Hub) Start() {
 
 		// If a client connects to the server, add it to the Hub
 		case client := <-h.AddClientChannel:
-			// The Add method returns a client ID, which we use to Initialize the WebSocket Client's ID
-			client.Initialize(h.Clients.Add(client))
+			// If this client already has an ID
+			if client.HasId() {
+				// We just add him to the Hub with the same ID he had before
+				h.Clients.Add(client, client.GetId())
+			} else { // First time joining the Hub after login
+				// The Add method returns a client ID, which we use to Initialize the WebSocket Client's ID
+				client.Initialize(h.Clients.Add(client))
+			}
+
+			// We increase the number of players online only after login
 			h.PlayersOnline++
 
 			// If a client disconnects, remove him from the Hub
 		case client := <-h.RemoveClientChannel:
-			h.Clients.Remove(client.Id())
+			h.Clients.Remove(client.GetId())
 			h.PlayersOnline--
 
 			// If we get a packet from the broadcast channel
 		case packet := <-h.BroadcastChannel:
-			// If there is more than one person connected to the Hub
-			if h.Clients.Len() > 1 {
-				// Go over every registered client in the Hub (whole server)
-				h.Clients.ForEach(func(id uint64, client ClientInterfacer) {
-					// Check that the sender does not send the message to itself
-					if client.Id() != packet.SenderId {
+			// Go over every registered client in the Hub (whole server)
+			h.Clients.ForEach(func(id uint64, client ClientInterfacer) {
+				// Check that the sender does not send the message to itself
+				if client.GetId() != packet.SenderId {
+					// If the client is not idling at the login/register screen
+					if client.GetNickname() != "" {
 						client.ProcessMessage(packet.SenderId, packet.Payload)
 					}
-				})
-			} // Only 1 client connected, ignore broadcast
+				}
+			})
 		}
 	}
 }
@@ -139,41 +144,43 @@ func (h *Hub) GetClient(id uint64) (ClientInterfacer, bool) {
 	return h.Clients.Get(id)
 }
 
-// Retrieves the zone (if found) in the Zones collection
-func (h *Hub) GetZone(id uint64) (Zone, bool) {
-	return h.Zones.Get(id)
+// Retrieves the room (if found) in the Rooms collection
+func (h *Hub) GetRoom(id uint64) (Room, bool) {
+	return h.Rooms.Get(id)
 }
 
-// Registers the client to the new zone
+// TO FIX -> SPLIT THE CREATE ROOM AND JOIN ROOM LOGIC!
+
+// Registers the client to this room if it exists, creates a new room if it doesn't
 // Returns a boolean to make the client interfacer wait before attempting to join
-func (h *Hub) JoinZone(clientId uint64, zoneId uint64) (*Zone, bool) {
+func (h *Hub) JoinRoom(clientId uint64, roomId uint64) (*Room, bool) {
 	// Search for this client by id
 	_, clientExists := h.GetClient(clientId)
 	// If the client is online and exists
 	if clientExists {
 		// Unregister the client from the hub
 		// The underlying connection to the websocket will remain, but he won't
-		// be sending packets directly to the hub, only to the zone hes at
+		// be sending packets directly to the hub, only to the room hes at
 		h.Clients.Remove(clientId)
-		// Search for this zone by id
-		zone, zoneExists := h.GetZone(zoneId)
-		// If the zone is already created
-		if zoneExists {
-			// Pass a pointer of this zone to the client
+		// Search for this room by id
+		room, roomExists := h.GetRoom(roomId)
+		// If the room is already created
+		if roomExists {
+			// Pass a pointer of this room to the client
 			// Return true to let the client know he can join immediately
-			return &zone, true
+			return &room, true
 
-		} else { // If the zone does not exist
-			// Create it
-			zone := CreateZone()
-			// Add it to the Hub's avaliable zones
-			zone.SetId(h.Zones.Add(*zone))
-			// Start the zone in a goroutine
-			go zone.Start()
+		} else { // If the room does not exist
+			// Create it with the next id counter from the Hub
+			room := CreateRoom()
+			// Add it to the Hub's avaliable rooms
+			room.SetId(h.Rooms.Add(*room))
+			// Start the room in a goroutine
+			go room.Start()
 
-			// Pass the pointer of this zone to the client
+			// Pass the pointer of this room to the client
 			// Return false to make the client wait 2 seconds before joining
-			return zone, false
+			return room, false
 		}
 	}
 

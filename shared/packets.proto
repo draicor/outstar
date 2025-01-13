@@ -14,10 +14,13 @@ message RequestGranted {} // Sent by server if request was successful
 message RequestDenied { string reason = 1; } // Sent by server if request was unsuccessful
 message LoginRequest { string username = 1; string password = 2; } // Sent by client to login
 message RegisterRequest { string username = 1; string nickname = 2; string password = 3; } // Sent by client to register
-message ClientEntered { string nickname = 1; } // Sent by the client once he arrives and broadcasted to everyone
-message ClientLeft { string nickname = 1; } // Sent by the client once he leaves, broadcasted to everyone
-message SwitchZoneRequest { uint64 zone_id = 1; } // Sent by the client to request joining a new zone
-message LoginSuccess { string nickname = 1; } // Sent by the client after successful login
+message ClientEntered { string nickname = 1; } // Sent by the client once his client is ready, broadcasted to everyone
+message ClientLeft { string nickname = 1; } // Broadcast by the server if a client leaves
+message JoinRoomRequest { uint64 room_id = 1; } // Sent by the client to request joining a new room
+message LoginSuccess { string nickname = 1; } // Sent by the server after successful login
+message LeaveRoomRequest {} // Sent by the client to request leaving a room and going back to the Hub
+message JoinRoomSuccess {} // Sent by the server to ask the client to switch to the room state
+message LeaveRoomSuccess {} // Sent by the server to ask the client to switch to the lobby state
 
 // Main Packet container
 message Packet {
@@ -32,7 +35,10 @@ message Packet {
     RegisterRequest register_request = 8;
     ClientEntered client_entered = 9;
     ClientLeft client_left = 10;
-    SwitchZoneRequest switch_zone_request = 11;
+    JoinRoomRequest join_room_request = 11;
     LoginSuccess login_success = 12;
+    LeaveRoomRequest leave_room_request = 13;
+    JoinRoomSuccess join_room_success = 14;
+    LeaveRoomSuccess leave_room_success = 15;
   }
 }

@@ -1044,25 +1044,25 @@ class ClientLeft:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
-class SwitchZoneRequest:
+class JoinRoomRequest:
 	func _init():
 		var service
 		
-		_zone_id = PBField.new("zone_id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		_room_id = PBField.new("room_id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _zone_id
-		data[_zone_id.tag] = service
+		service.field = _room_id
+		data[_room_id.tag] = service
 		
 	var data = {}
 	
-	var _zone_id: PBField
-	func get_zone_id() -> int:
-		return _zone_id.value
-	func clear_zone_id() -> void:
+	var _room_id: PBField
+	func get_room_id() -> int:
+		return _room_id.value
+	func clear_room_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_zone_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_zone_id(value : int) -> void:
-		_zone_id.value = value
+		_room_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_room_id(value : int) -> void:
+		_room_id.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1104,6 +1104,87 @@ class LoginSuccess:
 		_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_nickname(value : String) -> void:
 		_nickname.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
+class LeaveRoomRequest:
+	func _init():
+		var service
+		
+	var data = {}
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
+class JoinRoomSuccess:
+	func _init():
+		var service
+		
+	var data = {}
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
+class LeaveRoomSuccess:
+	func _init():
+		var service
+		
+	var data = {}
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1189,17 +1270,35 @@ class Packet:
 		service.func_ref = Callable(self, "new_client_left")
 		data[_client_left.tag] = service
 		
-		_switch_zone_request = PBField.new("switch_zone_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 11, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		_join_room_request = PBField.new("join_room_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 11, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _switch_zone_request
-		service.func_ref = Callable(self, "new_switch_zone_request")
-		data[_switch_zone_request.tag] = service
+		service.field = _join_room_request
+		service.func_ref = Callable(self, "new_join_room_request")
+		data[_join_room_request.tag] = service
 		
 		_login_success = PBField.new("login_success", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 12, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = _login_success
 		service.func_ref = Callable(self, "new_login_success")
 		data[_login_success.tag] = service
+		
+		_leave_room_request = PBField.new("leave_room_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 13, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _leave_room_request
+		service.func_ref = Callable(self, "new_leave_room_request")
+		data[_leave_room_request.tag] = service
+		
+		_join_room_success = PBField.new("join_room_success", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 14, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _join_room_success
+		service.func_ref = Callable(self, "new_join_room_success")
+		data[_join_room_success.tag] = service
+		
+		_leave_room_success = PBField.new("leave_room_success", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 15, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _leave_room_success
+		service.func_ref = Callable(self, "new_leave_room_success")
+		data[_leave_room_success.tag] = service
 		
 	var data = {}
 	
@@ -1238,10 +1337,16 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_public_message.value = PublicMessage.new()
 		return _public_message.value
 	
@@ -1271,10 +1376,16 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = Handshake.new()
 		return _handshake.value
 	
@@ -1304,10 +1415,16 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_heartbeat.value = Heartbeat.new()
 		return _heartbeat.value
 	
@@ -1337,10 +1454,16 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_request_granted.value = RequestGranted.new()
 		return _request_granted.value
 	
@@ -1370,10 +1493,16 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_request_denied.value = RequestDenied.new()
 		return _request_denied.value
 	
@@ -1403,10 +1532,16 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_login_request.value = LoginRequest.new()
 		return _login_request.value
 	
@@ -1436,10 +1571,16 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_register_request.value = RegisterRequest.new()
 		return _register_request.value
 	
@@ -1469,10 +1610,16 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.FILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_client_entered.value = ClientEntered.new()
 		return _client_entered.value
 	
@@ -1502,22 +1649,28 @@ class Packet:
 		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		data[10].state = PB_SERVICE_STATE.FILLED
-		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = ClientLeft.new()
 		return _client_left.value
 	
-	var _switch_zone_request: PBField
-	func has_switch_zone_request() -> bool:
+	var _join_room_request: PBField
+	func has_join_room_request() -> bool:
 		return data[11].state == PB_SERVICE_STATE.FILLED
-	func get_switch_zone_request() -> SwitchZoneRequest:
-		return _switch_zone_request.value
-	func clear_switch_zone_request() -> void:
+	func get_join_room_request() -> JoinRoomRequest:
+		return _join_room_request.value
+	func clear_join_room_request() -> void:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_switch_zone_request() -> SwitchZoneRequest:
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_join_room_request() -> JoinRoomRequest:
 		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -1539,8 +1692,14 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.FILLED
 		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_switch_zone_request.value = SwitchZoneRequest.new()
-		return _switch_zone_request.value
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_request.value = JoinRoomRequest.new()
+		return _join_room_request.value
 	
 	var _login_success: PBField
 	func has_login_success() -> bool:
@@ -1569,11 +1728,134 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		data[12].state = PB_SERVICE_STATE.FILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = LoginSuccess.new()
 		return _login_success.value
+	
+	var _leave_room_request: PBField
+	func has_leave_room_request() -> bool:
+		return data[13].state == PB_SERVICE_STATE.FILLED
+	func get_leave_room_request() -> LeaveRoomRequest:
+		return _leave_room_request.value
+	func clear_leave_room_request() -> void:
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_leave_room_request() -> LeaveRoomRequest:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		data[13].state = PB_SERVICE_STATE.FILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = LeaveRoomRequest.new()
+		return _leave_room_request.value
+	
+	var _join_room_success: PBField
+	func has_join_room_success() -> bool:
+		return data[14].state == PB_SERVICE_STATE.FILLED
+	func get_join_room_success() -> JoinRoomSuccess:
+		return _join_room_success.value
+	func clear_join_room_success() -> void:
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_join_room_success() -> JoinRoomSuccess:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		data[14].state = PB_SERVICE_STATE.FILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = JoinRoomSuccess.new()
+		return _join_room_success.value
+	
+	var _leave_room_success: PBField
+	func has_leave_room_success() -> bool:
+		return data[15].state == PB_SERVICE_STATE.FILLED
+	func get_leave_room_success() -> LeaveRoomSuccess:
+		return _leave_room_success.value
+	func clear_leave_room_success() -> void:
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_leave_room_success() -> LeaveRoomSuccess:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		data[15].state = PB_SERVICE_STATE.FILLED
+		_leave_room_success.value = LeaveRoomSuccess.new()
+		return _leave_room_success.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

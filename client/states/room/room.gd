@@ -2,14 +2,14 @@ extends Node
 
 # Preload resources
 const packets := preload("res://packets.gd")
-const lobby_escape_menu_scene: PackedScene = preload("res://components/escape_menu/lobby/lobby_escape_menu.tscn")
+const room_escape_menu_scene: PackedScene = preload("res://components/escape_menu/room/room_escape_menu.tscn")
 
 # User Interface Variables
 @onready var ui_canvas: CanvasLayer = $UI
 @onready var chat: Control = $UI/Chat
 var chat_input: LineEdit
-var lobby_escape_menu
-@onready var join_room: Button = $JoinRoom
+var room_escape_menu
+@onready var leave_room: Button = $LeaveRoom
 
 func _ready() -> void:
 	_initialize()
@@ -31,8 +31,8 @@ func _initialize() -> void:
 	chat_input.text_submitted.connect(_on_chat_input_text_submitted)
 	
 	# Create and add the escape menu to the UI canvas layer
-	lobby_escape_menu = lobby_escape_menu_scene.instantiate()
-	ui_canvas.add_child(lobby_escape_menu)
+	room_escape_menu = room_escape_menu_scene.instantiate()
+	ui_canvas.add_child(room_escape_menu)
 
 func _on_websocket_connection_closed() -> void:
 	chat.error("You have been disconnected from the server")
@@ -48,8 +48,8 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_client_entered_packet(packet.get_client_entered().get_nickname())
 	elif packet.has_client_left():
 		_handle_client_left_packet(packet.get_client_left())
-	elif packet.has_join_room_success():
-		_handle_join_room_success_packet()
+	elif packet.has_leave_room_success():
+		_handle_leave_room_success_packet()
 
 # Print the message into our chat window
 func _handle_public_message_packet(packet_public_message: packets.PublicMessage) -> void:
@@ -101,7 +101,7 @@ func _on_chat_input_text_submitted(text: String) -> void:
 
 # If the ui_escape key is pressed, toggle the escape menu
 func _on_ui_escape_menu_toggle() -> void:
-	lobby_escape_menu.toggle()
+	room_escape_menu.toggle()
 
 # If the ui_enter key is pressed, toggle the chat input
 func _on_ui_chat_input_toggle() -> void:
@@ -123,12 +123,11 @@ func _send_client_entered_packet() -> bool:
 	else:
 		return true
 
-func _send_join_room_request_packet(room_id: int) -> bool:
+func _send_leave_room_request_packet() -> bool:
 	# We create a new packet
 	var packet := packets.Packet.new()
-	# We send the packet with the room_id we want to access
-	var join_room_request_packet := packet.new_join_room_request()
-	join_room_request_packet.set_room_id(room_id)
+	# We send the packet requesting the server to leave the room
+	packet.new_leave_room_request()
 
 	# Serialize and send our message
 	var err := WebSocket.send(packet)
@@ -138,10 +137,10 @@ func _send_join_room_request_packet(room_id: int) -> bool:
 	else:
 		return true
 
-func _handle_join_room_success_packet() -> void:
-	# We transition into the Room scene
-	GameManager.set_state(GameManager.State.ROOM)
+func _handle_leave_room_success_packet() -> void:
+	# We transition into the Lobby scene
+	GameManager.set_state(GameManager.State.LOBBY)
 
-func _on_join_room_pressed() -> void:
-	_send_join_room_request_packet(1)
-	join_room.hide()
+func _on_leave_room_pressed() -> void:
+	_send_leave_room_request_packet()
+	leave_room.hide()

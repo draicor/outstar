@@ -16,12 +16,13 @@ type WebSocketClient struct {
 	id          uint64               // Ephemeral ID for this connection
 	connection  *websocket.Conn      // Websocket connection to the godot client
 	hub         *server.Hub          // Hub that this client connected to
-	zone        *server.Zone         // Zone that this client is at
+	room        *server.Room         // Room that this client is at
 	sendChannel chan *packets.Packet // Channel that holds packets to be sent to the client
 	logger      *log.Logger
 	state       server.ClientStateHandler // Knows in what state the client is in
 	nickname    string                    // Seen by every other client
 	DBTX        *server.DBTX
+	initialized bool // Starts as false, becomes true after it gets assigned an ephemeral ID
 }
 
 // Called from Hub.serve()
@@ -44,25 +45,32 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 	// If no errors were found, create a new WebSocketClient
 	client := &WebSocketClient{
 		hub:         hub,                             // Entry point for all connected clients
-		zone:        nil,                             // At creation, the client is not registered into any zones
+		room:        nil,                             // At creation, the client is not registered into any rooms
 		connection:  conn,                            // Underlying WebSocket connection
 		sendChannel: make(chan *packets.Packet, 256), // Buffered channel of 256 packets, if full, drops packets
 		logger:      log.New(log.Writer(), "", log.LstdFlags),
 		DBTX:        hub.NewDBTX(),
+		initialized: false,
 	}
 
 	return client, nil
 }
 
 // Returns the client's ID
-func (c *WebSocketClient) Id() uint64 {
+func (c *WebSocketClient) GetId() uint64 {
 	return c.id
+}
+
+func (c *WebSocketClient) HasId() bool {
+	return c.initialized
 }
 
 // Initializes the client's state within the server
 func (c *WebSocketClient) Initialize(id uint64) {
 	// We store the new id as this client's ID
 	c.id = id
+	// We switch this bool to true so it doesn't get assigned a new ID by the server again
+	c.initialized = true
 	// When a new client connects, we switch to the connected state
 	c.SetState(&states.Connected{})
 }
@@ -94,10 +102,10 @@ func (c *WebSocketClient) SocketSendAs(payload packets.Payload, senderId uint64)
 
 // Forward packet's payload to a specific client by ID
 func (c *WebSocketClient) PassToPeer(payload packets.Payload, peerId uint64) {
-	// If this client is currently in a zone
-	if c.zone != nil {
-		// We look for the peer in the current zone
-		peer, found := c.zone.GetClient(peerId)
+	// If this client is currently in a room
+	if c.room != nil {
+		// We look for the peer in the current room
+		peer, found := c.room.GetClient(peerId)
 		if found {
 			peer.ProcessMessage(c.id, payload)
 		}
@@ -113,10 +121,10 @@ func (c *WebSocketClient) PassToPeer(payload packets.Payload, peerId uint64) {
 
 // Convenience function to queue a packet up to be passed to every client except the sender
 func (c *WebSocketClient) Broadcast(payload packets.Payload) {
-	// If this client is currently in a zone
-	if c.zone != nil {
-		// We send it to the broadcast channel of that zone
-		c.zone.GetBroadcastChannel() <- &packets.Packet{
+	// If this client is currently in a room
+	if c.room != nil {
+		// We send it to the broadcast channel of that room
+		c.room.GetBroadcastChannel() <- &packets.Packet{
 			SenderId: c.id,
 			Payload:  payload,
 		}
@@ -135,7 +143,7 @@ func (c *WebSocketClient) Broadcast(payload packets.Payload) {
 func (c *WebSocketClient) ReadPump() {
 	// We defer closing this connection so we can clean up if an error occurs or the loop breaks
 	defer func() {
-		c.Close("Read pump closed")
+		c.Close("disconnected")
 	}()
 
 	// Infinite loop
@@ -171,7 +179,7 @@ func (c *WebSocketClient) ReadPump() {
 func (c *WebSocketClient) WritePump() {
 	// We defer closing this connection so we can clean up if an error occurs or the loop breaks
 	defer func() {
-		c.Close("Write pump closed")
+		c.Close("disconnected")
 	}()
 
 	// Go over every message in the client's send channel
@@ -215,14 +223,19 @@ func (c *WebSocketClient) WritePump() {
 
 // Responsible for cleaning up the client's connection and unregistering the client from the hub
 func (c *WebSocketClient) Close(reason string) {
-	c.logger.Printf("Closing client connection: %s", reason)
+	if c.GetNickname() != "" {
+		// Server logging
+		c.logger.Printf("%s %s", c.GetNickname(), reason)
+		// Broadcast to everyone that this client left before we remove it from the hub/room
+		c.Broadcast(packets.NewClientLeft(c.GetNickname()))
 
-	// Broadcast to everyone that this client left before we remove it form the hub/zone
-	c.Broadcast(packets.NewClientLeft(c.GetNickname()))
+	} else { // If the client connected to the server but never logged in
+		c.logger.Println("Client", reason)
+	}
 
-	// If we were at a zone, remove the client from this zone
-	if c.zone != nil {
-		c.zone.GetRemoveClientChannel() <- c
+	// If we were at a room, remove the client from this room
+	if c.room != nil {
+		c.room.GetRemoveClientChannel() <- c
 
 		// If we were at the Hub
 	} else {
@@ -260,8 +273,6 @@ func (c *WebSocketClient) SetState(state server.ClientStateHandler) {
 		newStateName = state.Name()
 	}
 
-	// CHECK THIS
-	// Probably a bug here, even if the state is INVALID, it will attempt to switch to it
 	c.logger.Printf("Switching from state %s to %s", lastStateName, newStateName)
 	c.state = state
 
@@ -288,48 +299,65 @@ func (c *WebSocketClient) GetNickname() string {
 	return c.nickname
 }
 
-// Moves the client to a new zone
-func (c *WebSocketClient) SetZone(zone_id uint64) {
-	// If the client was already at another zone
-	if c.zone != nil {
-		// Broadcast to everyone that this client left this zone!
+// Moves the client to a new room
+func (c *WebSocketClient) JoinRoom(roomId uint64) {
+	// If the client was already at another room
+	if c.room != nil {
+		// Broadcast to everyone that this client left this room!
 		c.Broadcast(packets.NewClientLeft(c.GetNickname()))
-		// Unregister the client from that zone
-		c.zone.GetRemoveClientChannel() <- c
+		// Unregister the client from that room
+		c.room.GetRemoveClientChannel() <- c
 	}
 
 	// Delegate the work to the Hub
-	zone, ready := c.hub.JoinZone(c.id, zone_id)
+	room, ready := c.hub.JoinRoom(c.id, roomId)
 
-	// If the zone is valid
-	if zone != nil {
-		// We attempt to have this client connection register itself to the zone
-		c.RegisterToZone(zone, ready)
+	// If the room is valid
+	if room != nil {
+		// We attempt to have this client connection register itself to the room
+		// If the room was not created, we wait
+		if !ready {
+			log.Println("Room just got created, Wait 2 seconds until room is up and running...")
+			// Wait 2 seconds so the room gets created
+			time.Sleep(2 * time.Second)
+		} else {
+			// Wait 1 second before I use the room's channel
+			time.Sleep(1 * time.Second)
+		}
+		// Save a pointer to the room this client is at
+		c.room = room
+
+		// Register the client to the new room
+		c.room.GetAddClientChannel() <- c
+
+		// Send the client a packet to let him join the room
+		c.SocketSend(packets.NewJoinRoomSuccess())
+
+		// We don't broadcast to everyone that this client joined because
+		// we are letting the client do it once his game client loads!
 	}
 }
 
-// Attempts to register this client into the new zone
-func (c *WebSocketClient) RegisterToZone(zone *server.Zone, ready bool) {
-	// If the zone was not created, we wait
-	if !ready {
-		log.Println("Zone just got created, Wait 2 seconds until zone is up and running...")
-		// Wait 2 seconds so the zone gets created
-		time.Sleep(2 * time.Second)
+// If the client leaves a room, he goes back to the hub again!
+func (c *WebSocketClient) LeaveRoom() {
+	if c.room != nil {
+		// Broadcast to everyone that this client left this room!
+		c.Broadcast(packets.NewClientLeft(c.GetNickname()))
+		// Unregister the client from that room
+		c.room.GetRemoveClientChannel() <- c
+		// We remove the reference to this room in our WebSocket client
+		c.room = nil
 	}
-	// Save a pointer to the zone this client is at
-	c.zone = zone
-	// Register the client to the new zone
-	c.zone.GetAddClientChannel() <- c
 
-	// Wait 2 seconds before I use the zone's channel
-	time.Sleep(2 * time.Second)
-	// Broadcast to everyone that this client joined
-	c.Broadcast(packets.NewClientEntered(c.GetNickname()))
+	// Register the client to the Hub again
+	c.hub.GetAddClientChannel() <- c
+
+	// Wait 1 second before we let the client go into the lobby
+	time.Sleep(1 * time.Second)
+
+	// Send the client a packet to let him join the lobby
+	c.SocketSend(packets.NewLeaveRoomSuccess())
+
+	// We don't broadcast to everyone that this client joined because
+	// we are letting the client do it once his game client loads!
 }
-
-/*
-func (c *WebSocketClient) LeaveZone() {
-
-	// If the client leaves a zone, he goes back to the hub again!
-
-*/

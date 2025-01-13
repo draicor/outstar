@@ -76,3 +76,17 @@ func NewLoginSuccess(nickname string) Payload {
 		},
 	}
 }
+
+// Sent by the server to ask the client to switch to the room state
+func NewJoinRoomSuccess() Payload {
+	return &Packet_JoinRoomSuccess{
+		JoinRoomSuccess: &JoinRoomSuccess{},
+	}
+}
+
+// Sent by the server to ask the client to switch to the lobby state
+func NewLeaveRoomSuccess() Payload {
+	return &Packet_LeaveRoomSuccess{
+		LeaveRoomSuccess: &LeaveRoomSuccess{},
+	}
+}
