@@ -15,8 +15,8 @@ func error(message: String) -> void:
 func success(message: String) -> void:
 	_instantiate_message().success(message)
 
-func public(sender_name: String, message: String) -> void:
-	_instantiate_message().public(sender_name, message)
+func public(sender_name: String, message: String, color: Color) -> void:
+	_instantiate_message().public(sender_name, message, color)
 
 func _instantiate_message() -> Message:
 	var m = Message.new()

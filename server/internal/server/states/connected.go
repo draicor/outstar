@@ -51,8 +51,12 @@ func (state *Connected) HandleMessage(senderId uint64, payload packets.Payload) 
 		switch casted_payload := payload.(type) {
 
 		// PUBLIC MESSAGE
-		case *packets.Packet_ChatMessage:
-			state.client.Broadcast(payload)
+		case *packets.Packet_PublicMessage:
+			// The server ignores the client's nickname from the packet, takes the data and
+			// constructs a new public message with the client's nickname from memory
+			nickname := state.client.GetNickname()
+			text := casted_payload.PublicMessage.Text
+			state.client.Broadcast(packets.NewPublicMessage(nickname, text))
 
 		// HEARTBEAT
 		case *packets.Packet_Heartbeat:
@@ -143,7 +147,8 @@ func (state *Connected) HandleLoginRequest(senderId uint64, payload *packets.Pac
 	// Store this client's nickname in memory
 	state.client.SetNickname(user.Nickname)
 	state.logger.Printf("%s logged in as %s", username, user.Nickname)
-	state.client.SocketSend(packets.NewRequestGranted())
+	// We send the nickname to the client so he can display it on his own game client
+	state.client.SocketSend(packets.NewLoginSuccess(user.Nickname))
 }
 
 func (state *Connected) HandleRegisterRequest(senderId uint64, payload *packets.Packet_RegisterRequest) {

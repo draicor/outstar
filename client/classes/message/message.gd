@@ -23,5 +23,5 @@ func success(message: String) -> void:
 	_add_text(message, Color.LAWN_GREEN)
 
 # Formats the message to display sender: message
-func public(sender_name: String, message: String) -> void:
-	_add_text("[color=#%s]%s:[/color] [i]%s[/i]" % [Color.CYAN.to_html(false), sender_name, message])
+func public(sender_name: String, message: String, color: Color) -> void:
+	_add_text("[color=#%s]%s[/color]: [i]%s[/i]" % [color.to_html(false), sender_name, message])

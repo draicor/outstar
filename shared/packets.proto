@@ -6,36 +6,33 @@ package packets;
 // Compile to the pkg/packets folder and use "packets" as the go package
 option go_package = "pkg/packets";
 
-// TO FIX ->
-// Replace Chat chat_message with -> PublicMessage public_message
-// Granted request_granted -> RequestGranted request_granted
-// Denied request_denied -> RequestDenied request_denied
-
 // Packet types
-message Chat { string text = 1; } // Sent by client to communicate with other clients
+message PublicMessage { string nickname = 1; string text = 2; } // Sent by client to communicate with other clients in the area
 message Handshake {} // Sent by server after client connects
 message Heartbeat {} // Used to keep connection alive
-message Granted {} // Sent by server if request was successful
-message Denied { string reason = 1; } // Sent by server if request was unsuccessful
+message RequestGranted {} // Sent by server if request was successful
+message RequestDenied { string reason = 1; } // Sent by server if request was unsuccessful
 message LoginRequest { string username = 1; string password = 2; } // Sent by client to login
 message RegisterRequest { string username = 1; string nickname = 2; string password = 3; } // Sent by client to register
 message ClientEntered { string nickname = 1; } // Sent by the client once he arrives and broadcasted to everyone
 message ClientLeft { string nickname = 1; } // Sent by the client once he leaves, broadcasted to everyone
 message SwitchZoneRequest { uint64 zone_id = 1; } // Sent by the client to request joining a new zone
+message LoginSuccess { string nickname = 1; } // Sent by the client after successful login
 
 // Main Packet container
 message Packet {
   uint64 sender_id = 1;
   oneof payload { // Generates a field called Payload of type isPacket_Payload interface
-    Chat chat_message = 2;
+    PublicMessage public_message = 2;
     Handshake handshake = 3;
     Heartbeat heartbeat = 4;
-    Granted request_granted = 5;
-    Denied request_denied = 6;
+    RequestGranted request_granted = 5;
+    RequestDenied request_denied = 6;
     LoginRequest login_request = 7;
     RegisterRequest register_request = 8;
     ClientEntered client_entered = 9;
     ClientLeft client_left = 10;
     SwitchZoneRequest switch_zone_request = 11;
+    LoginSuccess login_success = 12;
   }
 }

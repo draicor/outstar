@@ -10,11 +10,12 @@ package packets
 // The Packet Struct contains a Payload as an interface called isPacket_Payload
 type Payload = isPacket_Payload
 
-// Sent by client to communicate with other clients
-func NewChatMessage(text string) Payload {
-	return &Packet_ChatMessage{
-		ChatMessage: &Chat{
-			Text: text,
+// Sent by client to communicate with other clients in the area
+func NewPublicMessage(nickname string, text string) Payload {
+	return &Packet_PublicMessage{
+		PublicMessage: &PublicMessage{
+			Nickname: nickname,
+			Text:     text,
 		},
 	}
 }
@@ -36,14 +37,14 @@ func NewHeartbeat() Payload {
 // Sent by server if request was successful
 func NewRequestGranted() Payload {
 	return &Packet_RequestGranted{
-		RequestGranted: &Granted{},
+		RequestGranted: &RequestGranted{},
 	}
 }
 
 // Sent by server if request was unsuccessful
 func NewRequestDenied(reason string) Payload {
 	return &Packet_RequestDenied{
-		RequestDenied: &Denied{
+		RequestDenied: &RequestDenied{
 			Reason: reason,
 		},
 	}
@@ -62,6 +63,15 @@ func NewClientEntered(nickname string) Payload {
 func NewClientLeft(nickname string) Payload {
 	return &Packet_ClientLeft{
 		ClientLeft: &ClientLeft{
+			Nickname: nickname,
+		},
+	}
+}
+
+// Sent by the client after successful login
+func NewLoginSuccess(nickname string) Payload {
+	return &Packet_LoginSuccess{
+		LoginSuccess: &LoginSuccess{
 			Nickname: nickname,
 		},
 	}

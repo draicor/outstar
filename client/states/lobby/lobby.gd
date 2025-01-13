@@ -38,20 +38,21 @@ func _on_websocket_connection_closed() -> void:
 	chat.error("You have been disconnected from the server")
 
 func _on_websocket_packet_received(packet: packets.Packet) -> void:
-	var sender_id := packet.get_sender_id()
+	#var sender_id := packet.get_sender_id()
 	
-	if packet.has_chat_message():
-		_handle_packet_chat_message(sender_id, packet.get_chat_message())
+	if packet.has_public_message():
+		_handle_public_message_packet(packet.get_public_message())
 	elif packet.has_heartbeat():
 		Signals.heartbeat_received.emit()
 	elif packet.has_client_entered():
-		_handle_packet_client_entered(packet.get_client_entered().get_nickname())
+		_handle_client_entered_packet(packet.get_client_entered().get_nickname())
 	elif packet.has_client_left():
-		_handle_packet_client_left(packet.get_client_left())
+		_handle_client_left_packet(packet.get_client_left())
 
-# We print the message into our chat window
-func _handle_packet_chat_message(sender_id: int, packet_chat_message: packets.Chat) -> void:
-	chat.public("Client %d" % sender_id, packet_chat_message.get_text())
+# Print the message into our chat window
+func _handle_public_message_packet(packet_public_message: packets.PublicMessage) -> void:
+	# We print the nickname and then the message contents
+	chat.public("%s" % packet_public_message.get_nickname(), packet_public_message.get_text(), Color.LIGHT_SEA_GREEN)
 
 # We send a heartbeat packet to the server every time the timer timeouts
 func _on_websocket_heartbeat_attempt() -> void:
@@ -66,12 +67,12 @@ func _on_websocket_heartbeat_attempt() -> void:
 		Signals.heartbeat_sent.emit()
 
 # When a new client connects, we print the message into our chat window
-func _handle_packet_client_entered(nickname: String) -> void:
+func _handle_client_entered_packet(nickname: String) -> void:
 	chat.info("%s has joined" % nickname)
 
 # When a client leaves, we print the message into our chat window
-func _handle_packet_client_left(packet_client_left: packets.ClientLeft) -> void:
-	chat.info("%s left" % packet_client_left.get_nickname())
+func _handle_client_left_packet(client_left_packet: packets.ClientLeft) -> void:
+	chat.info("%s left" % client_left_packet.get_nickname())
 	
 # To send messages
 func _on_chat_input_text_submitted(text: String) -> void:
@@ -82,16 +83,16 @@ func _on_chat_input_text_submitted(text: String) -> void:
 	
 	# Create the chat_message packet
 	var packet := packets.Packet.new()
-	var chat_message := packet.new_chat_message()
-	chat_message.set_text(text)
+	var public_message := packet.new_public_message()
+	public_message.set_text(text)
 	
 	# This serializes and sends our message
 	var err := WebSocket.send(packet)
 	if err:
 		chat.error("You have been disconnected from the server")
 	else:
-		# FIX THIS -> Replace Localhost with nickname!
-		chat.public("Localhost", text)
+		# We grab our client's nickname from the GameManager autoload
+		chat.public(GameManager.client_nickname, text, Color.CYAN)
 	
 	# We clear the line edit
 	chat_input.text = ""

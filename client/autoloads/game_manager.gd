@@ -16,6 +16,7 @@ var _states_scenes: Dictionary = {
 
 # Expose the client's data globally
 var client_id: int
+var client_nickname: String
 var _current_scene_root: Node
 
 # A method to change the game's state

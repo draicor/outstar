@@ -316,7 +316,6 @@ func (c *WebSocketClient) RegisterToZone(zone *server.Zone, ready bool) {
 		// Wait 2 seconds so the zone gets created
 		time.Sleep(2 * time.Second)
 	}
-	log.Println(zone)
 	// Save a pointer to the zone this client is at
 	c.zone = zone
 	// Register the client to the new zone

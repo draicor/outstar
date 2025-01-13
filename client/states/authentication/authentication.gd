@@ -2,8 +2,6 @@ extends Node
 
 const packets := preload("res://packets.gd")
 
-var _on_request_granted : Callable
-
 @onready var username: LineEdit = $UI/MarginContainer/VBoxContainer/Username
 @onready var password: LineEdit = $UI/MarginContainer/VBoxContainer/Password
 @onready var nickname: LineEdit = $UI/MarginContainer/VBoxContainer/Nickname
@@ -23,8 +21,10 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	if packet.has_request_denied():
 		_update_status(packet.get_request_denied().get_reason())
 	elif packet.has_request_granted():
-		# We call the function that we setup if the request was granted
-		_on_request_granted.call()
+		_handle_request_granted_packet()
+	elif packet.has_login_success():
+		_handle_login_success(packet.get_login_success())
+
 
 func _on_login_button_pressed() -> void:
 	# Create the login_request packet
@@ -39,7 +39,11 @@ func _on_login_button_pressed() -> void:
 		_update_status("Error connecting to the server")
 	else:
 		_update_status("Logging in...")
-		_on_request_granted = func(): GameManager.set_state(GameManager.State.LOBBY)
+
+func _handle_login_success(login_success_packet: packets.LoginSuccess) -> void:
+	# We store the info of our client sent by the server
+	GameManager.client_nickname = login_success_packet.get_nickname()
+	GameManager.set_state(GameManager.State.LOBBY)
 
 func _on_register_button_pressed() -> void:
 	# Create the register_request packet
@@ -55,7 +59,9 @@ func _on_register_button_pressed() -> void:
 		_update_status("Error connecting to the server")
 	else:
 		_update_status("Creating user...")
-		_on_request_granted = func(): _update_status("Registration successful")
+
+func _handle_request_granted_packet() -> void:
+	_update_status("Registration successful")
 
 func _name_is_valid(input: LineEdit) -> bool:
 	if input.text.is_empty():

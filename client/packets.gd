@@ -661,22 +661,36 @@ class PBPacker:
 ############### USER DATA BEGIN ################
 
 
-class Chat:
+class PublicMessage:
 	func _init():
 		var service
 		
-		_text = PBField.new("text", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		_nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _nickname
+		data[_nickname.tag] = service
+		
+		_text = PBField.new("text", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
 		service.field = _text
 		data[_text.tag] = service
 		
 	var data = {}
 	
+	var _nickname: PBField
+	func get_nickname() -> String:
+		return _nickname.value
+	func clear_nickname() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_nickname(value : String) -> void:
+		_nickname.value = value
+	
 	var _text: PBField
 	func get_text() -> String:
 		return _text.value
 	func clear_text() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
+		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_text.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_text(value : String) -> void:
 		_text.value = value
@@ -756,7 +770,7 @@ class Heartbeat:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
-class Granted:
+class RequestGranted:
 	func _init():
 		var service
 		
@@ -783,7 +797,7 @@ class Granted:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
-class Denied:
+class RequestDenied:
 	func _init():
 		var service
 		
@@ -1071,6 +1085,47 @@ class SwitchZoneRequest:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
+class LoginSuccess:
+	func _init():
+		var service
+		
+		_nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _nickname
+		data[_nickname.tag] = service
+		
+	var data = {}
+	
+	var _nickname: PBField
+	func get_nickname() -> String:
+		return _nickname.value
+	func clear_nickname() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_nickname(value : String) -> void:
+		_nickname.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
 class Packet:
 	func _init():
 		var service
@@ -1080,11 +1135,11 @@ class Packet:
 		service.field = _sender_id
 		data[_sender_id.tag] = service
 		
-		_chat_message = PBField.new("chat_message", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		_public_message = PBField.new("public_message", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _chat_message
-		service.func_ref = Callable(self, "new_chat_message")
-		data[_chat_message.tag] = service
+		service.field = _public_message
+		service.func_ref = Callable(self, "new_public_message")
+		data[_public_message.tag] = service
 		
 		_handshake = PBField.new("handshake", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
@@ -1140,6 +1195,12 @@ class Packet:
 		service.func_ref = Callable(self, "new_switch_zone_request")
 		data[_switch_zone_request.tag] = service
 		
+		_login_success = PBField.new("login_success", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 12, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _login_success
+		service.func_ref = Callable(self, "new_login_success")
+		data[_login_success.tag] = service
+		
 	var data = {}
 	
 	var _sender_id: PBField
@@ -1151,15 +1212,15 @@ class Packet:
 	func set_sender_id(value : int) -> void:
 		_sender_id.value = value
 	
-	var _chat_message: PBField
-	func has_chat_message() -> bool:
+	var _public_message: PBField
+	func has_public_message() -> bool:
 		return data[2].state == PB_SERVICE_STATE.FILLED
-	func get_chat_message() -> Chat:
-		return _chat_message.value
-	func clear_chat_message() -> void:
+	func get_public_message() -> PublicMessage:
+		return _public_message.value
+	func clear_public_message() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_chat_message() -> Chat:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_public_message() -> PublicMessage:
 		data[2].state = PB_SERVICE_STATE.FILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
@@ -1179,8 +1240,10 @@ class Packet:
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_chat_message.value = Chat.new()
-		return _chat_message.value
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_public_message.value = PublicMessage.new()
+		return _public_message.value
 	
 	var _handshake: PBField
 	func has_handshake() -> bool:
@@ -1191,7 +1254,7 @@ class Packet:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_handshake() -> Handshake:
-		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		data[3].state = PB_SERVICE_STATE.FILLED
 		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -1210,6 +1273,8 @@ class Packet:
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = Handshake.new()
 		return _handshake.value
 	
@@ -1222,7 +1287,7 @@ class Packet:
 		data[4].state = PB_SERVICE_STATE.UNFILLED
 		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_heartbeat() -> Heartbeat:
-		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
@@ -1241,19 +1306,21 @@ class Packet:
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_heartbeat.value = Heartbeat.new()
 		return _heartbeat.value
 	
 	var _request_granted: PBField
 	func has_request_granted() -> bool:
 		return data[5].state == PB_SERVICE_STATE.FILLED
-	func get_request_granted() -> Granted:
+	func get_request_granted() -> RequestGranted:
 		return _request_granted.value
 	func clear_request_granted() -> void:
 		data[5].state = PB_SERVICE_STATE.UNFILLED
 		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_request_granted() -> Granted:
-		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_request_granted() -> RequestGranted:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
@@ -1272,19 +1339,21 @@ class Packet:
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = Granted.new()
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_request_granted.value = RequestGranted.new()
 		return _request_granted.value
 	
 	var _request_denied: PBField
 	func has_request_denied() -> bool:
 		return data[6].state == PB_SERVICE_STATE.FILLED
-	func get_request_denied() -> Denied:
+	func get_request_denied() -> RequestDenied:
 		return _request_denied.value
 	func clear_request_denied() -> void:
 		data[6].state = PB_SERVICE_STATE.UNFILLED
 		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_request_denied() -> Denied:
-		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_request_denied() -> RequestDenied:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
@@ -1303,7 +1372,9 @@ class Packet:
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = Denied.new()
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_request_denied.value = RequestDenied.new()
 		return _request_denied.value
 	
 	var _login_request: PBField
@@ -1315,7 +1386,7 @@ class Packet:
 		data[7].state = PB_SERVICE_STATE.UNFILLED
 		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_login_request() -> LoginRequest:
-		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
@@ -1334,6 +1405,8 @@ class Packet:
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_login_request.value = LoginRequest.new()
 		return _login_request.value
 	
@@ -1346,7 +1419,7 @@ class Packet:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_register_request() -> RegisterRequest:
-		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
@@ -1365,6 +1438,8 @@ class Packet:
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_register_request.value = RegisterRequest.new()
 		return _register_request.value
 	
@@ -1377,7 +1452,7 @@ class Packet:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_client_entered() -> ClientEntered:
-		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
@@ -1396,6 +1471,8 @@ class Packet:
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_client_entered.value = ClientEntered.new()
 		return _client_entered.value
 	
@@ -1408,7 +1485,7 @@ class Packet:
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_client_left() -> ClientLeft:
-		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
@@ -1427,6 +1504,8 @@ class Packet:
 		data[10].state = PB_SERVICE_STATE.FILLED
 		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = ClientLeft.new()
 		return _client_left.value
 	
@@ -1439,7 +1518,7 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_switch_zone_request() -> SwitchZoneRequest:
-		_chat_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
@@ -1458,8 +1537,43 @@ class Packet:
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		data[11].state = PB_SERVICE_STATE.FILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_switch_zone_request.value = SwitchZoneRequest.new()
 		return _switch_zone_request.value
+	
+	var _login_success: PBField
+	func has_login_success() -> bool:
+		return data[12].state == PB_SERVICE_STATE.FILLED
+	func get_login_success() -> LoginSuccess:
+		return _login_success.value
+	func clear_login_success() -> void:
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_login_success() -> LoginSuccess:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		_switch_zone_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		data[12].state = PB_SERVICE_STATE.FILLED
+		_login_success.value = LoginSuccess.new()
+		return _login_success.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
