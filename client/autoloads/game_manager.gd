@@ -2,7 +2,7 @@ extends Node
 
 # Game States
 enum State {
-	START,
+	CONNECTED,
 	AUTHENTICATION,
 	LOBBY,
 	ROOM,
@@ -10,7 +10,7 @@ enum State {
 
 # Replace with Dictionary[State, String] in new version of Godot v4.4+
 var _states_scenes: Dictionary = {
-	State.START: "res://states/start/start.tscn",
+	State.CONNECTED: "res://states/connected/connected.tscn",
 	State.AUTHENTICATION: "res://states/authentication/authentication.tscn",
 	State.LOBBY: "res://states/lobby/lobby.tscn",
 	State.ROOM: "res://states/room/room.tscn",

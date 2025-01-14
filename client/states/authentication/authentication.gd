@@ -2,9 +2,9 @@ extends Node
 
 const packets := preload("res://packets.gd")
 
-@onready var username: LineEdit = $UI/MarginContainer/VBoxContainer/Username
-@onready var password: LineEdit = $UI/MarginContainer/VBoxContainer/Password
-@onready var nickname: LineEdit = $UI/MarginContainer/VBoxContainer/Nickname
+@onready var username_input: LineEdit = $UI/MarginContainer/VBoxContainer/Username
+@onready var password_input: LineEdit = $UI/MarginContainer/VBoxContainer/Password
+@onready var nickname_input: LineEdit = $UI/MarginContainer/VBoxContainer/Nickname
 @onready var status: Label = $UI/MarginContainer/VBoxContainer/Status
 @onready var login_button: Button = $UI/MarginContainer/VBoxContainer/HBoxContainer/LoginButton
 @onready var register_button: Button = $UI/MarginContainer/VBoxContainer/HBoxContainer/RegisterButton
@@ -13,6 +13,11 @@ func _ready() -> void:
 	# Websocket signals
 	Signals.connection_closed.connect(_on_websocket_connection_closed)
 	Signals.packet_received.connect(_on_websocket_packet_received)
+	# Connect the username/password inputs to the login
+	username_input.text_submitted.connect(_on_login_input_text_submitted)
+	password_input.text_submitted.connect(_on_login_input_text_submitted)
+	# Focus on the username field
+	username_input.grab_focus()
 
 func _on_websocket_connection_closed() -> void:
 	_update_status("You have been disconnected from the server")
@@ -25,14 +30,25 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	elif packet.has_login_success():
 		_handle_login_success(packet.get_login_success())
 
+# We need to get the _text from the event but we ignore it because
+# we only care about the event itself, not the text being sent by it
+func _on_login_input_text_submitted(_text: String) -> void:
+	_on_login_button_pressed()
 
 func _on_login_button_pressed() -> void:
+	# We validate username and password fields
+	# before we even try to talk to the server
+	if not _name_is_valid(username_input):
+		return
+	if not _password_is_valid(password_input):
+		return
+	
 	# Create the login_request packet
 	var packet := packets.Packet.new()
 	var login_request := packet.new_login_request()
 	# Add the user input to the packet
-	login_request.set_username(username.text)
-	login_request.set_password(password.text)
+	login_request.set_username(username_input.text)
+	login_request.set_password(password_input.text)
 	# Serialize and send it to the server
 	var err := WebSocket.send(packet)
 	if err:
@@ -46,13 +62,21 @@ func _handle_login_success(login_success_packet: packets.LoginSuccess) -> void:
 	GameManager.set_state(GameManager.State.LOBBY)
 
 func _on_register_button_pressed() -> void:
+	# We validate all fields before we even try to talk to the server
+	if not _name_is_valid(username_input):
+		return
+	if not _name_is_valid(nickname_input):
+		return
+	if not _password_is_valid(password_input):
+		return
+		
 	# Create the register_request packet
 	var packet := packets.Packet.new()
 	var register_request := packet.new_register_request()
 	# Add the user input to the packet
-	register_request.set_username(username.text)
-	register_request.set_nickname(nickname.text)
-	register_request.set_password(password.text)
+	register_request.set_username(username_input.text)
+	register_request.set_nickname(nickname_input.text)
+	register_request.set_password(password_input.text)
 	# Serialize and send it to the server
 	var err := WebSocket.send(packet)
 	if err:
@@ -81,7 +105,7 @@ func _password_is_valid(input: LineEdit) -> bool:
 		input.grab_focus()
 		return false
 	if input.text.length() < 8:
-		_update_status(input.name + "is too short")
+		_update_status(input.name + " is too short")
 		input.grab_focus()
 		return false
 	if input.text.length() > input.max_length:

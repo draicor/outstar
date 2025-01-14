@@ -37,8 +37,7 @@ func _ready() -> void:
 	WebSocket.connect_to_url(url_address)
 
 func _on_websocket_connected_to_server() -> void:
-	# We don't do anything because we change states immediately
-	pass
+	status.text = "Connection established"
 
 func _on_websocket_connection_closed() -> void:
 	status.text = "Connection to the server failed"

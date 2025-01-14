@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"server/internal/server"
@@ -12,6 +13,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// This client data will be injected into every state on state changes,
+// any data that should be kept in server memory should be stored in the
+// WebSocketClient
 type WebSocketClient struct {
 	id          uint64               // Ephemeral ID for this connection
 	connection  *websocket.Conn      // Websocket connection to the godot client
@@ -71,13 +75,16 @@ func (c *WebSocketClient) Initialize(id uint64) {
 	c.id = id
 	// We switch this bool to true so it doesn't get assigned a new ID by the server again
 	c.initialized = true
+	// Improve the details of the logged data in the server console
+	prefix := fmt.Sprintf("Client %d [%s]: ", c.GetId(), "WebSocket")
+	c.logger.SetPrefix(prefix)
 	// When a new client connects, we switch to the connected state
 	c.SetState(&states.Connected{})
 }
 
 // Handles the packet that comes from the client
 func (c *WebSocketClient) ProcessMessage(senderId uint64, payload packets.Payload) {
-	c.state.HandleMessage(senderId, payload)
+	c.state.HandlePacket(senderId, payload)
 }
 
 // Sends a message to the client
@@ -263,17 +270,22 @@ func (c *WebSocketClient) SetState(state server.ClientStateHandler) {
 	// If our current state is valid
 	if c.state != nil {
 		// call the OnExit code for the current state
-		lastStateName = c.state.Name()
+		lastStateName = c.state.GetName()
 		c.state.OnExit()
 	}
 
 	newStateName := "None"
 	// If the new state is valid
 	if state != nil {
-		newStateName = state.Name()
+		newStateName = state.GetName()
 	}
 
-	c.logger.Printf("Switching from state %s to %s", lastStateName, newStateName)
+	// Server logging
+	if c.GetNickname() != "" {
+		c.logger.Printf("%s switched from state %s to %s", c.GetNickname(), lastStateName, newStateName)
+	}
+
+	// Replace the previous state with the new one inside this client
 	c.state = state
 
 	// If the client's new state is valid
@@ -317,7 +329,6 @@ func (c *WebSocketClient) JoinRoom(roomId uint64) {
 		// We attempt to have this client connection register itself to the room
 		// If the room was not created, we wait
 		if !ready {
-			log.Println("Room just got created, Wait 2 seconds until room is up and running...")
 			// Wait 2 seconds so the room gets created
 			time.Sleep(2 * time.Second)
 		} else {
@@ -332,6 +343,9 @@ func (c *WebSocketClient) JoinRoom(roomId uint64) {
 
 		// Send the client a packet to let him join the room
 		c.SocketSend(packets.NewJoinRoomSuccess())
+
+		// After joining the room, switch to the Room state
+		c.SetState(&states.Room{})
 
 		// We don't broadcast to everyone that this client joined because
 		// we are letting the client do it once his game client loads!
@@ -357,6 +371,9 @@ func (c *WebSocketClient) LeaveRoom() {
 
 	// Send the client a packet to let him join the lobby
 	c.SocketSend(packets.NewLeaveRoomSuccess())
+
+	// After leaving the room, switch to the Lobby state
+	c.SetState(&states.Lobby{})
 
 	// We don't broadcast to everyone that this client joined because
 	// we are letting the client do it once his game client loads!

@@ -60,7 +60,7 @@ type ClientInterfacer interface {
 
 // A structure for a state machine to process the client's messages
 type ClientStateHandler interface {
-	Name() string
+	GetName() string
 
 	// Inject the client into the state handler, so we can access the client's data
 	SetClient(client ClientInterfacer)
@@ -69,7 +69,7 @@ type ClientStateHandler interface {
 	OnEnter()
 
 	// Handles the packets received in this state
-	HandleMessage(senderId uint64, payload packets.Payload)
+	HandlePacket(senderId uint64, payload packets.Payload)
 
 	// Triggers once a client leaves this state
 	OnExit()

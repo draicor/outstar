@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"server/internal/server/objects"
 	"server/pkg/packets"
@@ -24,6 +25,8 @@ type Room struct {
 
 	// Clients received in this channel will be removed from this room
 	RemoveClientChannel chan ClientInterfacer
+
+	logger *log.Logger
 }
 
 // Returns this room's ID
@@ -34,21 +37,25 @@ func (r *Room) GetId() uint64 {
 // Sets the ID for this room after creation
 func (r *Room) SetId(roomId uint64) {
 	r.Id = roomId
+	// Improve the details of the logged data in the server console
+	prefix := fmt.Sprintf("[Room %d]: ", r.GetId())
+	r.logger.SetPrefix(prefix)
 }
 
-// Creates a new room
+// Static function that creates a new room
 func CreateRoom() *Room {
 	return &Room{
 		Clients:             objects.NewSharedCollection[ClientInterfacer](),
 		BroadcastChannel:    make(chan *packets.Packet),
 		AddClientChannel:    make(chan ClientInterfacer),
 		RemoveClientChannel: make(chan ClientInterfacer),
+		logger:              log.New(log.Writer(), "", log.LstdFlags),
 	}
 }
 
 // Listens for packets on each channel
 func (r *Room) Start() {
-	log.Println("Room", r.Id, "created...")
+	r.logger.Println("Listening for packets...")
 
 	// Infinite for loop
 	for {
@@ -61,13 +68,13 @@ func (r *Room) Start() {
 			// WE HAVE TO PASS THE SAME ID AS THE HUB ID!!!
 			r.Clients.Add(client, client.GetId()) // CAUTION HERE <-
 			r.PlayersOnline++
-		// If a client leaves, remove him from this room
 
+		// If a client leaves, remove him from this room
 		case client := <-r.RemoveClientChannel:
 			r.Clients.Remove(client.GetId())
 			r.PlayersOnline--
-		// If we get a packet from the broadcast channel
 
+		// If we get a packet from the broadcast channel
 		case packet := <-r.BroadcastChannel:
 			// Go over every registered client in this room
 			r.Clients.ForEach(func(id uint64, client ClientInterfacer) {
