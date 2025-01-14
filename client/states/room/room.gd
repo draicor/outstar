@@ -3,6 +3,7 @@ extends Node
 # Preload resources
 const packets := preload("res://packets.gd")
 const room_escape_menu_scene: PackedScene = preload("res://components/escape_menu/room/room_escape_menu.tscn")
+const dialogue_box_scene: PackedScene = preload("res://components/dialog_box/dialog_box.tscn")
 
 # User Interface Variables
 @onready var ui_canvas: CanvasLayer = $UI
@@ -143,4 +144,13 @@ func _handle_leave_room_success_packet() -> void:
 
 func _on_leave_room_pressed() -> void:
 	_send_leave_room_request_packet()
+	# We hide the leave room button so the user can't spam it
 	leave_room.hide()
+	
+	# We instantiate the dialogue box scene
+	var dialogue_box := dialogue_box_scene.instantiate()
+	# We add it to our root with force readable name set to false
+	ui_canvas.add_child(dialogue_box, false)
+	# The dialogue_box starts as hidden, we pass the values that will
+	# have, and then we show it from code
+	dialogue_box.initialize("Disconnecting...", false)

@@ -1,0 +1,63 @@
+[gd_scene load_steps=5 format=3 uid="uid://ckaq71xd28wyr"]
+
+[ext_resource type="StyleBox" uid="uid://nvug1cqa5843" path="res://themes/style_box_flat.tres" id="1_54ldi"]
+[ext_resource type="Script" path="res://components/dialog_box/dialog_box.gd" id="2_ds008"]
+[ext_resource type="Shader" path="res://assets/shaders/blur.gdshader" id="3_w5wtx"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_p4hjn"]
+shader = ExtResource("3_w5wtx")
+shader_parameter/amount = 1.0
+
+[node name="DialogBox" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_ds008")
+
+[node name="Background" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_p4hjn")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(280, 140)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -70.0
+offset_right = 140.0
+offset_bottom = 70.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_styles/panel = ExtResource("1_54ldi")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/separation = 20
+
+[node name="MessageLabel" type="Label" parent="PanelContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 2
+
+[node name="CloseButton" type="Button" parent="PanelContainer/VBoxContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "Close"

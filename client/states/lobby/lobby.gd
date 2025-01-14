@@ -3,6 +3,7 @@ extends Node
 # Preload resources
 const packets := preload("res://packets.gd")
 const lobby_escape_menu_scene: PackedScene = preload("res://components/escape_menu/lobby/lobby_escape_menu.tscn")
+const dialogue_box_scene: PackedScene = preload("res://components/dialog_box/dialog_box.tscn")
 
 # User Interface Variables
 @onready var ui_canvas: CanvasLayer = $UI
@@ -144,4 +145,13 @@ func _handle_join_room_success_packet() -> void:
 
 func _on_join_room_pressed() -> void:
 	_send_join_room_request_packet(1)
+	# We hide the join room button so the user can't spam it
 	join_room.hide()
+	
+	# We instantiate the dialogue box scene
+	var dialogue_box := dialogue_box_scene.instantiate()
+	# We add it to our root with force readable name set to false
+	ui_canvas.add_child(dialogue_box, false)
+	# The dialogue_box starts as hidden, we pass the values that will
+	# have, and then we show it from code
+	dialogue_box.initialize("Connecting...", false)

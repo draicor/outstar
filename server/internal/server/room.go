@@ -73,10 +73,7 @@ func (r *Room) Start() {
 			r.Clients.ForEach(func(id uint64, client ClientInterfacer) {
 				// Check that the sender does not send the message to itself
 				if client.GetId() != packet.SenderId {
-					// If the client is not idling at the login/register screen
-					if client.GetNickname() != "" {
-						client.ProcessMessage(packet.SenderId, packet.Payload)
-					}
+					client.ProcessMessage(packet.SenderId, packet.Payload)
 				}
 			})
 		}
