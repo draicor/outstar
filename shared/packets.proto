@@ -21,6 +21,7 @@ message LoginSuccess { string nickname = 1; } // Sent by the server after succes
 message LeaveRoomRequest {} // Sent by the client to request leaving a room and going back to the Hub
 message JoinRoomSuccess {} // Sent by the server to ask the client to switch to the room state
 message LeaveRoomSuccess {} // Sent by the server to ask the client to switch to the lobby state
+message CreateRoomRequest {} // Sent by the client to request creating a new room
 
 // Main Packet container
 message Packet {
@@ -40,5 +41,6 @@ message Packet {
     LeaveRoomRequest leave_room_request = 13;
     JoinRoomSuccess join_room_success = 14;
     LeaveRoomSuccess leave_room_success = 15;
+    CreateRoomRequest create_room_request = 16;
   }
 }

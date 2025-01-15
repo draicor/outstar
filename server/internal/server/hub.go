@@ -149,15 +149,29 @@ func (h *Hub) GetRoom(id uint64) (Room, bool) {
 	return h.Rooms.Get(id)
 }
 
-// TO FIX -> SPLIT THE CREATE ROOM AND JOIN ROOM LOGIC!
+// Creates a new room adds it to the list of available rooms
+func (h *Hub) CreateRoom() *Room {
+	// Create it with the next id counter from the Hub
+	room := CreateRoom()
+	// Add it to the Hub's available rooms
+	room.SetId(h.Rooms.Add(*room))
+	// Start the room in a goroutine
+	go room.Start()
 
-// Registers the client to this room if it exists, creates a new room if it doesn't
-// Returns a boolean to make the client interfacer wait before attempting to join
-func (h *Hub) JoinRoom(clientId uint64, roomId uint64) (*Room, bool) {
+	// Pass the pointer of this room to the client
+	return room
+}
+
+// Registers the client to this room if it exists and its available
+func (h *Hub) JoinRoom(clientId uint64, roomId uint64) *Room {
 	// Search for this client by id
 	_, clientExists := h.GetClient(clientId)
 	// If the client is online and exists
 	if clientExists {
+
+		// TO DO ->
+		// Unregister the client from the LOBBY, not the hub
+
 		// Unregister the client from the hub
 		// The underlying connection to the websocket will remain, but he won't
 		// be sending packets directly to the hub, only to the room hes at
@@ -166,26 +180,21 @@ func (h *Hub) JoinRoom(clientId uint64, roomId uint64) (*Room, bool) {
 		room, roomExists := h.GetRoom(roomId)
 		// If the room is already created
 		if roomExists {
+
+			// TO DO ->
+			// CHECK IF CLIENT CAN JOIN THIS ROOM (ROOM NOT FULL)
+
 			// Pass a pointer of this room to the client
 			// Return true to let the client know he can join immediately
-			return &room, true
+			return &room
 
 		} else { // If the room does not exist
-			// Create it with the next id counter from the Hub
-			room := CreateRoom()
-			// Add it to the Hub's available rooms
-			room.SetId(h.Rooms.Add(*room))
-			// Start the room in a goroutine
-			go room.Start()
-
-			// Pass the pointer of this room to the client
-			// Return false to make the client wait 2 seconds before joining
-			return room, false
+			return nil
 		}
 	}
 
 	// If the client is not online in the Hub, we return nil
-	return nil, false
+	return nil
 }
 
 // Returns the channel that can broadcast packets

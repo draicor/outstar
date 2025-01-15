@@ -65,6 +65,10 @@ func (state *Lobby) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_ClientLeft:
 			state.HandleClientLeft(state.client.GetNickname())
 
+		// CREATE ROOM REQUEST
+		case *packets.Packet_CreateRoomRequest:
+			state.HandleCreateRoomRequest()
+
 		// JOIN ROOM REQUEST
 		case *packets.Packet_JoinRoomRequest:
 			state.HandleJoinRoomRequest(casted_payload)
@@ -97,7 +101,12 @@ func (state *Lobby) OnExit() {
 	// we are doing it from the websocket.go
 }
 
-// Sent by the client to request joining a new room
+// Sent by the client to request creating a new room
+func (state *Lobby) HandleCreateRoomRequest() {
+	state.client.CreateRoom()
+}
+
+// Sent by the client to request joining a room
 func (state *Lobby) HandleJoinRoomRequest(payload *packets.Packet_JoinRoomRequest) {
 	state.client.JoinRoom(payload.JoinRoomRequest.GetRoomId())
 }

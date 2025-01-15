@@ -311,6 +311,22 @@ func (c *WebSocketClient) GetNickname() string {
 	return c.nickname
 }
 
+// Creates a new room and then calls JoinRoom() to move the creator into the new room
+func (c *WebSocketClient) CreateRoom() {
+	// Delegate the work to the Hub
+	room := c.hub.CreateRoom()
+
+	// Wait 2 seconds so the room gets created
+	time.Sleep(2 * time.Second)
+
+	// We make the client that created the room join it automatically
+	c.JoinRoom(room.GetId())
+
+	// TO DO ->
+	// SetRoomMaster(c.getId())
+	// Make some logic to add the user as the master of the room
+}
+
 // Moves the client to a new room
 func (c *WebSocketClient) JoinRoom(roomId uint64) {
 	// If the client was already at another room
@@ -322,19 +338,13 @@ func (c *WebSocketClient) JoinRoom(roomId uint64) {
 	}
 
 	// Delegate the work to the Hub
-	room, ready := c.hub.JoinRoom(c.id, roomId)
+	room := c.hub.JoinRoom(c.id, roomId)
 
 	// If the room is valid
 	if room != nil {
-		// We attempt to have this client connection register itself to the room
-		// If the room was not created, we wait
-		if !ready {
-			// Wait 2 seconds so the room gets created
-			time.Sleep(2 * time.Second)
-		} else {
-			// Wait 1 second before I use the room's channel
-			time.Sleep(1 * time.Second)
-		}
+		// Wait 1 second before we use the room's channel
+		time.Sleep(1 * time.Second)
+
 		// Save a pointer to the room this client is at
 		c.room = room
 

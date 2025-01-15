@@ -48,10 +48,13 @@ type ClientInterfacer interface {
 	// Returns this client's nickname
 	GetNickname() string
 
-	// Attempts to join a room by id [called from state]
+	// Attempts to create a room [called from lobby state]
+	CreateRoom()
+
+	// Attempts to join a room by id [called from lobby state]
 	JoinRoom(roomId uint64)
 
-	// Leaves the current room and goes back to the Hub [called from state]
+	// Leaves the current room and goes back to the Hub [called from room state]
 	LeaveRoom()
 
 	// Returns true if this client has already been initialized by the server (has id)
