@@ -5,13 +5,18 @@ import (
 	"log"
 	"net/http"
 	"server/internal/server"
+	"server/internal/server/objects"
 	"server/internal/server/states"
 	"server/pkg/packets"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 )
+
+// How long we want the client to wait after creating/joining a room
+const clientWaiting time.Duration = 1
 
 // This client data will be injected into every state on state changes,
 // any data that should be kept in server memory should be stored in the
@@ -177,6 +182,8 @@ func (c *WebSocketClient) ReadPump() {
 			packet.SenderId = c.id
 		}
 
+		// TO DO ->
+		// Replace this with a tickChannel so the hub/lobby/room process this by tick
 		c.ProcessMessage(packet.SenderId, packet.Payload)
 	}
 }
@@ -316,8 +323,8 @@ func (c *WebSocketClient) CreateRoom() {
 	// Delegate the work to the Hub
 	room := c.hub.CreateRoom()
 
-	// Wait 2 seconds so the room gets created
-	time.Sleep(2 * time.Second)
+	// Wait while the room gets created
+	time.Sleep(clientWaiting * time.Second)
 
 	// We make the client that created the room join it automatically
 	c.JoinRoom(room.GetId())
@@ -342,8 +349,8 @@ func (c *WebSocketClient) JoinRoom(roomId uint64) {
 
 	// If the room is valid
 	if room != nil {
-		// Wait 1 second before we use the room's channel
-		time.Sleep(1 * time.Second)
+		// Wait before we use the room's channel
+		time.Sleep(clientWaiting * time.Second)
 
 		// Save a pointer to the room this client is at
 		c.room = room
@@ -359,6 +366,11 @@ func (c *WebSocketClient) JoinRoom(roomId uint64) {
 
 		// We don't broadcast to everyone that this client joined because
 		// we are letting the client do it once his game client loads!
+
+	} else { // If room is not valid
+		// Send a packet to the client
+		reason := "Room #" + strconv.FormatUint(roomId, 10) + " is not available"
+		c.SocketSend(packets.NewRequestDenied(reason))
 	}
 }
 
@@ -376,8 +388,8 @@ func (c *WebSocketClient) LeaveRoom() {
 	// Register the client to the Hub again
 	c.hub.GetAddClientChannel() <- c
 
-	// Wait 1 second before we let the client go into the lobby
-	time.Sleep(1 * time.Second)
+	// Wait before we let the client go into the lobby
+	time.Sleep(clientWaiting * time.Second)
 
 	// Send the client a packet to let him join the lobby
 	c.SocketSend(packets.NewLeaveRoomSuccess())
@@ -387,4 +399,9 @@ func (c *WebSocketClient) LeaveRoom() {
 
 	// We don't broadcast to everyone that this client joined because
 	// we are letting the client do it once his game client loads!
+}
+
+// Returns the collection of rooms inside Hub
+func (c *WebSocketClient) GetRoomList() *objects.SharedCollection[server.Room] {
+	return c.hub.GetRooms()
 }

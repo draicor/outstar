@@ -169,13 +169,6 @@ func (h *Hub) JoinRoom(clientId uint64, roomId uint64) *Room {
 	// If the client is online and exists
 	if clientExists {
 
-		// TO DO ->
-		// Unregister the client from the LOBBY, not the hub
-
-		// Unregister the client from the hub
-		// The underlying connection to the websocket will remain, but he won't
-		// be sending packets directly to the hub, only to the room hes at
-		h.Clients.Remove(clientId)
 		// Search for this room by id
 		room, roomExists := h.GetRoom(roomId)
 		// If the room is already created
@@ -184,14 +177,25 @@ func (h *Hub) JoinRoom(clientId uint64, roomId uint64) *Room {
 			// TO DO ->
 			// CHECK IF CLIENT CAN JOIN THIS ROOM (ROOM NOT FULL)
 
+			// TO DO ->
+			// Unregister the client from the LOBBY, not the hub
+
+			// Unregister the client from the hub
+			// The underlying connection to the websocket will remain, but he won't
+			// be sending packets directly to the hub, only to the room hes at
+			h.Clients.Remove(clientId)
+
 			// Pass a pointer of this room to the client
 			// Return true to let the client know he can join immediately
 			return &room
 
 		} else { // If the room does not exist
+			log.Println("Room", roomId, "doesn't exist in the Hub ")
 			return nil
 		}
 	}
+
+	log.Println("Client", clientId, "not in lobby tried to join room", roomId)
 
 	// If the client is not online in the Hub, we return nil
 	return nil
@@ -210,4 +214,9 @@ func (h *Hub) GetAddClientChannel() chan ClientInterfacer {
 // Returns the channel that removes clients
 func (h *Hub) GetRemoveClientChannel() chan ClientInterfacer {
 	return h.RemoveClientChannel
+}
+
+// Returns the collection of rooms
+func (h *Hub) GetRooms() *objects.SharedCollection[Room] {
+	return h.Rooms
 }

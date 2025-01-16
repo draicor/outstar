@@ -6,41 +6,66 @@ package packets;
 // Compile to the pkg/packets folder and use "packets" as the go package
 option go_package = "pkg/packets";
 
-// Packet types
+// PACKET TYPES
+// Chat
 message PublicMessage { string nickname = 1; string text = 2; } // Sent by client to communicate with other clients in the area
+// Connection
 message Handshake {} // Sent by server after client connects
 message Heartbeat {} // Used to keep connection alive
+// Authentication
 message RequestGranted {} // Sent by server if request was successful
 message RequestDenied { string reason = 1; } // Sent by server if request was unsuccessful
 message LoginRequest { string username = 1; string password = 2; } // Sent by client to login
-message RegisterRequest { string username = 1; string nickname = 2; string password = 3; } // Sent by client to register
+message RegisterRequest { // Sent by client to register
+  string username = 1;
+  string nickname = 2;
+  string password = 3;
+}
+// Notifies
 message ClientEntered { string nickname = 1; } // Sent by the client once his client is ready, broadcasted to everyone
 message ClientLeft { string nickname = 1; } // Broadcast by the server if a client leaves
+// Lobby/Room
 message JoinRoomRequest { uint64 room_id = 1; } // Sent by the client to request joining a new room
 message LoginSuccess { string nickname = 1; } // Sent by the server after successful login
 message LeaveRoomRequest {} // Sent by the client to request leaving a room and going back to the Hub
 message JoinRoomSuccess {} // Sent by the server to ask the client to switch to the room state
 message LeaveRoomSuccess {} // Sent by the server to ask the client to switch to the lobby state
 message CreateRoomRequest {} // Sent by the client to request creating a new room
+message RoomInfo { // Data from a room used in Rooms
+  uint64 room_id = 1;
+  uint64 players_online = 2;
+  uint64 max_players = 3;
+}
+message RoomList { repeated RoomInfo room_list = 1; } // List with every available room sent by the server
+message GetRoomsRequest {} // Sent by the client to request all of the rooms from the server
 
 // Main Packet container
 message Packet {
   uint64 sender_id = 1;
   oneof payload { // Generates a field called Payload of type isPacket_Payload interface
-    PublicMessage public_message = 2;
-    Handshake handshake = 3;
-    Heartbeat heartbeat = 4;
-    RequestGranted request_granted = 5;
-    RequestDenied request_denied = 6;
-    LoginRequest login_request = 7;
-    RegisterRequest register_request = 8;
-    ClientEntered client_entered = 9;
-    ClientLeft client_left = 10;
-    JoinRoomRequest join_room_request = 11;
-    LoginSuccess login_success = 12;
-    LeaveRoomRequest leave_room_request = 13;
-    JoinRoomSuccess join_room_success = 14;
-    LeaveRoomSuccess leave_room_success = 15;
-    CreateRoomRequest create_room_request = 16;
+    // Chat
+    PublicMessage public_message = 2; // Both
+    // Connection
+    Handshake handshake = 3; // Server
+    Heartbeat heartbeat = 4; // Both
+    // Authentication
+    RequestGranted request_granted = 5; // Server
+    RequestDenied request_denied = 6; // Server
+    LoginRequest login_request = 7; // Client
+    RegisterRequest register_request = 8; // Client
+    // Notifies
+    ClientEntered client_entered = 9; // Both [Change this to be Server only!]
+    ClientLeft client_left = 10; // Server
+    JoinRoomRequest join_room_request = 11; // Client
+    LoginSuccess login_success = 12; // Server
+    // Lobby/Room
+    LeaveRoomRequest leave_room_request = 13; // Client
+    JoinRoomSuccess join_room_success = 14; // Server
+    LeaveRoomSuccess leave_room_success = 15; // Server
+    CreateRoomRequest create_room_request = 16; // Client
+    // Room data
+    RoomInfo room_info = 17; // Server
+    RoomList room_list = 18; // Server
+    GetRoomsRequest get_rooms_request = 19; // Client
   }
 }

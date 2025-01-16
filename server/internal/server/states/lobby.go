@@ -73,6 +73,10 @@ func (state *Lobby) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_JoinRoomRequest:
 			state.HandleJoinRoomRequest(casted_payload)
 
+		// GET ROOMS REQUEST
+		case *packets.Packet_GetRoomsRequest:
+			state.HandleGetRoomsRequest(casted_payload)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -109,4 +113,27 @@ func (state *Lobby) HandleCreateRoomRequest() {
 // Sent by the client to request joining a room
 func (state *Lobby) HandleJoinRoomRequest(payload *packets.Packet_JoinRoomRequest) {
 	state.client.JoinRoom(payload.JoinRoomRequest.GetRoomId())
+}
+
+// Sent by the client requesting the list of available rooms
+func (state *Lobby) HandleGetRoomsRequest(payload *packets.Packet_GetRoomsRequest) {
+	// Request the room list from the client [client requests it from the hub]
+	rooms := state.client.GetRoomList()
+	// If there are no rooms created, inform the client
+	if rooms.Len() < 1 {
+		state.client.SocketSend(packets.NewRequestDenied("No rooms available"))
+	}
+
+	// Create an empty map that will hold RoomInfo packets
+	roomsPacket := make([]*packets.RoomInfo, 0, rooms.Len())
+
+	// For each room in the rooms collection fetched from the Hub
+	rooms.ForEach(func(id uint64, room server.Room) {
+		// Extract the data from the room, create a single packet for each room and add it to the list
+		roomsPacket = append(roomsPacket, packets.CreateRoomInfo(id, 3, 99)) // <- FIX THIS
+	})
+
+	state.logger.Printf("%s requested the room list", state.client.GetNickname())
+	// Send the list of rooms to the client
+	state.client.SocketSend(packets.NewRoomList(roomsPacket))
 }

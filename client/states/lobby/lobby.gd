@@ -3,21 +3,23 @@ extends Node
 # Preload resources
 const packets := preload("res://packets.gd")
 const lobby_escape_menu_scene: PackedScene = preload("res://components/escape_menu/lobby/lobby_escape_menu.tscn")
-const dialogue_box_scene: PackedScene = preload("res://components/dialog_box/dialog_box.tscn")
 
 # User Interface Variables
 @onready var ui_canvas: CanvasLayer = $UI
 @onready var chat: Control = $UI/Chat
+@onready var browser: Control = $UI/Browser
+
 var chat_input: LineEdit
 var lobby_escape_menu
-@onready var join_room: Button = $JoinRoom
 
 func _ready() -> void:
 	_initialize()
+	# To initialize the browser, we need to pass it our UI (CanvasLayer)
+	browser.initialize(ui_canvas)
 	# Send a packet to the server to let everyone know we joined
 	_send_client_entered_packet()
 
-func _initialize() -> void:	
+func _initialize() -> void:
 	# Get access to the child nodes of the chat UI
 	chat_input = chat.find_child("Input")
 	
@@ -51,6 +53,10 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_client_left_packet(packet.get_client_left())
 	elif packet.has_join_room_success():
 		_handle_join_room_success_packet()
+	elif packet.has_request_denied():
+		_handle_request_denied_packet(packet.get_request_denied().get_reason())
+	elif packet.has_room_list():
+		_handle_room_list_packet(packet.get_room_list().get_room_list())
 
 # Print the message into our chat window
 func _handle_public_message_packet(packet_public_message: packets.PublicMessage) -> void:
@@ -84,17 +90,18 @@ func _on_chat_input_text_submitted(text: String) -> void:
 		chat_input.release_focus()
 		return
 	
-	# Create the chat_message packet
+	# Create the public_message packet
 	var packet := packets.Packet.new()
 	var public_message := packet.new_public_message()
 	public_message.set_text(text)
 	
-	# This serializes and sends our message
+	# Serialize and send our packet to the server
 	var err := WebSocket.send(packet)
 	if err:
 		chat.error("You have been disconnected from the server")
 	else:
 		# We grab our client's nickname from the GameManager autoload
+		# and display our own message in our client
 		chat.public(GameManager.client_nickname, text, Color.CYAN)
 	
 	# We clear the line edit
@@ -124,34 +131,23 @@ func _send_client_entered_packet() -> bool:
 	else:
 		return true
 
-func _send_join_room_request_packet(room_id: int) -> bool:
-	# We create a new packet
-	var packet := packets.Packet.new()
-	# We send the packet with the room_id we want to access
-	var join_room_request_packet := packet.new_join_room_request()
-	join_room_request_packet.set_room_id(room_id)
-
-	# Serialize and send our message
-	var err := WebSocket.send(packet)
-	# Report if we succeeded or failed
-	if err:
-		return false
-	else:
-		return true
-
 func _handle_join_room_success_packet() -> void:
 	# We transition into the Room scene
 	GameManager.set_state(GameManager.State.ROOM)
 
-func _on_join_room_pressed() -> void:
-	_send_join_room_request_packet(1)
-	# We hide the join room button so the user can't spam it
-	join_room.hide()
-	
-	# We instantiate the dialogue box scene
-	var dialogue_box := dialogue_box_scene.instantiate()
-	# We add it to our root with force readable name set to false
-	ui_canvas.add_child(dialogue_box, false)
-	# The dialogue_box starts as hidden, we pass the values that will
-	# have, and then we show it from code
-	dialogue_box.initialize("Connecting...", false)
+func _handle_request_denied_packet(reason: String) -> void:
+	# Show a dialog box to the user with the error
+	browser.new_dialog_box(reason, true)
+	browser.enable_input()
+
+func _handle_room_list_packet(room_list_packet: Array):
+	for entry in room_list_packet:
+		var room_info := entry as packets.RoomInfo
+		# TO FIX
+		# Use the data from the list to create the Entries
+		if room_info:
+			print(room_info.get_room_id())
+			print(room_info.get_players_online())
+			print(room_info.get_max_players())
+	# Hide the dialog box
+	browser.hide_dialog_box()

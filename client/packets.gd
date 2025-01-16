@@ -1207,6 +1207,173 @@ class LeaveRoomSuccess:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
+class CreateRoomRequest:
+	func _init():
+		var service
+		
+	var data = {}
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
+class RoomInfo:
+	func _init():
+		var service
+		
+		_room_id = PBField.new("room_id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = _room_id
+		data[_room_id.tag] = service
+		
+		_players_online = PBField.new("players_online", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = _players_online
+		data[_players_online.tag] = service
+		
+		_max_players = PBField.new("max_players", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = _max_players
+		data[_max_players.tag] = service
+		
+	var data = {}
+	
+	var _room_id: PBField
+	func get_room_id() -> int:
+		return _room_id.value
+	func clear_room_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_room_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_room_id(value : int) -> void:
+		_room_id.value = value
+	
+	var _players_online: PBField
+	func get_players_online() -> int:
+		return _players_online.value
+	func clear_players_online() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_players_online.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_players_online(value : int) -> void:
+		_players_online.value = value
+	
+	var _max_players: PBField
+	func get_max_players() -> int:
+		return _max_players.value
+	func clear_max_players() -> void:
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_max_players.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_max_players(value : int) -> void:
+		_max_players.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
+class RoomList:
+	func _init():
+		var service
+		
+		_room_list = PBField.new("room_list", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 1, true, [])
+		service = PBServiceField.new()
+		service.field = _room_list
+		service.func_ref = Callable(self, "add_room_list")
+		data[_room_list.tag] = service
+		
+	var data = {}
+	
+	var _room_list: PBField
+	func get_room_list() -> Array:
+		return _room_list.value
+	func clear_room_list() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = []
+	func add_room_list() -> RoomInfo:
+		var element = RoomInfo.new()
+		_room_list.value.append(element)
+		return element
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
+class GetRoomsRequest:
+	func _init():
+		var service
+		
+	var data = {}
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
 class Packet:
 	func _init():
 		var service
@@ -1300,6 +1467,30 @@ class Packet:
 		service.func_ref = Callable(self, "new_leave_room_success")
 		data[_leave_room_success.tag] = service
 		
+		_create_room_request = PBField.new("create_room_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 16, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _create_room_request
+		service.func_ref = Callable(self, "new_create_room_request")
+		data[_create_room_request.tag] = service
+		
+		_room_info = PBField.new("room_info", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 17, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _room_info
+		service.func_ref = Callable(self, "new_room_info")
+		data[_room_info.tag] = service
+		
+		_room_list = PBField.new("room_list", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 18, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _room_list
+		service.func_ref = Callable(self, "new_room_list")
+		data[_room_list.tag] = service
+		
+		_get_rooms_request = PBField.new("get_rooms_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 19, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _get_rooms_request
+		service.func_ref = Callable(self, "new_get_rooms_request")
+		data[_get_rooms_request.tag] = service
+		
 	var data = {}
 	
 	var _sender_id: PBField
@@ -1347,6 +1538,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_public_message.value = PublicMessage.new()
 		return _public_message.value
 	
@@ -1386,6 +1585,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = Handshake.new()
 		return _handshake.value
 	
@@ -1425,6 +1632,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_heartbeat.value = Heartbeat.new()
 		return _heartbeat.value
 	
@@ -1464,6 +1679,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_request_granted.value = RequestGranted.new()
 		return _request_granted.value
 	
@@ -1503,6 +1726,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_request_denied.value = RequestDenied.new()
 		return _request_denied.value
 	
@@ -1542,6 +1773,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_login_request.value = LoginRequest.new()
 		return _login_request.value
 	
@@ -1581,6 +1820,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_register_request.value = RegisterRequest.new()
 		return _register_request.value
 	
@@ -1620,6 +1867,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_client_entered.value = ClientEntered.new()
 		return _client_entered.value
 	
@@ -1659,6 +1914,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = ClientLeft.new()
 		return _client_left.value
 	
@@ -1698,6 +1961,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_join_room_request.value = JoinRoomRequest.new()
 		return _join_room_request.value
 	
@@ -1737,6 +2008,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = LoginSuccess.new()
 		return _login_success.value
 	
@@ -1776,6 +2055,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_request.value = LeaveRoomRequest.new()
 		return _leave_room_request.value
 	
@@ -1815,6 +2102,14 @@ class Packet:
 		data[14].state = PB_SERVICE_STATE.FILLED
 		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_join_room_success.value = JoinRoomSuccess.new()
 		return _join_room_success.value
 	
@@ -1854,8 +2149,204 @@ class Packet:
 		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		data[15].state = PB_SERVICE_STATE.FILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
 		_leave_room_success.value = LeaveRoomSuccess.new()
 		return _leave_room_success.value
+	
+	var _create_room_request: PBField
+	func has_create_room_request() -> bool:
+		return data[16].state == PB_SERVICE_STATE.FILLED
+	func get_create_room_request() -> CreateRoomRequest:
+		return _create_room_request.value
+	func clear_create_room_request() -> void:
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_create_room_request() -> CreateRoomRequest:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		data[16].state = PB_SERVICE_STATE.FILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = CreateRoomRequest.new()
+		return _create_room_request.value
+	
+	var _room_info: PBField
+	func has_room_info() -> bool:
+		return data[17].state == PB_SERVICE_STATE.FILLED
+	func get_room_info() -> RoomInfo:
+		return _room_info.value
+	func clear_room_info() -> void:
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_room_info() -> RoomInfo:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		data[17].state = PB_SERVICE_STATE.FILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = RoomInfo.new()
+		return _room_info.value
+	
+	var _room_list: PBField
+	func has_room_list() -> bool:
+		return data[18].state == PB_SERVICE_STATE.FILLED
+	func get_room_list() -> RoomList:
+		return _room_list.value
+	func clear_room_list() -> void:
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_room_list() -> RoomList:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		data[18].state = PB_SERVICE_STATE.FILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = RoomList.new()
+		return _room_list.value
+	
+	var _get_rooms_request: PBField
+	func has_get_rooms_request() -> bool:
+		return data[19].state == PB_SERVICE_STATE.FILLED
+	func get_get_rooms_request() -> GetRoomsRequest:
+		return _get_rooms_request.value
+	func clear_get_rooms_request() -> void:
+		data[19].state = PB_SERVICE_STATE.UNFILLED
+		_get_rooms_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_get_rooms_request() -> GetRoomsRequest:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_join_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_leave_room_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_create_room_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		_room_info.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		_room_list.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		data[19].state = PB_SERVICE_STATE.FILLED
+		_get_rooms_request.value = GetRoomsRequest.new()
+		return _get_rooms_request.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

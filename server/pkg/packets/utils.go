@@ -90,3 +90,28 @@ func NewLeaveRoomSuccess() Payload {
 		LeaveRoomSuccess: &LeaveRoomSuccess{},
 	}
 }
+
+// Auxiliary function to get the data we need in pieces and assemble the packet's contents
+func CreateRoomInfo(roomId uint64, playersOnline uint64, maxPlayers uint64) *RoomInfo {
+	return &RoomInfo{
+		RoomId:        roomId,
+		PlayersOnline: playersOnline,
+		MaxPlayers:    maxPlayers,
+	}
+}
+
+// Data from a room used in the RoomList packet
+func NewRoomInfo(roomId uint64, playersOnline uint64, maxPlayers uint64) Payload {
+	return &Packet_RoomInfo{
+		RoomInfo: CreateRoomInfo(roomId, playersOnline, maxPlayers),
+	}
+}
+
+// List of packets with every available room sent by the server
+func NewRoomList(rooms []*RoomInfo) Payload {
+	return &Packet_RoomList{
+		&RoomList{
+			RoomList: rooms,
+		},
+	}
+}

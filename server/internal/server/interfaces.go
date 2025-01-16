@@ -1,6 +1,7 @@
 package server
 
 import (
+	"server/internal/server/objects"
 	"server/pkg/packets"
 )
 
@@ -8,6 +9,9 @@ import (
 type ClientInterfacer interface {
 	// Returns the client's ID
 	GetId() uint64
+
+	// Returns true if this client has already been initialized by the server (has id)
+	HasId() bool
 
 	// Handles the client's message
 	ProcessMessage(senderId uint64, message packets.Payload)
@@ -48,6 +52,7 @@ type ClientInterfacer interface {
 	// Returns this client's nickname
 	GetNickname() string
 
+	// TO DO -> MOVE ALL OF THIS TO A LOBBY STRUCT
 	// Attempts to create a room [called from lobby state]
 	CreateRoom()
 
@@ -57,8 +62,8 @@ type ClientInterfacer interface {
 	// Leaves the current room and goes back to the Hub [called from room state]
 	LeaveRoom()
 
-	// Returns true if this client has already been initialized by the server (has id)
-	HasId() bool
+	// Request the list of rooms
+	GetRoomList() *objects.SharedCollection[Room]
 }
 
 // A structure for a state machine to process the client's messages
