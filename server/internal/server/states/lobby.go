@@ -124,20 +124,11 @@ func (state *Lobby) HandleGetRoomsRequest(payload *packets.Packet_GetRoomsReques
 		state.client.SocketSend(packets.NewRequestDenied("No rooms available"))
 	}
 
-	// Create an empty map that will hold RoomInfo packets
+	// Create an empty map that will hold RoomInfo packets with an initial capacity equal to the length of rooms
 	roomsPacket := make([]*packets.RoomInfo, 0, rooms.Len())
 
 	// For each room in the rooms collection fetched from the Hub
-	rooms.ForEach(func(id uint64, room server.Room) {
-		//state.logger.Println(room.GetPlayersOnline())
-		state.logger.Println(id)
-		roomFromHub, found := state.client.GetHub().GetRoom(id)
-		if found {
-			state.logger.Println(roomFromHub.Id)
-			state.logger.Println(roomFromHub.GetId())
-		}
-		//state.logger.Println(room.GetPlayersOnline())
-		//state.logger.Println(room.GetMaxPlayers())
+	rooms.ForEach(func(id uint64, room *server.Room) {
 		// Extract the data from the room, create a single packet for each room and add it to the list
 		roomsPacket = append(
 			roomsPacket,

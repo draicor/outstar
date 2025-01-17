@@ -408,6 +408,6 @@ func (c *WebSocketClient) LeaveRoom() {
 }
 
 // Returns the collection of rooms inside Hub
-func (c *WebSocketClient) GetRoomList() *objects.SharedCollection[server.Room] {
+func (c *WebSocketClient) GetRoomList() *objects.SharedCollection[*server.Room] {
 	return c.hub.GetRooms()
 }

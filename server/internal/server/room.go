@@ -9,13 +9,14 @@ import (
 
 // A room is a central point of communication between the connected clients within it
 type Room struct {
-	Id uint64 // Ephemeral ID assigned by the Hub at creation
+	// Ephemeral ID assigned by the Hub at creation
+	Id uint64
 
 	// Map of all the connected clients inside this room
 	Clients *objects.SharedCollection[ClientInterfacer]
 
 	// Master of this room
-	Master ClientInterfacer
+	RoomMaster string
 
 	// Players connected to this room
 	PlayersOnline uint64
@@ -51,8 +52,8 @@ func (r *Room) SetId(roomId uint64) {
 // Static function that creates a new room
 func CreateRoom() *Room {
 	return &Room{
-		PlayersOnline:       1,
-		MaxPlayers:          1,
+		PlayersOnline:       0,
+		MaxPlayers:          0,
 		Clients:             objects.NewSharedCollection[ClientInterfacer](),
 		BroadcastChannel:    make(chan *packets.Packet),
 		AddClientChannel:    make(chan ClientInterfacer),
@@ -75,12 +76,12 @@ func (r *Room) Start() {
 		case client := <-r.AddClientChannel:
 			// WE HAVE TO PASS THE SAME ID AS THE HUB ID!!!
 			r.Clients.Add(client, client.GetId()) // CAUTION HERE <-
-			r.IncreasePlayersOnline()
+			r.PlayersOnline++
 
 		// If a client leaves, remove him from this room
 		case client := <-r.RemoveClientChannel:
 			r.Clients.Remove(client.GetId())
-			r.DecreasePlayersOnline()
+			r.PlayersOnline--
 
 		// If we get a packet from the broadcast channel
 		case packet := <-r.BroadcastChannel:
@@ -118,16 +119,6 @@ func (r *Room) GetRemoveClientChannel() chan ClientInterfacer {
 // Returns the number of players inside this room
 func (r *Room) GetPlayersOnline() uint64 {
 	return r.PlayersOnline
-}
-
-// Increases the players online counter by 1
-func (r *Room) IncreasePlayersOnline() {
-	r.PlayersOnline = r.PlayersOnline + 1
-}
-
-// Decreases the players online counter by 1
-func (r *Room) DecreasePlayersOnline() {
-	r.PlayersOnline = r.PlayersOnline - 1
 }
 
 // Returns the maximum number of players that can participate in this match

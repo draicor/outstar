@@ -66,7 +66,7 @@ type ClientInterfacer interface {
 	LeaveRoom()
 
 	// Request the list of rooms
-	GetRoomList() *objects.SharedCollection[Room]
+	GetRoomList() *objects.SharedCollection[*Room]
 }
 
 // A structure for a state machine to process the client's messages

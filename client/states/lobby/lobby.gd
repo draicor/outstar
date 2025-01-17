@@ -56,7 +56,6 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	elif packet.has_request_denied():
 		_handle_request_denied_packet(packet.get_request_denied().get_reason())
 	elif packet.has_room_list():
-		print(packet)
 		_handle_room_list_packet(packet.get_room_list().get_room_list())
 
 # Print the message into our chat window

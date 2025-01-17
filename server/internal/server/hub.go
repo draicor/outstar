@@ -30,7 +30,7 @@ type Hub struct {
 	RemoveClientChannel chan ClientInterfacer
 
 	// Map of every available room
-	Rooms *objects.SharedCollection[Room]
+	Rooms *objects.SharedCollection[*Room]
 
 	// Every new room will get a reference to the database connection pool
 	DatabasePool *sql.DB
@@ -50,7 +50,7 @@ func CreateHub(databasePool *sql.DB) *Hub {
 		RemoveClientChannel: make(chan ClientInterfacer),
 		BroadcastChannel:    make(chan *packets.Packet),
 		// Collection of every available room in the server
-		Rooms: objects.NewSharedCollection[Room](),
+		Rooms: objects.NewSharedCollection[*Room](),
 		// Database connection
 		DatabasePool: databasePool,
 		// TO FIX -> CHANGE THE TYPE OF THE CHANNELs
@@ -145,8 +145,12 @@ func (h *Hub) GetClient(id uint64) (ClientInterfacer, bool) {
 }
 
 // Retrieves the room (if found) in the Rooms collection
-func (h *Hub) GetRoom(id uint64) (Room, bool) {
-	return h.Rooms.Get(id)
+func (h *Hub) GetRoom(id uint64) (*Room, bool) {
+	room, found := h.Rooms.Get(id)
+	if found {
+		return room, true
+	}
+	return nil, false
 }
 
 // Creates a new room adds it to the list of available rooms
@@ -154,10 +158,12 @@ func (h *Hub) CreateRoom() *Room {
 	// Create it with the next id counter from the Hub
 	room := CreateRoom()
 
-	room.SetMaxPlayers(8) // <- FIX THIS: Hardcoded this to be 8 players for now
+	// Dereference the pointer to add a REAL room object to the Hub's list of rooms
+	// If this is the first room, h.Rooms.Add returns 1, and the initial value for the room was 0
+	room.SetId(h.Rooms.Add(room))
 
-	// Add it to the Hub's available rooms
-	room.SetId(h.Rooms.Add(*room))
+	room.SetMaxPlayers(8) // <- hardcoding this for now
+
 	// Start the room in a goroutine
 	go room.Start()
 
@@ -190,7 +196,7 @@ func (h *Hub) JoinRoom(clientId uint64, roomId uint64) *Room {
 
 			// Pass a pointer of this room to the client
 			// Return true to let the client know he can join immediately
-			return &room
+			return room
 
 		} else { // If the room does not exist
 			log.Println("Room", roomId, "doesn't exist in the Hub ")
@@ -220,6 +226,6 @@ func (h *Hub) GetRemoveClientChannel() chan ClientInterfacer {
 }
 
 // Returns the collection of rooms
-func (h *Hub) GetRooms() *objects.SharedCollection[Room] {
+func (h *Hub) GetRooms() *objects.SharedCollection[*Room] {
 	return h.Rooms
 }
