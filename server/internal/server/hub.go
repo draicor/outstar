@@ -153,6 +153,9 @@ func (h *Hub) GetRoom(id uint64) (Room, bool) {
 func (h *Hub) CreateRoom() *Room {
 	// Create it with the next id counter from the Hub
 	room := CreateRoom()
+
+	room.SetMaxPlayers(8) // <- FIX THIS: Hardcoded this to be 8 players for now
+
 	// Add it to the Hub's available rooms
 	room.SetId(h.Rooms.Add(*room))
 	// Start the room in a goroutine

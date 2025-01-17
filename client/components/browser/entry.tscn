@@ -32,7 +32,7 @@ theme_override_constants/separation = 20
 [node name="MasterLabel" type="Label" parent="PanelContainer/MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "NICKNAME"
+text = "MASTER"
 
 [node name="MapLabel" type="Label" parent="PanelContainer/MarginContainer/HBoxContainer"]
 layout_mode = 2

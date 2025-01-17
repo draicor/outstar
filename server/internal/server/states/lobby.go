@@ -129,8 +129,25 @@ func (state *Lobby) HandleGetRoomsRequest(payload *packets.Packet_GetRoomsReques
 
 	// For each room in the rooms collection fetched from the Hub
 	rooms.ForEach(func(id uint64, room server.Room) {
+		//state.logger.Println(room.GetPlayersOnline())
+		state.logger.Println(id)
+		roomFromHub, found := state.client.GetHub().GetRoom(id)
+		if found {
+			state.logger.Println(roomFromHub.Id)
+			state.logger.Println(roomFromHub.GetId())
+		}
+		//state.logger.Println(room.GetPlayersOnline())
+		//state.logger.Println(room.GetMaxPlayers())
 		// Extract the data from the room, create a single packet for each room and add it to the list
-		roomsPacket = append(roomsPacket, packets.CreateRoomInfo(id, 3, 99)) // <- FIX THIS
+		roomsPacket = append(
+			roomsPacket,
+			packets.CreateRoomInfo(
+				id,
+				state.client.GetNickname(), // <- FIX THIS: should be the current master of this room not the client
+				"Chat",                     // <- FIX THIS: mapName should be an enum on both client and server
+				room.GetPlayersOnline(),
+				room.GetMaxPlayers()))
+
 	})
 
 	state.logger.Printf("%s requested the room list", state.client.GetNickname())

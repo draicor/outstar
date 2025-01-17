@@ -55,7 +55,7 @@ func (s *SharedCollection[T]) Remove(id uint64) {
 	delete(s.objects, id)
 }
 
-// Execute the callback function for each object in the map
+// Creates a copy of the collection, then executes the callback function for each object in the copy
 func (s *SharedCollection[T]) ForEach(callback func(uint64, T)) {
 	// Lock the map so no other goroutine modify it while we are iterating over it
 	s.mutex.Lock()

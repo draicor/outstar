@@ -1243,12 +1243,22 @@ class RoomInfo:
 		service.field = _room_id
 		data[_room_id.tag] = service
 		
-		_players_online = PBField.new("players_online", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		_master = PBField.new("master", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _master
+		data[_master.tag] = service
+		
+		_map_name = PBField.new("map_name", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = _map_name
+		data[_map_name.tag] = service
+		
+		_players_online = PBField.new("players_online", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
 		service.field = _players_online
 		data[_players_online.tag] = service
 		
-		_max_players = PBField.new("max_players", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		_max_players = PBField.new("max_players", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
 		service.field = _max_players
 		data[_max_players.tag] = service
@@ -1264,11 +1274,29 @@ class RoomInfo:
 	func set_room_id(value : int) -> void:
 		_room_id.value = value
 	
+	var _master: PBField
+	func get_master() -> String:
+		return _master.value
+	func clear_master() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_master.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_master(value : String) -> void:
+		_master.value = value
+	
+	var _map_name: PBField
+	func get_map_name() -> String:
+		return _map_name.value
+	func clear_map_name() -> void:
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_map_name.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_map_name(value : String) -> void:
+		_map_name.value = value
+	
 	var _players_online: PBField
 	func get_players_online() -> int:
 		return _players_online.value
 	func clear_players_online() -> void:
-		data[2].state = PB_SERVICE_STATE.UNFILLED
+		data[4].state = PB_SERVICE_STATE.UNFILLED
 		_players_online.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_players_online(value : int) -> void:
 		_players_online.value = value
@@ -1277,7 +1305,7 @@ class RoomInfo:
 	func get_max_players() -> int:
 		return _max_players.value
 	func clear_max_players() -> void:
-		data[3].state = PB_SERVICE_STATE.UNFILLED
+		data[5].state = PB_SERVICE_STATE.UNFILLED
 		_max_players.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_max_players(value : int) -> void:
 		_max_players.value = value

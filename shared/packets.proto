@@ -33,8 +33,10 @@ message LeaveRoomSuccess {} // Sent by the server to ask the client to switch to
 message CreateRoomRequest {} // Sent by the client to request creating a new room
 message RoomInfo { // Data from a room used in Rooms
   uint64 room_id = 1;
-  uint64 players_online = 2;
-  uint64 max_players = 3;
+  string master = 2;
+  string map_name = 3;
+  uint64 players_online = 4;
+  uint64 max_players = 5;
 }
 message RoomList { repeated RoomInfo room_list = 1; } // List with every available room sent by the server
 message GetRoomsRequest {} // Sent by the client to request all of the rooms from the server

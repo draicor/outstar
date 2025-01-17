@@ -65,11 +65,17 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 	return client, nil
 }
 
+// Returns the Hub this client is connected to
+func (c *WebSocketClient) GetHub() *server.Hub {
+	return c.hub
+}
+
 // Returns the client's ID
 func (c *WebSocketClient) GetId() uint64 {
 	return c.id
 }
 
+// Returns true if this client has already been initialized by the server (has id)
 func (c *WebSocketClient) HasId() bool {
 	return c.initialized
 }

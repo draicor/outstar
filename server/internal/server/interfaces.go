@@ -7,6 +7,9 @@ import (
 
 // A structure for the connected client to interface with the server
 type ClientInterfacer interface {
+	// Returns the Hub this client is connected to
+	GetHub() *Hub
+
 	// Returns the client's ID
 	GetId() uint64
 

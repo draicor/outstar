@@ -14,8 +14,14 @@ type Room struct {
 	// Map of all the connected clients inside this room
 	Clients *objects.SharedCollection[ClientInterfacer]
 
+	// Master of this room
+	Master ClientInterfacer
+
 	// Players connected to this room
 	PlayersOnline uint64
+
+	// Max players allowed to join this room as participants
+	MaxPlayers uint64
 
 	// Packets in this channel will be processed by all connected clients except the sender
 	BroadcastChannel chan *packets.Packet
@@ -45,6 +51,8 @@ func (r *Room) SetId(roomId uint64) {
 // Static function that creates a new room
 func CreateRoom() *Room {
 	return &Room{
+		PlayersOnline:       1,
+		MaxPlayers:          1,
 		Clients:             objects.NewSharedCollection[ClientInterfacer](),
 		BroadcastChannel:    make(chan *packets.Packet),
 		AddClientChannel:    make(chan ClientInterfacer),
@@ -67,12 +75,12 @@ func (r *Room) Start() {
 		case client := <-r.AddClientChannel:
 			// WE HAVE TO PASS THE SAME ID AS THE HUB ID!!!
 			r.Clients.Add(client, client.GetId()) // CAUTION HERE <-
-			r.PlayersOnline++
+			r.IncreasePlayersOnline()
 
 		// If a client leaves, remove him from this room
 		case client := <-r.RemoveClientChannel:
 			r.Clients.Remove(client.GetId())
-			r.PlayersOnline--
+			r.DecreasePlayersOnline()
 
 		// If we get a packet from the broadcast channel
 		case packet := <-r.BroadcastChannel:
@@ -110,4 +118,33 @@ func (r *Room) GetRemoveClientChannel() chan ClientInterfacer {
 // Returns the number of players inside this room
 func (r *Room) GetPlayersOnline() uint64 {
 	return r.PlayersOnline
+}
+
+// Increases the players online counter by 1
+func (r *Room) IncreasePlayersOnline() {
+	r.PlayersOnline = r.PlayersOnline + 1
+}
+
+// Decreases the players online counter by 1
+func (r *Room) DecreasePlayersOnline() {
+	r.PlayersOnline = r.PlayersOnline - 1
+}
+
+// Returns the maximum number of players that can participate in this match
+func (r *Room) GetMaxPlayers() uint64 {
+	return r.MaxPlayers
+}
+
+// Updates the capacity of this room
+func (r *Room) SetMaxPlayers(newMaxPlayers uint64) {
+	// If the new capacity is lower than the current number of players inside, ignore this
+	if newMaxPlayers < r.PlayersOnline {
+		return
+	}
+	// If the new capacity is the same as the previous one, ignore this
+	if newMaxPlayers == r.MaxPlayers {
+		return
+	}
+
+	r.MaxPlayers = newMaxPlayers
 }

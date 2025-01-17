@@ -128,6 +128,7 @@ func delete_all_entries() -> void:
 	for i in range(0, room_list_container.get_child_count()):
 		room_list_container.get_child(i).queue_free()
 
+# Adds a single entry to the list
 func add_room_entry(room_info: packets.RoomInfo) -> void:
 	# We instantiate an entry
 	var entry := entry_scene.instantiate()
@@ -136,12 +137,9 @@ func add_room_entry(room_info: packets.RoomInfo) -> void:
 	# The entry starts as hidden, we pass the values that will
 	# have, and then we show it from code
 	entry.initialize(
-		"nick_test",
-		"map_test",
+		room_info.get_master(),
+		room_info.get_map_name(),
 		room_info.get_players_online(),
 		room_info.get_max_players(),
 		room_info.get_room_id(),
 		)
-	
-	# Is this doing anything?
-	room_list_container.sort_children.emit()
