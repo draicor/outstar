@@ -1,4 +1,6 @@
-[gd_scene format=3 uid="uid://bhttdhf6gdmqj"]
+[gd_scene load_steps=2 format=3 uid="uid://bhttdhf6gdmqj"]
+
+[ext_resource type="Script" path="res://components/browser/entry.gd" id="1_6bla6"]
 
 [node name="Entry" type="Control"]
 custom_minimum_size = Vector2(0, 51)
@@ -8,6 +10,7 @@ anchor_right = 1.0
 grow_horizontal = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
+script = ExtResource("1_6bla6")
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -29,20 +32,32 @@ theme_override_constants/separation = 20
 [node name="MasterLabel" type="Label" parent="PanelContainer/MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "REPLACE"
+text = "NICKNAME"
 
 [node name="MapLabel" type="Label" parent="PanelContainer/MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "REPLACE"
+text = "MAP"
 
-[node name="PlayersLabel2" type="Label" parent="PanelContainer/MarginContainer/HBoxContainer"]
+[node name="PlayersContainer" type="HBoxContainer" parent="PanelContainer/MarginContainer/HBoxContainer"]
 layout_mode = 2
-text = "00/00"
+theme_override_constants/separation = 0
 
-[node name="RoomLabel" type="Label" parent="PanelContainer/MarginContainer/HBoxContainer"]
+[node name="PlayersOnlineLabel" type="Label" parent="PanelContainer/MarginContainer/HBoxContainer/PlayersContainer"]
 layout_mode = 2
-text = "REPLACE"
+text = "0"
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/HBoxContainer/PlayersContainer"]
+layout_mode = 2
+text = "/"
+
+[node name="MaxPlayersLabel" type="Label" parent="PanelContainer/MarginContainer/HBoxContainer/PlayersContainer"]
+layout_mode = 2
+text = "0"
+
+[node name="RoomIdLabel" type="Label" parent="PanelContainer/MarginContainer/HBoxContainer"]
+layout_mode = 2
+text = "ROOM #"
 
 [node name="JoinRoomButton" type="Button" parent="PanelContainer/MarginContainer/HBoxContainer"]
 custom_minimum_size = Vector2(80, 0)

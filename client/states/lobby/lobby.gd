@@ -141,13 +141,15 @@ func _handle_request_denied_packet(reason: String) -> void:
 	browser.enable_input()
 
 func _handle_room_list_packet(room_list_packet: Array):
+	# Clear our list
+	browser.delete_all_entries()
+	# Go over each entry on our packet
 	for entry in room_list_packet:
+		# Create an entry for each room
 		var room_info := entry as packets.RoomInfo
-		# TO FIX
 		# Use the data from the list to create the Entries
 		if room_info:
-			print(room_info.get_room_id())
-			print(room_info.get_players_online())
-			print(room_info.get_max_players())
+			browser.add_room_entry(room_info)
+
 	# Hide the dialog box
 	browser.hide_dialog_box()

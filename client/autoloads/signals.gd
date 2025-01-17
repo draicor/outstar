@@ -19,6 +19,9 @@ signal heartbeat_sent
 # Multiplayer packets
 signal heartbeat_received
 
+# Browser signals
+signal browser_join_room(room_id: int)
+
 # Input signals
 signal ui_escape_menu_toggle
 signal ui_chat_input_toggle
