@@ -1,24 +1,24 @@
-[gd_scene load_steps=3 format=3 uid="uid://cy8r4wd7hitwp"]
+[gd_scene load_steps=4 format=3 uid="uid://cy8r4wd7hitwp"]
 
 [ext_resource type="Script" path="res://states/room/room.gd" id="1_yxv8o"]
 [ext_resource type="PackedScene" uid="uid://c0e51fcsnsimq" path="res://components/chat/chat.tscn" id="2_upu2y"]
+[ext_resource type="PackedScene" uid="uid://djtsxwanlek03" path="res://components/duel/duel.tscn" id="2_wfi3e"]
 
 [node name="Room" type="Node"]
 script = ExtResource("1_yxv8o")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="Chat" parent="UI" instance=ExtResource("2_upu2y")]
-anchors_preset = 12
-anchor_top = 1.0
-offset_top = -162.0
-grow_vertical = 0
+[node name="VBoxContainer" type="VBoxContainer" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="LeaveRoom" type="Button" parent="."]
-offset_left = 248.0
-offset_top = 28.0
-offset_right = 358.0
-offset_bottom = 59.0
-text = "LEAVE ROOM"
+[node name="Duel" parent="UI/VBoxContainer" instance=ExtResource("2_wfi3e")]
+layout_mode = 2
+size_flags_vertical = 3
 
-[connection signal="pressed" from="LeaveRoom" to="." method="_on_leave_room_pressed"]
+[node name="Chat" parent="UI/VBoxContainer" instance=ExtResource("2_upu2y")]
+layout_mode = 2

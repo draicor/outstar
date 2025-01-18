@@ -1211,7 +1211,21 @@ class CreateRoomRequest:
 	func _init():
 		var service
 		
+		_max_players = PBField.new("max_players", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = _max_players
+		data[_max_players.tag] = service
+		
 	var data = {}
+	
+	var _max_players: PBField
+	func get_max_players() -> int:
+		return _max_players.value
+	func clear_max_players() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_max_players.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_max_players(value : int) -> void:
+		_max_players.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

@@ -154,15 +154,13 @@ func (h *Hub) GetRoom(id uint64) (*Room, bool) {
 }
 
 // Creates a new room adds it to the list of available rooms
-func (h *Hub) CreateRoom() *Room {
+func (h *Hub) CreateRoom(maxPlayers uint64) *Room {
 	// Create it with the next id counter from the Hub
-	room := CreateRoom()
+	room := CreateRoom(maxPlayers)
 
 	// Dereference the pointer to add a REAL room object to the Hub's list of rooms
 	// If this is the first room, h.Rooms.Add returns 1, and the initial value for the room was 0
 	room.SetId(h.Rooms.Add(room))
-
-	room.SetMaxPlayers(8) // <- hardcoding this for now
 
 	// Start the room in a goroutine
 	go room.Start()

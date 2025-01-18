@@ -54,10 +54,11 @@ func send_join_room_request_packet(room_id: int) -> bool:
 	else:
 		return true
 
-func send_create_room_request_packet() -> bool:
+func send_create_room_request_packet(max_players: int) -> bool:
 	# We create a new packet
 	var packet := packets.Packet.new()
-	packet.new_create_room_request()
+	var create_room_request_packet := packet.new_create_room_request()
+	create_room_request_packet.set_max_players(max_players)
 
 	# Serialize and send our packet
 	var err := WebSocket.send(packet)
@@ -98,12 +99,13 @@ func _on_join_room_button_pressed(room_id: int) -> void:
 		new_dialog_box("Error sending data to the server", true)
 		enable_input()
 
+# TO FIX: we need to set up this differently
 func _on_create_room_button_pressed() -> void:
 	# We disable the button so the user can't spam it
 	disable_input()
 	
 	# We create the packet and send it to the server
-	if send_create_room_request_packet():
+	if send_create_room_request_packet(2): # TO FIX <- HARDCODING VALUE
 		# Show a dialog box to the user as he waits
 		new_dialog_box("Creating room...", false)
 	else:

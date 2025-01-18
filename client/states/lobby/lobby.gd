@@ -6,8 +6,8 @@ const lobby_escape_menu_scene: PackedScene = preload("res://components/escape_me
 
 # User Interface Variables
 @onready var ui_canvas: CanvasLayer = $UI
-@onready var chat: Control = $UI/Chat
-@onready var browser: Control = $UI/Browser
+@onready var browser: Control = $UI/VBoxContainer/Browser
+@onready var chat: Control = $UI/VBoxContainer/Chat
 
 var chat_input: LineEdit
 var lobby_escape_menu
@@ -141,6 +141,10 @@ func _handle_request_denied_packet(reason: String) -> void:
 	browser.enable_input()
 
 func _handle_room_list_packet(room_list_packet: Array):
+	# TO DO -> Improve this to implement a map with the room id and the packet
+	# that would be stored as a global variable, this would let us re-use the
+	# same list without having to refresh everytime we switch scenes
+	
 	# Clear our list
 	browser.delete_all_entries()
 	# Go over each entry on our packet

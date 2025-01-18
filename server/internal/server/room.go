@@ -24,6 +24,9 @@ type Room struct {
 	// Max players allowed to join this room as participants
 	MaxPlayers uint64
 
+	// Map of slot IDs and clientInterfacers in each slot
+	Slots map[uint64]ClientInterfacer
+
 	// Packets in this channel will be processed by all connected clients except the sender
 	BroadcastChannel chan *packets.Packet
 
@@ -50,10 +53,11 @@ func (r *Room) SetId(roomId uint64) {
 }
 
 // Static function that creates a new room
-func CreateRoom() *Room {
+func CreateRoom(maxPlayers uint64) *Room {
 	return &Room{
 		PlayersOnline:       0,
-		MaxPlayers:          0,
+		MaxPlayers:          maxPlayers,
+		Slots:               make(map[uint64]ClientInterfacer, maxPlayers),
 		Clients:             objects.NewSharedCollection[ClientInterfacer](),
 		BroadcastChannel:    make(chan *packets.Packet),
 		AddClientChannel:    make(chan ClientInterfacer),
@@ -77,6 +81,17 @@ func (r *Room) Start() {
 			// WE HAVE TO PASS THE SAME ID AS THE HUB ID!!!
 			r.Clients.Add(client, client.GetId()) // CAUTION HERE <-
 			r.PlayersOnline++
+			// this is how you occupy a slot mapVariable[key] = value
+			// r.Slots[0] = client
+
+			// this is how you delete a slot delete(mapVariable, key)
+			// delete(r.Slots, 0)
+
+			// this is how you get a single value in the map mapVariable[key]
+			// r.Slots[0]
+
+			// this is how you get the total occupied slots len(mapVariable)
+			// uint64(len(r.Slots))
 
 		// If a client leaves, remove him from this room
 		case client := <-r.RemoveClientChannel:

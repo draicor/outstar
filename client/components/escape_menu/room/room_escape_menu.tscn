@@ -78,14 +78,14 @@ theme_override_constants/separation = 8
 layout_mode = 2
 text = "Resume"
 
-[node name="Disconnect" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer"]
+[node name="LeaveRoom" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "Disconnect"
+text = "Leave room"
 
 [node name="Quit" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Quit"
 
 [connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/Resume" to="." method="_on_resume_pressed"]
-[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/Disconnect" to="." method="_on_disconnect_pressed"]
+[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/LeaveRoom" to="." method="_on_leave_room_pressed"]
 [connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/Quit" to="." method="_on_quit_pressed"]

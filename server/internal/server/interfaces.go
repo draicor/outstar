@@ -57,7 +57,7 @@ type ClientInterfacer interface {
 
 	// TO DO -> MOVE ALL OF THIS TO A LOBBY STRUCT
 	// Attempts to create a room [called from lobby state]
-	CreateRoom()
+	CreateRoom(maxPlayers uint64)
 
 	// Attempts to join a room by id [called from lobby state]
 	JoinRoom(roomId uint64)

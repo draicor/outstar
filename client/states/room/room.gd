@@ -7,10 +7,10 @@ const dialogue_box_scene: PackedScene = preload("res://components/dialog_box/dia
 
 # User Interface Variables
 @onready var ui_canvas: CanvasLayer = $UI
-@onready var chat: Control = $UI/Chat
+@onready var chat: Control = $UI/VBoxContainer/Chat
 var chat_input: LineEdit
 var room_escape_menu
-@onready var leave_room: Button = $LeaveRoom
+
 
 func _ready() -> void:
 	_initialize()
@@ -27,6 +27,7 @@ func _initialize() -> void:
 	Signals.heartbeat_attempt.connect(_on_websocket_heartbeat_attempt)
 	# User Interface signals
 	Signals.ui_escape_menu_toggle.connect(_on_ui_escape_menu_toggle)
+	Signals.ui_leave_room.connect(_on_ui_leave_room_pressed)
 	# Chat signals
 	Signals.ui_chat_input_toggle.connect(_on_ui_chat_input_toggle)
 	chat_input.text_submitted.connect(_on_chat_input_text_submitted)
@@ -34,6 +35,8 @@ func _initialize() -> void:
 	# Create and add the escape menu to the UI canvas layer
 	room_escape_menu = room_escape_menu_scene.instantiate()
 	ui_canvas.add_child(room_escape_menu)
+	
+
 
 func _on_websocket_connection_closed() -> void:
 	chat.error("You have been disconnected from the server")
@@ -142,10 +145,8 @@ func _handle_leave_room_success_packet() -> void:
 	# We transition into the Lobby scene
 	GameManager.set_state(GameManager.State.LOBBY)
 
-func _on_leave_room_pressed() -> void:
+func _on_ui_leave_room_pressed() -> void:
 	_send_leave_room_request_packet()
-	# We hide the leave room button so the user can't spam it
-	leave_room.hide()
 	
 	# We instantiate the dialogue box scene
 	var dialogue_box := dialogue_box_scene.instantiate()
@@ -153,4 +154,4 @@ func _on_leave_room_pressed() -> void:
 	ui_canvas.add_child(dialogue_box, false)
 	# The dialogue_box starts as hidden, we pass the values that will
 	# have, and then we show it from code
-	dialogue_box.initialize("Disconnecting...", false)
+	dialogue_box.initialize("Leaving...", false)

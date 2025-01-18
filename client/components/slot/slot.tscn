@@ -1,0 +1,50 @@
+[gd_scene load_steps=2 format=3 uid="uid://dfbau5k5s0sta"]
+
+[ext_resource type="Script" path="res://components/slot/slot.gd" id="1_pa88n"]
+
+[node name="Slot" type="Control"]
+custom_minimum_size = Vector2(196, 64)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_pa88n")
+
+[node name="Button" type="Button" parent="."]
+custom_minimum_size = Vector2(196, 64)
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Button"]
+layout_mode = 2
+offset_right = 196.0
+offset_bottom = 64.0
+
+[node name="Portrait" type="TextureRect" parent="Button/HBoxContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+expand_mode = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Button/HBoxContainer"]
+custom_minimum_size = Vector2(128, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="Level" type="Label" parent="Button/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+
+[node name="Nickname" type="Label" parent="Button/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+
+[node name="Guild" type="Label" parent="Button/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

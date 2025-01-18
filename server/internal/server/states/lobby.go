@@ -67,15 +67,15 @@ func (state *Lobby) HandlePacket(senderId uint64, payload packets.Payload) {
 
 		// CREATE ROOM REQUEST
 		case *packets.Packet_CreateRoomRequest:
-			state.HandleCreateRoomRequest()
+			state.HandleCreateRoomRequest(casted_payload.CreateRoomRequest)
 
 		// JOIN ROOM REQUEST
 		case *packets.Packet_JoinRoomRequest:
-			state.HandleJoinRoomRequest(casted_payload)
+			state.HandleJoinRoomRequest(casted_payload.JoinRoomRequest)
 
 		// GET ROOMS REQUEST
 		case *packets.Packet_GetRoomsRequest:
-			state.HandleGetRoomsRequest(casted_payload)
+			state.HandleGetRoomsRequest()
 
 		case nil:
 			// Ignore packet if not a valid payload type
@@ -106,22 +106,23 @@ func (state *Lobby) OnExit() {
 }
 
 // Sent by the client to request creating a new room
-func (state *Lobby) HandleCreateRoomRequest() {
-	state.client.CreateRoom()
+func (state *Lobby) HandleCreateRoomRequest(payload *packets.CreateRoomRequest) {
+	state.client.CreateRoom(payload.GetMaxPlayers())
 }
 
 // Sent by the client to request joining a room
-func (state *Lobby) HandleJoinRoomRequest(payload *packets.Packet_JoinRoomRequest) {
-	state.client.JoinRoom(payload.JoinRoomRequest.GetRoomId())
+func (state *Lobby) HandleJoinRoomRequest(payload *packets.JoinRoomRequest) {
+	state.client.JoinRoom(payload.GetRoomId())
 }
 
 // Sent by the client requesting the list of available rooms
-func (state *Lobby) HandleGetRoomsRequest(payload *packets.Packet_GetRoomsRequest) {
+func (state *Lobby) HandleGetRoomsRequest() {
 	// Request the room list from the client [client requests it from the hub]
 	rooms := state.client.GetRoomList()
-	// If there are no rooms created, inform the client
+	// If there are no rooms created, inform the client and return
 	if rooms.Len() < 1 {
 		state.client.SocketSend(packets.NewRequestDenied("No rooms available"))
+		return
 	}
 
 	// Create an empty map that will hold RoomInfo packets with an initial capacity equal to the length of rooms

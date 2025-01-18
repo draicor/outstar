@@ -21,16 +21,14 @@ message RegisterRequest { // Sent by client to register
   string nickname = 2;
   string password = 3;
 }
+message LoginSuccess { string nickname = 1; } // Sent by the server after successful login
 // Notifies
 message ClientEntered { string nickname = 1; } // Sent by the client once his client is ready, broadcasted to everyone
 message ClientLeft { string nickname = 1; } // Broadcast by the server if a client leaves
-// Lobby/Room
+// Lobby
 message JoinRoomRequest { uint64 room_id = 1; } // Sent by the client to request joining a new room
-message LoginSuccess { string nickname = 1; } // Sent by the server after successful login
-message LeaveRoomRequest {} // Sent by the client to request leaving a room and going back to the Hub
 message JoinRoomSuccess {} // Sent by the server to ask the client to switch to the room state
-message LeaveRoomSuccess {} // Sent by the server to ask the client to switch to the lobby state
-message CreateRoomRequest {} // Sent by the client to request creating a new room
+message CreateRoomRequest { uint64 max_players = 1; } // Sent by the client to request creating a new room
 message RoomInfo { // Data from a room used in Rooms
   uint64 room_id = 1;
   string master = 2;
@@ -40,6 +38,9 @@ message RoomInfo { // Data from a room used in Rooms
 }
 message RoomList { repeated RoomInfo room_list = 1; } // List with every available room sent by the server
 message GetRoomsRequest {} // Sent by the client to request all of the rooms from the server
+// Room
+message LeaveRoomRequest {} // Sent by the client to request leaving a room and going back to the Hub
+message LeaveRoomSuccess {} // Sent by the server to ask the client to switch to the lobby state
 
 // Main Packet container
 message Packet {
@@ -55,19 +56,19 @@ message Packet {
     RequestDenied request_denied = 6; // Server
     LoginRequest login_request = 7; // Client
     RegisterRequest register_request = 8; // Client
+    LoginSuccess login_success = 12; // Server
     // Notifies
     ClientEntered client_entered = 9; // Both [Change this to be Server only!]
     ClientLeft client_left = 10; // Server
+    // Lobby
     JoinRoomRequest join_room_request = 11; // Client
-    LoginSuccess login_success = 12; // Server
-    // Lobby/Room
-    LeaveRoomRequest leave_room_request = 13; // Client
     JoinRoomSuccess join_room_success = 14; // Server
-    LeaveRoomSuccess leave_room_success = 15; // Server
     CreateRoomRequest create_room_request = 16; // Client
-    // Room data
     RoomInfo room_info = 17; // Server
     RoomList room_list = 18; // Server
     GetRoomsRequest get_rooms_request = 19; // Client
+    // Room
+    LeaveRoomRequest leave_room_request = 13; // Client
+    LeaveRoomSuccess leave_room_success = 15; // Server
   }
 }

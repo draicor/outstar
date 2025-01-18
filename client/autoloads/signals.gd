@@ -25,4 +25,5 @@ signal browser_join_room(room_id: int)
 # Input signals
 signal ui_escape_menu_toggle
 signal ui_chat_input_toggle
+signal ui_leave_room
 #signal ui_disconnect

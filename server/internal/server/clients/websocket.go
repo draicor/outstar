@@ -325,9 +325,9 @@ func (c *WebSocketClient) GetNickname() string {
 }
 
 // Creates a new room and then calls JoinRoom() to move the creator into the new room
-func (c *WebSocketClient) CreateRoom() {
+func (c *WebSocketClient) CreateRoom(maxPlayers uint64) {
 	// Delegate the work to the Hub
-	room := c.hub.CreateRoom()
+	room := c.hub.CreateRoom(maxPlayers)
 
 	// Wait while the room gets created
 	time.Sleep(clientWaiting * time.Second)
