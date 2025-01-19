@@ -69,7 +69,15 @@ func (state *Room) HandlePacket(senderId uint64, payload packets.Payload) {
 
 		// LEAVE ROOM REQUEST
 		case *packets.Packet_LeaveRoomRequest:
-			state.HandleLeaveRoomRequest(casted_payload)
+			state.HandleLeaveRoomRequest()
+
+		// TAKE SLOT REQUEST
+		case *packets.Packet_TakeSlotRequest:
+			state.HandleTakeSlotRequest(casted_payload.TakeSlotRequest.GetSlotId())
+
+		// LEAVE SLOT REQUEST
+		case *packets.Packet_LeaveSlotRequest:
+			state.HandleLeaveSlotRequest()
 
 		case nil:
 			// Ignore packet if not a valid payload type
@@ -98,6 +106,32 @@ func (state *Room) OnExit() {
 }
 
 // Sent by the client to request leaving a room
-func (state *Room) HandleLeaveRoomRequest(payload *packets.Packet_LeaveRoomRequest) {
+func (state *Room) HandleLeaveRoomRequest() {
 	state.client.LeaveRoom()
+}
+
+// Sent by the client to request occupying a slot inside the room
+func (state *Room) HandleTakeSlotRequest(slotId uint64) {
+	// We get the room this client is in
+	room := state.client.GetRoom()
+	// We attempt to take the slot
+	success := room.TakeSlot(slotId, state.client)
+	if success {
+		state.client.SocketSend(packets.NewRequestGranted())
+	} else {
+		state.client.SocketSend(packets.NewRequestDenied("Slot not available"))
+	}
+}
+
+// Sent by the client to request leaving a slot inside the room
+func (state *Room) HandleLeaveSlotRequest() {
+	// We get the room this client is in
+	room := state.client.GetRoom()
+	// We attempt to leave the slot
+	success := room.LeaveSlot(state.client)
+	if success {
+		state.client.SocketSend(packets.NewRequestGranted())
+	} else {
+		state.client.SocketSend(packets.NewRequestDenied("You are not occupying any slot"))
+	}
 }

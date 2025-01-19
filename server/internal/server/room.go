@@ -16,9 +16,9 @@ type Room struct {
 	Clients *objects.SharedCollection[ClientInterfacer]
 
 	// Master of this room
-	RoomMaster string
+	RoomMaster ClientInterfacer
 
-	// Players connected to this room
+	// Players connected to this room (both players and spectators)
 	PlayersOnline uint64
 
 	// Max players allowed to join this room as participants
@@ -68,7 +68,9 @@ func CreateRoom(maxPlayers uint64) *Room {
 
 // Listens for packets on each channel
 func (r *Room) Start() {
-	r.logger.Println("Listening for packets...")
+	r.logger.Printf("Starting Room #%d", r.GetId())
+	// We set all of the slots to nil before starting
+	r.initializeSlots()
 
 	// Infinite for loop
 	for {
@@ -81,8 +83,6 @@ func (r *Room) Start() {
 			// WE HAVE TO PASS THE SAME ID AS THE HUB ID!!!
 			r.Clients.Add(client, client.GetId()) // CAUTION HERE <-
 			r.PlayersOnline++
-			// this is how you occupy a slot mapVariable[key] = value
-			// r.Slots[0] = client
 
 			// this is how you delete a slot delete(mapVariable, key)
 			// delete(r.Slots, 0)
@@ -153,4 +153,45 @@ func (r *Room) SetMaxPlayers(newMaxPlayers uint64) {
 	}
 
 	r.MaxPlayers = newMaxPlayers
+}
+
+// Internal function to create all of the slots with a nil value
+func (r *Room) initializeSlots() {
+	// First value is 1, last value is equal to the number of max players
+	for i := uint64(1); i <= r.MaxPlayers; i++ {
+		r.Slots[i] = nil
+	}
+}
+
+// Attempts to store the client interfacer in the slot id passed as argument
+func (r *Room) TakeSlot(slotId uint64, client ClientInterfacer) bool {
+	// If the client tried to pass an invalid id
+	if slotId < 1 || slotId > r.MaxPlayers {
+		return false
+	}
+
+	// If the slot is already occupied
+	if r.Slots[slotId] != nil {
+		return false
+	}
+
+	// This is how you occupy a slot mapVariable[key] = value
+	r.Slots[slotId] = client // <- replace this with the player object instead
+	return true
+}
+
+// Looks for the client in the Slots and if present, he removes the client
+func (r *Room) LeaveSlot(client ClientInterfacer) bool {
+	// We iterate the all of Slots looking for the client
+	for key, value := range r.Slots {
+		// If we find the client in the list
+		if value == client {
+			// We remove him
+			r.Slots[key] = nil
+			// We break out of this cycle by returning true
+			return true
+		}
+	}
+	// If we didn't find the client in the map, we return false
+	return false
 }

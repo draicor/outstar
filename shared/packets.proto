@@ -41,6 +41,8 @@ message GetRoomsRequest {} // Sent by the client to request all of the rooms fro
 // Room
 message LeaveRoomRequest {} // Sent by the client to request leaving a room and going back to the Hub
 message LeaveRoomSuccess {} // Sent by the server to ask the client to switch to the lobby state
+message TakeSlotRequest { uint64 slot_id = 1; } // Sent by the client to request occupying a slot inside the room
+message LeaveSlotRequest {} // Sent by the client to request leaving a slot inside the room
 
 // Main Packet container
 message Packet {
@@ -70,5 +72,7 @@ message Packet {
     // Room
     LeaveRoomRequest leave_room_request = 13; // Client
     LeaveRoomSuccess leave_room_success = 15; // Server
+    TakeSlotRequest take_slot_request = 20; // Client
+    LeaveSlotRequest leave_slot_request = 21; // Client
   }
 }

@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// How long we want the client to wait after creating/joining a room
+// How long we want the client to wait after creating/joining/leaving a room
 const clientWaiting time.Duration = 1
 
 // This client data will be injected into every state on state changes,
@@ -68,6 +68,11 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 // Returns the Hub this client is connected to
 func (c *WebSocketClient) GetHub() *server.Hub {
 	return c.hub
+}
+
+// Returns this client's current room
+func (c *WebSocketClient) GetRoom() *server.Room {
+	return c.room
 }
 
 // Returns the client's ID

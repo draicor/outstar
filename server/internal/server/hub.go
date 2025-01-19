@@ -40,6 +40,11 @@ type Hub struct {
 	DatabaseChannel chan *db.Queries
 }
 
+type SharedGameObjects struct {
+	// The ID of the player is the ID of the client
+	Players *objects.SharedCollection[*objects.Player]
+}
+
 // Creates a new empty hub object, we have to pass a valid DB connection
 func CreateHub(databasePool *sql.DB) *Hub {
 	return &Hub{

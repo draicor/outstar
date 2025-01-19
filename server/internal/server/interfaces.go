@@ -55,6 +55,9 @@ type ClientInterfacer interface {
 	// Returns this client's nickname
 	GetNickname() string
 
+	// Returns this client's current room
+	GetRoom() *Room
+
 	// TO DO -> MOVE ALL OF THIS TO A LOBBY STRUCT
 	// Attempts to create a room [called from lobby state]
 	CreateRoom(maxPlayers uint64)

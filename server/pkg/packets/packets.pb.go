@@ -840,6 +840,87 @@ func (*LeaveRoomSuccess) Descriptor() ([]byte, []int) {
 	return file_packets_proto_rawDescGZIP(), []int{17}
 }
 
+type TakeSlotRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SlotId uint64 `protobuf:"varint,1,opt,name=slot_id,json=slotId,proto3" json:"slot_id,omitempty"`
+}
+
+func (x *TakeSlotRequest) Reset() {
+	*x = TakeSlotRequest{}
+	mi := &file_packets_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TakeSlotRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TakeSlotRequest) ProtoMessage() {}
+
+func (x *TakeSlotRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_packets_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TakeSlotRequest.ProtoReflect.Descriptor instead.
+func (*TakeSlotRequest) Descriptor() ([]byte, []int) {
+	return file_packets_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *TakeSlotRequest) GetSlotId() uint64 {
+	if x != nil {
+		return x.SlotId
+	}
+	return 0
+}
+
+type LeaveSlotRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *LeaveSlotRequest) Reset() {
+	*x = LeaveSlotRequest{}
+	mi := &file_packets_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaveSlotRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaveSlotRequest) ProtoMessage() {}
+
+func (x *LeaveSlotRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_packets_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaveSlotRequest.ProtoReflect.Descriptor instead.
+func (*LeaveSlotRequest) Descriptor() ([]byte, []int) {
+	return file_packets_proto_rawDescGZIP(), []int{19}
+}
+
 // Main Packet container
 type Packet struct {
 	state         protoimpl.MessageState
@@ -867,12 +948,14 @@ type Packet struct {
 	//	*Packet_GetRoomsRequest
 	//	*Packet_LeaveRoomRequest
 	//	*Packet_LeaveRoomSuccess
+	//	*Packet_TakeSlotRequest
+	//	*Packet_LeaveSlotRequest
 	Payload isPacket_Payload `protobuf_oneof:"payload"`
 }
 
 func (x *Packet) Reset() {
 	*x = Packet{}
-	mi := &file_packets_proto_msgTypes[18]
+	mi := &file_packets_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -884,7 +967,7 @@ func (x *Packet) String() string {
 func (*Packet) ProtoMessage() {}
 
 func (x *Packet) ProtoReflect() protoreflect.Message {
-	mi := &file_packets_proto_msgTypes[18]
+	mi := &file_packets_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -897,7 +980,7 @@ func (x *Packet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Packet.ProtoReflect.Descriptor instead.
 func (*Packet) Descriptor() ([]byte, []int) {
-	return file_packets_proto_rawDescGZIP(), []int{18}
+	return file_packets_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *Packet) GetSenderId() uint64 {
@@ -1040,6 +1123,20 @@ func (x *Packet) GetLeaveRoomSuccess() *LeaveRoomSuccess {
 	return nil
 }
 
+func (x *Packet) GetTakeSlotRequest() *TakeSlotRequest {
+	if x, ok := x.GetPayload().(*Packet_TakeSlotRequest); ok {
+		return x.TakeSlotRequest
+	}
+	return nil
+}
+
+func (x *Packet) GetLeaveSlotRequest() *LeaveSlotRequest {
+	if x, ok := x.GetPayload().(*Packet_LeaveSlotRequest); ok {
+		return x.LeaveSlotRequest
+	}
+	return nil
+}
+
 type isPacket_Payload interface {
 	isPacket_Payload()
 }
@@ -1122,6 +1219,14 @@ type Packet_LeaveRoomSuccess struct {
 	LeaveRoomSuccess *LeaveRoomSuccess `protobuf:"bytes,15,opt,name=leave_room_success,json=leaveRoomSuccess,proto3,oneof"` // Server
 }
 
+type Packet_TakeSlotRequest struct {
+	TakeSlotRequest *TakeSlotRequest `protobuf:"bytes,20,opt,name=take_slot_request,json=takeSlotRequest,proto3,oneof"` // Client
+}
+
+type Packet_LeaveSlotRequest struct {
+	LeaveSlotRequest *LeaveSlotRequest `protobuf:"bytes,21,opt,name=leave_slot_request,json=leaveSlotRequest,proto3,oneof"` // Client
+}
+
 func (*Packet_PublicMessage) isPacket_Payload() {}
 
 func (*Packet_Handshake) isPacket_Payload() {}
@@ -1157,6 +1262,10 @@ func (*Packet_GetRoomsRequest) isPacket_Payload() {}
 func (*Packet_LeaveRoomRequest) isPacket_Payload() {}
 
 func (*Packet_LeaveRoomSuccess) isPacket_Payload() {}
+
+func (*Packet_TakeSlotRequest) isPacket_Payload() {}
+
+func (*Packet_LeaveSlotRequest) isPacket_Payload() {}
 
 var File_packets_proto protoreflect.FileDescriptor
 
@@ -1215,7 +1324,11 @@ var file_packets_proto_rawDesc = []byte{
 	0x73, 0x74, 0x22, 0x11, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x52, 0x6f, 0x6f, 0x6d, 0x73, 0x52, 0x65,
 	0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x12, 0x0a, 0x10, 0x4c, 0x65, 0x61, 0x76, 0x65, 0x52, 0x6f,
 	0x6f, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x12, 0x0a, 0x10, 0x4c, 0x65, 0x61,
-	0x76, 0x65, 0x52, 0x6f, 0x6f, 0x6d, 0x53, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x22, 0xba, 0x09,
+	0x76, 0x65, 0x52, 0x6f, 0x6f, 0x6d, 0x53, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x22, 0x2a, 0x0a,
+	0x0f, 0x54, 0x61, 0x6b, 0x65, 0x53, 0x6c, 0x6f, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x17, 0x0a, 0x07, 0x73, 0x6c, 0x6f, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x04, 0x52, 0x06, 0x73, 0x6c, 0x6f, 0x74, 0x49, 0x64, 0x22, 0x12, 0x0a, 0x10, 0x4c, 0x65, 0x61,
+	0x76, 0x65, 0x53, 0x6c, 0x6f, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0xcd, 0x0a,
 	0x0a, 0x06, 0x50, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x65, 0x6e, 0x64,
 	0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x73, 0x65, 0x6e,
 	0x64, 0x65, 0x72, 0x49, 0x64, 0x12, 0x3f, 0x0a, 0x0e, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x5f,
@@ -1290,10 +1403,19 @@ var file_packets_proto_rawDesc = []byte{
 	0x6f, 0x6d, 0x5f, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x0f, 0x20, 0x01, 0x28, 0x0b,
 	0x32, 0x19, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x73, 0x2e, 0x4c, 0x65, 0x61, 0x76, 0x65,
 	0x52, 0x6f, 0x6f, 0x6d, 0x53, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x48, 0x00, 0x52, 0x10, 0x6c,
-	0x65, 0x61, 0x76, 0x65, 0x52, 0x6f, 0x6f, 0x6d, 0x53, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x42,
-	0x09, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x42, 0x0d, 0x5a, 0x0b, 0x70, 0x6b,
-	0x67, 0x2f, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x65, 0x61, 0x76, 0x65, 0x52, 0x6f, 0x6f, 0x6d, 0x53, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12,
+	0x46, 0x0a, 0x11, 0x74, 0x61, 0x6b, 0x65, 0x5f, 0x73, 0x6c, 0x6f, 0x74, 0x5f, 0x72, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x18, 0x14, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x70, 0x61, 0x63,
+	0x6b, 0x65, 0x74, 0x73, 0x2e, 0x54, 0x61, 0x6b, 0x65, 0x53, 0x6c, 0x6f, 0x74, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x48, 0x00, 0x52, 0x0f, 0x74, 0x61, 0x6b, 0x65, 0x53, 0x6c, 0x6f, 0x74,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x49, 0x0a, 0x12, 0x6c, 0x65, 0x61, 0x76, 0x65,
+	0x5f, 0x73, 0x6c, 0x6f, 0x74, 0x5f, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x18, 0x15, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x73, 0x2e, 0x4c, 0x65,
+	0x61, 0x76, 0x65, 0x53, 0x6c, 0x6f, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x48, 0x00,
+	0x52, 0x10, 0x6c, 0x65, 0x61, 0x76, 0x65, 0x53, 0x6c, 0x6f, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x42, 0x09, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x42, 0x0d, 0x5a,
+	0x0b, 0x70, 0x6b, 0x67, 0x2f, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1308,7 +1430,7 @@ func file_packets_proto_rawDescGZIP() []byte {
 	return file_packets_proto_rawDescData
 }
 
-var file_packets_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_packets_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_packets_proto_goTypes = []any{
 	(*PublicMessage)(nil),     // 0: packets.PublicMessage
 	(*Handshake)(nil),         // 1: packets.Handshake
@@ -1328,7 +1450,9 @@ var file_packets_proto_goTypes = []any{
 	(*GetRoomsRequest)(nil),   // 15: packets.GetRoomsRequest
 	(*LeaveRoomRequest)(nil),  // 16: packets.LeaveRoomRequest
 	(*LeaveRoomSuccess)(nil),  // 17: packets.LeaveRoomSuccess
-	(*Packet)(nil),            // 18: packets.Packet
+	(*TakeSlotRequest)(nil),   // 18: packets.TakeSlotRequest
+	(*LeaveSlotRequest)(nil),  // 19: packets.LeaveSlotRequest
+	(*Packet)(nil),            // 20: packets.Packet
 }
 var file_packets_proto_depIdxs = []int32{
 	13, // 0: packets.RoomList.room_list:type_name -> packets.RoomInfo
@@ -1350,11 +1474,13 @@ var file_packets_proto_depIdxs = []int32{
 	15, // 16: packets.Packet.get_rooms_request:type_name -> packets.GetRoomsRequest
 	16, // 17: packets.Packet.leave_room_request:type_name -> packets.LeaveRoomRequest
 	17, // 18: packets.Packet.leave_room_success:type_name -> packets.LeaveRoomSuccess
-	19, // [19:19] is the sub-list for method output_type
-	19, // [19:19] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	18, // 19: packets.Packet.take_slot_request:type_name -> packets.TakeSlotRequest
+	19, // 20: packets.Packet.leave_slot_request:type_name -> packets.LeaveSlotRequest
+	21, // [21:21] is the sub-list for method output_type
+	21, // [21:21] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_packets_proto_init() }
@@ -1362,7 +1488,7 @@ func file_packets_proto_init() {
 	if File_packets_proto != nil {
 		return
 	}
-	file_packets_proto_msgTypes[18].OneofWrappers = []any{
+	file_packets_proto_msgTypes[20].OneofWrappers = []any{
 		(*Packet_PublicMessage)(nil),
 		(*Packet_Handshake)(nil),
 		(*Packet_Heartbeat)(nil),
@@ -1381,6 +1507,8 @@ func file_packets_proto_init() {
 		(*Packet_GetRoomsRequest)(nil),
 		(*Packet_LeaveRoomRequest)(nil),
 		(*Packet_LeaveRoomSuccess)(nil),
+		(*Packet_TakeSlotRequest)(nil),
+		(*Packet_LeaveSlotRequest)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1388,7 +1516,7 @@ func file_packets_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_packets_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
