@@ -1,7 +1,7 @@
 extends Node
 
 const packets := preload("res://packets.gd")
-const heartbeat_wait_time := 5.0
+const heartbeat_wait_time := 10.0
 
 var socket := WebSocketPeer.new()
 var last_state := WebSocketPeer.STATE_CLOSED

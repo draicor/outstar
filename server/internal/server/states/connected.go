@@ -34,8 +34,7 @@ func (state *Connected) SetClient(client server.ClientInterfacer) {
 
 func (state *Connected) OnEnter() {
 	// A newly connected client will receive its own ID
-	state.client.SocketSend(packets.NewHandshake())
-
+	state.client.SendPacket(packets.NewHandshake())
 	// After sending the Handshake packet to the client, switch to the Authentication state
 	state.client.SetState(&Authentication{})
 }

@@ -11,14 +11,11 @@ import (
 )
 
 // The hub is the entry point for all connected clients and the only go routine
-// that should write to the database. It also keeps track of every available room
+// that should write to the database. It also keeps track of every available region
 // within the server.
 type Hub struct {
 	// Map of all the connected clients in the server
-	Clients *objects.SharedCollection[ClientInterfacer]
-
-	// Players connected counter
-	PlayersOnline uint64
+	Clients *objects.MapMutex[ClientInterfacer]
 
 	// Packets in this channel will be processed by all connected clients
 	BroadcastChannel chan *packets.Packet
@@ -29,37 +26,30 @@ type Hub struct {
 	// Clients that disconnect will be removed from the Hub
 	RemoveClientChannel chan ClientInterfacer
 
-	// Map of every available room
-	Rooms *objects.SharedCollection[*Room]
+	// Map of every region
+	Regions *objects.MapMutex[*Region]
 
-	// Every new room will get a reference to the database connection pool
-	DatabasePool *sql.DB
-
-	// Database write queries received on this channel will be queued for execution
-	// Only rooms should request the hub to write something
-	DatabaseChannel chan *db.Queries
+	// Refactor the code so only the hub writes to the DB
+	Database *sql.DB
 }
 
-type SharedGameObjects struct {
+type SharedObjects struct {
 	// The ID of the player is the ID of the client
-	Players *objects.SharedCollection[*objects.Player]
+	Players *objects.MapMutex[*objects.Character]
 }
 
 // Creates a new empty hub object, we have to pass a valid DB connection
-func CreateHub(databasePool *sql.DB) *Hub {
+func CreateHub(database *sql.DB) *Hub {
 	return &Hub{
 		// Collection of every connected client in the server
-		Clients:             objects.NewSharedCollection[ClientInterfacer](),
-		PlayersOnline:       0,
+		Clients:             objects.NewMapMutex[ClientInterfacer](),
 		AddClientChannel:    make(chan ClientInterfacer),
 		RemoveClientChannel: make(chan ClientInterfacer),
 		BroadcastChannel:    make(chan *packets.Packet),
-		// Collection of every available room in the server
-		Rooms: objects.NewSharedCollection[*Room](),
+		// Collection of every available region in the server
+		Regions: objects.NewMapMutex[*Region](),
 		// Database connection
-		DatabasePool: databasePool,
-		// TO FIX -> CHANGE THE TYPE OF THE CHANNELs
-		DatabaseChannel: make(chan *db.Queries),
+		Database: database,
 	}
 }
 
@@ -79,15 +69,19 @@ func (h *Hub) Serve(getNewClient func(*Hub, http.ResponseWriter, *http.Request) 
 	// Send this client to the add client channel
 	h.AddClientChannel <- client
 
-	// Sends packets to the godot websocket client
-	go client.WritePump()
-	// Reads packets from the godot websocket client and process them
-	go client.ReadPump()
+	// Sends packets to the game client
+	go client.StartWritePump()
+	// Reads packets from the game client
+	go client.StartReadPump()
 }
 
 // Listens for packets on each channel
 func (h *Hub) Start() {
-	log.Println("Hub created, awaiting client connections...")
+	log.Println("Starting hub...")
+
+	h.CreateRegion("Tutorial", "tutorial")
+
+	log.Println("Hub created, awaiting clients...")
 
 	// Infinite for loop
 	for {
@@ -97,33 +91,20 @@ func (h *Hub) Start() {
 
 		// If a client connects to the server, add it to the Hub
 		case client := <-h.AddClientChannel:
-			// If this client already has an ID
-			if client.HasId() {
-				// We just add him to the Hub with the same ID he had before
-				h.Clients.Add(client, client.GetId())
-			} else { // First time joining the Hub after login
-				// The Add method returns a client ID, which we use to Initialize the WebSocket Client's ID
-				client.Initialize(h.Clients.Add(client))
-			}
-
-			// We increase the number of players online only after login
-			h.PlayersOnline++
+			// The Add method returns a client ID, which we use to Initialize the WebSocket Client's ID
+			client.Initialize(h.Clients.Add(client))
 
 		// If a client disconnects, remove him from the Hub
 		case client := <-h.RemoveClientChannel:
 			h.Clients.Remove(client.GetId())
-			h.PlayersOnline--
 
 		// If we get a packet from the broadcast channel
 		case packet := <-h.BroadcastChannel:
 			// Go over every registered client in the Hub (whole server)
 			h.Clients.ForEach(func(id uint64, client ClientInterfacer) {
-				// Check that the sender does not send the message to itself
+				// Check that the sender does not send the packet to itself
 				if client.GetId() != packet.SenderId {
-					// If the client is not idling at the login/register screen
-					if client.GetNickname() != "" {
-						client.ProcessMessage(packet.SenderId, packet.Payload)
-					}
+					client.ProcessPacket(packet.SenderId, packet.Payload)
 				}
 			})
 		}
@@ -140,7 +121,7 @@ type DBTX struct {
 func (h *Hub) NewDBTX() *DBTX {
 	return &DBTX{
 		Ctx:     context.Background(),
-		Queries: db.New(h.DatabasePool),
+		Queries: db.New(h.Database),
 	}
 }
 
@@ -149,86 +130,57 @@ func (h *Hub) GetClient(id uint64) (ClientInterfacer, bool) {
 	return h.Clients.Get(id)
 }
 
-// Retrieves the room (if found) in the Rooms collection
-func (h *Hub) GetRoom(id uint64) (*Room, bool) {
-	room, found := h.Rooms.Get(id)
+// Retrieves the region (if found) in the Regions collection
+func (h *Hub) GetRegionById(id uint64) (*Region, bool) {
+	region, found := h.Regions.Get(id)
 	if found {
-		return room, true
+		return region, true
 	}
 	return nil, false
 }
 
-// Creates a new room adds it to the list of available rooms
-func (h *Hub) CreateRoom(maxPlayers uint64) *Room {
-	// Create it with the next id counter from the Hub
-	room := CreateRoom(maxPlayers)
+// Creates a new region and adds it to Hub
+func (h *Hub) CreateRegion(name string, gameMap string) {
+	region := CreateRegion(name, gameMap)
 
-	// Dereference the pointer to add a REAL room object to the Hub's list of rooms
-	// If this is the first room, h.Rooms.Add returns 1, and the initial value for the room was 0
-	room.SetId(h.Rooms.Add(room))
+	// Dereference the pointer to add a REAL region object to the Hub's list of regions
+	// If this is the first region, h.Regions.Add returns 1, and the initial value for the region was 0
+	region.SetId(h.Regions.Add(region))
 
-	// Start the room in a goroutine
-	go room.Start()
-
-	// Pass the pointer of this room to the client
-	return room
+	// Start the region in a goroutine
+	go region.Start()
 }
 
-// Registers the client to this room if it exists and its available
-func (h *Hub) JoinRoom(clientId uint64, roomId uint64) *Room {
+// Registers the client to this region if it exists and its available
+func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 	// Search for this client by id
-	_, clientExists := h.GetClient(clientId)
+	client, clientExists := h.GetClient(clientId)
 	// If the client is online and exists
 	if clientExists {
 
-		// Search for this room by id
-		room, roomExists := h.GetRoom(roomId)
-		// If the room is already created
-		if roomExists {
+		// Search for this region by id
+		region, regionExists := h.GetRegionById(regionId)
+		// If the region is valid
+		if regionExists {
 
 			// TO DO ->
-			// CHECK IF CLIENT CAN JOIN THIS ROOM (ROOM NOT FULL)
+			// CHECK IF CLIENT CAN JOIN THIS REGION (LEVEL REQ)
 
-			// TO DO ->
-			// Unregister the client from the LOBBY, not the hub
+			// If the client was already at another region
+			if client.GetRegion() != nil {
+				// Broadcast to everyone that this client left this region!
+				client.Broadcast(packets.NewClientLeft(client.GetCharacter().Name))
+				// Unregister the client from that region
+				client.GetRegion().RemoveClientChannel <- client
+			}
 
-			// Unregister the client from the hub
-			// The underlying connection to the websocket will remain, but he won't
-			// be sending packets directly to the hub, only to the room hes at
-			h.Clients.Remove(clientId)
+			// Register the client to the new region
+			region.AddClientChannel <- client
+			// Save the new region pointer in the client
+			client.SetRegion(region)
 
-			// Pass a pointer of this room to the client
-			// Return true to let the client know he can join immediately
-			return room
-
-		} else { // If the room does not exist
-			log.Println("Room", roomId, "doesn't exist in the Hub ")
-			return nil
+		} else { // If the region does not exist
+			log.Printf("Region %d not available", regionId)
 		}
 	}
-
-	log.Println("Client", clientId, "not in lobby tried to join room", roomId)
-
-	// If the client is not online in the Hub, we return nil
-	return nil
-}
-
-// Returns the channel that can broadcast packets
-func (h *Hub) GetBroadcastChannel() chan *packets.Packet {
-	return h.BroadcastChannel
-}
-
-// Returns the channel that registers new clients
-func (h *Hub) GetAddClientChannel() chan ClientInterfacer {
-	return h.AddClientChannel
-}
-
-// Returns the channel that removes clients
-func (h *Hub) GetRemoveClientChannel() chan ClientInterfacer {
-	return h.RemoveClientChannel
-}
-
-// Returns the collection of rooms
-func (h *Hub) GetRooms() *objects.SharedCollection[*Room] {
-	return h.Rooms
 }

@@ -7,6 +7,7 @@ import (
 	"log"
 	"server/internal/server"
 	"server/internal/server/db"
+	"server/internal/server/objects"
 	"strings"
 
 	"server/pkg/packets"
@@ -49,11 +50,11 @@ func (state *Authentication) HandlePacket(senderId uint64, payload packets.Paylo
 
 		// LOGIN REQUEST
 		case *packets.Packet_LoginRequest:
-			state.HandleLoginRequest(senderId, casted_payload)
+			state.HandleLoginRequest(senderId, casted_payload.LoginRequest)
 
 		// REGISTER REQUEST
 		case *packets.Packet_RegisterRequest:
-			state.HandleRegisterRequest(senderId, casted_payload)
+			state.HandleRegisterRequest(senderId, casted_payload.RegisterRequest)
 
 		case nil:
 			// Ignore packet if not a valid payload type
@@ -63,11 +64,11 @@ func (state *Authentication) HandlePacket(senderId uint64, payload packets.Paylo
 
 	} else {
 		// If another client passed us this packet, forward it to our client
-		state.client.SocketSendAs(payload, senderId)
+		state.client.SendPacketAs(senderId, payload)
 	}
 }
 
-func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packets.Packet_LoginRequest) {
+func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packets.LoginRequest) {
 	// If client used a different ID than his own ID, ignore this packet
 	if senderId != state.client.GetId() {
 		state.logger.Printf("Unauthorized login packet: ID#%d != ID#%d", senderId, state.client.GetId())
@@ -75,26 +76,26 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	}
 
 	// We make the username lowercase before trying to access the database
-	username := strings.ToLower(payload.LoginRequest.Username)
+	username := strings.ToLower(payload.Username)
 
 	// We validate the username and if we find an error we deny the request
 	err := validateUsername(username)
 	if err != nil {
 		reason := fmt.Sprintf("Invalid username: %v", err)
 		state.logger.Println(reason)
-		state.client.SocketSend(packets.NewRequestDenied(reason))
+		state.client.SendPacket(packets.NewRequestDenied(reason))
 		return
 	}
 
 	// We store the password for ease of use here
-	password := payload.LoginRequest.Password
+	password := payload.Password
 
 	// We validate the password and if we find an error we deny the request
 	err = validatePassword(password)
 	if err != nil {
 		reason := fmt.Sprintf("Invalid password: %v", err)
 		state.logger.Println(reason)
-		state.client.SocketSend(packets.NewRequestDenied(reason))
+		state.client.SendPacket(packets.NewRequestDenied(reason))
 		return
 	}
 
@@ -105,7 +106,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	user, err := state.queries.GetUserByUsername(state.dbCtx, username)
 	if err != nil {
 		state.logger.Printf("Username %s error: %v", username, err)
-		state.client.SocketSend(deniedMessage)
+		state.client.SendPacket(deniedMessage)
 		return
 	}
 
@@ -113,20 +114,20 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
 		state.logger.Printf("Invalid password attempt from %s", user.Nickname)
-		state.client.SocketSend(deniedMessage)
+		state.client.SendPacket(deniedMessage)
 		return
 	}
 
-	// Store this client's nickname in memory
-	state.client.SetNickname(user.Nickname)
+	// Save this client's character data
+	state.client.SetCharacter(objects.NewCharacter(user.Nickname))
 	state.logger.Printf("%s logged in as %s", username, user.Nickname)
 	// We send the nickname to the client so he can display it on his own game client
-	state.client.SocketSend(packets.NewLoginSuccess(user.Nickname))
-	// After the client logs in, switch to the Lobby state
-	state.client.SetState(&Lobby{})
+	state.client.SendPacket(packets.NewLoginSuccess(user.Nickname))
+	// After the client logs in, switch to the Game state
+	state.client.SetState(&Game{})
 }
 
-func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *packets.Packet_RegisterRequest) {
+func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *packets.RegisterRequest) {
 	// If client used a different ID than his own ID, ignore this packet
 	if senderId != state.client.GetId() {
 		state.logger.Printf("Unauthorized register packet: ID#%d != ID#%d", senderId, state.client.GetId())
@@ -135,14 +136,14 @@ func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *pac
 
 	// Get the password from the packet for ease of use
 	// We store usernames in lowercase to avoid case-sensitivity issues
-	username := strings.ToLower(payload.RegisterRequest.Username)
+	username := strings.ToLower(payload.Username)
 
 	// We validate the username and if we find an error we deny the request
 	err := validateUsername(username)
 	if err != nil {
 		reason := fmt.Sprintf("Invalid username: %v", err)
 		state.logger.Println(reason)
-		state.client.SocketSend(packets.NewRequestDenied(reason))
+		state.client.SendPacket(packets.NewRequestDenied(reason))
 		return
 	}
 
@@ -152,19 +153,19 @@ func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *pac
 	if err == nil {
 		reason := fmt.Sprintf("Username %s already in use", username)
 		state.logger.Println(reason)
-		state.client.SocketSend(packets.NewRequestDenied(reason))
+		state.client.SendPacket(packets.NewRequestDenied(reason))
 		return
 	}
 
 	// Get the nickname from the packet for ease of use
-	nickname := payload.RegisterRequest.Nickname
+	nickname := payload.Nickname
 
 	// We validate the nickname and if we find an error we deny the request
 	err = validateNickname(nickname)
 	if err != nil {
 		reason := fmt.Sprintf("Invalid nickname: %v", err)
 		state.logger.Println(reason)
-		state.client.SocketSend(packets.NewRequestDenied(reason))
+		state.client.SendPacket(packets.NewRequestDenied(reason))
 		return
 	}
 
@@ -173,7 +174,7 @@ func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *pac
 	if err != nil {
 		reason := fmt.Sprintf("Invalid nickname: %v", err)
 		state.logger.Println(reason)
-		state.client.SocketSend(packets.NewRequestDenied(reason))
+		state.client.SendPacket(packets.NewRequestDenied(reason))
 		return
 	}
 
@@ -183,19 +184,19 @@ func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *pac
 	if err == nil {
 		reason := fmt.Sprintf("Nickname %s already in use", nickname)
 		state.logger.Println(reason)
-		state.client.SocketSend(packets.NewRequestDenied(reason))
+		state.client.SendPacket(packets.NewRequestDenied(reason))
 		return
 	}
 
 	// Get the password from the packet for ease of use
-	password := payload.RegisterRequest.Password
+	password := payload.Password
 
 	// We validate the password and if we find an error we deny the request
 	err = validatePassword(password)
 	if err != nil {
 		reason := fmt.Sprintf("Invalid password: %v", err)
 		state.logger.Println(reason)
-		state.client.SocketSend(packets.NewRequestDenied(reason))
+		state.client.SendPacket(packets.NewRequestDenied(reason))
 		return
 	}
 
@@ -205,10 +206,10 @@ func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *pac
 	deniedMessage := packets.NewRequestDenied("Error registering user (internal server error)")
 
 	// Attempt to hash the password
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(payload.RegisterRequest.Password), bcrypt.DefaultCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
 	if err != nil {
 		state.logger.Printf("Error registering user (Bcrypt failure)")
-		state.client.SocketSend(deniedMessage)
+		state.client.SendPacket(deniedMessage)
 		return
 	}
 
@@ -220,15 +221,15 @@ func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *pac
 	})
 	if err != nil {
 		state.logger.Printf("Error registering user (Database failure)")
-		state.client.SocketSend(deniedMessage)
+		state.client.SendPacket(deniedMessage)
 		return
 	}
 
 	state.logger.Printf("New user %s registered successfully", nickname)
-	state.client.SocketSend(packets.NewRequestGranted())
+	state.client.SendPacket(packets.NewRequestGranted())
 }
 
-// TO FIX -> No symbols on the username
+// FIX -> No symbols on the username
 // Validate username before registration
 func validateUsername(username string) error {
 	if len(username) <= 0 {
@@ -243,7 +244,7 @@ func validateUsername(username string) error {
 	return nil
 }
 
-// TO FIX -> No symbols on the username
+// FIX -> No symbols on the username
 // Validate nickname before registration
 func validateNickname(nickname string) error {
 	if len(nickname) <= 0 {

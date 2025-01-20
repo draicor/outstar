@@ -2,22 +2,21 @@ extends Node
 
 # Preload resources
 const packets := preload("res://packets.gd")
-const room_escape_menu_scene: PackedScene = preload("res://components/escape_menu/room/room_escape_menu.tscn")
-const dialogue_box_scene: PackedScene = preload("res://components/dialog_box/dialog_box.tscn")
+const game_escape_menu_scene: PackedScene = preload("res://components/escape_menu/game/game_escape_menu.tscn")
 
 # User Interface Variables
 @onready var ui_canvas: CanvasLayer = $UI
 @onready var chat: Control = $UI/VBoxContainer/Chat
-var chat_input: LineEdit
-var room_escape_menu
 
+var chat_input: LineEdit
+var game_escape_menu
 
 func _ready() -> void:
 	_initialize()
 	# Send a packet to the server to let everyone know we joined
 	_send_client_entered_packet()
 
-func _initialize() -> void:	
+func _initialize() -> void:
 	# Get access to the child nodes of the chat UI
 	chat_input = chat.find_child("Input")
 	
@@ -27,23 +26,18 @@ func _initialize() -> void:
 	Signals.heartbeat_attempt.connect(_on_websocket_heartbeat_attempt)
 	# User Interface signals
 	Signals.ui_escape_menu_toggle.connect(_on_ui_escape_menu_toggle)
-	Signals.ui_leave_room.connect(_on_ui_leave_room_pressed)
 	# Chat signals
 	Signals.ui_chat_input_toggle.connect(_on_ui_chat_input_toggle)
 	chat_input.text_submitted.connect(_on_chat_input_text_submitted)
 	
 	# Create and add the escape menu to the UI canvas layer
-	room_escape_menu = room_escape_menu_scene.instantiate()
-	ui_canvas.add_child(room_escape_menu)
-	
-
+	game_escape_menu = game_escape_menu_scene.instantiate()
+	ui_canvas.add_child(game_escape_menu)
 
 func _on_websocket_connection_closed() -> void:
 	chat.error("You have been disconnected from the server")
 
-func _on_websocket_packet_received(packet: packets.Packet) -> void:
-	#var sender_id := packet.get_sender_id()
-	
+func _on_websocket_packet_received(packet: packets.Packet) -> void:	
 	if packet.has_public_message():
 		_handle_public_message_packet(packet.get_public_message())
 	elif packet.has_heartbeat():
@@ -52,8 +46,8 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_client_entered_packet(packet.get_client_entered().get_nickname())
 	elif packet.has_client_left():
 		_handle_client_left_packet(packet.get_client_left())
-	elif packet.has_leave_room_success():
-		_handle_leave_room_success_packet()
+	elif packet.has_request_denied():
+		_handle_request_denied_packet(packet.get_request_denied().get_reason())
 
 # Print the message into our chat window
 func _handle_public_message_packet(packet_public_message: packets.PublicMessage) -> void:
@@ -87,17 +81,18 @@ func _on_chat_input_text_submitted(text: String) -> void:
 		chat_input.release_focus()
 		return
 	
-	# Create the chat_message packet
+	# Create the public_message packet
 	var packet := packets.Packet.new()
 	var public_message := packet.new_public_message()
 	public_message.set_text(text)
 	
-	# This serializes and sends our message
+	# Serialize and send our packet to the server
 	var err := WebSocket.send(packet)
 	if err:
 		chat.error("You have been disconnected from the server")
 	else:
 		# We grab our client's nickname from the GameManager autoload
+		# and display our own message in our client
 		chat.public(GameManager.client_nickname, text, Color.CYAN)
 	
 	# We clear the line edit
@@ -105,7 +100,7 @@ func _on_chat_input_text_submitted(text: String) -> void:
 
 # If the ui_escape key is pressed, toggle the escape menu
 func _on_ui_escape_menu_toggle() -> void:
-	room_escape_menu.toggle()
+	game_escape_menu.toggle()
 
 # If the ui_enter key is pressed, toggle the chat input
 func _on_ui_chat_input_toggle() -> void:
@@ -127,31 +122,6 @@ func _send_client_entered_packet() -> bool:
 	else:
 		return true
 
-func _send_leave_room_request_packet() -> bool:
-	# We create a new packet
-	var packet := packets.Packet.new()
-	# We send the packet requesting the server to leave the room
-	packet.new_leave_room_request()
-
-	# Serialize and send our message
-	var err := WebSocket.send(packet)
-	# Report if we succeeded or failed
-	if err:
-		return false
-	else:
-		return true
-
-func _handle_leave_room_success_packet() -> void:
-	# We transition into the Lobby scene
-	GameManager.set_state(GameManager.State.LOBBY)
-
-func _on_ui_leave_room_pressed() -> void:
-	_send_leave_room_request_packet()
-	
-	# We instantiate the dialogue box scene
-	var dialogue_box := dialogue_box_scene.instantiate()
-	# We add it to our root with force readable name set to false
-	ui_canvas.add_child(dialogue_box, false)
-	# The dialogue_box starts as hidden, we pass the values that will
-	# have, and then we show it from code
-	dialogue_box.initialize("Leaving...", false)
+func _handle_request_denied_packet(reason: String) -> void:
+	# Log the error to console
+	print(reason)

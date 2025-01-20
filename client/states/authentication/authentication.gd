@@ -59,7 +59,7 @@ func _on_login_button_pressed() -> void:
 func _handle_login_success(login_success_packet: packets.LoginSuccess) -> void:
 	# We store the info of our client sent by the server
 	GameManager.client_nickname = login_success_packet.get_nickname()
-	GameManager.set_state(GameManager.State.LOBBY)
+	GameManager.set_state(GameManager.State.GAME)
 
 func _on_register_button_pressed() -> void:
 	# We validate all fields before we even try to talk to the server

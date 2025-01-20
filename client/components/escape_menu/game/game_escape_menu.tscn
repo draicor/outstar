@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://c3dndr4w4euk5"]
 
-[ext_resource type="Script" path="res://components/escape_menu/lobby/lobby_escape_menu.gd" id="1_a5j54"]
+[ext_resource type="Script" path="res://components/escape_menu/game/game_escape_menu.gd" id="1_a5j54"]
 [ext_resource type="Shader" path="res://assets/shaders/blur.gdshader" id="2_0pl3q"]
 [ext_resource type="StyleBox" uid="uid://nvug1cqa5843" path="res://themes/style_box_flat.tres" id="3_53op5"]
 
@@ -8,7 +8,7 @@
 shader = ExtResource("2_0pl3q")
 shader_parameter/amount = 1.0
 
-[node name="LobbyEscapeMenu" type="Control"]
+[node name="GameEscapeMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

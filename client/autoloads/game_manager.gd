@@ -4,16 +4,14 @@ extends Node
 enum State {
 	CONNECTED,
 	AUTHENTICATION,
-	LOBBY,
-	ROOM,
+	GAME,
 }
 
 # Replace with Dictionary[State, String] in new version of Godot v4.4+
 var _states_scenes: Dictionary = {
 	State.CONNECTED: "res://states/connected/connected.tscn",
 	State.AUTHENTICATION: "res://states/authentication/authentication.tscn",
-	State.LOBBY: "res://states/lobby/lobby.tscn",
-	State.ROOM: "res://states/room/room.tscn",
+	State.GAME: "res://states/game/game.tscn",
 }
 
 # Expose the client's data globally

@@ -26,6 +26,8 @@ var schemaGenSql string
 // The client should send this variable upon connection attempt and it
 // should match with the server's version to allow connection!
 
+var version = "0.0.1.0"
+
 var (
 	port = flag.Int("port", 31591, "Port to listen on")
 )
@@ -34,6 +36,8 @@ var (
 func main() {
 	// Reads the OS command-line flags
 	flag.Parse()
+
+	log.Printf("Starting server v %s", version)
 
 	// This generates the db.sqlite file if it doesn't exists
 	log.Println("Connecting to the database...")

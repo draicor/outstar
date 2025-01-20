@@ -8,30 +8,24 @@ import (
 	"server/internal/server/objects"
 	"server/internal/server/states"
 	"server/pkg/packets"
-	"strconv"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 )
 
-// How long we want the client to wait after creating/joining/leaving a room
-const clientWaiting time.Duration = 1
-
 // This client data will be injected into every state on state changes,
 // any data that should be kept in server memory should be stored in the
 // WebSocketClient
 type WebSocketClient struct {
-	id          uint64               // Ephemeral ID for this connection
-	connection  *websocket.Conn      // Websocket connection to the godot client
-	hub         *server.Hub          // Hub that this client connected to
-	room        *server.Room         // Room that this client is at
-	sendChannel chan *packets.Packet // Channel that holds packets to be sent to the client
+	id          uint64                    // Ephemeral ID for this connection
+	connection  *websocket.Conn           // Websocket connection to the godot client
+	hub         *server.Hub               // Hub that this client connected to
+	region      *server.Region            // Region that this client is at
+	sendChannel chan *packets.Packet      // Channel that holds packets to be sent to the client
+	state       server.ClientStateHandler // In what state the client is in
+	character   *objects.Character        // The player's data is stored in his character
+	dbtx        *server.DBTX              // <- FIX dependency
 	logger      *log.Logger
-	state       server.ClientStateHandler // Knows in what state the client is in
-	nickname    string                    // Seen by every other client
-	DBTX        *server.DBTX
-	initialized bool // Starts as false, becomes true after it gets assigned an ephemeral ID
 }
 
 // Called from Hub.serve()
@@ -40,7 +34,7 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
-		CheckOrigin:     func(_ *http.Request) bool { return true }, // TO FIX -> Validate request origin
+		CheckOrigin:     func(_ *http.Request) bool { return true }, // FIX -> Validate request origin
 	}
 
 	// Upgrades the HTTP connection to a WebSocket connection
@@ -54,15 +48,22 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 	// If no errors were found, create a new WebSocketClient
 	client := &WebSocketClient{
 		hub:         hub,                             // Entry point for all connected clients
-		room:        nil,                             // At creation, the client is not registered into any rooms
+		region:      nil,                             // Before login, the client's region is nil
 		connection:  conn,                            // Underlying WebSocket connection
 		sendChannel: make(chan *packets.Packet, 256), // Buffered channel of 256 packets, if full, drops packets
 		logger:      log.New(log.Writer(), "", log.LstdFlags),
-		DBTX:        hub.NewDBTX(),
-		initialized: false,
+		dbtx:        hub.NewDBTX(), // <- FIX dependency
 	}
 
 	return client, nil
+}
+
+// Character get/set
+func (c *WebSocketClient) GetCharacter() *objects.Character {
+	return c.character
+}
+func (c *WebSocketClient) SetCharacter(character *objects.Character) {
+	c.character = character
 }
 
 // Returns the Hub this client is connected to
@@ -70,9 +71,12 @@ func (c *WebSocketClient) GetHub() *server.Hub {
 	return c.hub
 }
 
-// Returns this client's current room
-func (c *WebSocketClient) GetRoom() *server.Room {
-	return c.room
+// Region get/set
+func (c *WebSocketClient) GetRegion() *server.Region {
+	return c.region
+}
+func (c *WebSocketClient) SetRegion(region *server.Region) {
+	c.region = region
 }
 
 // Returns the client's ID
@@ -80,36 +84,30 @@ func (c *WebSocketClient) GetId() uint64 {
 	return c.id
 }
 
-// Returns true if this client has already been initialized by the server (has id)
-func (c *WebSocketClient) HasId() bool {
-	return c.initialized
-}
-
 // Initializes the client's state within the server
 func (c *WebSocketClient) Initialize(id uint64) {
 	// We store the new id as this client's ID
 	c.id = id
-	// We switch this bool to true so it doesn't get assigned a new ID by the server again
-	c.initialized = true
 	// Improve the details of the logged data in the server console
 	prefix := fmt.Sprintf("Client %d [%s]: ", c.GetId(), "WebSocket")
 	c.logger.SetPrefix(prefix)
+
 	// When a new client connects, we switch to the connected state
 	c.SetState(&states.Connected{})
 }
 
 // Handles the packet that comes from the client
-func (c *WebSocketClient) ProcessMessage(senderId uint64, payload packets.Payload) {
+func (c *WebSocketClient) ProcessPacket(senderId uint64, payload packets.Payload) {
 	c.state.HandlePacket(senderId, payload)
 }
 
 // Sends a message to the client
-func (c *WebSocketClient) SocketSend(message packets.Payload) {
-	c.SocketSendAs(message, c.id)
+func (c *WebSocketClient) SendPacket(payload packets.Payload) {
+	c.SendPacketAs(c.id, payload)
 }
 
 // This is useful when we want to forward a packet we received from another client
-func (c *WebSocketClient) SocketSendAs(payload packets.Payload, senderId uint64) {
+func (c *WebSocketClient) SendPacketAs(senderId uint64, payload packets.Payload) {
 	select {
 	// We queue messages up to send to the client
 	case c.sendChannel <- &packets.Packet{
@@ -124,46 +122,33 @@ func (c *WebSocketClient) SocketSendAs(payload packets.Payload, senderId uint64)
 }
 
 // Forward packet's payload to a specific client by ID
-func (c *WebSocketClient) PassToPeer(payload packets.Payload, peerId uint64) {
-	// If this client is currently in a room
-	if c.room != nil {
-		// We look for the peer in the current room
-		peer, found := c.room.GetClient(peerId)
+// Note: only works if both clients are in the same region!
+func (c *WebSocketClient) RelayPacket(peerId uint64, payload packets.Payload) {
+	// If this client is currently in a region
+	if c.region != nil {
+		// We look for the peer in the current region
+		peer, found := c.region.GetClient(peerId)
 		if found {
-			peer.ProcessMessage(c.id, payload)
-		}
-
-	} else {
-		// We look for the peer in the server's map of clients
-		peer, found := c.hub.GetClient(peerId)
-		if found {
-			peer.ProcessMessage(c.id, payload)
+			peer.ProcessPacket(c.id, payload)
 		}
 	}
 }
 
 // Convenience function to queue a packet up to be passed to every client except the sender
+// Note: only works if the client is logged in and in a region
 func (c *WebSocketClient) Broadcast(payload packets.Payload) {
-	// If this client is currently in a room
-	if c.room != nil {
-		// We send it to the broadcast channel of that room
-		c.room.GetBroadcastChannel() <- &packets.Packet{
-			SenderId: c.id,
-			Payload:  payload,
-		}
-
-	} else {
-		// We send it to the Hub's broadcast channel
-		c.hub.GetBroadcastChannel() <- &packets.Packet{
+	// If this client is currently in a region
+	if c.region != nil {
+		// We send it to the broadcast channel of that region
+		c.region.BroadcastChannel <- &packets.Packet{
 			SenderId: c.id,
 			Payload:  payload,
 		}
 	}
 }
 
-// Directly interfaces with the websocket from Godot
-// Responsible for reading and processing messages from the Godot client
-func (c *WebSocketClient) ReadPump() {
+// Starts reading and processing packets from the Godot client
+func (c *WebSocketClient) StartReadPump() {
 	// We defer closing this connection so we can clean up if an error occurs or the loop breaks
 	defer func() {
 		c.Close("disconnected")
@@ -194,14 +179,13 @@ func (c *WebSocketClient) ReadPump() {
 		}
 
 		// TO DO ->
-		// Replace this with a tickChannel so the hub/lobby/room process this by tick
-		c.ProcessMessage(packet.SenderId, packet.Payload)
+		// Replace this with a tickChannel so the hub/lobby/region process this by tick
+		c.ProcessPacket(packet.SenderId, packet.Payload)
 	}
 }
 
-// Directly interfaces with the websocket from Godot
-// Responsible for reading packets we've queued in the send channel, serialize and send them to the Godot client
-func (c *WebSocketClient) WritePump() {
+// Starts reading packets we've queued in the send channel, serialize and send them to the Godot client
+func (c *WebSocketClient) StartWritePump() {
 	// We defer closing this connection so we can clean up if an error occurs or the loop breaks
 	defer func() {
 		c.Close("disconnected")
@@ -246,27 +230,25 @@ func (c *WebSocketClient) WritePump() {
 	}
 }
 
-// Responsible for cleaning up the client's connection and unregistering the client from the hub
+// Cleans up the client's connection and unregisters the client from the server
 func (c *WebSocketClient) Close(reason string) {
-	if c.GetNickname() != "" {
+	if c.GetCharacter() != nil {
 		// Server logging
-		c.logger.Printf("%s %s", c.GetNickname(), reason)
-		// Broadcast to everyone that this client left before we remove it from the hub/room
-		c.Broadcast(packets.NewClientLeft(c.GetNickname()))
+		c.logger.Printf("%s %s", c.character.Name, reason)
+		// Broadcast to everyone that this client left before we remove it from the hub/region
+		c.Broadcast(packets.NewClientLeft(c.character.Name))
 
 	} else { // If the client connected to the server but never logged in
 		c.logger.Println("Client", reason)
 	}
 
-	// If we were at a room, remove the client from this room
-	if c.room != nil {
-		c.room.GetRemoveClientChannel() <- c
-
-		// If we were at the Hub
-	} else {
-		// Remove the client from the Hub
-		c.hub.GetRemoveClientChannel() <- c
+	// If we were at a region, remove the client from this region
+	if c.region != nil {
+		c.region.RemoveClientChannel <- c
 	}
+
+	// Remove the client from the Hub
+	c.hub.RemoveClientChannel <- c
 
 	// Remove the client's state before disconnection
 	c.SetState(nil)
@@ -299,8 +281,8 @@ func (c *WebSocketClient) SetState(state server.ClientStateHandler) {
 	}
 
 	// Server logging
-	if c.GetNickname() != "" {
-		c.logger.Printf("%s switched from state %s to %s", c.GetNickname(), lastStateName, newStateName)
+	if c.character != nil {
+		c.logger.Printf("%s switched from %s to %s", c.character.Name, lastStateName, newStateName)
 	}
 
 	// Replace the previous state with the new one inside this client
@@ -316,103 +298,5 @@ func (c *WebSocketClient) SetState(state server.ClientStateHandler) {
 
 // Returns the database transaction context from this client
 func (c *WebSocketClient) GetDBTX() *server.DBTX {
-	return c.DBTX
-}
-
-// Called after a client successfuly logins to store the nickname in memory
-func (c *WebSocketClient) SetNickname(nickname string) {
-	c.nickname = nickname
-}
-
-// Called by the server to form the packet it will broadcast
-func (c *WebSocketClient) GetNickname() string {
-	return c.nickname
-}
-
-// Creates a new room and then calls JoinRoom() to move the creator into the new room
-func (c *WebSocketClient) CreateRoom(maxPlayers uint64) {
-	// Delegate the work to the Hub
-	room := c.hub.CreateRoom(maxPlayers)
-
-	// Wait while the room gets created
-	time.Sleep(clientWaiting * time.Second)
-
-	// We make the client that created the room join it automatically
-	c.JoinRoom(room.GetId())
-
-	// TO DO ->
-	// SetRoomMaster(c.getId())
-	// Make some logic to add the user as the master of the room
-}
-
-// Moves the client to a new room
-func (c *WebSocketClient) JoinRoom(roomId uint64) {
-	// If the client was already at another room
-	if c.room != nil {
-		// Broadcast to everyone that this client left this room!
-		c.Broadcast(packets.NewClientLeft(c.GetNickname()))
-		// Unregister the client from that room
-		c.room.GetRemoveClientChannel() <- c
-	}
-
-	// Delegate the work to the Hub
-	room := c.hub.JoinRoom(c.id, roomId)
-
-	// If the room is valid
-	if room != nil {
-		// Wait before we use the room's channel
-		time.Sleep(clientWaiting * time.Second)
-
-		// Save a pointer to the room this client is at
-		c.room = room
-
-		// Register the client to the new room
-		c.room.GetAddClientChannel() <- c
-
-		// Send the client a packet to let him join the room
-		c.SocketSend(packets.NewJoinRoomSuccess())
-
-		// After joining the room, switch to the Room state
-		c.SetState(&states.Room{})
-
-		// We don't broadcast to everyone that this client joined because
-		// we are letting the client do it once his game client loads!
-
-	} else { // If room is not valid
-		// Send a packet to the client
-		reason := "Room #" + strconv.FormatUint(roomId, 10) + " is not available"
-		c.SocketSend(packets.NewRequestDenied(reason))
-	}
-}
-
-// If the client leaves a room, he goes back to the hub again!
-func (c *WebSocketClient) LeaveRoom() {
-	if c.room != nil {
-		// Broadcast to everyone that this client left this room!
-		c.Broadcast(packets.NewClientLeft(c.GetNickname()))
-		// Unregister the client from that room
-		c.room.GetRemoveClientChannel() <- c
-		// We remove the reference to this room in our WebSocket client
-		c.room = nil
-	}
-
-	// Register the client to the Hub again
-	c.hub.GetAddClientChannel() <- c
-
-	// Wait before we let the client go into the lobby
-	time.Sleep(clientWaiting * time.Second)
-
-	// Send the client a packet to let him join the lobby
-	c.SocketSend(packets.NewLeaveRoomSuccess())
-
-	// After leaving the room, switch to the Lobby state
-	c.SetState(&states.Lobby{})
-
-	// We don't broadcast to everyone that this client joined because
-	// we are letting the client do it once his game client loads!
-}
-
-// Returns the collection of rooms inside Hub
-func (c *WebSocketClient) GetRoomList() *objects.SharedCollection[*server.Room] {
-	return c.hub.GetRooms()
+	return c.dbtx
 }

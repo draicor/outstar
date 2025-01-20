@@ -3,14 +3,14 @@ package objects
 import "sync"
 
 // Generic thread-safe map of objects with auto-incrementings IDs
-type SharedCollection[T any] struct {
+type MapMutex[T any] struct {
 	objects map[uint64]T
 	nextId  uint64
 	mutex   sync.Mutex
 }
 
-// Constructor for the SharedCollection that allows us to specify the initial capacity of the map
-func NewSharedCollection[T any](capacity ...int) *SharedCollection[T] {
+// Constructor for the MapMutex that allows us to specify the initial capacity of the map
+func NewMapMutex[T any](capacity ...int) *MapMutex[T] {
 	var newMap map[uint64]T
 
 	if len(capacity) > 0 {
@@ -19,7 +19,7 @@ func NewSharedCollection[T any](capacity ...int) *SharedCollection[T] {
 		newMap = make(map[uint64]T)
 	}
 
-	return &SharedCollection[T]{
+	return &MapMutex[T]{
 		objects: newMap,
 		nextId:  1,
 	}
@@ -27,7 +27,7 @@ func NewSharedCollection[T any](capacity ...int) *SharedCollection[T] {
 
 // Adds an object to the map with the given ID (if provided) or the next available ID
 // Returns the ID of the object added
-func (s *SharedCollection[T]) Add(obj T, id ...uint64) uint64 {
+func (s *MapMutex[T]) Add(obj T, id ...uint64) uint64 {
 	// We lock the map while we are adding our object
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -46,7 +46,7 @@ func (s *SharedCollection[T]) Add(obj T, id ...uint64) uint64 {
 }
 
 // Removes an object from the map by ID, if it exists
-func (s *SharedCollection[T]) Remove(id uint64) {
+func (s *MapMutex[T]) Remove(id uint64) {
 	// We lock the map while we are deleting this object
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -55,8 +55,8 @@ func (s *SharedCollection[T]) Remove(id uint64) {
 	delete(s.objects, id)
 }
 
-// Creates a copy of the collection, then executes the callback function for each object in the copy
-func (s *SharedCollection[T]) ForEach(callback func(uint64, T)) {
+// Creates a copy of the map, then executes the callback function for each object in the copy
+func (s *MapMutex[T]) ForEach(callback func(uint64, T)) {
 	// Lock the map so no other goroutine modify it while we are iterating over it
 	s.mutex.Lock()
 	// Create a local copy of the map while holding the lock
@@ -78,7 +78,7 @@ func (s *SharedCollection[T]) ForEach(callback func(uint64, T)) {
 
 // Gets the object by ID, if it exists, otherwise nil
 // Also returns a boolean indicating whether the object was found
-func (s *SharedCollection[T]) Get(id uint64) (T, bool) {
+func (s *MapMutex[T]) Get(id uint64) (T, bool) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -87,6 +87,6 @@ func (s *SharedCollection[T]) Get(id uint64) (T, bool) {
 }
 
 // Gets the approximate number of objects in the map (it doesn't lock the map)
-func (s *SharedCollection[T]) Len() int {
+func (s *MapMutex[T]) Len() int {
 	return len(s.objects)
 }

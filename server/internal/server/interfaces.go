@@ -13,63 +13,47 @@ type ClientInterfacer interface {
 	// Returns the client's ID
 	GetId() uint64
 
-	// Returns true if this client has already been initialized by the server (has id)
-	HasId() bool
-
-	// Handles the client's message
-	ProcessMessage(senderId uint64, message packets.Payload)
-
-	// Sets the client's ID
+	// Sets the client's ID and loads the character from the database after login
 	Initialize(id uint64)
 
+	// Handles the client's packet
+	ProcessPacket(senderId uint64, packet packets.Payload)
+
 	// Puts data from the client into the write pump
-	SocketSend(message packets.Payload)
+	SendPacket(packet packets.Payload)
 
 	// Puts data from another client in the write pump
-	SocketSendAs(message packets.Payload, senderId uint64)
+	SendPacketAs(peerId uint64, packet packets.Payload)
 
-	// Forward message to another client for processing
-	PassToPeer(message packets.Payload, peerId uint64)
+	// Forward packet to another client for processing
+	RelayPacket(peerId uint64, packet packets.Payload)
 
-	// Forward message to all other clients for processing
-	Broadcast(message packets.Payload)
+	// Forward packet to all other clients for processing
+	Broadcast(packet packets.Payload)
 
-	// Pump data from the connected socket directly to the client
-	ReadPump()
+	// Start reading data from the game client
+	StartReadPump()
 
-	// Pump data from the client directly to the connected socket
-	WritePump()
-
-	// Close the client's connection and cleanup
-	Close(reason string)
+	// Start writing data to the game client
+	StartWritePump()
 
 	// Updates the state of this client
 	SetState(newState ClientStateHandler)
 
+	// REMOVE THIS DEPENDENCY
 	// Get reference to the database transaction context for this client
 	GetDBTX() *DBTX
 
-	// Updates the nickname of this client on login
-	SetNickname(nickname string)
+	// Character get/set
+	GetCharacter() *objects.Character
+	SetCharacter(*objects.Character)
 
-	// Returns this client's nickname
-	GetNickname() string
+	// Region get/set
+	GetRegion() *Region
+	SetRegion(*Region)
 
-	// Returns this client's current room
-	GetRoom() *Room
-
-	// TO DO -> MOVE ALL OF THIS TO A LOBBY STRUCT
-	// Attempts to create a room [called from lobby state]
-	CreateRoom(maxPlayers uint64)
-
-	// Attempts to join a room by id [called from lobby state]
-	JoinRoom(roomId uint64)
-
-	// Leaves the current room and goes back to the Hub [called from room state]
-	LeaveRoom()
-
-	// Request the list of rooms
-	GetRoomList() *objects.SharedCollection[*Room]
+	// Close the client's connection and cleanup
+	Close(reason string)
 }
 
 // A structure for a state machine to process the client's messages

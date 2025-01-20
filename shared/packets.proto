@@ -25,24 +25,8 @@ message LoginSuccess { string nickname = 1; } // Sent by the server after succes
 // Notifies
 message ClientEntered { string nickname = 1; } // Sent by the client once his client is ready, broadcasted to everyone
 message ClientLeft { string nickname = 1; } // Broadcast by the server if a client leaves
-// Lobby
-message JoinRoomRequest { uint64 room_id = 1; } // Sent by the client to request joining a new room
-message JoinRoomSuccess {} // Sent by the server to ask the client to switch to the room state
-message CreateRoomRequest { uint64 max_players = 1; } // Sent by the client to request creating a new room
-message RoomInfo { // Data from a room used in Rooms
-  uint64 room_id = 1;
-  string master = 2;
-  string map_name = 3;
-  uint64 players_online = 4;
-  uint64 max_players = 5;
-}
-message RoomList { repeated RoomInfo room_list = 1; } // List with every available room sent by the server
-message GetRoomsRequest {} // Sent by the client to request all of the rooms from the server
-// Room
-message LeaveRoomRequest {} // Sent by the client to request leaving a room and going back to the Hub
-message LeaveRoomSuccess {} // Sent by the server to ask the client to switch to the lobby state
-message TakeSlotRequest { uint64 slot_id = 1; } // Sent by the client to request occupying a slot inside the room
-message LeaveSlotRequest {} // Sent by the client to request leaving a slot inside the room
+// Region
+message JoinRegionRequest { uint64 region_id = 1; } // Sent by the client to request joining a new region
 
 // Main Packet container
 message Packet {
@@ -62,17 +46,7 @@ message Packet {
     // Notifies
     ClientEntered client_entered = 9; // Both [Change this to be Server only!]
     ClientLeft client_left = 10; // Server
-    // Lobby
-    JoinRoomRequest join_room_request = 11; // Client
-    JoinRoomSuccess join_room_success = 14; // Server
-    CreateRoomRequest create_room_request = 16; // Client
-    RoomInfo room_info = 17; // Server
-    RoomList room_list = 18; // Server
-    GetRoomsRequest get_rooms_request = 19; // Client
-    // Room
-    LeaveRoomRequest leave_room_request = 13; // Client
-    LeaveRoomSuccess leave_room_success = 15; // Server
-    TakeSlotRequest take_slot_request = 20; // Client
-    LeaveSlotRequest leave_slot_request = 21; // Client
+    // Region
+    JoinRegionRequest join_region_request = 11; // Client
   }
 }
