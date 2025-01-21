@@ -4,6 +4,8 @@ extends Node
 const packets := preload("res://packets.gd")
 const game_escape_menu_scene: PackedScene = preload("res://components/escape_menu/game/game_escape_menu.tscn")
 
+var _current_map_scene: Node
+
 # User Interface Variables
 @onready var ui_canvas: CanvasLayer = $UI
 @onready var chat: Control = $UI/VBoxContainer/Chat
@@ -15,6 +17,9 @@ func _ready() -> void:
 	_initialize()
 	# Send a packet to the server to let everyone know we joined
 	_send_client_entered_packet()
+	
+	# Test loading the map!
+	_load_map(GameManager.Maps.PROTOTYPE)
 
 func _initialize() -> void:
 	# Get access to the child nodes of the chat UI
@@ -26,7 +31,7 @@ func _initialize() -> void:
 	Signals.heartbeat_attempt.connect(_on_websocket_heartbeat_attempt)
 	# User Interface signals
 	Signals.ui_escape_menu_toggle.connect(_on_ui_escape_menu_toggle)
-	# Chat signals
+	# Chat signals, ui_chat_input_toggle is called from Main.gd
 	Signals.ui_chat_input_toggle.connect(_on_ui_chat_input_toggle)
 	chat_input.text_submitted.connect(_on_chat_input_text_submitted)
 	
@@ -125,3 +130,11 @@ func _send_client_entered_packet() -> bool:
 func _handle_request_denied_packet(reason: String) -> void:
 	# Log the error to console
 	print(reason)
+
+func _load_map(map: GameManager.Maps) -> void:
+	# Load the next scene
+	var map_scene: PackedScene = load(GameManager.maps_scenes[map])
+	# Create the map scene
+	_current_map_scene = map_scene.instantiate()
+	# Add it to the game root
+	add_child(_current_map_scene)

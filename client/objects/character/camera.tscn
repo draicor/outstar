@@ -1,0 +1,39 @@
+[gd_scene load_steps=2 format=3 uid="uid://bxth8rgd7iyjw"]
+
+[ext_resource type="Script" path="res://objects/character/camera.gd" id="1_jyxng"]
+
+[node name="Camera" type="Node3D"]
+script = ExtResource("1_jyxng")
+
+[node name="BaseCamera" type="Camera3D" parent="."]
+cull_mask = 1047552
+
+[node name="BackgroundContainer" type="SubViewportContainer" parent="BaseCamera"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+
+[node name="BackgroundViewport" type="SubViewport" parent="BaseCamera/BackgroundContainer"]
+handle_input_locally = false
+size = Vector2i(576, 324)
+render_target_update_mode = 4
+
+[node name="BackgroundCamera" type="Camera3D" parent="BaseCamera/BackgroundContainer/BackgroundViewport"]
+
+[node name="ForegroundContainer" type="SubViewportContainer" parent="BaseCamera"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+
+[node name="ForegroundViewport" type="SubViewport" parent="BaseCamera/ForegroundContainer"]
+handle_input_locally = false
+size = Vector2i(576, 324)
+render_target_update_mode = 4
+
+[node name="ForegroundCamera" type="Camera3D" parent="BaseCamera/ForegroundContainer/ForegroundViewport"]

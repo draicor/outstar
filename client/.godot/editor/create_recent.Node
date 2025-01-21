@@ -1,3 +1,10 @@
+Node3D
+Camera3D
+SubViewport
+SubViewportContainer
+CollisionShape3D
+CharacterBody3D
+CSGBox3D
 Button
 VBoxContainer
 PanelContainer
@@ -5,10 +12,3 @@ Label
 HBoxContainer
 TextureRect
 MarginContainer
-ScrollContainer
-Control
-PopupPanel
-LineEdit
-CanvasLayer
-VScrollBar
-Container
