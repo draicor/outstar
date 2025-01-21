@@ -3895,7 +3895,7 @@ _data = {
 "walk": SubResource("Animation_u8n0n")
 }
 
-[node name="Player" type="CharacterBody3D"]
+[node name="Character" type="CharacterBody3D"]
 script = ExtResource("1_vavwr")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -4380,5 +4380,5 @@ libraries = {
 "": SubResource("AnimationLibrary_u8ydt")
 }
 
-[node name="CameraOrigin" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 4, 4)
+[node name="CameraRig" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707106, 0.707106, 0, -0.707106, 0.707106, 0, 4, 3)

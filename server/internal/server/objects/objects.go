@@ -1,10 +1,16 @@
 package objects
 
 type Character struct {
-	Name       string
+	Name string
+	// Transforms
+	X         float64
+	Y         float64 // Up
+	Z         float64 // Forward
+	Direction float64
+	Speed     float64
+	// Add stats here
 	Level      uint64
 	Experience uint64
-	// Add stats here
 }
 
 // Static function to create a new character

@@ -62,7 +62,7 @@ func CreateRegion(name string, gameMap string) *Region {
 
 // Listens for packets on each channel
 func (r *Region) Start() {
-	r.logger.Printf("%s region created...", r.Name)
+	r.logger.Println("Region created...")
 
 	// Infinite for loop
 	for {

@@ -1,5 +1,7 @@
-Node3D
 Camera3D
+OmniLight3D
+Node3D
+RemoteTransform3D
 SubViewport
 SubViewportContainer
 CollisionShape3D
@@ -10,5 +12,3 @@ VBoxContainer
 PanelContainer
 Label
 HBoxContainer
-TextureRect
-MarginContainer

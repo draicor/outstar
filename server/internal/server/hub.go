@@ -17,6 +17,9 @@ type Hub struct {
 	// Map of all the connected clients in the server
 	Clients *objects.MapMutex[ClientInterfacer]
 
+	// Map of every object in the server
+	SharedObjects *SharedObjects
+
 	// Packets in this channel will be processed by all connected clients
 	BroadcastChannel chan *packets.Packet
 
@@ -50,6 +53,10 @@ func CreateHub(database *sql.DB) *Hub {
 		Regions: objects.NewMapMutex[*Region](),
 		// Database connection
 		Database: database,
+		// Game objects
+		SharedObjects: &SharedObjects{
+			Players: objects.NewMapMutex[*objects.Character](),
+		},
 	}
 }
 
@@ -79,7 +86,7 @@ func (h *Hub) Serve(getNewClient func(*Hub, http.ResponseWriter, *http.Request) 
 func (h *Hub) Start() {
 	log.Println("Starting hub...")
 
-	h.CreateRegion("Tutorial", "tutorial")
+	h.CreateRegion("Prototype", "prototype")
 
 	log.Println("Hub created, awaiting clients...")
 

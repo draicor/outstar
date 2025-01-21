@@ -2,7 +2,7 @@ extends CharacterBody3D
 
 @onready var animation_player: AnimationPlayer = $Model/Body/AnimationPlayer
 @onready var model: Node3D = $Model
-@onready var camera_origin: Node3D = $CameraOrigin
+@onready var camera_rig: Node3D = $CameraRig
 
 const SPEED = 3.0
 var walking = false
@@ -18,6 +18,10 @@ func _ready() -> void:
 	
 	# FIX:
 	# Do this only for the player's character
+	# Add a camera to our character
+	var camera := Camera3D.new()
+	camera_rig.add_child(camera)
+	
 	# Stores our player character as a global variable
 	GameManager.set_player_character(self)
 
@@ -45,6 +49,7 @@ func _physics_process(delta: float) -> void:
 		
 		# Make our model look at the direction he is moving towards
 		model.look_at(direction + position)
+		# model.rotation.y = lerp_angle(model.rotation.y, atan2(-direction.x, -direction.z), delta * 8.0)
 		
 		# Update the character's state machine
 		if not walking:
