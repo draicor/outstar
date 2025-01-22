@@ -140,10 +140,10 @@ func _handle_request_denied_packet(reason: String) -> void:
 
 func _handle_spawn_character_packet(spawn_character_packet: packets.SpawnCharacter) -> void:
 	var character_id := spawn_character_packet.get_id()
+
 	# If this character is NOT in our list of players
+	# this is a new character, so we need to instantiate it
 	if character_id not in _players:
-		# This is a new character, so we need to instantiate it
-	
 		# Check if our client id is the same as this spawn character packet sender id
 		var is_my_player_character := character_id == GameManager.client_id
 		
@@ -168,14 +168,17 @@ func _handle_spawn_character_packet(spawn_character_packet: packets.SpawnCharact
 	
 	# This is an existing player in our list
 	else:
-		# Update this character's data
+		# Fetch the character from our list of players
 		var character: Character = _players[character_id]
-		#character.position.x = spawn_character_packet.get_x()
-		#character.position.y = spawn_character_packet.get_y()
-		# character.position.z = spawn_character_packet.get_z()
+		# Update this character's data
+		character.position.x = spawn_character_packet.get_x()
+		# Ignore the Y axis since our maps will be flat, for now at least
+		character.position.z = spawn_character_packet.get_z()
+		# Update the X and Z direction so our model can rotate correctly
 		character.direction_x = spawn_character_packet.get_direction_x()
 		character.direction_z = spawn_character_packet.get_direction_z()
-		# character.speed = spawn_character_packet.get_speed()
+		# Overwrite the speed just in case it changes in the server
+		character.speed = spawn_character_packet.get_speed()
 
 func _load_map(map: GameManager.Maps) -> void:
 	# Load the next scene

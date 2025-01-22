@@ -56,7 +56,7 @@ func (state *Game) OnEnter() {
 // Attempts to keep an accurate representation of the character's position on the server
 func (state *Game) synchronizeCharacter(delta float64) {
 	// Calculates the new position of the character based on the character’s current direction and speed
-	newX := state.player.X + state.player.Speed*math.Cos(state.player.DirectionX)*delta
+	newX := state.player.X + state.player.Speed*math.Sin(state.player.DirectionX)*delta
 	newZ := state.player.Z + state.player.Speed*math.Sin(state.player.DirectionZ)*delta
 
 	// Overwrite our player character's position
@@ -72,9 +72,9 @@ func (state *Game) synchronizeCharacter(delta float64) {
 	go state.client.SendPacket(updatePacket)
 }
 
-// Runs in a loop updating the player's position every 100ms,
+// Runs in a loop updating the player's position every 50ms
 func (state *Game) playerUpdateLoop(ctx context.Context) {
-	const delta float64 = 0.1
+	const delta float64 = 0.05
 	ticker := time.NewTicker(time.Duration(delta*1000) * time.Millisecond)
 	defer ticker.Stop()
 

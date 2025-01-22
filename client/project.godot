@@ -74,6 +74,11 @@ turn_right={
 ]
 }
 
+[layer_names]
+
+3d_physics/layer_1="Static"
+3d_physics/layer_2="Character"
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"

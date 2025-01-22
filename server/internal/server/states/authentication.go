@@ -119,9 +119,9 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	}
 
 	// TO FIX -> Load all of this from the database
-	var x float64 = 0
-	var y float64 = 0
-	var z float64 = 0
+	var x float64 = 1
+	var y float64 = 1
+	var z float64 = 1
 	var rotationY float64 = 0
 	var directionX float64 = 0
 	var directionY float64 = 0
