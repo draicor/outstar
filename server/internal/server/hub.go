@@ -15,7 +15,7 @@ import (
 // within the server.
 type Hub struct {
 	// Map of all the connected clients in the server
-	Clients *objects.MapMutex[ClientInterfacer]
+	Clients *objects.MapMutex[Client]
 
 	// Map of every object in the server
 	SharedObjects *SharedObjects
@@ -24,10 +24,10 @@ type Hub struct {
 	BroadcastChannel chan *packets.Packet
 
 	// Clients connected will be added to the Hub
-	AddClientChannel chan ClientInterfacer
+	AddClientChannel chan Client
 
 	// Clients that disconnect will be removed from the Hub
-	RemoveClientChannel chan ClientInterfacer
+	RemoveClientChannel chan Client
 
 	// Map of every region
 	Regions *objects.MapMutex[*Region]
@@ -36,6 +36,7 @@ type Hub struct {
 	Database *sql.DB
 }
 
+// Any state from any client can access and modify these objects
 type SharedObjects struct {
 	// The ID of the player is the ID of the client
 	Players *objects.MapMutex[*objects.Character]
@@ -45,9 +46,9 @@ type SharedObjects struct {
 func CreateHub(database *sql.DB) *Hub {
 	return &Hub{
 		// Collection of every connected client in the server
-		Clients:             objects.NewMapMutex[ClientInterfacer](),
-		AddClientChannel:    make(chan ClientInterfacer),
-		RemoveClientChannel: make(chan ClientInterfacer),
+		Clients:             objects.NewMapMutex[Client](),
+		AddClientChannel:    make(chan Client),
+		RemoveClientChannel: make(chan Client),
 		BroadcastChannel:    make(chan *packets.Packet),
 		// Collection of every available region in the server
 		Regions: objects.NewMapMutex[*Region](),
@@ -61,7 +62,7 @@ func CreateHub(database *sql.DB) *Hub {
 }
 
 // Creates a client for the new connection and begins the concurrent read and write pumps
-func (h *Hub) Serve(getNewClient func(*Hub, http.ResponseWriter, *http.Request) (ClientInterfacer, error), writer http.ResponseWriter, request *http.Request) {
+func (h *Hub) Serve(getNewClient func(*Hub, http.ResponseWriter, *http.Request) (Client, error), writer http.ResponseWriter, request *http.Request) {
 	// Because the connection goes through the onion protocol, the IP gets anonymized, we can only see the port
 	log.Println("New client connected from", request.RemoteAddr)
 
@@ -108,7 +109,7 @@ func (h *Hub) Start() {
 		// If we get a packet from the broadcast channel
 		case packet := <-h.BroadcastChannel:
 			// Go over every registered client in the Hub (whole server)
-			h.Clients.ForEach(func(id uint64, client ClientInterfacer) {
+			h.Clients.ForEach(func(id uint64, client Client) {
 				// Check that the sender does not send the packet to itself
 				if client.GetId() != packet.SenderId {
 					client.ProcessPacket(packet.SenderId, packet.Payload)
@@ -133,7 +134,7 @@ func (h *Hub) NewDBTX() *DBTX {
 }
 
 // Retrieves the client (if found) in the Clients collection
-func (h *Hub) GetClient(id uint64) (ClientInterfacer, bool) {
+func (h *Hub) GetClient(id uint64) (Client, bool) {
 	return h.Clients.Get(id)
 }
 

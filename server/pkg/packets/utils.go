@@ -1,5 +1,7 @@
 package packets
 
+import "server/internal/server/objects"
+
 /*
 	packet := &packets.Packet{
 		SenderId: 1,
@@ -73,6 +75,23 @@ func NewLoginSuccess(nickname string) Payload {
 	return &Packet_LoginSuccess{
 		LoginSuccess: &LoginSuccess{
 			Nickname: nickname,
+		},
+	}
+}
+
+// Sent by the server to spawn a new character in the client
+func NewSpawnCharacter(id uint64, character *objects.Character) Payload {
+	return &Packet_SpawnCharacter{
+		SpawnCharacter: &SpawnCharacter{
+			Id:         id,
+			Name:       character.Name,
+			X:          character.X,
+			Y:          character.Y,
+			Z:          character.Z,
+			RotationY:  character.RotationY,
+			DirectionX: character.DirectionX,
+			DirectionZ: character.DirectionZ,
+			Speed:      character.Speed,
 		},
 	}
 }

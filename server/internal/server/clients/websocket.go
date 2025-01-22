@@ -17,20 +17,20 @@ import (
 // any data that should be kept in server memory should be stored in the
 // WebSocketClient
 type WebSocketClient struct {
-	id          uint64                    // Ephemeral ID for this connection
-	connection  *websocket.Conn           // Websocket connection to the godot client
-	hub         *server.Hub               // Hub that this client connected to
-	region      *server.Region            // Region that this client is at
-	sendChannel chan *packets.Packet      // Channel that holds packets to be sent to the client
-	state       server.ClientStateHandler // In what state the client is in
-	character   *objects.Character        // The player's data is stored in his character
-	dbtx        *server.DBTX              // <- FIX dependency
+	id          uint64               // Ephemeral ID for this connection
+	connection  *websocket.Conn      // Websocket connection to the godot client
+	hub         *server.Hub          // Hub that this client connected to
+	region      *server.Region       // Region that this client is at
+	sendChannel chan *packets.Packet // Channel that holds packets to be sent to the client
+	state       server.ClientState   // In what state the client is in
+	character   *objects.Character   // The player's data is stored in his character
+	dbtx        *server.DBTX         // <- FIX dependency
 	logger      *log.Logger
 }
 
 // Called from Hub.serve()
 // Static function used to create a new WebSocket client from an HTTP connection (which is what Godot will use)
-func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *http.Request) (server.ClientInterfacer, error) {
+func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *http.Request) (server.Client, error) {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -263,7 +263,7 @@ func (c *WebSocketClient) Close(reason string) {
 	}
 }
 
-func (c *WebSocketClient) SetState(state server.ClientStateHandler) {
+func (c *WebSocketClient) SetState(state server.ClientState) {
 	// State names are used for debugging purposes
 	lastStateName := "None"
 

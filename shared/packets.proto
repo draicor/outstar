@@ -27,6 +27,20 @@ message ClientEntered { string nickname = 1; } // Sent by the client once his cl
 message ClientLeft { string nickname = 1; } // Broadcast by the server if a client leaves
 // Region
 message JoinRegionRequest { uint64 region_id = 1; } // Sent by the client to request joining a new region
+// Character
+message SpawnCharacter {
+  // Sent by the server to spawn a new character in the client
+  uint64 id = 1;
+  string name = 2;
+  double x = 3;
+  double y = 4;
+  double z = 5;
+  double rotation_y = 6;
+  double direction_x = 7;
+  double direction_z = 8;
+  double speed = 9;
+}
+message CharacterDirection { double direction_x = 1; double direction_z = 2; } // Input direction sent by the client
 
 // Main Packet container
 message Packet {
@@ -42,11 +56,14 @@ message Packet {
     RequestDenied request_denied = 6; // Server
     LoginRequest login_request = 7; // Client
     RegisterRequest register_request = 8; // Client
-    LoginSuccess login_success = 12; // Server
+    LoginSuccess login_success = 9; // Server
     // Notifies
-    ClientEntered client_entered = 9; // Both [Change this to be Server only!]
-    ClientLeft client_left = 10; // Server
+    ClientEntered client_entered = 10; // Both [Change this to be Server only!]
+    ClientLeft client_left = 11; // Server
     // Region
-    JoinRegionRequest join_region_request = 11; // Client
+    JoinRegionRequest join_region_request = 12; // Client
+    // Character
+    SpawnCharacter spawn_character = 13; // Server
+    CharacterDirection character_direction = 14; // Both
   }
 }

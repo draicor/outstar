@@ -17,7 +17,7 @@ func connect_to_url(url: String, tls_options: TLSOptions = null) -> int:
 	return OK
 
 func send(packet: packets.Packet) -> int:
-	# The server already knows the ID of my client
+	# The server already knows the ID of my client, so I just send 0
 	packet.set_sender_id(0)
 	# Serializing data into binary
 	var data := packet.to_bytes()

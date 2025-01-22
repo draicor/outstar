@@ -6,7 +6,7 @@ import (
 )
 
 // A structure for the connected client to interface with the server
-type ClientInterfacer interface {
+type Client interface {
 	// Returns the Hub this client is connected to
 	GetHub() *Hub
 
@@ -38,7 +38,7 @@ type ClientInterfacer interface {
 	StartWritePump()
 
 	// Updates the state of this client
-	SetState(newState ClientStateHandler)
+	SetState(newState ClientState)
 
 	// REMOVE THIS DEPENDENCY
 	// Get reference to the database transaction context for this client
@@ -57,11 +57,11 @@ type ClientInterfacer interface {
 }
 
 // A structure for a state machine to process the client's messages
-type ClientStateHandler interface {
+type ClientState interface {
 	GetName() string
 
-	// Inject the client into the state handler, so we can access the client's data
-	SetClient(client ClientInterfacer)
+	// Inject the client into the state, so we can access the client's data
+	SetClient(client Client)
 
 	// Triggers once a client switches to this state
 	OnEnter()

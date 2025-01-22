@@ -3,6 +3,8 @@
 [ext_resource type="Script" path="res://objects/character/character.gd" id="1_vavwr"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_kh6hq"]
+resource_local_to_scene = true
+radius = 0.4
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_74fks"]
 resource_name = "Beta_Joints_MAT1"

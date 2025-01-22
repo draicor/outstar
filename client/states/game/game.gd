@@ -2,9 +2,14 @@ extends Node
 
 # Preload resources
 const packets := preload("res://packets.gd")
+const Character := preload("res://objects/character/character.gd")
 const game_escape_menu_scene: PackedScene = preload("res://components/escape_menu/game/game_escape_menu.tscn")
 
+# Holds our current map node so we can spawn scenes into it
 var _current_map_scene: Node
+
+# Map of all the players in this region, where the key is the player's ID
+var _players: Dictionary
 
 # User Interface Variables
 @onready var ui_canvas: CanvasLayer = $UI
@@ -42,7 +47,7 @@ func _initialize() -> void:
 func _on_websocket_connection_closed() -> void:
 	chat.error("You have been disconnected from the server")
 
-func _on_websocket_packet_received(packet: packets.Packet) -> void:	
+func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	if packet.has_public_message():
 		_handle_public_message_packet(packet.get_public_message())
 	elif packet.has_heartbeat():
@@ -53,6 +58,8 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_client_left_packet(packet.get_client_left())
 	elif packet.has_request_denied():
 		_handle_request_denied_packet(packet.get_request_denied().get_reason())
+	elif packet.has_spawn_character():
+		_handle_spawn_character_packet(packet.get_spawn_character())
 
 # Print the message into our chat window
 func _handle_public_message_packet(packet_public_message: packets.PublicMessage) -> void:
@@ -130,6 +137,45 @@ func _send_client_entered_packet() -> bool:
 func _handle_request_denied_packet(reason: String) -> void:
 	# Log the error to console
 	print(reason)
+
+func _handle_spawn_character_packet(spawn_character_packet: packets.SpawnCharacter) -> void:
+	var character_id := spawn_character_packet.get_id()
+	# If this character is NOT in our list of players
+	if character_id not in _players:
+		# This is a new character, so we need to instantiate it
+	
+		# Check if our client id is the same as this spawn character packet sender id
+		var is_my_player_character := character_id == GameManager.client_id
+		
+		# Grab all of the data from the server and we use it to create this character
+		var character := Character.instantiate(
+			character_id,
+			spawn_character_packet.get_name(),
+			spawn_character_packet.get_x(),
+			spawn_character_packet.get_y(),
+			spawn_character_packet.get_z(),
+			spawn_character_packet.get_rotation_y(),
+			spawn_character_packet.get_direction_x(),
+			spawn_character_packet.get_direction_z(),
+			spawn_character_packet.get_speed(),
+			is_my_player_character
+		)
+		# Add this character to our list of players
+		_players[character_id] = character
+		
+		# Spawn the character
+		_current_map_scene.add_child(character)
+	
+	# This is an existing player in our list
+	else:
+		# Update this character's data
+		var character: Character = _players[character_id]
+		#character.position.x = spawn_character_packet.get_x()
+		#character.position.y = spawn_character_packet.get_y()
+		# character.position.z = spawn_character_packet.get_z()
+		character.direction_x = spawn_character_packet.get_direction_x()
+		character.direction_z = spawn_character_packet.get_direction_z()
+		# character.speed = spawn_character_packet.get_speed()
 
 func _load_map(map: GameManager.Maps) -> void:
 	# Load the next scene

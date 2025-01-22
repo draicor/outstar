@@ -16,7 +16,7 @@ import (
 )
 
 type Authentication struct {
-	client  server.ClientInterfacer
+	client  server.Client
 	logger  *log.Logger
 	queries *db.Queries
 	dbCtx   context.Context
@@ -26,7 +26,7 @@ func (state *Authentication) GetName() string {
 	return "Authentication"
 }
 
-func (state *Authentication) SetClient(client server.ClientInterfacer) {
+func (state *Authentication) SetClient(client server.Client) {
 	// We save the client's data into this state
 	state.client = client
 	state.queries = client.GetDBTX().Queries
@@ -118,8 +118,29 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 		return
 	}
 
-	// Save this client's character data
-	state.client.SetCharacter(objects.NewCharacter(user.Nickname))
+	// TO FIX -> Load all of this from the database
+	var x float64 = 0
+	var y float64 = 0
+	var z float64 = 0
+	var rotationY float64 = 0
+	var directionX float64 = 0
+	var directionY float64 = 0
+	var speed float64 = 3 // Get this from another go file!
+	var level uint64 = 1
+	var experience uint64 = 1
+
+	// Load this client's player/character data from the database!
+	state.client.SetCharacter(objects.LoadCharacter(
+		user.Nickname, 1,
+		// Position
+		x, y, z, rotationY,
+		// Movement
+		directionX, directionY, speed,
+		// Stats
+		level, experience,
+		// Atributes
+	))
+
 	state.logger.Printf("%s logged in as %s", username, user.Nickname)
 	// We send the nickname to the client so he can display it on his own game client
 	state.client.SendPacket(packets.NewLoginSuccess(user.Nickname))
@@ -212,6 +233,8 @@ func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *pac
 		state.client.SendPacket(deniedMessage)
 		return
 	}
+
+	// TO FIX -> Save all of the DEFAULT character data to the database
 
 	// Attempt to register a new user
 	_, err = state.queries.CreateUser(state.dbCtx, db.CreateUserParams{

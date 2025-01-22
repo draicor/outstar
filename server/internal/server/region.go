@@ -13,7 +13,7 @@ type Region struct {
 	Id uint64
 
 	// Map of all the connected clients inside this region
-	Clients *objects.MapMutex[ClientInterfacer]
+	Clients *objects.MapMutex[Client]
 
 	// Name of this region
 	Name string
@@ -26,10 +26,10 @@ type Region struct {
 	BroadcastChannel chan *packets.Packet
 
 	// Clients received in this channel will be added to this room
-	AddClientChannel chan ClientInterfacer
+	AddClientChannel chan Client
 
 	// Clients received in this channel will be removed from this room
-	RemoveClientChannel chan ClientInterfacer
+	RemoveClientChannel chan Client
 
 	logger *log.Logger
 }
@@ -52,10 +52,10 @@ func CreateRegion(name string, gameMap string) *Region {
 	return &Region{
 		Name:                name,
 		GameMap:             gameMap,
-		Clients:             objects.NewMapMutex[ClientInterfacer](),
+		Clients:             objects.NewMapMutex[Client](),
 		BroadcastChannel:    make(chan *packets.Packet),
-		AddClientChannel:    make(chan ClientInterfacer),
-		RemoveClientChannel: make(chan ClientInterfacer),
+		AddClientChannel:    make(chan Client),
+		RemoveClientChannel: make(chan Client),
 		logger:              log.New(log.Writer(), "", log.LstdFlags),
 	}
 }
@@ -82,7 +82,7 @@ func (r *Region) Start() {
 		// If we get a packet from the broadcast channel
 		case packet := <-r.BroadcastChannel:
 			// Go over every registered client in this room
-			r.Clients.ForEach(func(id uint64, client ClientInterfacer) {
+			r.Clients.ForEach(func(id uint64, client Client) {
 				// Check that the sender does not send the packet to itself
 				if client.GetId() != packet.SenderId {
 					client.ProcessPacket(packet.SenderId, packet.Payload)
@@ -93,6 +93,6 @@ func (r *Region) Start() {
 }
 
 // Retrieves the client (if found) in the Clients collection
-func (r *Region) GetClient(id uint64) (ClientInterfacer, bool) {
+func (r *Region) GetClient(id uint64) (Client, bool) {
 	return r.Clients.Get(id)
 }

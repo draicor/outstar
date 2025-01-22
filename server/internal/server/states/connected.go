@@ -11,7 +11,7 @@ import (
 )
 
 type Connected struct {
-	client  server.ClientInterfacer
+	client  server.Client
 	logger  *log.Logger
 	queries *db.Queries
 	dbCtx   context.Context
@@ -21,7 +21,7 @@ func (state *Connected) GetName() string {
 	return "Connected"
 }
 
-func (state *Connected) SetClient(client server.ClientInterfacer) {
+func (state *Connected) SetClient(client server.Client) {
 	// We save the client's data into this state
 	state.client = client
 	state.queries = client.GetDBTX().Queries
