@@ -84,6 +84,17 @@ func _handle_client_entered_packet(nickname: String) -> void:
 
 # When a client leaves, we print the message into our chat window
 func _handle_client_left_packet(client_left_packet: packets.ClientLeft) -> void:
+	# Get the character id from the packet
+	var character_id := client_left_packet.get_id()
+	# If the id is on our players dictionary
+	if character_id in _players:
+		# Attempt to retrieve the character object
+		var character: Character = _players[character_id]
+		# If its valid
+		if character:
+			# Destroy it
+			character.queue_free()
+			
 	chat.info("%s left" % client_left_packet.get_nickname())
 	
 # To send messages

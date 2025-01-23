@@ -24,7 +24,7 @@ message RegisterRequest { // Sent by client to register
 message LoginSuccess { string nickname = 1; } // Sent by the server after successful login
 // Notifies
 message ClientEntered { string nickname = 1; } // Sent by the client once his client is ready, broadcasted to everyone
-message ClientLeft { string nickname = 1; } // Broadcast by the server if a client leaves
+message ClientLeft { uint64 id =1; string nickname = 2; } // Broadcast by the server if a client leaves
 // Region
 message JoinRegionRequest { uint64 region_id = 1; } // Sent by the client to request joining a new region
 // Character

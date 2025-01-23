@@ -236,7 +236,7 @@ func (c *WebSocketClient) Close(reason string) {
 		// Server logging
 		c.logger.Printf("%s %s", c.character.Name, reason)
 		// Broadcast to everyone that this client left before we remove it from the hub/region
-		c.Broadcast(packets.NewClientLeft(c.character.Name))
+		c.Broadcast(packets.NewClientLeft(c.id, c.character.Name))
 
 	} else { // If the client connected to the server but never logged in
 		c.logger.Println("Client", reason)

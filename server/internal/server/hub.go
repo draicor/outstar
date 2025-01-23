@@ -177,7 +177,7 @@ func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 			// If the client was already at another region
 			if client.GetRegion() != nil {
 				// Broadcast to everyone that this client left this region!
-				client.Broadcast(packets.NewClientLeft(client.GetCharacter().Name))
+				client.Broadcast(packets.NewClientLeft(client.GetId(), client.GetCharacter().Name))
 				// Unregister the client from that region
 				client.GetRegion().RemoveClientChannel <- client
 			}

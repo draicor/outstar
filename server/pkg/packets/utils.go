@@ -62,9 +62,10 @@ func NewClientEntered(nickname string) Payload {
 }
 
 // Sent by the client once he leaves, broadcasted to everyone
-func NewClientLeft(nickname string) Payload {
+func NewClientLeft(id uint64, nickname string) Payload {
 	return &Packet_ClientLeft{
 		ClientLeft: &ClientLeft{
+			Id:       id,
 			Nickname: nickname,
 		},
 	}

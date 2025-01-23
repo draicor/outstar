@@ -1048,18 +1048,32 @@ class ClientLeft:
 	func _init():
 		var service
 		
-		_nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		_id = PBField.new("id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = _id
+		data[_id.tag] = service
+		
+		_nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
 		service.field = _nickname
 		data[_nickname.tag] = service
 		
 	var data = {}
 	
+	var _id: PBField
+	func get_id() -> int:
+		return _id.value
+	func clear_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_id(value : int) -> void:
+		_id.value = value
+	
 	var _nickname: PBField
 	func get_nickname() -> String:
 		return _nickname.value
 	func clear_nickname() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
+		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_nickname(value : String) -> void:
 		_nickname.value = value

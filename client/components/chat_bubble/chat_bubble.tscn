@@ -1,0 +1,40 @@
+[gd_scene load_steps=3 format=3 uid="uid://cv2i471rse4tl"]
+
+[ext_resource type="Script" path="res://components/chat_bubble/chat_bubble.gd" id="1_v28gq"]
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_81cm0"]
+viewport_path = NodePath("Sprite3D/SubViewport")
+
+[node name="ChatBubble" type="Node3D"]
+script = ExtResource("1_v28gq")
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+gi_mode = 0
+billboard = 2
+double_sided = false
+texture = SubResource("ViewportTexture_81cm0")
+region_rect = Rect2(144, 152, 156, 48)
+
+[node name="SubViewport" type="SubViewport" parent="Sprite3D"]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(100, 22)
+
+[node name="PanelContainer" type="PanelContainer" parent="Sprite3D/SubViewport"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = 0.333334
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Label" type="Label" parent="Sprite3D/SubViewport/PanelContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 1
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3

@@ -113,7 +113,7 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 
 		// CLIENT LEFT
 		case *packets.Packet_ClientLeft:
-			state.HandleClientLeft(state.client.GetCharacter().Name)
+			state.HandleClientLeft(state.client.GetId(), state.client.GetCharacter().Name)
 
 		// CHARACTER DIRECTION
 		case *packets.Packet_CharacterDirection:
@@ -140,8 +140,8 @@ func (state *Game) HandleClientEntered(nickname string) {
 }
 
 // We send this message to everybody
-func (state *Game) HandleClientLeft(nickname string) {
-	state.client.Broadcast(packets.NewClientLeft(nickname))
+func (state *Game) HandleClientLeft(id uint64, nickname string) {
+	state.client.Broadcast(packets.NewClientLeft(id, nickname))
 }
 
 func (state *Game) HandleCharacterDirection(payload *packets.CharacterDirection) {
