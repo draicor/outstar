@@ -1,7 +1,8 @@
+MarginContainer
+Label
+PanelContainer
 SubViewportContainer
 Node3D
-PanelContainer
-Label
 SubViewport
 Sprite3D
 Label3D

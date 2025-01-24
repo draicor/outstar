@@ -23,6 +23,7 @@ var last_input_direction: Vector2
 @onready var animation_player: AnimationPlayer = $Model/Body/AnimationPlayer
 @onready var model: Node3D = $Model
 @onready var camera_rig: Node3D = $CameraRig
+@onready var chat_bubble: Node3D = $ChatBubbleOrigin/ChatBubble
 
 static func instantiate(
 	id: int,
@@ -147,3 +148,7 @@ func _move_character(direction: Vector3) -> void:
 	
 	# Calculate physics
 	move_and_slide()
+
+# Used to update the text inside our chat bubble!
+func new_chat_bubble(message: String) -> void:
+	chat_bubble.set_text(message)

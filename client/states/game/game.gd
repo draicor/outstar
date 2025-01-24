@@ -114,9 +114,11 @@ func _on_chat_input_text_submitted(text: String) -> void:
 	if err:
 		chat.error("You have been disconnected from the server")
 	else:
-		# We grab our client's nickname from the GameManager autoload
+		# Grab our client's nickname from the GameManager autoload
 		# and display our own message in our client
 		chat.public(GameManager.client_nickname, text, Color.CYAN)
+		# Update my character's chat bubble!
+		GameManager.player_character.new_chat_bubble(text)
 	
 	# We clear the line edit
 	chat_input.text = ""
