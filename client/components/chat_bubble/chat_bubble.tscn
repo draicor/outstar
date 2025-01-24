@@ -10,7 +10,7 @@ script = ExtResource("1_v28gq")
 
 [node name="Sprite3D" type="Sprite3D" parent="."]
 gi_mode = 0
-billboard = 2
+billboard = 1
 double_sided = false
 texture = SubResource("ViewportTexture_81cm0")
 region_rect = Rect2(144, 152, 156, 48)
@@ -47,3 +47,9 @@ layout_mode = 2
 size_flags_vertical = 1
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 5.0
+one_shot = true
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

@@ -48,8 +48,10 @@ func _on_websocket_connection_closed() -> void:
 	chat.error("You have been disconnected from the server")
 
 func _on_websocket_packet_received(packet: packets.Packet) -> void:
+	var sender_id := packet.get_sender_id()
+	
 	if packet.has_public_message():
-		_handle_public_message_packet(packet.get_public_message())
+		_handle_public_message_packet(sender_id, packet.get_public_message())
 	elif packet.has_heartbeat():
 		Signals.heartbeat_received.emit()
 	elif packet.has_client_entered():
@@ -62,9 +64,17 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_spawn_character_packet(packet.get_spawn_character())
 
 # Print the message into our chat window
-func _handle_public_message_packet(packet_public_message: packets.PublicMessage) -> void:
+func _handle_public_message_packet(sender_id: int, packet_public_message: packets.PublicMessage) -> void:
 	# We print the nickname and then the message contents
 	chat.public("%s" % packet_public_message.get_nickname(), packet_public_message.get_text(), Color.LIGHT_SEA_GREEN)
+	# If the id is on our players dictionary
+	if sender_id in _players:
+		# Attempt to retrieve the character object
+		var character: Character = _players[sender_id]
+		# If its valid
+		if character:
+			# Update their chat bubble to reflect the text
+			character.new_chat_bubble(packet_public_message.get_text())
 
 # We send a heartbeat packet to the server every time the timer timeouts
 func _on_websocket_heartbeat_attempt() -> void:
@@ -80,7 +90,9 @@ func _on_websocket_heartbeat_attempt() -> void:
 
 # When a new client connects, we print the message into our chat window
 func _handle_client_entered_packet(nickname: String) -> void:
+	# We print the nickname to the chat log
 	chat.info("%s has joined" % nickname)
+	# Spawning the character is being handled elsewhere below
 
 # When a client leaves, we print the message into our chat window
 func _handle_client_left_packet(client_left_packet: packets.ClientLeft) -> void:
