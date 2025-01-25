@@ -2,7 +2,7 @@ extends Node
 
 # Preload resources
 const packets := preload("res://packets.gd")
-const Character := preload("res://objects/character/character.gd")
+const Player := preload("res://objects/character/player/player.gd")
 const game_escape_menu_scene: PackedScene = preload("res://components/escape_menu/game/game_escape_menu.tscn")
 
 # Holds our current map node so we can spawn scenes into it
@@ -23,7 +23,9 @@ func _ready() -> void:
 	# Send a packet to the server to let everyone know we joined
 	_send_client_entered_packet()
 	
-	# Test loading the map!
+	# TO FIX
+	# We need to get which map to load from the server instead!
+	# Loads the map from our game manager
 	_load_map(GameManager.Maps.PROTOTYPE)
 
 func _initialize() -> void:
@@ -40,12 +42,15 @@ func _initialize() -> void:
 	Signals.ui_chat_input_toggle.connect(_on_ui_chat_input_toggle)
 	chat_input.text_submitted.connect(_on_chat_input_text_submitted)
 	
-	# Create and add the escape menu to the UI canvas layer
+	# Create and add the escape menu to the UI canvas layer, hidden
 	game_escape_menu = game_escape_menu_scene.instantiate()
 	ui_canvas.add_child(game_escape_menu)
 
+# If our connection to the server closed
 func _on_websocket_connection_closed() -> void:
 	chat.error("You have been disconnected from the server")
+	# Display some kind of dialog box that the user can accept to go back to
+	# the main menu
 
 func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()
@@ -60,21 +65,21 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_client_left_packet(packet.get_client_left())
 	elif packet.has_request_denied():
 		_handle_request_denied_packet(packet.get_request_denied().get_reason())
-	elif packet.has_spawn_character():
-		_handle_spawn_character_packet(packet.get_spawn_character())
+	elif packet.has_spawn_player():
+		_handle_spawn_player_packet(packet.get_spawn_player())
 
-# Print the message into our chat window
+# Print the message into our chat window and update that player's chat bubble
 func _handle_public_message_packet(sender_id: int, packet_public_message: packets.PublicMessage) -> void:
 	# We print the nickname and then the message contents
 	chat.public("%s" % packet_public_message.get_nickname(), packet_public_message.get_text(), Color.LIGHT_SEA_GREEN)
 	# If the id is on our players dictionary
 	if sender_id in _players:
-		# Attempt to retrieve the character object
-		var character: Character = _players[sender_id]
+		# Attempt to retrieve the player character object
+		var player: Player = _players[sender_id]
 		# If its valid
-		if character:
+		if player:
 			# Update their chat bubble to reflect the text
-			character.new_chat_bubble(packet_public_message.get_text())
+			player.new_chat_bubble(packet_public_message.get_text())
 
 # We send a heartbeat packet to the server every time the timer timeouts
 func _on_websocket_heartbeat_attempt() -> void:
@@ -92,24 +97,27 @@ func _on_websocket_heartbeat_attempt() -> void:
 func _handle_client_entered_packet(nickname: String) -> void:
 	# We print the nickname to the chat log
 	chat.info("%s has joined" % nickname)
+	
+	# To fix?
 	# Spawning the character is being handled elsewhere below
 
-# When a client leaves, we print the message into our chat window
+# When a client leaves, print the message into our chat window
+# If that client was on our player list, we destroy his character to free resources
 func _handle_client_left_packet(client_left_packet: packets.ClientLeft) -> void:
-	# Get the character id from the packet
-	var character_id := client_left_packet.get_id()
+	# Get the player id from the packet
+	var player_id := client_left_packet.get_id()
 	# If the id is on our players dictionary
-	if character_id in _players:
-		# Attempt to retrieve the character object
-		var character: Character = _players[character_id]
+	if player_id in _players:
+		# Attempt to retrieve the player character object
+		var player: Player = _players[player_id]
 		# If its valid
-		if character:
+		if player:
 			# Destroy it
-			character.queue_free()
+			player.queue_free()
 			
 	chat.info("%s left" % client_left_packet.get_nickname())
 	
-# To send messages
+# if our client presses the enter key in the chat
 func _on_chat_input_text_submitted(text: String) -> void:
 	# Ignore this if the message was empty and release focus!
 	if chat_input.text.is_empty():
@@ -160,50 +168,57 @@ func _send_client_entered_packet() -> bool:
 		return true
 
 func _handle_request_denied_packet(reason: String) -> void:
-	# Log the error to console
+	# Just jog the error to console for now
 	print(reason)
+	
+	# TO UPGRADE
+	# We need to have a Callable that we assign a different function
+	# everytime we want to request something to the server so we don't
+	# have a packet type for every type of request unless we have to!
 
-func _handle_spawn_character_packet(spawn_character_packet: packets.SpawnCharacter) -> void:
-	var character_id := spawn_character_packet.get_id()
+func _handle_spawn_player_packet(spawn_player_packet: packets.SpawnPlayer) -> void:
+	var player_id := spawn_player_packet.get_id()
 
 	# If this character is NOT in our list of players
-	# this is a new character, so we need to instantiate it
-	if character_id not in _players:
+	# is a new character so we need to instantiate it
+	if player_id not in _players:
 		# Check if our client id is the same as this spawn character packet sender id
-		var is_my_player_character := character_id == GameManager.client_id
+		var is_my_player_character := player_id == GameManager.client_id
 		
 		# Grab all of the data from the server and we use it to create this character
-		var character := Character.instantiate(
-			character_id,
-			spawn_character_packet.get_name(),
-			spawn_character_packet.get_x(),
-			spawn_character_packet.get_y(),
-			spawn_character_packet.get_z(),
-			spawn_character_packet.get_rotation_y(),
-			spawn_character_packet.get_direction_x(),
-			spawn_character_packet.get_direction_z(),
-			spawn_character_packet.get_speed(),
+		var player := Player.instantiate(
+			player_id,
+			spawn_player_packet.get_name(),
+			spawn_player_packet.get_x(),
+			spawn_player_packet.get_y(),
+			spawn_player_packet.get_z(),
+			spawn_player_packet.get_rotation_y(),
+			spawn_player_packet.get_velocity_x(),
+			spawn_player_packet.get_velocity_y(),
+			spawn_player_packet.get_velocity_z(),
+			spawn_player_packet.get_speed(),
 			is_my_player_character
 		)
 		# Add this character to our list of players
-		_players[character_id] = character
+		_players[player_id] = player
 		
 		# Spawn the character
-		_current_map_scene.add_child(character)
+		_current_map_scene.add_child(player)
 	
 	# This is an existing player in our list
 	else:
 		# Fetch the character from our list of players
-		var character: Character = _players[character_id]
+		var player: Player = _players[player_id]
 		# Update this character's data
-		character.position.x = spawn_character_packet.get_x()
+		player.position.x = spawn_player_packet.get_x()
 		# Ignore the Y axis since our maps will be flat, for now at least
-		character.position.z = spawn_character_packet.get_z()
-		# Update the X and Z direction so our model can rotate correctly
-		character.direction_x = spawn_character_packet.get_direction_x()
-		character.direction_z = spawn_character_packet.get_direction_z()
+		player.position.z = spawn_player_packet.get_z()
+		# Update the X, Y and Z velocity so our model can rotate correctly
+		player.velocity_x = spawn_player_packet.get_velocity_x()
+		player.velocity_y = spawn_player_packet.get_velocity_y()
+		player.velocity_z = spawn_player_packet.get_velocity_z()
 		# Overwrite the speed just in case it changes in the server
-		character.speed = spawn_character_packet.get_speed()
+		player.speed = spawn_player_packet.get_speed()
 
 func _load_map(map: GameManager.Maps) -> void:
 	# Load the next scene

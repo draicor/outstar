@@ -50,6 +50,12 @@ material_override = ExtResource("2_doaqb")
 use_collision = true
 size = Vector3(1, 2, 50)
 
+[node name="Wall5" type="CSGBox3D" parent="Map/Static"]
+transform = Transform3D(-0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, -0.5, 3, 1.5, 7)
+material_override = ExtResource("2_doaqb")
+use_collision = true
+size = Vector3(1, 2, 10)
+
 [node name="Lights" type="Node3D" parent="Map"]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="Map/Lights"]

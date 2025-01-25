@@ -44,9 +44,9 @@ type Client interface {
 	// Get reference to the database transaction context for this client
 	GetDBTX() *DBTX
 
-	// Character get/set
-	GetCharacter() *objects.Character
-	SetCharacter(*objects.Character)
+	// PlayerCharacter get/set
+	GetPlayerCharacter() *objects.Player
+	SetPlayerCharacter(*objects.Player)
 
 	// Region get/set
 	GetRegion() *Region

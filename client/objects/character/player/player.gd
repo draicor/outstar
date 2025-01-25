@@ -1,18 +1,19 @@
 extends CharacterBody3D
 
 const packets := preload("res://packets.gd")
-const character_scene := preload("res://objects/character/character.tscn")
-const Character := preload("res://objects/character/character.gd")
+const player_scene := preload("res://objects/character/player/player.tscn")
+const Player := preload("res://objects/character/player/player.gd")
 
 # Spawn data
-var character_id: int
-var character_name: String
+var player_id: int
+var player_name: String
 var x: float
 var y: float
 var z: float
 var model_rotation_y: float
-var direction_x: float
-var direction_z: float
+var velocity_x: float
+var velocity_y: float # Not used for now, maybe some abilities will use this
+var velocity_z: float
 var speed: float
 var my_player_character: bool
 # Internal data
@@ -32,26 +33,28 @@ static func instantiate(
 	spawn_y: float,
 	spawn_z: float,
 	spawn_model_rotation_y: float, # Used to update our model.rotation.y
-	spawn_direction_x: float,
-	spawn_direction_z: float,
+	spawn_velocity_x: float,
+	spawn_velocity_y: float,
+	spawn_velocity_z: float,
 	spawn_speed: float,
 	is_my_player_character: bool
-) -> Character:
-	# Instantiate a new empty character
-	var character := character_scene.instantiate()
-	# Load the data from the function parameters into our new character
-	character.character_id = id
-	character.character_name = nickname
-	character.x = spawn_x
-	character.y = spawn_y
-	character.z = spawn_z
-	character.model_rotation_y = spawn_model_rotation_y
-	character.direction_x = spawn_direction_x
-	character.direction_z = spawn_direction_z
-	character.speed = spawn_speed
-	character.my_player_character = is_my_player_character
+) -> Player:
+	# Instantiate a new empty player character
+	var player := player_scene.instantiate()
+	# Load the data from the function parameters into a new player character
+	player.player_id = id
+	player.player_name = nickname
+	player.x = spawn_x
+	player.y = spawn_y
+	player.z = spawn_z
+	player.model_rotation_y = spawn_model_rotation_y
+	player.velocity_x = spawn_velocity_x
+	player.velocity_y = spawn_velocity_y
+	player.velocity_z = spawn_velocity_z
+	player.speed = spawn_speed
+	player.my_player_character = is_my_player_character
 
-	return character
+	return player
 
 func _ready() -> void:
 	# Blend animations
@@ -68,7 +71,7 @@ func _ready() -> void:
 	model.rotation.y = model_rotation_y
 	# Update any other spawn data here
 	
-	# Do this only for the player's character
+	# Do this only for our player's character
 	if my_player_character:
 		# Add a camera to our character
 		var camera := Camera3D.new()
@@ -88,46 +91,45 @@ func _physics_process(delta: float) -> void:
 	
 	# If this is not my player character, move it with the data I got from the server
 	if not my_player_character:
-		# Calculate the character's direction (ignore Y axis)
-		var character_direction := (transform.basis * Vector3(direction_x, 0, direction_z)).normalized()
-		_move_character(character_direction)
+		# Calculate the character's direction (Ignore Y axis)
+		var player_direction := (transform.basis * Vector3(velocity_x, 0, velocity_z)).normalized()
+		# We calculate the velocity from the character's direction, apply it but discard the vector
+		var _ignore_result := _calculate_and_apply_velocity(player_direction)
+		_animate_character(player_direction)
 		return
 	
 	# If this is MY player character
-	var input_dir: Vector2
+	var input_direction: Vector2
 	# Prevent WASD movement if we are trying to type in the chat
 	if not chatting:
 		# Get the input direction and handle the movement/deceleration.
-		input_dir = Input.get_vector("turn_left", "turn_right", "forward", "backward")
+		input_direction = Input.get_vector("turn_left", "turn_right", "forward", "backward")
 	
-	# Calculate the character's direction from our input (ignore Y axis)
+	# Calculate the character's direction from our input (ignores Y axis)
 	# Note: Input.get_vector is a Vector2D, so there is only X and Y here, but
 	# we are taking it as X and Z, since Y is vertical in 3D
-	# that's why we use input_dir.y, but its in the Z axis in the Vector3(x, y, z)
-	var character_direction_from_input := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-	_move_character(character_direction_from_input)
+	# that's why we use input_direction.y, but its in the Z axis in the Vector3(x, y, z)
+	var character_direction_from_input := (transform.basis * Vector3(input_direction.x, 0, input_direction.y)).normalized()
+	var new_velocity := _calculate_and_apply_velocity(character_direction_from_input)
+	_animate_character(character_direction_from_input)
 	
 	# If our input changed, tell the server
-	# We create a new packet to hold our input direction
+	# We create a new packet to hold our input velocity
 	var packet := packets.Packet.new()
-	var character_direction_packet := packet.new_character_direction()
+	var player_velocity_packet := packet.new_player_velocity()
 	# We store input as separate values since Golang doesn't handle Vector3
-	character_direction_packet.set_direction_x(character_direction_from_input.x)
-	# We ignore the Y axis
-	character_direction_packet.set_direction_z(character_direction_from_input.z)
+	player_velocity_packet.set_velocity_x(new_velocity.x)
+	player_velocity_packet.set_velocity_y(new_velocity.y)
+	player_velocity_packet.set_velocity_z(new_velocity.z)
 	# Send our input direction to the server
 	WebSocket.send(packet)
 
-# Utility function to apply physics to our character and rotate our model
-func _move_character(direction: Vector3) -> void:
+# Utility function to rotate our model and change the animation
+func _animate_character(direction: Vector3) -> void:
 	# If we are trying to move
 	if direction:
-		velocity.x = direction.x * speed # left/right
-		velocity.z = direction.z * speed # forward/backward
-		
 		# Make our model look at the direction he is moving towards
 		model.look_at(direction + position)
-		# model.rotation.y = lerp_angle(model.rotation.y, atan2(-direction.x, -direction.z), delta * 8.0)
 		
 		# Update the character's state machine
 		if not walking:
@@ -137,17 +139,27 @@ func _move_character(direction: Vector3) -> void:
 	
 	# If we are not trying to move, stop
 	else:
-		velocity.x = move_toward(velocity.x, 0, speed)
-		velocity.z = move_toward(velocity.z, 0, speed)
-		
 		# Update the character's state machine
 		if walking:
 			walking = false
 			# Only start playing the animation when the state changes
 			animation_player.play("idle")
-	
-	# Calculate physics
+
+# Used to predict the velocity based on the input
+func _calculate_and_apply_velocity(direction: Vector3) -> Vector3:
+	# If we are trying to move
+	if direction:
+		velocity.x = direction.x * speed # left/right
+		velocity.z = direction.z * speed # forward/backward
+	# If we are not trying to move, stop
+	else:
+		velocity.x = move_toward(velocity.x, 0, speed)
+		velocity.z = move_toward(velocity.z, 0, speed)
+		
+	# Apply physics
 	move_and_slide()
+	
+	return Vector3(velocity.x, velocity.y, velocity.z)
 
 # Used to update the text inside our chat bubble!
 func new_chat_bubble(message: String) -> void:

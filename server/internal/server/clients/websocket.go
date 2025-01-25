@@ -17,15 +17,15 @@ import (
 // any data that should be kept in server memory should be stored in the
 // WebSocketClient
 type WebSocketClient struct {
-	id          uint64               // Ephemeral ID for this connection
-	connection  *websocket.Conn      // Websocket connection to the godot client
-	hub         *server.Hub          // Hub that this client connected to
-	region      *server.Region       // Region that this client is at
-	sendChannel chan *packets.Packet // Channel that holds packets to be sent to the client
-	state       server.ClientState   // In what state the client is in
-	character   *objects.Character   // The player's data is stored in his character
-	dbtx        *server.DBTX         // <- FIX dependency
-	logger      *log.Logger
+	id              uint64               // Ephemeral ID for this connection
+	connection      *websocket.Conn      // Websocket connection to the godot client
+	hub             *server.Hub          // Hub that this client connected to
+	region          *server.Region       // Region that this client is at
+	sendChannel     chan *packets.Packet // Channel that holds packets to be sent to the client
+	state           server.ClientState   // In what state the client is in
+	playerCharacter *objects.Player      // The player's data is stored in his character
+	dbtx            *server.DBTX         // <- FIX dependency
+	logger          *log.Logger
 }
 
 // Called from Hub.serve()
@@ -59,11 +59,11 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 }
 
 // Character get/set
-func (c *WebSocketClient) GetCharacter() *objects.Character {
-	return c.character
+func (c *WebSocketClient) GetPlayerCharacter() *objects.Player {
+	return c.playerCharacter
 }
-func (c *WebSocketClient) SetCharacter(character *objects.Character) {
-	c.character = character
+func (c *WebSocketClient) SetPlayerCharacter(playerCharacter *objects.Player) {
+	c.playerCharacter = playerCharacter
 }
 
 // Returns the Hub this client is connected to
@@ -232,11 +232,11 @@ func (c *WebSocketClient) StartWritePump() {
 
 // Cleans up the client's connection and unregisters the client from the server
 func (c *WebSocketClient) Close(reason string) {
-	if c.GetCharacter() != nil {
+	if c.GetPlayerCharacter() != nil {
 		// Server logging
-		c.logger.Printf("%s %s", c.character.Name, reason)
+		c.logger.Printf("%s %s", c.playerCharacter.Name, reason)
 		// Broadcast to everyone that this client left before we remove it from the hub/region
-		c.Broadcast(packets.NewClientLeft(c.id, c.character.Name))
+		c.Broadcast(packets.NewClientLeft(c.id, c.playerCharacter.Name))
 
 	} else { // If the client connected to the server but never logged in
 		c.logger.Println("Client", reason)
@@ -281,8 +281,8 @@ func (c *WebSocketClient) SetState(state server.ClientState) {
 	}
 
 	// Server logging
-	if c.character != nil {
-		c.logger.Printf("%s switched from %s to %s", c.character.Name, lastStateName, newStateName)
+	if c.playerCharacter != nil {
+		c.logger.Printf("%s switched from %s to %s", c.playerCharacter.Name, lastStateName, newStateName)
 	}
 
 	// Replace the previous state with the new one inside this client

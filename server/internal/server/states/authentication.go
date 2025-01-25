@@ -123,19 +123,20 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	var y float64 = 1
 	var z float64 = 1
 	var rotationY float64 = 0
-	var directionX float64 = 0
-	var directionY float64 = 0
+	var velocityX float64 = 0
+	var velocityY float64 = 0
+	var velocityZ float64 = 0
 	var speed float64 = 3 // Get this from another go file!
 	var level uint64 = 1
 	var experience uint64 = 1
 
 	// Load this client's player/character data from the database!
-	state.client.SetCharacter(objects.LoadCharacter(
+	state.client.SetPlayerCharacter(objects.LoadPlayer(
 		user.Nickname, 1,
 		// Position
 		x, y, z, rotationY,
-		// Movement
-		directionX, directionY, speed,
+		// Movement data
+		velocityX, velocityY, velocityZ, speed,
 		// Stats
 		level, experience,
 		// Atributes

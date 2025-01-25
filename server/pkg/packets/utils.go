@@ -80,19 +80,20 @@ func NewLoginSuccess(nickname string) Payload {
 	}
 }
 
-// Sent by the server to spawn a new character in the client
-func NewSpawnCharacter(id uint64, character *objects.Character) Payload {
-	return &Packet_SpawnCharacter{
-		SpawnCharacter: &SpawnCharacter{
-			Id:         id,
-			Name:       character.Name,
-			X:          character.X,
-			Y:          character.Y,
-			Z:          character.Z,
-			RotationY:  character.RotationY,
-			DirectionX: character.DirectionX,
-			DirectionZ: character.DirectionZ,
-			Speed:      character.Speed,
+// Sent by the server to spawn a new player in the client
+func NewSpawnPlayer(id uint64, player *objects.Player) Payload {
+	return &Packet_SpawnPlayer{
+		SpawnPlayer: &SpawnPlayer{
+			Id:        id,
+			Name:      player.Name,
+			X:         player.X,
+			Y:         player.Y,
+			Z:         player.Z,
+			RotationY: player.RotationY,
+			VelocityX: player.VelocityX,
+			VelocityY: player.VelocityY,
+			VelocityZ: player.VelocityZ,
+			Speed:     player.Speed,
 		},
 	}
 }

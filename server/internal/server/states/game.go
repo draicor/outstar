@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math"
 	"server/internal/server"
 	"server/internal/server/db"
 	"server/internal/server/objects"
@@ -15,7 +14,7 @@ import (
 
 type Game struct {
 	client                 server.Client
-	player                 *objects.Character
+	player                 *objects.Player
 	cancelPlayerUpdateLoop context.CancelFunc
 	logger                 *log.Logger
 	queries                *db.Queries
@@ -31,7 +30,7 @@ func (state *Game) SetClient(client server.Client) {
 	// We save the client's data into this state
 	state.client = client
 	// We save the client's character data into this state too
-	state.player = client.GetCharacter()
+	state.player = client.GetPlayerCharacter()
 	state.queries = client.GetDBTX().Queries
 	state.dbCtx = client.GetDBTX().Ctx
 
@@ -50,21 +49,32 @@ func (state *Game) OnEnter() {
 	state.client.GetHub().JoinRegion(state.client.GetId(), state.player.RegionId)
 
 	// Tell the client to spawn our character
-	state.client.SendPacket(packets.NewSpawnCharacter(state.client.GetId(), state.player))
+	state.client.SendPacket(packets.NewSpawnPlayer(state.client.GetId(), state.player))
 }
 
 // Attempts to keep an accurate representation of the character's position on the server
 func (state *Game) synchronizeCharacter(delta float64) {
-	// Calculates the new position of the character based on the character’s current direction and speed
-	newX := state.player.X + state.player.Speed*math.Sin(state.player.DirectionX)*delta
-	newZ := state.player.Z + state.player.Speed*math.Sin(state.player.DirectionZ)*delta
+	// Synchronizes the position of the character in the server
+	// based on the character’s current velocity coming from the client
+	newX := state.player.X + state.player.VelocityX*delta // left/right
+	newY := state.player.Y + state.player.VelocityY*delta // up/down (vertical)
+	newZ := state.player.Z + state.player.VelocityZ*delta // forward/backward
 
-	// Overwrite our player character's position
+	// Check that this character doesn't try to move faster than the max speed
+	if state.player.VelocityX > state.player.Speed {
+		newX = state.player.Speed
+	}
+	if state.player.VelocityZ > state.player.Speed {
+		newZ = state.player.Speed
+	}
+
+	// Overwrite our player character's position in the server
 	state.player.X = newX
+	state.player.Y = newY
 	state.player.Z = newZ
 
 	// Create a packet and broadcast it to everyone to update the character's position
-	updatePacket := packets.NewSpawnCharacter(state.client.GetId(), state.player)
+	updatePacket := packets.NewSpawnPlayer(state.client.GetId(), state.player)
 	state.client.Broadcast(updatePacket)
 	// Send the update to the client that owns this character, so they can ensure
 	// they are in sync with the server (this can cause rubber banding)
@@ -99,7 +109,7 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_PublicMessage:
 			// The server ignores the client's character name from the packet, takes the data and
 			// constructs a new public message with the client's nickname from memory
-			nickname := state.client.GetCharacter().Name
+			nickname := state.client.GetPlayerCharacter().Name
 			text := casted_payload.PublicMessage.Text
 			state.client.Broadcast(packets.NewPublicMessage(nickname, text))
 
@@ -109,15 +119,15 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 
 		// CLIENT ENTERED
 		case *packets.Packet_ClientEntered:
-			state.HandleClientEntered(state.client.GetCharacter().Name)
+			state.HandleClientEntered(state.client.GetPlayerCharacter().Name)
 
 		// CLIENT LEFT
 		case *packets.Packet_ClientLeft:
-			state.HandleClientLeft(state.client.GetId(), state.client.GetCharacter().Name)
+			state.HandleClientLeft(state.client.GetId(), state.client.GetPlayerCharacter().Name)
 
-		// CHARACTER DIRECTION
-		case *packets.Packet_CharacterDirection:
-			state.HandleCharacterDirection(casted_payload.CharacterDirection)
+		// PLAYER VELOCITY
+		case *packets.Packet_PlayerVelocity:
+			state.HandlePlayerVelocity(casted_payload.PlayerVelocity)
 
 		case nil:
 			// Ignore packet if not a valid payload type
@@ -144,9 +154,10 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 	state.client.Broadcast(packets.NewClientLeft(id, nickname))
 }
 
-func (state *Game) HandleCharacterDirection(payload *packets.CharacterDirection) {
-	state.player.DirectionX = payload.DirectionX
-	state.player.DirectionZ = payload.DirectionZ
+func (state *Game) HandlePlayerVelocity(payload *packets.PlayerVelocity) {
+	state.player.VelocityX = payload.VelocityX // Left/Right
+	state.player.VelocityY = payload.VelocityY // Up/Down (Vertical)
+	state.player.VelocityZ = payload.VelocityZ // Forward/backward
 
 	// If this is the first time we are receiving a character direction packet
 	// from our client, we start the player update loop

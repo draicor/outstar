@@ -39,7 +39,7 @@ type Hub struct {
 // Any state from any client can access and modify these objects
 type SharedObjects struct {
 	// The ID of the player is the ID of the client
-	Players *objects.MapMutex[*objects.Character]
+	Players *objects.MapMutex[*objects.Player]
 }
 
 // Creates a new empty hub object, we have to pass a valid DB connection
@@ -56,7 +56,7 @@ func CreateHub(database *sql.DB) *Hub {
 		Database: database,
 		// Game objects
 		SharedObjects: &SharedObjects{
-			Players: objects.NewMapMutex[*objects.Character](),
+			Players: objects.NewMapMutex[*objects.Player](),
 		},
 	}
 }
@@ -177,7 +177,7 @@ func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 			// If the client was already at another region
 			if client.GetRegion() != nil {
 				// Broadcast to everyone that this client left this region!
-				client.Broadcast(packets.NewClientLeft(client.GetId(), client.GetCharacter().Name))
+				client.Broadcast(packets.NewClientLeft(client.GetId(), client.GetPlayerCharacter().Name))
 				// Unregister the client from that region
 				client.GetRegion().RemoveClientChannel <- client
 			}

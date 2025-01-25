@@ -34,8 +34,8 @@ func _ready() -> void:
 
 # Updates the chat bubble text
 func set_text(new_text: String) -> void:
-	# If the text hasn't changed, ignore this
-	if (new_text == label.text):
+	# If the text is empty, ignore this
+	if (new_text == ""):
 		return
 	
 	# If a bubble is already active, reset the timer without fading
