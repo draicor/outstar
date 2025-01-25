@@ -93,8 +93,8 @@ func _physics_process(delta: float) -> void:
 	if not my_player_character:
 		# Calculate the character's direction (Ignore Y axis)
 		var player_direction := (transform.basis * Vector3(velocity_x, 0, velocity_z)).normalized()
-		# We calculate the velocity from the character's direction, apply it but discard the vector
-		var _ignore_result := _calculate_and_apply_velocity(player_direction)
+		# We calculate the velocity from the character's direction
+		_move_player(_calculate_velocity(player_direction))
 		_animate_character(player_direction)
 		return
 	
@@ -110,17 +110,18 @@ func _physics_process(delta: float) -> void:
 	# we are taking it as X and Z, since Y is vertical in 3D
 	# that's why we use input_direction.y, but its in the Z axis in the Vector3(x, y, z)
 	var character_direction_from_input := (transform.basis * Vector3(input_direction.x, 0, input_direction.y)).normalized()
-	var new_velocity := _calculate_and_apply_velocity(character_direction_from_input)
+	_move_player(_calculate_velocity(character_direction_from_input))
 	_animate_character(character_direction_from_input)
 	
 	# If our input changed, tell the server
-	# We create a new packet to hold our input velocity
+	# Create a new packet to hold our input velocity
 	var packet := packets.Packet.new()
 	var player_velocity_packet := packet.new_player_velocity()
-	# We store input as separate values since Golang doesn't handle Vector3
-	player_velocity_packet.set_velocity_x(new_velocity.x)
-	player_velocity_packet.set_velocity_y(new_velocity.y)
-	player_velocity_packet.set_velocity_z(new_velocity.z)
+	# We pass the velocity vector to the server to keep both in sync
+	player_velocity_packet.set_velocity_x(velocity.x)
+	player_velocity_packet.set_velocity_y(velocity.y)
+	player_velocity_packet.set_velocity_z(velocity.z)
+		
 	# Send our input direction to the server
 	WebSocket.send(packet)
 
@@ -145,21 +146,30 @@ func _animate_character(direction: Vector3) -> void:
 			# Only start playing the animation when the state changes
 			animation_player.play("idle")
 
-# Used to predict the velocity based on the input
-func _calculate_and_apply_velocity(direction: Vector3) -> Vector3:
+# Predicts the velocity based on the input
+func _calculate_velocity(direction: Vector3) -> Vector3:
+	var new_velocity : Vector3
 	# If we are trying to move
 	if direction:
-		velocity.x = direction.x * speed # left/right
-		velocity.z = direction.z * speed # forward/backward
+		new_velocity.x = direction.x * speed # left/right
+		new_velocity.z = direction.z * speed # forward/backward
 	# If we are not trying to move, stop
 	else:
-		velocity.x = move_toward(velocity.x, 0, speed)
-		velocity.z = move_toward(velocity.z, 0, speed)
-		
-	# Apply physics
-	move_and_slide()
+		new_velocity.x = move_toward(velocity.x, 0, speed)
+		new_velocity.z = move_toward(velocity.z, 0, speed)
 	
-	return Vector3(velocity.x, velocity.y, velocity.z)
+	# Assign the same Y velocity our character had
+	new_velocity.y = velocity.y
+	return new_velocity
+
+# Apply physics and moves the player
+func _move_player(new_velocity: Vector3) -> void:
+	velocity.x = new_velocity.x
+	velocity.y = new_velocity.y
+	velocity.z = new_velocity.z
+	
+	# Apply physics with the new velocity
+	move_and_slide()
 
 # Used to update the text inside our chat bubble!
 func new_chat_bubble(message: String) -> void:
