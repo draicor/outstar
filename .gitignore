@@ -8,6 +8,7 @@
 *.dll
 *.so
 *.dylib
+*.sqlite
 
 # Test binary, built with `go test -c`
 *.test
@@ -20,6 +21,9 @@
 
 # Go workspace file
 go.work
+
+# Folder ignores
+/server/cmd
 
 
 # Client Code

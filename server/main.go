@@ -12,6 +12,7 @@ import (
 
 	_ "embed" // allows the use of the go:embed directive
 
+	"github.com/kardianos/osext"
 	_ "modernc.org/sqlite" // registers itself with the sql package
 )
 
@@ -39,16 +40,24 @@ func main() {
 
 	log.Printf("Starting server v %s", version)
 
-	// This generates the db.sqlite file if it doesn't exists
-	log.Println("Connecting to the database...")
-	database, err := sql.Open("sqlite", "internal/server/db/db.sqlite")
+	// Get the absolute directory of the executable (Cross platform)
+	execPath, err := osext.ExecutableFolder()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
+	}
+	log.Printf("Server running from %s", execPath)
+
+	log.Printf("Connecting to the database at %s\\db.sqlite", execPath)
+	// This generates the db.sqlite file if it doesn't exists
+	// We need to place the db next to the executable for easy of access
+	database, err := sql.Open("sqlite", execPath+"/db.sqlite")
+	if err != nil {
+		panic(err)
 	}
 	// Query that doesn't return any rows to test the database connection
 	_, err = database.ExecContext(context.Background(), schemaGenSql)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	// Spawn the main hub that will take new websocket connections

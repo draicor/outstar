@@ -1,0 +1,10 @@
+# To generate the keys:
+in powershell:
+C:\Users\Draicor\Documents\Draicor\Godot\ideas\Keys
+ssh-keygen -t rsa
+pi_private_key
+
+# To copy the public key to the server:
+# Type this in powershell in admin mode, because we have Putty
+# installed we can use this commands in powershell:
+scp C:/Users/Draicor/Documents/Draicor/Godot/ideas/Keys/pi_private_key.pub draicor@64.223.161.129:/home/draicor/

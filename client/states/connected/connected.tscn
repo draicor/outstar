@@ -4,6 +4,7 @@
 
 [node name="Connected" type="Node"]
 script = ExtResource("1_nxvia")
+server = 1
 
 [node name="UI" type="CanvasLayer" parent="."]
 

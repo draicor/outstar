@@ -6,17 +6,17 @@ const packets := preload("res://packets.gd")
 
 enum Server {
 	LOCAL,
-	PROXY,
+	REMOTE,
 }
 # We have a dictionary connected to the enum above to switch
 # between local and remote testing
 var ip: Dictionary = {
 	Server.LOCAL: "localhost",
-	Server.PROXY: "64.223.161.129"
+	Server.REMOTE: "64.223.161.129"
 }
 var port: Dictionary = {
 	Server.LOCAL: 31591,
-	Server.PROXY: 2000
+	Server.REMOTE: 31591
 }
 # We make the enum easily accesible for testing
 @export var server : Server

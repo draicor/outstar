@@ -1,4 +1,4 @@
-To generate the go files for the database,
+To generate the go source files for the database,
 in the root folder for the project run in CMD.exe:
 sqlc generate -f server/internal/server/db/config/sqlc.yml
 
@@ -13,3 +13,6 @@ Also sets those files to use the package "db"
 
 CREATE, DELETE, DROP, INSERT, and UPDATE operations
 should only be handled by ONE writer.
+
+To change where should the database be placed:
+Update the main.go file
