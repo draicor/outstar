@@ -54,19 +54,19 @@ func (state *Game) OnEnter() {
 
 // Attempts to keep an accurate representation of the character's position on the server
 func (state *Game) synchronizeCharacter(delta float64) {
+	// Check that this character doesn't try to move faster than the max speed
+	if state.player.VelocityX > state.player.Speed {
+		state.player.VelocityX = state.player.Speed
+	}
+	if state.player.VelocityZ > state.player.Speed {
+		state.player.VelocityZ = state.player.Speed
+	}
+
 	// Synchronizes the position of the character in the server
 	// based on the character’s current velocity coming from the client
 	newX := state.player.X + state.player.VelocityX*delta // left/right
 	newY := state.player.Y + state.player.VelocityY*delta // up/down (vertical)
 	newZ := state.player.Z + state.player.VelocityZ*delta // forward/backward
-
-	// Check that this character doesn't try to move faster than the max speed
-	if state.player.VelocityX > state.player.Speed {
-		newX = state.player.Speed
-	}
-	if state.player.VelocityZ > state.player.Speed {
-		newZ = state.player.Speed
-	}
 
 	// Overwrite our player character's position in the server
 	state.player.X = newX

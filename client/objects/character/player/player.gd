@@ -10,6 +10,7 @@ var player_name: String
 var x: float
 var y: float
 var z: float
+var server_position: Vector3
 var model_rotation_y: float
 var velocity_x: float
 var velocity_y: float # Not used for now, maybe some abilities will use this
@@ -68,8 +69,10 @@ func _ready() -> void:
 	position.x = x
 	position.y = y
 	position.z = z
-	model.rotation.y = model_rotation_y
+	# Make the server position match our local position
+	server_position = position
 	# Update any other spawn data here
+	model.rotation.y = model_rotation_y
 	
 	# Do this only for our player's character
 	if my_player_character:
@@ -96,6 +99,7 @@ func _physics_process(delta: float) -> void:
 		# We calculate the velocity from the character's direction
 		_move_player(_calculate_velocity(player_direction))
 		_animate_character(player_direction)
+		_sync_player(delta)
 		return
 	
 	# If this is MY player character
@@ -112,18 +116,47 @@ func _physics_process(delta: float) -> void:
 	var character_direction_from_input := (transform.basis * Vector3(input_direction.x, 0, input_direction.y)).normalized()
 	_move_player(_calculate_velocity(character_direction_from_input))
 	_animate_character(character_direction_from_input)
+	_sync_player(delta)
+	
+	# Get the current real velocity since the last call to move_and_slide.
+	var real_velocity := get_real_velocity()
 	
 	# If our input changed, tell the server
 	# Create a new packet to hold our input velocity
 	var packet := packets.Packet.new()
 	var player_velocity_packet := packet.new_player_velocity()
 	# We pass the velocity vector to the server to keep both in sync
-	player_velocity_packet.set_velocity_x(velocity.x)
-	player_velocity_packet.set_velocity_y(velocity.y)
-	player_velocity_packet.set_velocity_z(velocity.z)
-		
+	player_velocity_packet.set_velocity_x(real_velocity.x)
+	player_velocity_packet.set_velocity_y(real_velocity.y)
+	player_velocity_packet.set_velocity_z(real_velocity.z)
+	
 	# Send our input direction to the server
 	WebSocket.send(packet)
+
+# Predicts the velocity based on the input
+func _calculate_velocity(direction: Vector3) -> Vector3:
+	var new_velocity : Vector3
+	# If we are trying to move
+	if direction:
+		new_velocity.x = direction.x * speed # left/right
+		new_velocity.z = direction.z * speed # forward/backward
+	# If we are not trying to move, stop
+	else:
+		new_velocity.x = move_toward(velocity.x, 0, speed)
+		new_velocity.z = move_toward(velocity.z, 0, speed)
+	
+	# Assign the same Y velocity our character had
+	new_velocity.y = velocity.y
+	return new_velocity
+
+# Apply physics and moves the player
+func _move_player(new_velocity: Vector3) -> void:	
+	velocity.x = new_velocity.x
+	velocity.y = new_velocity.y
+	velocity.z = new_velocity.z
+	
+	# Apply physics with the new velocity
+	move_and_slide()
 
 # Utility function to rotate our model and change the animation
 func _animate_character(direction: Vector3) -> void:
@@ -146,30 +179,9 @@ func _animate_character(direction: Vector3) -> void:
 			# Only start playing the animation when the state changes
 			animation_player.play("idle")
 
-# Predicts the velocity based on the input
-func _calculate_velocity(direction: Vector3) -> Vector3:
-	var new_velocity : Vector3
-	# If we are trying to move
-	if direction:
-		new_velocity.x = direction.x * speed # left/right
-		new_velocity.z = direction.z * speed # forward/backward
-	# If we are not trying to move, stop
-	else:
-		new_velocity.x = move_toward(velocity.x, 0, speed)
-		new_velocity.z = move_toward(velocity.z, 0, speed)
-	
-	# Assign the same Y velocity our character had
-	new_velocity.y = velocity.y
-	return new_velocity
-
-# Apply physics and moves the player
-func _move_player(new_velocity: Vector3) -> void:
-	velocity.x = new_velocity.x
-	velocity.y = new_velocity.y
-	velocity.z = new_velocity.z
-	
-	# Apply physics with the new velocity
-	move_and_slide()
+func _sync_player(delta: float) -> void:
+	if abs(float(server_position.x - position.x)) > 1 or abs(float(server_position.z - position.z > 1)):
+		position = position.lerp(server_position, delta * 1.5)
 
 # Used to update the text inside our chat bubble!
 func new_chat_bubble(message: String) -> void:

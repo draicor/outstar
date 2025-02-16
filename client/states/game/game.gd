@@ -213,9 +213,9 @@ func _handle_spawn_player_packet(spawn_player_packet: packets.SpawnPlayer) -> vo
 		# Fetch the character from our list of players
 		var player: Player = _players[player_id]
 		# Update this character's data
-		player.position.x = spawn_player_packet.get_x()
+		player.server_position.x = spawn_player_packet.get_x()
 		# Ignore the Y axis since our maps will be flat, for now at least
-		player.position.z = spawn_player_packet.get_z()
+		player.server_position.z = spawn_player_packet.get_z()
 		# Update the X, Y and Z velocity so our model can rotate correctly
 		player.velocity_x = spawn_player_packet.get_velocity_x()
 		player.velocity_y = spawn_player_packet.get_velocity_y()

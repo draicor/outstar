@@ -120,7 +120,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 
 	// TO FIX -> Load all of this from the database
 	var x float64 = 1
-	var y float64 = 1
+	var y float64 = 1 // the top of the floor is at 0.5, fix this
 	var z float64 = 1
 	var rotationY float64 = 0
 	var velocityX float64 = 0
