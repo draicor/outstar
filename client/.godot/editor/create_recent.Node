@@ -1,3 +1,4 @@
+RayCast3D
 Timer
 MarginContainer
 Label
@@ -12,4 +13,3 @@ OmniLight3D
 RemoteTransform3D
 CollisionShape3D
 CharacterBody3D
-CSGBox3D

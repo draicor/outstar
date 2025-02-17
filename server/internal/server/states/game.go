@@ -12,6 +12,8 @@ import (
 	"server/pkg/packets"
 )
 
+const PlayerTick float64 = 0.6
+
 type Game struct {
 	client                 server.Client
 	player                 *objects.Player
@@ -53,26 +55,12 @@ func (state *Game) OnEnter() {
 }
 
 // Attempts to keep an accurate representation of the character's position on the server
-func (state *Game) synchronizeCharacter(delta float64) {
-	// Check that this character doesn't try to move faster than the max speed
-	if state.player.VelocityX > state.player.Speed {
-		state.player.VelocityX = state.player.Speed
-	}
-	if state.player.VelocityZ > state.player.Speed {
-		state.player.VelocityZ = state.player.Speed
-	}
-
-	// Synchronizes the position of the character in the server
-	// based on the character’s current velocity coming from the client
-	newX := state.player.X + state.player.VelocityX*delta // left/right
-	newY := state.player.Y + state.player.VelocityY*delta // up/down (vertical)
-	newZ := state.player.Z + state.player.VelocityZ*delta // forward/backward
-
+func (state *Game) updateCharacter() {
 	// Overwrite our player character's position in the server
-	state.player.X = newX
-	state.player.Y = newY
-	state.player.Z = newZ
+	state.player.X = state.player.DestinationX
+	state.player.Z = state.player.DestinationZ
 
+	// TO FIX -> Create an update position packet
 	// Create a packet and broadcast it to everyone to update the character's position
 	updatePacket := packets.NewSpawnPlayer(state.client.GetId(), state.player)
 	state.client.Broadcast(updatePacket)
@@ -82,16 +70,15 @@ func (state *Game) synchronizeCharacter(delta float64) {
 	go state.client.SendPacket(updatePacket)
 }
 
-// Runs in a loop updating the player's position every 50ms
+// Runs in a loop updating the player
 func (state *Game) playerUpdateLoop(ctx context.Context) {
-	const delta float64 = 0.05
-	ticker := time.NewTicker(time.Duration(delta*1000) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(PlayerTick*1000) * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			state.synchronizeCharacter(delta)
+			state.updateCharacter()
 		case <-ctx.Done():
 			return
 		}
@@ -125,9 +112,9 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_ClientLeft:
 			state.HandleClientLeft(state.client.GetId(), state.client.GetPlayerCharacter().Name)
 
-		// PLAYER VELOCITY
-		case *packets.Packet_PlayerVelocity:
-			state.HandlePlayerVelocity(casted_payload.PlayerVelocity)
+		// PLAYER DESTINATION
+		case *packets.Packet_PlayerDestination:
+			state.HandlePlayerDestination(casted_payload.PlayerDestination)
 
 		case nil:
 			// Ignore packet if not a valid payload type
@@ -154,12 +141,12 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 	state.client.Broadcast(packets.NewClientLeft(id, nickname))
 }
 
-func (state *Game) HandlePlayerVelocity(payload *packets.PlayerVelocity) {
-	state.player.VelocityX = payload.VelocityX // Left/Right
-	state.player.VelocityY = payload.VelocityY // Up/Down (Vertical)
-	state.player.VelocityZ = payload.VelocityZ // Forward/backward
+// Sent from the client to the server to request setting a new destination for their player character
+func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
+	state.player.DestinationX = payload.X // Left/Right
+	state.player.DestinationZ = payload.Z // Forward/backward
 
-	// If this is the first time we are receiving a character direction packet
+	// If this is the first time we are receiving a player destination packet
 	// from our client, we start the player update loop
 	if state.cancelPlayerUpdateLoop == nil {
 		ctx, cancel := context.WithCancel(context.Background())

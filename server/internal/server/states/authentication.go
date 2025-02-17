@@ -119,14 +119,12 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	}
 
 	// TO FIX -> Load all of this from the database
-	var x float64 = 1
-	var y float64 = 1 // the top of the floor is at 0.5, fix this
-	var z float64 = 1
+	var x uint64 = 10
+	var z uint64 = 10
 	var rotationY float64 = 0
-	var velocityX float64 = 0
-	var velocityY float64 = 0
-	var velocityZ float64 = 0
-	var speed float64 = 3 // Get this from another go file!
+	var targetX uint64 = 0
+	var targetZ uint64 = 0
+	// TO FIX -> Implement a variable to switch between walk/run
 	var level uint64 = 1
 	var experience uint64 = 1
 
@@ -134,9 +132,9 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	state.client.SetPlayerCharacter(objects.LoadPlayer(
 		user.Nickname, 1,
 		// Position
-		x, y, z, rotationY,
-		// Movement data
-		velocityX, velocityY, velocityZ, speed,
+		x, z, rotationY,
+		// Destination
+		targetX, targetZ,
 		// Stats
 		level, experience,
 		// Atributes

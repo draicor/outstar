@@ -27,22 +27,19 @@ message ClientEntered { string nickname = 1; } // Sent by the client once his cl
 message ClientLeft { uint64 id =1; string nickname = 2; } // Broadcast by the server if a client leaves
 // Region
 message JoinRegionRequest { uint64 region_id = 1; } // Sent by the client to request joining a new region
-// Player
+// Spawn Player Character
 message SpawnPlayer {
   // Sent by the server to spawn a new player in the client
   uint64 id = 1;
   string name = 2;
-  double x = 3;
-  double y = 4;
-  double z = 5;
-  double rotation_y = 6;
-  double velocity_x = 7;
-  double velocity_y = 8;
-  double velocity_z = 9;
-  double speed = 10;
+  uint64 x = 3;
+  uint64 z = 4;
+  double rotation_y = 5;
+  uint64 destination_x = 6;
+  uint64 destination_z = 7;
 }
-// Input velocity sent by the client (Y axis is vertical)
-message PlayerVelocity { double velocity_x = 1; double velocity_y = 2; double velocity_z = 3;}
+// Target Destination sent by the client (Ignore Y axis (vertical))
+message PlayerDestination { uint64 x = 1; uint64 z = 2;}
 
 // Main Packet container
 message Packet {
@@ -66,6 +63,6 @@ message Packet {
     JoinRegionRequest join_region_request = 12; // Client
     // Player
     SpawnPlayer spawn_player = 13; // Server
-    PlayerVelocity player_velocity = 14; // Both
+    PlayerDestination player_destination = 14; // Both
   }
 }

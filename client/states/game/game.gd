@@ -192,14 +192,9 @@ func _handle_spawn_player_packet(spawn_player_packet: packets.SpawnPlayer) -> vo
 		var player := Player.instantiate(
 			player_id,
 			spawn_player_packet.get_name(),
-			spawn_player_packet.get_x(),
-			spawn_player_packet.get_y(),
-			spawn_player_packet.get_z(),
 			spawn_player_packet.get_rotation_y(),
-			spawn_player_packet.get_velocity_x(),
-			spawn_player_packet.get_velocity_y(),
-			spawn_player_packet.get_velocity_z(),
-			spawn_player_packet.get_speed(),
+			spawn_player_packet.get_x(),
+			spawn_player_packet.get_z(),
 			is_my_player_character
 		)
 		# Add this character to our list of players
@@ -213,15 +208,9 @@ func _handle_spawn_player_packet(spawn_player_packet: packets.SpawnPlayer) -> vo
 		# Fetch the character from our list of players
 		var player: Player = _players[player_id]
 		# Update this character's data
-		player.server_position.x = spawn_player_packet.get_x()
-		# Ignore the Y axis since our maps will be flat, for now at least
-		player.server_position.z = spawn_player_packet.get_z()
-		# Update the X, Y and Z velocity so our model can rotate correctly
-		player.velocity_x = spawn_player_packet.get_velocity_x()
-		player.velocity_y = spawn_player_packet.get_velocity_y()
-		player.velocity_z = spawn_player_packet.get_velocity_z()
-		# Overwrite the speed just in case it changes in the server
-		player.speed = spawn_player_packet.get_speed()
+		player.server_grid_position.x = spawn_player_packet.get_x()
+		# Ignore the Y axis since our maps will be flat
+		player.server_grid_position.y = spawn_player_packet.get_z()
 
 func _load_map(map: GameManager.Maps) -> void:
 	# Load the next scene

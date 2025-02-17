@@ -84,16 +84,13 @@ func NewLoginSuccess(nickname string) Payload {
 func NewSpawnPlayer(id uint64, player *objects.Player) Payload {
 	return &Packet_SpawnPlayer{
 		SpawnPlayer: &SpawnPlayer{
-			Id:        id,
-			Name:      player.Name,
-			X:         player.X,
-			Y:         player.Y,
-			Z:         player.Z,
-			RotationY: player.RotationY,
-			VelocityX: player.VelocityX,
-			VelocityY: player.VelocityY,
-			VelocityZ: player.VelocityZ,
-			Speed:     player.Speed,
+			Id:           id,
+			Name:         player.Name,
+			X:            player.X,
+			Z:            player.Z,
+			RotationY:    player.RotationY,
+			DestinationX: player.DestinationX,
+			DestinationZ: player.DestinationZ,
 		},
 	}
 }

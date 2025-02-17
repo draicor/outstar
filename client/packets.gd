@@ -1154,45 +1154,30 @@ class SpawnPlayer:
 		service.field = _name
 		data[_name.tag] = service
 		
-		_x = PBField.new("x", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		_x = PBField.new("x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
 		service.field = _x
 		data[_x.tag] = service
 		
-		_y = PBField.new("y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
-		service = PBServiceField.new()
-		service.field = _y
-		data[_y.tag] = service
-		
-		_z = PBField.new("z", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		_z = PBField.new("z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
 		service.field = _z
 		data[_z.tag] = service
 		
-		_rotation_y = PBField.new("rotation_y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		_rotation_y = PBField.new("rotation_y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
 		service.field = _rotation_y
 		data[_rotation_y.tag] = service
 		
-		_velocity_x = PBField.new("velocity_x", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		_destination_x = PBField.new("destination_x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _velocity_x
-		data[_velocity_x.tag] = service
+		service.field = _destination_x
+		data[_destination_x.tag] = service
 		
-		_velocity_y = PBField.new("velocity_y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 8, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		_destination_z = PBField.new("destination_z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _velocity_y
-		data[_velocity_y.tag] = service
-		
-		_velocity_z = PBField.new("velocity_z", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 9, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
-		service = PBServiceField.new()
-		service.field = _velocity_z
-		data[_velocity_z.tag] = service
-		
-		_speed = PBField.new("speed", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 10, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
-		service = PBServiceField.new()
-		service.field = _speed
-		data[_speed.tag] = service
+		service.field = _destination_z
+		data[_destination_z.tag] = service
 		
 	var data = {}
 	
@@ -1215,76 +1200,49 @@ class SpawnPlayer:
 		_name.value = value
 	
 	var _x: PBField
-	func get_x() -> float:
+	func get_x() -> int:
 		return _x.value
 	func clear_x() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_x(value : float) -> void:
+		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_x(value : int) -> void:
 		_x.value = value
 	
-	var _y: PBField
-	func get_y() -> float:
-		return _y.value
-	func clear_y() -> void:
-		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_y(value : float) -> void:
-		_y.value = value
-	
 	var _z: PBField
-	func get_z() -> float:
+	func get_z() -> int:
 		return _z.value
 	func clear_z() -> void:
-		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_z(value : float) -> void:
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_z(value : int) -> void:
 		_z.value = value
 	
 	var _rotation_y: PBField
 	func get_rotation_y() -> float:
 		return _rotation_y.value
 	func clear_rotation_y() -> void:
-		data[6].state = PB_SERVICE_STATE.UNFILLED
+		data[5].state = PB_SERVICE_STATE.UNFILLED
 		_rotation_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_rotation_y(value : float) -> void:
 		_rotation_y.value = value
 	
-	var _velocity_x: PBField
-	func get_velocity_x() -> float:
-		return _velocity_x.value
-	func clear_velocity_x() -> void:
+	var _destination_x: PBField
+	func get_destination_x() -> int:
+		return _destination_x.value
+	func clear_destination_x() -> void:
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_destination_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_destination_x(value : int) -> void:
+		_destination_x.value = value
+	
+	var _destination_z: PBField
+	func get_destination_z() -> int:
+		return _destination_z.value
+	func clear_destination_z() -> void:
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_velocity_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_velocity_x(value : float) -> void:
-		_velocity_x.value = value
-	
-	var _velocity_y: PBField
-	func get_velocity_y() -> float:
-		return _velocity_y.value
-	func clear_velocity_y() -> void:
-		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_velocity_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_velocity_y(value : float) -> void:
-		_velocity_y.value = value
-	
-	var _velocity_z: PBField
-	func get_velocity_z() -> float:
-		return _velocity_z.value
-	func clear_velocity_z() -> void:
-		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_velocity_z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_velocity_z(value : float) -> void:
-		_velocity_z.value = value
-	
-	var _speed: PBField
-	func get_speed() -> float:
-		return _speed.value
-	func clear_speed() -> void:
-		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_speed(value : float) -> void:
-		_speed.value = value
+		_destination_z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_destination_z(value : int) -> void:
+		_destination_z.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1307,53 +1265,39 @@ class SpawnPlayer:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
-class PlayerVelocity:
+class PlayerDestination:
 	func _init():
 		var service
 		
-		_velocity_x = PBField.new("velocity_x", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		_x = PBField.new("x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _velocity_x
-		data[_velocity_x.tag] = service
+		service.field = _x
+		data[_x.tag] = service
 		
-		_velocity_y = PBField.new("velocity_y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		_z = PBField.new("z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _velocity_y
-		data[_velocity_y.tag] = service
-		
-		_velocity_z = PBField.new("velocity_z", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
-		service = PBServiceField.new()
-		service.field = _velocity_z
-		data[_velocity_z.tag] = service
+		service.field = _z
+		data[_z.tag] = service
 		
 	var data = {}
 	
-	var _velocity_x: PBField
-	func get_velocity_x() -> float:
-		return _velocity_x.value
-	func clear_velocity_x() -> void:
+	var _x: PBField
+	func get_x() -> int:
+		return _x.value
+	func clear_x() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_velocity_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_velocity_x(value : float) -> void:
-		_velocity_x.value = value
+		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_x(value : int) -> void:
+		_x.value = value
 	
-	var _velocity_y: PBField
-	func get_velocity_y() -> float:
-		return _velocity_y.value
-	func clear_velocity_y() -> void:
+	var _z: PBField
+	func get_z() -> int:
+		return _z.value
+	func clear_z() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_velocity_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_velocity_y(value : float) -> void:
-		_velocity_y.value = value
-	
-	var _velocity_z: PBField
-	func get_velocity_z() -> float:
-		return _velocity_z.value
-	func clear_velocity_z() -> void:
-		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_velocity_z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
-	func set_velocity_z(value : float) -> void:
-		_velocity_z.value = value
+		_z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_z(value : int) -> void:
+		_z.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1457,11 +1401,11 @@ class Packet:
 		service.func_ref = Callable(self, "new_spawn_player")
 		data[_spawn_player.tag] = service
 		
-		_player_velocity = PBField.new("player_velocity", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 14, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		_player_destination = PBField.new("player_destination", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 14, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _player_velocity
-		service.func_ref = Callable(self, "new_player_velocity")
-		data[_player_velocity.tag] = service
+		service.field = _player_destination
+		service.func_ref = Callable(self, "new_player_destination")
+		data[_player_destination.tag] = service
 		
 	var data = {}
 	
@@ -1506,7 +1450,7 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_public_message.value = PublicMessage.new()
 		return _public_message.value
@@ -1543,7 +1487,7 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = Handshake.new()
 		return _handshake.value
@@ -1580,7 +1524,7 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_heartbeat.value = Heartbeat.new()
 		return _heartbeat.value
@@ -1617,7 +1561,7 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_request_granted.value = RequestGranted.new()
 		return _request_granted.value
@@ -1654,7 +1598,7 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_request_denied.value = RequestDenied.new()
 		return _request_denied.value
@@ -1691,7 +1635,7 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_login_request.value = LoginRequest.new()
 		return _login_request.value
@@ -1728,7 +1672,7 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_register_request.value = RegisterRequest.new()
 		return _register_request.value
@@ -1765,7 +1709,7 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = LoginSuccess.new()
 		return _login_success.value
@@ -1802,7 +1746,7 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_client_entered.value = ClientEntered.new()
 		return _client_entered.value
@@ -1839,7 +1783,7 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = ClientLeft.new()
 		return _client_left.value
@@ -1876,7 +1820,7 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.FILLED
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = JoinRegionRequest.new()
 		return _join_region_request.value
@@ -1913,20 +1857,20 @@ class Packet:
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		data[13].state = PB_SERVICE_STATE.FILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_spawn_player.value = SpawnPlayer.new()
 		return _spawn_player.value
 	
-	var _player_velocity: PBField
-	func has_player_velocity() -> bool:
+	var _player_destination: PBField
+	func has_player_destination() -> bool:
 		return data[14].state == PB_SERVICE_STATE.FILLED
-	func get_player_velocity() -> PlayerVelocity:
-		return _player_velocity.value
-	func clear_player_velocity() -> void:
+	func get_player_destination() -> PlayerDestination:
+		return _player_destination.value
+	func clear_player_destination() -> void:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_velocity.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_player_velocity() -> PlayerVelocity:
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_player_destination() -> PlayerDestination:
 		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -1952,8 +1896,8 @@ class Packet:
 		_spawn_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
 		data[14].state = PB_SERVICE_STATE.FILLED
-		_player_velocity.value = PlayerVelocity.new()
-		return _player_velocity.value
+		_player_destination.value = PlayerDestination.new()
+		return _player_destination.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
