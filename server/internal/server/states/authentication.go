@@ -128,8 +128,8 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	var level uint64 = 1
 	var experience uint64 = 1
 
-	// Load this client's player/character data from the database!
-	state.client.SetPlayerCharacter(objects.LoadPlayer(
+	// Create this client's player/character data from the database!
+	state.client.SetPlayerCharacter(objects.CreatePlayer(
 		user.Nickname, 1,
 		// Position
 		x, z, rotationY,

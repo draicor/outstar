@@ -56,6 +56,7 @@ func CreateHub(database *sql.DB) *Hub {
 		Database: database,
 		// Game objects
 		SharedObjects: &SharedObjects{
+			// Create an empty map of players
 			Players: objects.NewMapMutex[*objects.Player](),
 		},
 	}
