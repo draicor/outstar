@@ -56,9 +56,24 @@ func (state *Game) OnEnter() {
 
 // Attempts to keep an accurate representation of the character's position on the server
 func (state *Game) updateCharacter() {
-	// Overwrite our player character's position in the server
-	state.player.X = state.player.DestinationX
-	state.player.Z = state.player.DestinationZ
+	// Get the grid from this region
+	grid := state.client.GetRegion().Grid
+	// Get the player's current grid position
+	gridPosition := state.player.GetGridPosition()
+	// Get the player's target grid position
+	targetPosition := grid.GetValidatedCell(state.player.DestinationX, state.player.DestinationZ)
+
+	// If the target cell is not valid, abort
+	if targetPosition == nil {
+		return
+	}
+	// If the player is already at the target position, abort
+	if gridPosition == targetPosition {
+		return
+	}
+
+	// Overwrite this player character's grid position in the server
+	grid.SetObject(targetPosition, state.player)
 
 	// TO FIX -> Create an update position packet
 	// Create a packet and broadcast it to everyone to update the character's position

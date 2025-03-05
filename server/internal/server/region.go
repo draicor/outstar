@@ -31,6 +31,9 @@ type Region struct {
 	// Clients received in this channel will be removed from this room
 	RemoveClientChannel chan Client
 
+	// 2D Grid map for this region
+	Grid Grid
+
 	logger *log.Logger
 }
 
@@ -48,7 +51,7 @@ func (r *Region) SetId(id uint64) {
 }
 
 // Static function that creates a new region
-func CreateRegion(name string, gameMap string) *Region {
+func CreateRegion(name string, gameMap string, grid_width uint64, grid_height uint64) *Region {
 	return &Region{
 		Name:                name,
 		GameMap:             gameMap,
@@ -56,13 +59,15 @@ func CreateRegion(name string, gameMap string) *Region {
 		BroadcastChannel:    make(chan *packets.Packet),
 		AddClientChannel:    make(chan Client),
 		RemoveClientChannel: make(chan Client),
+		Grid:                *CreateGrid(grid_width, grid_height),
 		logger:              log.New(log.Writer(), "", log.LstdFlags),
 	}
 }
 
 // Listens for packets on each channel
 func (r *Region) Start() {
-	r.logger.Println("Region created...")
+	// Log into the console which region this is and whats its grid size
+	r.logger.Printf("%s region created (%dx%d)...", r.Name, r.Grid.max_width, r.Grid.max_height)
 
 	// Infinite for loop
 	for {

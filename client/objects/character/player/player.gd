@@ -102,6 +102,7 @@ func _raycast(mouse_position: Vector2) -> void:
 		var local_point : Vector3 = raycast.get_collision_point()
 		# Transform the local space position to our grid coordinate
 		grid_destination = Utils.local_to_map(local_point)
+		print(grid_destination)
 		
 		_rotate_player(grid_destination)
 		

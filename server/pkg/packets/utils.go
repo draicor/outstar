@@ -86,8 +86,8 @@ func NewSpawnPlayer(id uint64, player *objects.Player) Payload {
 		SpawnPlayer: &SpawnPlayer{
 			Id:           id,
 			Name:         player.Name,
-			X:            player.X,
-			Z:            player.Z,
+			X:            player.GetX(),
+			Z:            player.GetZ(),
 			RotationY:    player.RotationY,
 			DestinationX: player.DestinationX,
 			DestinationZ: player.DestinationZ,

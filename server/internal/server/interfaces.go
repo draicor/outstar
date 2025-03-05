@@ -5,7 +5,7 @@ import (
 	"server/pkg/packets"
 )
 
-// A structure for the connected client to interface with the server
+// Interface between the connected client and the server
 type Client interface {
 	// Returns the Hub this client is connected to
 	GetHub() *Hub
@@ -56,7 +56,7 @@ type Client interface {
 	Close(reason string)
 }
 
-// A structure for a state machine to process the client's messages
+// State machine to process the client's messages
 type ClientState interface {
 	GetName() string
 

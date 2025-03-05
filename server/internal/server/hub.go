@@ -88,7 +88,10 @@ func (h *Hub) Serve(getNewClient func(*Hub, http.ResponseWriter, *http.Request) 
 func (h *Hub) Start() {
 	log.Println("Starting hub...")
 
-	h.CreateRegion("Prototype", "prototype")
+	// Create a new region called Prototype with a grid of (20x40) squares
+	h.CreateRegion("Prototype", "prototype", 18, 36)
+
+	// add obstacles [20, 33] = "stone_column", rotate it by 30°
 
 	log.Println("Hub created, awaiting clients...")
 
@@ -149,8 +152,8 @@ func (h *Hub) GetRegionById(id uint64) (*Region, bool) {
 }
 
 // Creates a new region and adds it to Hub
-func (h *Hub) CreateRegion(name string, gameMap string) {
-	region := CreateRegion(name, gameMap)
+func (h *Hub) CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint64) {
+	region := CreateRegion(name, gameMap, gridWidth, gridHeight)
 
 	// Dereference the pointer to add a REAL region object to the Hub's list of regions
 	// If this is the first region, h.Regions.Add returns 1, and the initial value for the region was 0
