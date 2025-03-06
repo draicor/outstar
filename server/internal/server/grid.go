@@ -13,11 +13,11 @@ type Grid struct {
 
 // Transforms a 2D point into a pointer to a cell in the grid
 func (grid *Grid) GetCell(x uint64, z uint64) *objects.Cell {
-	// If the player clicked past the max width, abort
+	// If the player clicked past the max grid width, abort
 	if x >= grid.max_width {
 		return nil
 	}
-	// If the player clicked past the max height, abort
+	// If the player clicked past the max grid height, abort
 	if z >= grid.max_height {
 		return nil
 	}
@@ -33,28 +33,27 @@ func (grid *Grid) GetCell(x uint64, z uint64) *objects.Cell {
 }
 
 func (grid *Grid) GetValidatedCell(x uint64, z uint64) *objects.Cell {
-	println("Client's target: ", x, z)
-
 	// Get from the grid the cell we need
 	cell := grid.GetCell(x, z)
+
 	// If the cell is valid
 	if cell != nil {
-		println("Server's Cell: ", cell.X, cell.Z)
-
 		// If the cell is reachable
 		if cell.Reachable {
 			// If the cell is empty
 			if cell.Object == nil {
 				return cell
 			} else {
+				// Cell is occupied
 				return nil
 			}
 		} else {
+			// Cell is valid but not reachable
 			println("Cell is valid but not reachable")
 			return nil
 		}
 	} else {
-		println("Invalid cell")
+		// Invalid cell
 		return nil
 	}
 }
@@ -81,7 +80,6 @@ func (grid *Grid) SetObject(targetCell *objects.Cell, object objects.Object) {
 
 	// Overwrite the object's position
 	object.SetGridPosition(targetCell)
-
 }
 
 // Creates and initializes an empty grid

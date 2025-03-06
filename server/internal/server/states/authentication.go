@@ -119,22 +119,21 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	}
 
 	// TO FIX -> Load all of this from the database
-	var x uint64 = 10
-	var z uint64 = 10
+	var regionId uint64 = 1
+	var spawnX uint64 = 0
+	var spawnZ uint64 = 0
 	var rotationY float64 = 0
-	var targetX uint64 = 0
-	var targetZ uint64 = 0
 	// TO FIX -> Implement a variable to switch between walk/run
 	var level uint64 = 1
 	var experience uint64 = 1
 
 	// Create this client's player/character data from the database!
 	state.client.SetPlayerCharacter(objects.CreatePlayer(
-		user.Nickname, 1,
+		user.Nickname, regionId,
 		// Position
-		x, z, rotationY,
+		spawnX, spawnZ, rotationY,
 		// Destination
-		targetX, targetZ,
+		spawnX, spawnZ,
 		// Stats
 		level, experience,
 		// Atributes

@@ -58,6 +58,14 @@ func (player *Player) SetGridPosition(cell *Cell) {
 	player.Position = cell
 }
 
+func (player *Player) SetX(newX uint64) {
+	player.DestinationX = newX
+}
+
+func (player *Player) SetZ(newZ uint64) {
+	player.DestinationZ = newZ
+}
+
 // Static function to create a new player
 func CreatePlayer(
 	name string,

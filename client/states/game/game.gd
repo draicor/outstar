@@ -65,8 +65,8 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_client_left_packet(packet.get_client_left())
 	elif packet.has_request_denied():
 		_handle_request_denied_packet(packet.get_request_denied().get_reason())
-	elif packet.has_spawn_player():
-		_handle_spawn_player_packet(packet.get_spawn_player())
+	elif packet.has_update_player():
+		_handle_update_player_packet(packet.get_update_player())
 
 # Print the message into our chat window and update that player's chat bubble
 func _handle_public_message_packet(sender_id: int, packet_public_message: packets.PublicMessage) -> void:
@@ -96,12 +96,8 @@ func _on_websocket_heartbeat_attempt() -> void:
 # When a new client connects, we print the message into our chat window
 func _handle_client_entered_packet(_nickname: String) -> void:
 	pass
-	
-	# Displays a message in the chat window
-	# chat.info("%s has joined" % nickname)
-	
-	# To fix?
-	# Spawning the character is being handled elsewhere below
+	# When a client enters, we need to send our own data to him so he can
+	# store it locally!
 
 # When a client leaves, print the message into our chat window
 # If that client was on our player list, we destroy his character to free resources
@@ -179,38 +175,40 @@ func _handle_request_denied_packet(reason: String) -> void:
 	# everytime we want to request something to the server so we don't
 	# have a packet type for every type of request unless we have to!
 
-func _handle_spawn_player_packet(spawn_player_packet: packets.SpawnPlayer) -> void:
-	var player_id := spawn_player_packet.get_id()
+func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) -> void:
+	var player_id := update_player_packet.get_id()
 
-	# If this character is NOT in our list of players
-	# is a new character so we need to instantiate it
+	# If this player is NOT in our list of players
+	# then is a new player so we need to spawn it
 	if player_id not in _players:
-		# Check if our client id is the same as this spawn character packet sender id
+		# Check if our client id is the same as this update player packet sender id
+		# 
 		var is_my_player_character := player_id == GameManager.client_id
 		
-		# Grab all of the data from the server and we use it to create this character
+		# Grab all of the data from the server and use it to create this player character
 		var player := Player.instantiate(
 			player_id,
-			spawn_player_packet.get_name(),
-			spawn_player_packet.get_rotation_y(),
-			spawn_player_packet.get_x(),
-			spawn_player_packet.get_z(),
+			update_player_packet.get_name(),
+			update_player_packet.get_rotation_y(),
+			update_player_packet.get_x(),
+			update_player_packet.get_z(),
 			is_my_player_character
 		)
-		# Add this character to our list of players
+		# Add this player to our list of players
 		_players[player_id] = player
 		
-		# Spawn the character
+		# Spawn the player
 		_current_map_scene.add_child(player)
 	
-	# This is an existing player in our list
+	# If the player is already in our local list of players
+	# Then we just need to update it
 	else:
-		# Fetch the character from our list of players
+		# Fetch the player from our list of players
 		var player: Player = _players[player_id]
-		# Update this character's data
-		player.server_grid_position.x = spawn_player_packet.get_x()
+		# Update this player's data
+		player.server_grid_position.x = update_player_packet.get_x()
 		# Ignore the Y axis since our maps will be flat
-		player.server_grid_position.y = spawn_player_packet.get_z()
+		player.server_grid_position.y = update_player_packet.get_z()
 
 func _load_map(map: GameManager.Maps) -> void:
 	# Load the next scene

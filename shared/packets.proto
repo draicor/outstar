@@ -23,13 +23,14 @@ message RegisterRequest { // Sent by client to register
 }
 message LoginSuccess { string nickname = 1; } // Sent by the server after successful login
 // Notifies
+// TO FIX add uint64 id in client entered so we can send our player data directly!
 message ClientEntered { string nickname = 1; } // Sent by the client once his client is ready, broadcasted to everyone
 message ClientLeft { uint64 id =1; string nickname = 2; } // Broadcast by the server if a client leaves
 // Region
 message JoinRegionRequest { uint64 region_id = 1; } // Sent by the client to request joining a new region
-// Spawn Player Character
-message SpawnPlayer {
-  // Sent by the server to spawn a new player in the client
+// Update Player Character (Used to spawn as well)
+message UpdatePlayer {
+  // Sent by the server to update a a player character
   uint64 id = 1;
   string name = 2;
   uint64 x = 3;
@@ -38,7 +39,7 @@ message SpawnPlayer {
   uint64 destination_x = 6;
   uint64 destination_z = 7;
 }
-// Target Destination sent by the client (Ignore Y axis (vertical))
+// Target Destination sent by the client (Ignores Y axis (vertical))
 message PlayerDestination { uint64 x = 1; uint64 z = 2;}
 
 // Main Packet container
@@ -62,7 +63,7 @@ message Packet {
     // Region
     JoinRegionRequest join_region_request = 12; // Client
     // Player
-    SpawnPlayer spawn_player = 13; // Server
+    UpdatePlayer update_player = 13; // Server
     PlayerDestination player_destination = 14; // Both
   }
 }

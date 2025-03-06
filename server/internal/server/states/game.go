@@ -50,8 +50,20 @@ func (state *Game) OnEnter() {
 	// Move the client to the region his character is at
 	state.client.GetHub().JoinRegion(state.client.GetId(), state.player.RegionId)
 
-	// Tell the client to spawn our character
-	state.client.SendPacket(packets.NewSpawnPlayer(state.client.GetId(), state.player))
+	//	Start the player update loop in its own co-routine
+	if state.cancelPlayerUpdateLoop == nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		state.cancelPlayerUpdateLoop = cancel
+		go state.playerUpdateLoop(ctx)
+	}
+
+	// Create an update packet to be sent to everyone in this region
+	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
+
+	// Spawn our own character in our client first
+	state.client.SendPacket(updatePlayerPacket)
+	// Tell everyone else to spawn our character too
+	state.client.Broadcast(updatePlayerPacket)
 }
 
 // Attempts to keep an accurate representation of the character's position on the server
@@ -75,14 +87,13 @@ func (state *Game) updateCharacter() {
 	// Overwrite this player character's grid position in the server
 	grid.SetObject(targetPosition, state.player)
 
-	// TO FIX -> Create an update position packet
 	// Create a packet and broadcast it to everyone to update the character's position
-	updatePacket := packets.NewSpawnPlayer(state.client.GetId(), state.player)
-	state.client.Broadcast(updatePacket)
+	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
+	state.client.Broadcast(updatePlayerPacket)
 	// Send the update to the client that owns this character, so they can ensure
 	// they are in sync with the server (this can cause rubber banding)
 	// We are sending this in a goroutine so we don't block our game loop
-	go state.client.SendPacket(updatePacket)
+	go state.client.SendPacket(updatePlayerPacket)
 }
 
 // Runs in a loop updating the player
@@ -160,15 +171,6 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 	state.player.DestinationX = payload.X // Left/Right
 	state.player.DestinationZ = payload.Z // Forward/backward
-
-	// If this is the first time we are receiving a player destination packet
-	// from our client, we start the player update loop
-	if state.cancelPlayerUpdateLoop == nil {
-		ctx, cancel := context.WithCancel(context.Background())
-		state.cancelPlayerUpdateLoop = cancel
-		go state.playerUpdateLoop(ctx)
-	}
-
 }
 
 func (state *Game) OnExit() {

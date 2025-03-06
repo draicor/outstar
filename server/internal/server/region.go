@@ -18,8 +18,7 @@ type Region struct {
 	// Name of this region
 	Name string
 
-	// Map name for this region
-	// TO FIX -> This should be an enum on both server and client with the same order
+	// Map name for this region, this should match on both server and client
 	GameMap string
 
 	// Packets in this channel will be processed by all connected clients except the sender
@@ -51,7 +50,7 @@ func (r *Region) SetId(id uint64) {
 }
 
 // Static function that creates a new region
-func CreateRegion(name string, gameMap string, grid_width uint64, grid_height uint64) *Region {
+func CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint64) *Region {
 	return &Region{
 		Name:                name,
 		GameMap:             gameMap,
@@ -59,7 +58,7 @@ func CreateRegion(name string, gameMap string, grid_width uint64, grid_height ui
 		BroadcastChannel:    make(chan *packets.Packet),
 		AddClientChannel:    make(chan Client),
 		RemoveClientChannel: make(chan Client),
-		Grid:                *CreateGrid(grid_width, grid_height),
+		Grid:                *CreateGrid(gridWidth, gridHeight),
 		logger:              log.New(log.Writer(), "", log.LstdFlags),
 	}
 }

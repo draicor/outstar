@@ -123,6 +123,9 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 	
+	# Rotate the player before syncing with the server
+	# _rotate_player(grid_destination)d
+	
 	# TO FIX -> This should only be called if there is a certain distance
 	# between the client's position and the client's position in the server
 	_sync_player()

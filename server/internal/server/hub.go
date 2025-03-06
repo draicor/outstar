@@ -191,6 +191,47 @@ func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 			// Save the new region pointer in the client
 			client.SetRegion(region)
 
+			// Get the max width and height to make sure we only spawn to a valid position
+			gridMaxWidth := region.Grid.max_width
+			gridMaxHeight := region.Grid.max_height
+
+			// Get the spawn positions for this player
+			playerSpawnPositionX := client.GetPlayerCharacter().GetX()
+			playerSpawnPositionZ := client.GetPlayerCharacter().GetZ()
+
+			// Declare our player's spawn cell to nil until we find an available square
+			var playerSpawnCell *objects.Cell = nil
+			// Internal values to keep track of the current cell within the loop
+			var targetX uint64 = playerSpawnPositionX
+			var targetZ uint64 = playerSpawnPositionZ
+
+			// Start an infinite loop to look for an available spot to place this player
+			// From the starting spawn position, it will continue to look for an available spot to
+			// the right and down and it will reset back to the start of the map if it reaches the end
+			// of the grid, this should prevent players from getting stuck against each other
+			for playerSpawnCell == nil {
+				// If the targetX overflows
+				if targetX >= gridMaxWidth {
+					// Reset it to zero and increase the Z by one
+					targetX = 0
+					targetZ++
+					// If the targetZ overflows
+					if targetZ >= gridMaxHeight {
+						// Reset it to zero again and keep going
+						targetZ = 0
+					}
+				}
+				// We first try with the spawn positions
+				playerSpawnCell = region.Grid.GetValidatedCell(targetX, targetZ)
+				// After testing, we increase the X position by one just in case the cell is still invalid
+				targetX++
+			}
+			// Override the player's destination before updating the grid so they match at spawn
+			client.GetPlayerCharacter().SetX(targetX - 1) // Subtract 1 to counteract the last statement in the loop
+			client.GetPlayerCharacter().SetZ(targetZ)
+			// Place the player in the grid for this region
+			region.Grid.SetObject(playerSpawnCell, client.GetPlayerCharacter())
+
 		} else { // If the region does not exist
 			log.Printf("Region %d not available", regionId)
 		}

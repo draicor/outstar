@@ -80,10 +80,10 @@ func NewLoginSuccess(nickname string) Payload {
 	}
 }
 
-// Sent by the server to spawn a new player in the client
-func NewSpawnPlayer(id uint64, player *objects.Player) Payload {
-	return &Packet_SpawnPlayer{
-		SpawnPlayer: &SpawnPlayer{
+// Sent by the server to update a player character
+func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
+	return &Packet_UpdatePlayer{
+		UpdatePlayer: &UpdatePlayer{
 			Id:           id,
 			Name:         player.Name,
 			X:            player.GetX(),
