@@ -199,6 +199,8 @@ func (state *Game) OnExit() {
 		state.cancelPlayerUpdateLoop()
 	}
 
+	// We are removing the player from the grid in the region code
+
 	// Remove this player from the list of players from the Hub
 	state.client.GetHub().SharedObjects.Players.Remove(state.client.GetId())
 }

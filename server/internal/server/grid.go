@@ -99,9 +99,16 @@ func (grid *Grid) GetSpawnCell(startX uint64, startZ uint64) *objects.Cell {
 }
 
 // Sets the object to a cell in the grid
+// If we pass a nil object, it will free the cell in the grid
 func (grid *Grid) SetObject(targetCell *objects.Cell, object objects.Object) {
 	// If cell is not valid, abort
 	if targetCell == nil {
+		return
+	}
+
+	// If we pass a nil pointer as an object, it means we want to free the cell
+	if object == nil {
+		targetCell.Object = nil
 		return
 	}
 

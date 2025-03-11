@@ -79,8 +79,16 @@ func (r *Region) Start() {
 			// WE HAVE TO PASS THE SAME ID AS THE HUB ID!!!
 			r.Clients.Add(client, client.GetId()) // CAUTION HERE <-
 
-		// If a client leaves, remove him from this region
+		// If a client leaves
 		case client := <-r.RemoveClientChannel:
+			// Get the player's position in the grid
+			cell := client.GetPlayerCharacter().GetGridPosition()
+			if cell != nil {
+				// Remove the player from the grid
+				r.Grid.SetObject(cell, nil)
+			}
+
+			// Remove him from this region
 			r.Clients.Remove(client.GetId())
 
 		// If we get a packet from the broadcast channel
