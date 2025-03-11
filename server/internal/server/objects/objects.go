@@ -26,9 +26,7 @@ type Player struct {
 	RotationY float64 // Model look at rotation
 	Radius    uint64  // Radius used for collisions
 	// Destination
-	Destination  *Cell  // Where the player wants to go
-	DestinationX uint64 // Left/Right
-	DestinationZ uint64 // Forward/Backward
+	Destination *Cell // Where the player wants to go
 	// Stats
 	Level      uint64
 	Experience uint64

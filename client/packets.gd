@@ -1169,16 +1169,6 @@ class UpdatePlayer:
 		service.field = _rotation_y
 		data[_rotation_y.tag] = service
 		
-		_destination_x = PBField.new("destination_x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
-		service = PBServiceField.new()
-		service.field = _destination_x
-		data[_destination_x.tag] = service
-		
-		_destination_z = PBField.new("destination_z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
-		service = PBServiceField.new()
-		service.field = _destination_z
-		data[_destination_z.tag] = service
-		
 	var data = {}
 	
 	var _id: PBField
@@ -1225,24 +1215,6 @@ class UpdatePlayer:
 		_rotation_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_rotation_y(value : float) -> void:
 		_rotation_y.value = value
-	
-	var _destination_x: PBField
-	func get_destination_x() -> int:
-		return _destination_x.value
-	func clear_destination_x() -> void:
-		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_destination_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_destination_x(value : int) -> void:
-		_destination_x.value = value
-	
-	var _destination_z: PBField
-	func get_destination_z() -> int:
-		return _destination_z.value
-	func clear_destination_z() -> void:
-		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_destination_z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_destination_z(value : int) -> void:
-		_destination_z.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

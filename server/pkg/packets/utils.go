@@ -84,13 +84,11 @@ func NewLoginSuccess(nickname string) Payload {
 func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
 	return &Packet_UpdatePlayer{
 		UpdatePlayer: &UpdatePlayer{
-			Id:           id,
-			Name:         player.Name,
-			X:            player.GetGridPosition().X,
-			Z:            player.GetGridPosition().Z,
-			RotationY:    player.RotationY,
-			DestinationX: player.DestinationX,
-			DestinationZ: player.DestinationZ,
+			Id:        id,
+			Name:      player.Name,
+			X:         player.GetGridPosition().X,
+			Z:         player.GetGridPosition().Z,
+			RotationY: player.RotationY,
 		},
 	}
 }

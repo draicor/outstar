@@ -34,8 +34,6 @@ message UpdatePlayer {// Sent by the server to update a a player character (Used
   uint64 x = 3;
   uint64 z = 4;
   double rotation_y = 5;
-  uint64 destination_x = 6;
-  uint64 destination_z = 7;
 }
 // Target Destination sent by the client (Ignores Y axis (vertical))
 message PlayerDestination { uint64 x = 1; uint64 z = 2;}

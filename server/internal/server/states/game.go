@@ -177,13 +177,14 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 
 // Sent from the client to the server to request setting a new destination for their player character
 func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
-	destination := state.client.GetRegion().Grid.LocalToMap(payload.X, payload.Z)
-	if destination != nil {
+	// Get the grid from this region
+	grid := state.client.GetRegion().Grid
+	// Get the cell the player wants to access
+	destination := grid.LocalToMap(payload.X, payload.Z)
+	// Only update the player's destination if the cell is valid and unoccupied
+	if grid.IsValidCell(destination) {
 		state.player.SetGridDestination(destination)
 	}
-
-	//state.player.DestinationX = payload.X // Left/Right
-	//state.player.DestinationZ = payload.Z // Forward/backward
 }
 
 func (state *Game) OnExit() {

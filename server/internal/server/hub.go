@@ -193,7 +193,7 @@ func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 
 			// SPAWN THIS CHARACTER AT THE ORIGIN for now
 			// TO FIX <- GET THIS FROM THE DATABASE!
-			playerSpawnCell := region.Grid.GetSpawnCell(17, 1)
+			playerSpawnCell := region.Grid.GetSpawnCell(17, 35)
 
 			// Place the player in the grid for this region
 			region.Grid.SetObject(playerSpawnCell, client.GetPlayerCharacter())
