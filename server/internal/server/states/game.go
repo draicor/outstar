@@ -12,7 +12,8 @@ import (
 	"server/pkg/packets"
 )
 
-const PlayerTick float64 = 0.6
+// SERVER TICKS
+const PlayerTick float64 = 0.6 // Player Movement Tick
 
 type Game struct {
 	client                 server.Client
@@ -54,13 +55,6 @@ func (state *Game) OnEnter() {
 	// We use grid destination on the update loop, so if its not set it will crash
 	state.player.SetGridDestination(state.player.GetGridPosition())
 
-	//	Start the player update loop in its own co-routine
-	if state.cancelPlayerUpdateLoop == nil {
-		ctx, cancel := context.WithCancel(context.Background())
-		state.cancelPlayerUpdateLoop = cancel
-		go state.playerUpdateLoop(ctx)
-	}
-
 	// Create an update packet to be sent to everyone in this region
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
 
@@ -68,6 +62,20 @@ func (state *Game) OnEnter() {
 	state.client.SendPacket(updatePlayerPacket)
 	// Tell everyone else to spawn our character too
 	state.client.Broadcast(updatePlayerPacket)
+
+	// Loop over all of the clients in this region
+	state.client.GetRegion().Clients.ForEach(func(id uint64, client server.Client) {
+		// Create an update packet to be sent to our new client
+		updatePlayerPacket := packets.NewUpdatePlayer(id, client.GetPlayerCharacter())
+		state.client.SendPacket(updatePlayerPacket)
+	})
+
+	//	Start the player update loop in its own co-routine
+	if state.cancelPlayerUpdateLoop == nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		state.cancelPlayerUpdateLoop = cancel
+		go state.playerUpdateLoop(ctx)
+	}
 }
 
 // Attempts to keep an accurate representation of the character's position on the server
