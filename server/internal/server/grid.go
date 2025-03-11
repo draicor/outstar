@@ -58,9 +58,23 @@ func (grid *Grid) GetValidCell(x uint64, z uint64) *objects.Cell {
 
 // Used only to spawn the player
 func (grid *Grid) GetSpawnCell(startX uint64, startZ uint64) *objects.Cell {
+	// Keeps track of whether we have looped back into the starting cell
+	hasLoopedBack := false
+
+	// Clamp the starting coordinates so they are within the grid
+	// Clamp the x value
+	if startX >= grid.maxWidth {
+		startX = grid.maxWidth - 1
+	}
+	// Clamp the z value
+	if startZ >= grid.maxHeight {
+		startZ = grid.maxHeight - 1
+	}
+
 	// Start at the target cell
 	x, z := startX, startZ
-	var direction int = 1 // 1 = left-to-right, -1 = right-to-left
+	var directionX int = 1 // 1 = left-to-right, -1 = right-to-left
+	var directionZ int = 1 // 1 = top-to-bottom, -1 = bottom-to-top
 
 	// Endless loop until we find valid cell
 	for {
@@ -72,26 +86,40 @@ func (grid *Grid) GetSpawnCell(startX uint64, startZ uint64) *objects.Cell {
 
 		// Cell was not available, move to the next cell
 		signed_x := int(x)
-		signed_x += direction
+		signed_x += directionX
 		x = uint64(signed_x)
 
 		// If X reached the end of the grid
 		if x >= grid.maxWidth {
-			direction *= -1 // Reverse direction and get back into the grid
+			// Reverse directionX and get back into the grid
+			directionX *= -1
 			signed_x = int(x)
-			signed_x += direction
-			x = uint64(signed_x) // x has to be an unsigned int
-			z++                  // Move to the next row <- FIX THIS to reverse z direction
+			signed_x += directionX
+			x = uint64(signed_x) // x only allows unsigned int
+
+			// Move to the next row
+			signed_z := int(z)
+			signed_z += directionZ
+			z = uint64(signed_z)
 
 			// If z reached the end of the grid
 			if z >= grid.maxHeight {
-				z = 0 // Reset to the start
+				// Reverse directionZ and get back into the grid
+				directionZ *= -1
+				signed_z += directionZ
+				z = uint64(signed_z)
 			}
 		}
 
-		// If we looped back to the start, break out
+		// If we looped back to the starting cell
 		if x == startX && z == startZ {
-			break
+			// If this is the second time we reach the start, break out
+			if hasLoopedBack {
+				break
+			}
+			// If this is the first time, we mark it and we keep going
+			hasLoopedBack = true
+			continue
 		}
 	}
 

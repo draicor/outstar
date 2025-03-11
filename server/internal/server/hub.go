@@ -88,9 +88,10 @@ func (h *Hub) Serve(getNewClient func(*Hub, http.ResponseWriter, *http.Request) 
 func (h *Hub) Start() {
 	log.Println("Starting hub...")
 
-	// Create a new region called Prototype with a grid of (20x40) squares
-	h.CreateRegion("Prototype", "prototype", 18, 36)
+	// Create a new region called Prototype with a grid of (X by Z) squares
+	h.CreateRegion("Prototype", "prototype", 20, 40)
 
+	// TO IMPLEMENT -> Adding static obstacles to the current map
 	// add obstacles [20, 33] = "stone_column", rotate it by 30°
 
 	log.Println("Hub created, awaiting clients...")
@@ -193,7 +194,7 @@ func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 
 			// SPAWN THIS CHARACTER AT THE ORIGIN for now
 			// TO FIX <- GET THIS FROM THE DATABASE!
-			playerSpawnCell := region.Grid.GetSpawnCell(17, 35)
+			playerSpawnCell := region.Grid.GetSpawnCell(99, 99)
 
 			// Place the player in the grid for this region
 			region.Grid.SetObject(playerSpawnCell, client.GetPlayerCharacter())
