@@ -120,8 +120,6 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 
 	// TO FIX -> Load all of this from the database
 	var regionId uint64 = 1
-	var spawnX uint64 = 0
-	var spawnZ uint64 = 0
 	var rotationY float64 = 0
 	// TO FIX -> Implement a variable to switch between walk/run
 	var level uint64 = 1
@@ -131,9 +129,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	state.client.SetPlayerCharacter(objects.CreatePlayer(
 		user.Nickname, regionId,
 		// Position
-		spawnX, spawnZ, rotationY,
-		// Destination
-		spawnX, spawnZ,
+		rotationY,
 		// Stats
 		level, experience,
 		// Atributes

@@ -66,7 +66,7 @@ func CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint
 // Listens for packets on each channel
 func (r *Region) Start() {
 	// Log into the console which region this is and whats its grid size
-	r.logger.Printf("%s region created (%dx%d)...", r.Name, r.Grid.max_width, r.Grid.max_height)
+	r.logger.Printf("%s region created (%dx%d)...", r.Name, r.Grid.maxWidth, r.Grid.maxHeight)
 
 	// Infinite for loop
 	for {

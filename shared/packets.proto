@@ -28,9 +28,7 @@ message ClientEntered { string nickname = 1; } // Sent by the client once his cl
 message ClientLeft { uint64 id =1; string nickname = 2; } // Broadcast by the server if a client leaves
 // Region
 message JoinRegionRequest { uint64 region_id = 1; } // Sent by the client to request joining a new region
-// Update Player Character (Used to spawn as well)
-message UpdatePlayer {
-  // Sent by the server to update a a player character
+message UpdatePlayer {// Sent by the server to update a a player character (Used to spawn as well)
   uint64 id = 1;
   string name = 2;
   uint64 x = 3;

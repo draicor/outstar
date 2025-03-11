@@ -2,12 +2,12 @@ package objects
 
 // Every object should implement these
 type Object interface {
-	GetX() uint64               // Left/Right
-	GetZ() uint64               // Forward/Backward
-	GetRotation() float64       // Model look at rotation
-	GetRadius() uint64          // Simplified radius of this object (used in collisions)
-	GetGridPosition() *Cell     // Returns the cell where this object is
-	SetGridPosition(cell *Cell) // Updates this object's grid cell position
+	GetRotation() float64          // Model look at rotation
+	GetRadius() uint64             // Simplified radius of this object (used in collisions)
+	GetGridPosition() *Cell        // Returns the cell where this object is
+	SetGridPosition(cell *Cell)    // Updates this object's grid cell position
+	GetGridDestination() *Cell     // Returns the cell where the object wants to move
+	SetGridDestination(cell *Cell) // Updates this object's grid destination cell
 }
 
 type Cell struct {
@@ -26,20 +26,13 @@ type Player struct {
 	RotationY float64 // Model look at rotation
 	Radius    uint64  // Radius used for collisions
 	// Destination
+	Destination  *Cell  // Where the player wants to go
 	DestinationX uint64 // Left/Right
 	DestinationZ uint64 // Forward/Backward
 	// Stats
 	Level      uint64
 	Experience uint64
 	// Attributes
-}
-
-func (player *Player) GetX() uint64 {
-	return player.Position.X
-}
-
-func (player *Player) GetZ() uint64 {
-	return player.Position.Z
 }
 
 func (player *Player) GetRotation() float64 {
@@ -58,25 +51,19 @@ func (player *Player) SetGridPosition(cell *Cell) {
 	player.Position = cell
 }
 
-func (player *Player) SetX(newX uint64) {
-	player.DestinationX = newX
+func (player *Player) GetGridDestination() *Cell {
+	return player.Destination
 }
 
-func (player *Player) SetZ(newZ uint64) {
-	player.DestinationZ = newZ
+func (player *Player) SetGridDestination(cell *Cell) {
+	player.Destination = cell
 }
 
 // Static function to create a new player
 func CreatePlayer(
 	name string,
 	regionId uint64,
-	// Position
-	x uint64,
-	z uint64,
 	rotationY float64,
-	// Destination
-	destinationX uint64,
-	destinationZ uint64,
 	// Stats
 	level uint64,
 	experience uint64,
@@ -86,16 +73,8 @@ func CreatePlayer(
 		Name:     name,
 		RegionId: regionId,
 		// Position
-		Position: &Cell{
-			X:         x,
-			Z:         z,
-			Reachable: true,
-			Object:    nil, // At spawn, allow overlap of players <- TO FIX
-		},
+		Position:  nil,
 		RotationY: rotationY, // Look at direction
-		// Destination
-		DestinationX: destinationX, // Target destination
-		DestinationZ: destinationZ, // Target destination
 		// Stats
 		Level:      level,
 		Experience: experience,

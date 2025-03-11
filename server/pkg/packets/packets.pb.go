@@ -537,13 +537,11 @@ func (x *JoinRegionRequest) GetRegionId() uint64 {
 	return 0
 }
 
-// Update Player Character (Used to spawn as well)
 type UpdatePlayer struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Sent by the server to update a a player character
 	Id           uint64  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name         string  `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	X            uint64  `protobuf:"varint,3,opt,name=x,proto3" json:"x,omitempty"`

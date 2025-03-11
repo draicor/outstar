@@ -5,24 +5,25 @@ import (
 )
 
 type Grid struct {
-	max_width  uint64                   // X axis size
-	max_height uint64                   // Z axis size
-	length     uint64                   // 2d array length as a 1d array (max_width * max_height)
-	cells      map[uint64]*objects.Cell // A hash map between the 1d index and each cell in the 2d world
+	maxWidth  uint64                   // X axis size
+	maxHeight uint64                   // Z axis size
+	length    uint64                   // 2d array length as a 1d array (maxWidth * maxHeight)
+	cells     map[uint64]*objects.Cell // A hash map between the 1d index and each cell in the 2d world
 }
 
-// Transforms a 2D point into a pointer to a cell in the grid
-func (grid *Grid) GetCell(x uint64, z uint64) *objects.Cell {
-	// If the player clicked past the max grid width, abort
-	if x >= grid.max_width {
-		return nil
+// Transforms a point in space to a coordinate in the grid
+func (grid *Grid) LocalToMap(x, z uint64) *objects.Cell {
+	// Clamp the x value
+	if x >= grid.maxWidth {
+		x = grid.maxWidth - 1
 	}
-	// If the player clicked past the max grid height, abort
-	if z >= grid.max_height {
-		return nil
+	// Clamp the z value
+	if z >= grid.maxHeight {
+		z = grid.maxHeight - 1
 	}
+
 	// Convert the 2d point into a 1d index
-	var index uint64 = grid.max_width*z + x
+	var index uint64 = grid.maxWidth*z + x
 	// If the index is past the 1d array length, abort
 	if index > grid.length {
 		return nil
@@ -32,30 +33,69 @@ func (grid *Grid) GetCell(x uint64, z uint64) *objects.Cell {
 	return grid.cells[index]
 }
 
-func (grid *Grid) GetValidatedCell(x uint64, z uint64) *objects.Cell {
-	// Get from the grid the cell we need
-	cell := grid.GetCell(x, z)
-
-	// If the cell is valid
+func (grid *Grid) IsValidCell(cell *objects.Cell) bool {
 	if cell != nil {
-		// If the cell is reachable
-		if cell.Reachable {
-			// If the cell is empty
-			if cell.Object == nil {
-				return cell
-			} else {
-				// Cell is occupied
-				return nil
-			}
-		} else {
-			// Cell is valid but not reachable
-			println("Cell is valid but not reachable")
-			return nil
+		// Check if the cell is reachable and available
+		if cell.Reachable && cell.Object == nil {
+			return true
 		}
-	} else {
-		// Invalid cell
-		return nil
 	}
+
+	return false // Cell is not valid or already occupied
+}
+
+// Gets the cell at that point in space if the cell is reachable and unoccupied
+func (grid *Grid) GetValidCell(x uint64, z uint64) *objects.Cell {
+	// Get the grid cell at this point
+	cell := grid.LocalToMap(x, z)
+	// If valid, return it
+	if grid.IsValidCell(cell) {
+		return cell
+	}
+
+	return nil // Cell not valid or already occupied
+}
+
+// Used only to spawn the player
+func (grid *Grid) GetSpawnCell(startX uint64, startZ uint64) *objects.Cell {
+	// Start at the target cell
+	x, z := startX, startZ
+	var direction int = 1 // 1 = left-to-right, -1 = right-to-left
+
+	// Endless loop until we find valid cell
+	for {
+		cell := grid.GetValidCell(x, z)
+		// If cell is valid, use it to spawn our character
+		if cell != nil {
+			return cell
+		}
+
+		// Cell was not available, move to the next cell
+		signed_x := int(x)
+		signed_x += direction
+		x = uint64(signed_x)
+
+		// If X reached the end of the grid
+		if x >= grid.maxWidth {
+			direction *= -1 // Reverse direction and get back into the grid
+			signed_x = int(x)
+			signed_x += direction
+			x = uint64(signed_x) // x has to be an unsigned int
+			z++                  // Move to the next row <- FIX THIS to reverse z direction
+
+			// If z reached the end of the grid
+			if z >= grid.maxHeight {
+				z = 0 // Reset to the start
+			}
+		}
+
+		// If we looped back to the start, break out
+		if x == startX && z == startZ {
+			break
+		}
+	}
+
+	return nil // No available cell found
 }
 
 // Sets the object to a cell in the grid
@@ -65,10 +105,7 @@ func (grid *Grid) SetObject(targetCell *objects.Cell, object objects.Object) {
 		return
 	}
 
-	// Get the current cell the object is at
-	oldX := object.GetX()
-	oldZ := object.GetZ()
-	oldCell := grid.GetCell(oldX, oldZ)
+	oldCell := object.GetGridPosition()
 	// If the previous cell is valid
 	if oldCell != nil {
 		// Remove the object from the previous position
@@ -83,18 +120,18 @@ func (grid *Grid) SetObject(targetCell *objects.Cell, object objects.Object) {
 }
 
 // Creates and initializes an empty grid
-func CreateGrid(max_width uint64, max_height uint64) *Grid {
-	length := max_width * max_height
+func CreateGrid(maxWidth uint64, maxHeight uint64) *Grid {
+	length := maxWidth * maxHeight
 	// Create an empty map with an initial value equal to the length
 	emptyCells := make(map[uint64]*objects.Cell, length)
 
 	// Go over a virtual two dimensional array, cell by cell
-	for row := range max_height {
-		for col := range max_width {
+	for row := range maxHeight {
+		for col := range maxWidth {
 
 			// Transform the 2D point into a 1D index and use it as the key
-			// Z * MAX_WIDTH + X
-			key := row*max_width + col
+			// Z * MAXWIDTH + X
+			key := row*maxWidth + col
 
 			// Initialize the cell with the X and Z coordinates
 			emptyCells[key] = &objects.Cell{
@@ -108,9 +145,9 @@ func CreateGrid(max_width uint64, max_height uint64) *Grid {
 
 	// Returns a pointer to the newly created grid
 	return &Grid{
-		max_width:  max_width,              // X axis
-		max_height: max_height,             // Z axis
-		length:     max_width * max_height, // Number of cells in 1D
-		cells:      emptyCells,             // Grid made up of empty cells
+		maxWidth:  maxWidth,             // X axis
+		maxHeight: maxHeight,            // Z axis
+		length:    maxWidth * maxHeight, // Number of cells in 1D
+		cells:     emptyCells,           // Grid made up of empty cells
 	}
 }

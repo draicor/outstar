@@ -50,6 +50,10 @@ func (state *Game) OnEnter() {
 	// Move the client to the region his character is at
 	state.client.GetHub().JoinRegion(state.client.GetId(), state.player.RegionId)
 
+	// Make our character's destination target be our spawn cell so he doesn't move at spawn
+	// We use grid destination on the update loop, so if its not set it will crash
+	state.player.SetGridDestination(state.player.GetGridPosition())
+
 	//	Start the player update loop in its own co-routine
 	if state.cancelPlayerUpdateLoop == nil {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -70,15 +74,16 @@ func (state *Game) OnEnter() {
 func (state *Game) updateCharacter() {
 	// Get the grid from this region
 	grid := state.client.GetRegion().Grid
-	// Get the player's current grid position
-	gridPosition := state.player.GetGridPosition()
-	// Get the player's target grid position
-	targetPosition := grid.GetValidatedCell(state.player.DestinationX, state.player.DestinationZ)
 
 	// If the target cell is not valid, abort
-	if targetPosition == nil {
+	if !grid.IsValidCell(state.player.GetGridDestination()) {
 		return
 	}
+
+	// Get the player's current grid position and destination
+	gridPosition := state.player.GetGridPosition()
+	targetPosition := state.player.GetGridDestination()
+
 	// If the player is already at the target position, abort
 	if gridPosition == targetPosition {
 		return
@@ -89,7 +94,10 @@ func (state *Game) updateCharacter() {
 
 	// Create a packet and broadcast it to everyone to update the character's position
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
+
+	// Broadcast the new player position to everyone else
 	state.client.Broadcast(updatePlayerPacket)
+
 	// Send the update to the client that owns this character, so they can ensure
 	// they are in sync with the server (this can cause rubber banding)
 	// We are sending this in a goroutine so we don't block our game loop
@@ -169,8 +177,13 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 
 // Sent from the client to the server to request setting a new destination for their player character
 func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
-	state.player.DestinationX = payload.X // Left/Right
-	state.player.DestinationZ = payload.Z // Forward/backward
+	destination := state.client.GetRegion().Grid.LocalToMap(payload.X, payload.Z)
+	if destination != nil {
+		state.player.SetGridDestination(destination)
+	}
+
+	//state.player.DestinationX = payload.X // Left/Right
+	//state.player.DestinationZ = payload.Z // Forward/backward
 }
 
 func (state *Game) OnExit() {

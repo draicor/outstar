@@ -86,8 +86,8 @@ func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
 		UpdatePlayer: &UpdatePlayer{
 			Id:           id,
 			Name:         player.Name,
-			X:            player.GetX(),
-			Z:            player.GetZ(),
+			X:            player.GetGridPosition().X,
+			Z:            player.GetGridPosition().Z,
 			RotationY:    player.RotationY,
 			DestinationX: player.DestinationX,
 			DestinationZ: player.DestinationZ,
