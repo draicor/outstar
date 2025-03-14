@@ -80,25 +80,50 @@ func (state *Game) OnEnter() {
 
 // Attempts to keep an accurate representation of the character's position on the server
 func (state *Game) updateCharacter() {
-	// Get the grid from this region
-	grid := state.client.GetRegion().Grid
-
-	// If the target cell is not valid, abort
-	if !grid.IsValidCell(state.player.GetGridDestination()) {
-		return
-	}
-
 	// Get the player's current grid position and destination
 	gridPosition := state.player.GetGridPosition()
 	targetPosition := state.player.GetGridDestination()
 
-	// If the player is already at the target position, abort
+	// If the player is already at the target position
 	if gridPosition == targetPosition {
+		// Make our grid path null and abort
+		state.player.SetGridPath(nil)
 		return
 	}
 
-	// Overwrite this player character's grid position in the server
-	grid.SetObject(targetPosition, state.player)
+	// Get the path for this player
+	path := state.player.GetGridPath()
+	// If no valid path is found or our path is not long enough, abort
+	if path == nil || len(path) < 1 {
+		return
+	}
+
+	// Get the next cell from our path
+	nextCell := path[0]
+
+	// Get the grid from this region
+	grid := state.client.GetRegion().Grid
+
+	// If the next cell exists
+	if nextCell != nil {
+		// If the next cell is valid and available
+		if grid.IsValidCell(nextCell) {
+			// Move our character into that cell
+			grid.SetObject(nextCell, state.player)
+
+			// Remove the first node from our path
+			// and save this as our new path
+			state.player.SetGridPath(path[1:])
+
+		} else {
+			// FIX THIS to recalculate the path!
+			// If the next cell is not valid, interrupt movement
+			state.player.SetGridPath(nil)
+			// Overwrite our destination with our current position
+			state.player.SetGridDestination(state.player.GetGridPosition())
+			return
+		}
+	}
 
 	// Create a packet and broadcast it to everyone to update the character's position
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
@@ -195,7 +220,18 @@ func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 	destination := grid.LocalToMap(payload.X, payload.Z)
 	// Only update the player's destination if the cell is valid and unoccupied
 	if grid.IsValidCell(destination) {
-		state.player.SetGridDestination(destination)
+		// We compare our new destination to our previous one
+		previousDestination := state.player.GetGridDestination()
+		// If the new destination is NOT the same one we already had
+		if previousDestination != destination {
+			// Overwrite our previous destination
+			state.player.SetGridDestination(destination)
+			// Calculate a path from our current cell to our destination cell
+			path := grid.AStar(state.player.Position, state.player.Destination)
+			// Delete the first node in our path since its our current position
+			// Set the path as our character's path
+			state.player.SetGridPath(path[1:])
+		}
 	}
 }
 

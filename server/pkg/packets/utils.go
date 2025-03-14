@@ -2,13 +2,6 @@ package packets
 
 import "server/internal/server/objects"
 
-/*
-	packet := &packets.Packet{
-		SenderId: 1,
-		Payload:  packets.NewChatMessage("Hello, world"),
-	}
-*/
-
 // The Packet Struct contains a Payload as an interface called isPacket_Payload
 type Payload = isPacket_Payload
 
