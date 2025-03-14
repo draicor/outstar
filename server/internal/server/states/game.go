@@ -13,7 +13,7 @@ import (
 )
 
 // SERVER TICKS
-const PlayerTick float64 = 0.6 // Player Movement Tick
+const PlayerTick float64 = 0.5 // Player Movement Tick
 
 type Game struct {
 	client                 server.Client
@@ -111,8 +111,7 @@ func (state *Game) updateCharacter() {
 			// Move our character into that cell
 			grid.SetObject(nextCell, state.player)
 
-			// Remove the first node from our path
-			// and save this as our new path
+			// Remove the first node from our path and overwrite it
 			state.player.SetGridPath(path[1:])
 
 		} else {
@@ -224,13 +223,18 @@ func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 		previousDestination := state.player.GetGridDestination()
 		// If the new destination is NOT the same one we already had
 		if previousDestination != destination {
-			// Overwrite our previous destination
-			state.player.SetGridDestination(destination)
-			// Calculate a path from our current cell to our destination cell
-			path := grid.AStar(state.player.Position, state.player.Destination)
-			// Delete the first node in our path since its our current position
-			// Set the path as our character's path
-			state.player.SetGridPath(path[1:])
+			// Calculate the shortest path from our current cell to our destination cell
+			path := grid.AStar(state.player.Position, destination)
+
+			// If the path is not empty
+			if len(path) > 0 {
+				// Delete the first node in our path since the first node is our current position
+				// Set this path as our character's path
+				state.player.SetGridPath(path[1:])
+
+				// Overwrite our previous destination
+				state.player.SetGridDestination(destination)
+			}
 		}
 	}
 }
