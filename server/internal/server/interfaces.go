@@ -31,6 +31,9 @@ type Client interface {
 	// Forward packet to all other clients for processing
 	Broadcast(packet packets.Payload)
 
+	// Gets the processing packets channel
+	GetProcessingChannel() chan *packets.Packet
+
 	// Start reading data from the game client
 	StartReadPump()
 

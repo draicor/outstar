@@ -8,6 +8,7 @@ import (
 	"server/internal/server/db"
 	"server/internal/server/objects"
 	"server/pkg/packets"
+	"time"
 )
 
 // The hub is the entry point for all connected clients and the only go routine
@@ -89,10 +90,15 @@ func (h *Hub) Start() {
 	log.Println("Starting hub...")
 
 	// Create a new region called Prototype with a grid of (X by Z) squares
-	h.CreateRegion("Prototype", "prototype", 20, 40)
+	h.CreateRegion("Prototype", "prototype", 16, 30)
 
 	// TO IMPLEMENT -> Adding static obstacles to the current map
 	// add obstacles [20, 33] = "stone_column", rotate it by 30°
+
+	// Create a ticker that ticks every 0.2 seconds
+	serverTick := 5 // Max 5 packets per second (5 Hz)
+	ticker := time.NewTicker(time.Second / time.Duration(serverTick))
+	defer ticker.Stop()
 
 	log.Println("Hub created, awaiting clients...")
 
@@ -111,6 +117,10 @@ func (h *Hub) Start() {
 		case client := <-h.RemoveClientChannel:
 			h.Clients.Remove(client.GetId())
 
+		// NOTE:
+		// No packets are being sent to the hub's broadcasting channel yet.
+		// I need to overhaul this so its the server instead that sends a packet to every client connected.
+		// Possibly for system messages!
 		// If we get a packet from the broadcast channel
 		case packet := <-h.BroadcastChannel:
 			// Go over every registered client in the Hub (whole server)
@@ -118,6 +128,17 @@ func (h *Hub) Start() {
 				// Check that the sender does not send the packet to itself
 				if client.GetId() != packet.SenderId {
 					client.ProcessPacket(packet.SenderId, packet.Payload)
+				}
+			})
+
+		// Process one packet per client per tick from the client's processing channel
+		case <-ticker.C:
+			h.Clients.ForEach(func(id uint64, client Client) {
+				select {
+				case packet := <-client.GetProcessingChannel():
+					client.ProcessPacket(packet.SenderId, packet.Payload)
+				default:
+					// If no packet is available, then skip to the next client
 				}
 			})
 		}

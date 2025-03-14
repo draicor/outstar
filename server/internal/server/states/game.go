@@ -136,11 +136,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 
 		// PUBLIC MESSAGE
 		case *packets.Packet_PublicMessage:
-			// The server ignores the client's character name from the packet, takes the data and
-			// constructs a new public message with the client's nickname from memory
+			// The server ignores the client's character name from the packet,
+			// it broadcasts the message with the client's nickname from memory
 			nickname := state.client.GetPlayerCharacter().Name
-			text := casted_payload.PublicMessage.Text
-			state.client.Broadcast(packets.NewPublicMessage(nickname, text))
+			state.HandlePublicMessage(nickname, casted_payload.PublicMessage.Text)
 
 		// HEARTBEAT
 		case *packets.Packet_Heartbeat:
@@ -166,10 +165,15 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 
 	} else {
 		// If another client passed us this packet, forward it to our client
-		// TO FIX
+		// <- TO FIX
 		// Filter per packet type and distance so we can decide if we SHOULD see this
 		state.client.SendPacketAs(senderId, payload)
 	}
+}
+
+// Tell everybody we sent a public message
+func (state *Game) HandlePublicMessage(nickname string, text string) {
+	state.client.Broadcast(packets.NewPublicMessage(nickname, text))
 }
 
 // We send this message to everybody
@@ -196,7 +200,6 @@ func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 }
 
 func (state *Game) OnExit() {
-	// TO FIX
 	// We don't broadcast the client leaving here because
 	// we are doing it from the websocket.go
 

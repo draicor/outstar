@@ -17,15 +17,16 @@ import (
 // any data that should be kept in server memory should be stored in the
 // WebSocketClient
 type WebSocketClient struct {
-	id              uint64               // Ephemeral ID for this connection
-	connection      *websocket.Conn      // Websocket connection to the godot client
-	hub             *server.Hub          // Hub that this client connected to
-	region          *server.Region       // Region that this client is at
-	sendChannel     chan *packets.Packet // Channel that holds packets to be sent to the client
-	state           server.ClientState   // In what state the client is in
-	playerCharacter *objects.Player      // The player's data is stored in his character
-	dbtx            *server.DBTX         // <- FIX dependency
-	logger          *log.Logger
+	id                uint64               // Ephemeral ID for this connection
+	connection        *websocket.Conn      // Websocket connection to the godot client
+	hub               *server.Hub          // Hub that this client connected to
+	region            *server.Region       // Region that this client is at
+	sendChannel       chan *packets.Packet // Channel that holds packets to be sent to the client
+	processingChannel chan *packets.Packet // Channel that holds packets to be sent to the server
+	state             server.ClientState   // In what state the client is in
+	playerCharacter   *objects.Player      // The player's data is stored in his character
+	dbtx              *server.DBTX         // <- FIX dependency
+	logger            *log.Logger
 }
 
 // Called from Hub.serve()
@@ -47,12 +48,13 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 
 	// If no errors were found, create a new WebSocketClient
 	client := &WebSocketClient{
-		hub:         hub,                             // Entry point for all connected clients
-		region:      nil,                             // Before login, the client's region is nil
-		connection:  conn,                            // Underlying WebSocket connection
-		sendChannel: make(chan *packets.Packet, 256), // Buffered channel of 256 packets, if full, drops packets
-		logger:      log.New(log.Writer(), "", log.LstdFlags),
-		dbtx:        hub.NewDBTX(), // <- FIX dependency
+		hub:               hub,                             // Entry point for all connected clients
+		region:            nil,                             // Before login, the client's region is nil
+		connection:        conn,                            // Underlying WebSocket connection
+		sendChannel:       make(chan *packets.Packet, 128), // Buffered channel of 128 packets, drops packets if full
+		processingChannel: make(chan *packets.Packet, 32),  // Buffered channel of 32 packets, drops packets if full
+		logger:            log.New(log.Writer(), "", log.LstdFlags),
+		dbtx:              hub.NewDBTX(), // <- FIX dependency
 	}
 
 	return client, nil
@@ -109,15 +111,15 @@ func (c *WebSocketClient) SendPacket(payload packets.Payload) {
 // This is useful when we want to forward a packet we received from another client
 func (c *WebSocketClient) SendPacketAs(senderId uint64, payload packets.Payload) {
 	select {
-	// We queue messages up to send to the client
+	// We queue packets to be sent to the client
 	case c.sendChannel <- &packets.Packet{
 		SenderId: senderId,
 		Payload:  payload,
 	}:
-	// If the client's channel is full, we drop the message and log a warning
+	// If the client's channel is full, we drop the packet and log a warning
 	// This is to prevent the server from blocking waiting for this client
 	default:
-		c.logger.Printf("Client %d send channel full, dropping message: %T", c.id, payload)
+		c.logger.Printf("Client %d send channel full, dropping packet: %T", c.id, payload)
 	}
 }
 
@@ -145,6 +147,11 @@ func (c *WebSocketClient) Broadcast(payload packets.Payload) {
 			Payload:  payload,
 		}
 	}
+}
+
+// Returns the processing packets channel
+func (c *WebSocketClient) GetProcessingChannel() chan *packets.Packet {
+	return c.processingChannel
 }
 
 // Starts reading and processing packets from the Godot client
@@ -178,9 +185,13 @@ func (c *WebSocketClient) StartReadPump() {
 			packet.SenderId = c.id
 		}
 
-		// TO DO ->
-		// Replace this with a tickChannel so the hub/lobby/region process this by tick
-		c.ProcessPacket(packet.SenderId, packet.Payload)
+		// Try putting this out to the Hub for processing
+		select {
+		case c.processingChannel <- packet:
+		// But if this client's channel is full, drop the packet coming from Godot
+		default:
+			c.logger.Printf("Client %d processing channel full, dropping packet: %T", c.id, packet.Payload)
+		}
 	}
 }
 
