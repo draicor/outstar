@@ -3,7 +3,8 @@ package server
 import (
 	"fmt"
 	"log"
-	"server/internal/server/objects"
+	"server/internal/server/adt"
+	"server/internal/server/pathfinding"
 	"server/pkg/packets"
 )
 
@@ -13,7 +14,7 @@ type Region struct {
 	Id uint64
 
 	// Map of all the connected clients inside this region
-	Clients *objects.MapMutex[Client]
+	Clients *adt.MapMutex[Client]
 
 	// Name of this region
 	Name string
@@ -31,7 +32,7 @@ type Region struct {
 	RemoveClientChannel chan Client
 
 	// 2D Grid map for this region
-	Grid Grid
+	Grid pathfinding.Grid
 
 	logger *log.Logger
 }
@@ -54,11 +55,11 @@ func CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint
 	return &Region{
 		Name:                name,
 		GameMap:             gameMap,
-		Clients:             objects.NewMapMutex[Client](),
+		Clients:             adt.NewMapMutex[Client](),
 		BroadcastChannel:    make(chan *packets.Packet),
 		AddClientChannel:    make(chan Client),
 		RemoveClientChannel: make(chan Client),
-		Grid:                *CreateGrid(gridWidth, gridHeight),
+		Grid:                *pathfinding.CreateGrid(gridWidth, gridHeight),
 		logger:              log.New(log.Writer(), "", log.LstdFlags),
 	}
 }
@@ -66,7 +67,7 @@ func CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint
 // Listens for packets on each channel
 func (r *Region) Start() {
 	// Log into the console which region this is and whats its grid size
-	r.logger.Printf("%s region created (%dx%d)...", r.Name, r.Grid.maxWidth, r.Grid.maxHeight)
+	r.logger.Printf("%s region created (%dx%d)...", r.Name, r.Grid.GetMaxWidth(), r.Grid.GetMaxHeight())
 
 	// Infinite for loop
 	for {

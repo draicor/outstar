@@ -7,6 +7,7 @@ import (
 	"log"
 	"server/internal/server"
 	"server/internal/server/db"
+	"server/internal/server/math"
 	"server/internal/server/objects"
 	"strings"
 
@@ -120,7 +121,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 
 	// TO FIX -> Load all of this from the database
 	var regionId uint64 = 1
-	var rotationY float64 = 0
+	var rotationY float64 = math.DegreesToRadians(270)
 	// TO FIX -> Implement a variable to switch between walk/run
 	var level uint64 = 1
 	var experience uint64 = 1

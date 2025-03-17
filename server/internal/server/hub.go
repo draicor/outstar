@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"server/internal/server/adt"
 	"server/internal/server/db"
 	"server/internal/server/objects"
 	"server/pkg/packets"
@@ -16,7 +17,7 @@ import (
 // within the server.
 type Hub struct {
 	// Map of all the connected clients in the server
-	Clients *objects.MapMutex[Client]
+	Clients *adt.MapMutex[Client]
 
 	// Map of every object in the server
 	SharedObjects *SharedObjects
@@ -31,7 +32,7 @@ type Hub struct {
 	RemoveClientChannel chan Client
 
 	// Map of every region
-	Regions *objects.MapMutex[*Region]
+	Regions *adt.MapMutex[*Region]
 
 	// Refactor the code so only the hub writes to the DB
 	Database *sql.DB
@@ -40,25 +41,25 @@ type Hub struct {
 // Any state from any client can access and modify these objects
 type SharedObjects struct {
 	// The ID of the player is the ID of the client
-	Players *objects.MapMutex[*objects.Player]
+	Players *adt.MapMutex[*objects.Player]
 }
 
 // Creates a new empty hub object, we have to pass a valid DB connection
 func CreateHub(database *sql.DB) *Hub {
 	return &Hub{
 		// Collection of every connected client in the server
-		Clients:             objects.NewMapMutex[Client](),
+		Clients:             adt.NewMapMutex[Client](),
 		AddClientChannel:    make(chan Client),
 		RemoveClientChannel: make(chan Client),
 		BroadcastChannel:    make(chan *packets.Packet),
 		// Collection of every available region in the server
-		Regions: objects.NewMapMutex[*Region](),
+		Regions: adt.NewMapMutex[*Region](),
 		// Database connection
 		Database: database,
 		// Game objects
 		SharedObjects: &SharedObjects{
 			// Create an empty map of players
-			Players: objects.NewMapMutex[*objects.Player](),
+			Players: adt.NewMapMutex[*objects.Player](),
 		},
 	}
 }
