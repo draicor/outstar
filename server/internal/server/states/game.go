@@ -7,6 +7,7 @@ import (
 	"server/internal/server"
 	"server/internal/server/db"
 	"server/internal/server/objects"
+	"server/internal/server/pathfinding"
 	"time"
 
 	"server/pkg/packets"
@@ -55,6 +56,12 @@ func (state *Game) OnEnter() {
 	// We use grid destination on the update loop, so if its not set it will crash
 	state.player.SetGridDestination(state.player.GetGridPosition())
 
+	// Create a spawn path that only has one element, our spawn position
+	var spawnPath []*pathfinding.Cell
+	spawnPath = append(spawnPath, state.player.GetGridPosition())
+	// Overwrite our path to hold our grid position
+	state.player.SetGridPath(spawnPath)
+
 	// Create an update packet to be sent to everyone in this region
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
 
@@ -99,7 +106,7 @@ func (state *Game) updateCharacter() {
 	}
 
 	// Get the next cell from our path
-	nextCell := path[0]
+	nextCell := path[1]
 
 	// Get the grid from this region
 	grid := state.client.GetRegion().Grid
@@ -110,9 +117,6 @@ func (state *Game) updateCharacter() {
 		if grid.IsValidCell(nextCell) {
 			// Move our character into that cell
 			grid.SetObject(nextCell, state.player)
-
-			// Remove the first node from our path and overwrite it
-			state.player.SetGridPath(path[1:])
 
 		} else {
 			// FIX THIS to recalculate the path!
@@ -126,6 +130,10 @@ func (state *Game) updateCharacter() {
 
 	// Create a packet and broadcast it to everyone to update the character's position
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
+
+	// AFTER we create our packet
+	// Remove the first node from our path and overwrite it
+	state.player.SetGridPath(path[1:])
 
 	// Broadcast the new player position to everyone else
 	state.client.Broadcast(updatePlayerPacket)
@@ -228,9 +236,8 @@ func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 
 			// If the path is not empty
 			if len(path) > 0 {
-				// Delete the first node in our path since the first node is our current position
 				// Set this path as our character's path
-				state.player.SetGridPath(path[1:])
+				state.player.SetGridPath(path)
 
 				// Overwrite our previous destination
 				state.player.SetGridDestination(destination)

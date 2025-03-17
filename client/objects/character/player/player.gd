@@ -4,21 +4,33 @@ const packets := preload("res://packets.gd")
 const player_scene := preload("res://objects/character/player/player.tscn")
 const Player := preload("res://objects/character/player/player.gd")
 
+# CONSTANTS
+const SERVER_TICK: float = 0.5
+
 # Spawn data
 var player_id: int
 var player_name: String
+var player_path: Array
 var model_rotation_y: float
+var player_speed: int
+# Used to spawn the character and also to correct the player's position
 var server_grid_position: Vector2i
 var my_player_character: bool
 # Internal data
 # We store our current grid_position and our grid_destination_position
 var grid_position: Vector2i
 var grid_destination: Vector2i
+
 # Position is our current point in space but thats built-in Godot
-# Destination is our destination point in space
-var destination: Vector3
+var current_position: Vector3
+var target_position: Vector3
+var elapsed_time: float = 0.0
+
+# Walking is used to switch between the different animations
 var walking = false
+# Chatting is used to display a bubble on top of the player's head when writing
 var chatting = false
+
 var camera : Camera3D
 var raycast : RayCast3D
 # Constants
@@ -32,9 +44,9 @@ const RAYCAST_DISTANCE : float = 20
 static func instantiate(
 	id: int,
 	nickname: String,
+	path: Array,
 	spawn_model_rotation_y: float, # Used to update our model.rotation.y
-	spawn_x: int,
-	spawn_z: int,
+	speed: int,
 	is_my_player_character: bool
 ) -> Player:
 	# Instantiate a new empty player character
@@ -42,14 +54,18 @@ static func instantiate(
 	# Load the data from the function parameters into a new player character
 	player.player_id = id
 	player.player_name = nickname
+	player.player_path = path
 	player.model_rotation_y = spawn_model_rotation_y
-	player.server_grid_position.x = spawn_x
-	player.server_grid_position.y = spawn_z
+	player.player_speed = speed
 	player.my_player_character = is_my_player_character
+	
+	# At spawn, we need to make our positions the same as our spawn position
+	player.server_grid_position = path.front()
+	player.grid_position = player.server_grid_position
 
 	return player
 
-func _ready() -> void:
+func _ready() -> void:	
 	# Blend animations
 	animation_player.set_blend_time("idle", "walk", 0.2)
 	animation_player.set_blend_time("walk", "idle", 0.2)
@@ -58,7 +74,11 @@ func _ready() -> void:
 	Signals.ui_chat_input_toggle.connect(_on_chat_input_toggle)
 	
 	# Update our position with the data from the server
-	position = Utils.map_to_local(server_grid_position)
+	# We need to override our current and target positions, both used to interpolate
+	current_position = Utils.map_to_local(server_grid_position)
+	target_position = current_position
+	# We also set our position which is where the character is placed at the world
+	position = current_position
 
 	# Update any other spawn data here
 	model.rotation.y = model_rotation_y
@@ -102,6 +122,8 @@ func _raycast(mouse_position: Vector2) -> void:
 		var local_point : Vector3 = raycast.get_collision_point()
 		# Transform the local space position to our grid coordinate
 		grid_destination = Utils.local_to_map(local_point)
+		
+		# DEBUG
 		print(grid_destination)
 		
 		_rotate_player(grid_destination)
@@ -118,13 +140,9 @@ func _raycast(mouse_position: Vector2) -> void:
 	else:
 		print("no collision detected")
 
-func _physics_process(delta: float) -> void:
-	# Apply gravity.
-	if not is_on_floor():
-		velocity += get_gravity() * delta
-	
+func _process(delta: float) -> void:
 	# Rotate the player before syncing with the server
-	# _rotate_player(grid_destination)d
+	# _rotate_player(grid_destination)
 	
 	# TO FIX -> This should only be called if there is a certain distance
 	# between the client's position and the client's position in the server
@@ -132,17 +150,30 @@ func _physics_process(delta: float) -> void:
 	
 	# If this is not my player character, move it with the data I got from the server
 	if not my_player_character:
-		_move_player()
+		_move_player(delta)
 		return
 	
-	_move_player()
+	_move_player(delta)
 
-func _move_player() -> void:
-	position = Utils.map_to_local(grid_position)
+func _physics_process(delta: float) -> void:
+	# Apply gravity.
+	if not is_on_floor():
+		velocity += get_gravity() * delta
+
+func _move_player(delta: float) -> void:
+	if elapsed_time < (SERVER_TICK / player_speed):
+		elapsed_time += delta
+		var t : float = elapsed_time / (SERVER_TICK / player_speed)
+		var new_position: Vector3 = current_position.lerp(target_position, t)
+		position = new_position
+	else:
+		position = target_position
+		#position = Utils.map_to_local(grid_position)
 
 # Overwrite our client's grid position locally with the one from the server
 func _sync_player() -> void:
-	grid_position = server_grid_position
+	pass
+	# grid_position = player_path.front()
 
 # Rotates our character to look at the target cell
 func _rotate_player(target: Vector2i) -> void:
@@ -176,3 +207,22 @@ func _animate_character(direction: Vector3) -> void:
 # Used to update the text inside our chat bubble!
 func new_chat_bubble(message: String) -> void:
 	chat_bubble.set_text(message)
+
+func update_destination(path: Array) -> void:
+	player_path = path
+	# Overwrite our server grid position with the data from the server
+	server_grid_position = player_path.front()
+	
+	# TO FIX, this should be interpolated
+	# Get the first position in our path as our current_position
+	current_position = Utils.map_to_local(server_grid_position)
+	
+	# If we have a path to traverse (two cells or more)
+	if player_path.size() > 1:
+		# Get the next position in our path as our target_position
+		target_position = Utils.map_to_local(player_path[1])
+		elapsed_time = 0
+	
+	# If we don't have a path, our current_position will be our target_position
+	else:
+		target_position = current_position

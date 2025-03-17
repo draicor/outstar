@@ -10,12 +10,13 @@ type Player struct {
 	Position  *pathfinding.Cell // Where this player is
 	RotationY float64           // Model look at rotation
 	// Pathfinding
-	Destination *pathfinding.Cell // Where the player wants to go
-	Path        []*pathfinding.Cell
+	Destination *pathfinding.Cell   // Where the player wants to go
+	Path        []*pathfinding.Cell // The path the player will take in a single tick
 	// Stats
 	Level      uint64
 	Experience uint64
 	// Attributes
+	Speed uint64 // Cells per tick
 }
 
 // Returns this object's model look at rotation
@@ -62,6 +63,7 @@ func CreatePlayer(
 	level uint64,
 	experience uint64,
 	// Atributes
+	speed uint64,
 ) *Player {
 	return &Player{
 		Name:     name,
@@ -73,5 +75,6 @@ func CreatePlayer(
 		Level:      level,
 		Experience: experience,
 		// Attributes
+		Speed: speed,
 	}
 }

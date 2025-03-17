@@ -23,6 +23,7 @@ type PriorityNode struct {
 	Index    int   // Index of this element in the heap
 }
 
+// Implements heap.Interface and holds items
 // Represents a min heap priority queue made up of Nodes with a priority
 type PriorityQueue []*PriorityNode
 
@@ -32,6 +33,7 @@ func (pq PriorityQueue) Len() int {
 }
 
 // Returns true if the first element has a lower priority than the second element
+// (lower F cost has higher priority)
 func (pq PriorityQueue) Less(i, j int) bool {
 	return pq[i].Priority < pq[j].Priority
 }
@@ -58,7 +60,7 @@ func (pq *PriorityQueue) Pop() interface{} {
 	// Gets the last element in the queue
 	n := len(old)
 	element := old[n-1]
-	// Deletes the index in the element for safety
+	// Deletes the index in the element for safety so we don't try to access it
 	element.Index = -1
 	// Deletes the last element in the queue
 	*pq = old[0 : n-1]

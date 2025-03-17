@@ -1140,6 +1140,61 @@ class JoinRegionRequest:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
+class Position:
+	func _init():
+		var service
+		
+		_x = PBField.new("x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = _x
+		data[_x.tag] = service
+		
+		_z = PBField.new("z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = _z
+		data[_z.tag] = service
+		
+	var data = {}
+	
+	var _x: PBField
+	func get_x() -> int:
+		return _x.value
+	func clear_x() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_x(value : int) -> void:
+		_x.value = value
+	
+	var _z: PBField
+	func get_z() -> int:
+		return _z.value
+	func clear_z() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_z(value : int) -> void:
+		_z.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
 class UpdatePlayer:
 	func _init():
 		var service
@@ -1154,20 +1209,21 @@ class UpdatePlayer:
 		service.field = _name
 		data[_name.tag] = service
 		
-		_x = PBField.new("x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		_path = PBField.new("path", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 3, true, [])
 		service = PBServiceField.new()
-		service.field = _x
-		data[_x.tag] = service
+		service.field = _path
+		service.func_ref = Callable(self, "add_path")
+		data[_path.tag] = service
 		
-		_z = PBField.new("z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
-		service = PBServiceField.new()
-		service.field = _z
-		data[_z.tag] = service
-		
-		_rotation_y = PBField.new("rotation_y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		_rotation_y = PBField.new("rotation_y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
 		service.field = _rotation_y
 		data[_rotation_y.tag] = service
+		
+		_speed = PBField.new("speed", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = _speed
+		data[_speed.tag] = service
 		
 	var data = {}
 	
@@ -1189,32 +1245,34 @@ class UpdatePlayer:
 	func set_name(value : String) -> void:
 		_name.value = value
 	
-	var _x: PBField
-	func get_x() -> int:
-		return _x.value
-	func clear_x() -> void:
+	var _path: PBField
+	func get_path() -> Array:
+		return _path.value
+	func clear_path() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_x(value : int) -> void:
-		_x.value = value
-	
-	var _z: PBField
-	func get_z() -> int:
-		return _z.value
-	func clear_z() -> void:
-		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_z(value : int) -> void:
-		_z.value = value
+		_path.value = []
+	func add_path() -> Position:
+		var element = Position.new()
+		_path.value.append(element)
+		return element
 	
 	var _rotation_y: PBField
 	func get_rotation_y() -> float:
 		return _rotation_y.value
 	func clear_rotation_y() -> void:
-		data[5].state = PB_SERVICE_STATE.UNFILLED
+		data[4].state = PB_SERVICE_STATE.UNFILLED
 		_rotation_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_rotation_y(value : float) -> void:
 		_rotation_y.value = value
+	
+	var _speed: PBField
+	func get_speed() -> int:
+		return _speed.value
+	func clear_speed() -> void:
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_speed(value : int) -> void:
+		_speed.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1367,13 +1425,19 @@ class Packet:
 		service.func_ref = Callable(self, "new_join_region_request")
 		data[_join_region_request.tag] = service
 		
-		_update_player = PBField.new("update_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 13, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		_position = PBField.new("position", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 13, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = _position
+		service.func_ref = Callable(self, "new_position")
+		data[_position.tag] = service
+		
+		_update_player = PBField.new("update_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 14, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = _update_player
 		service.func_ref = Callable(self, "new_update_player")
 		data[_update_player.tag] = service
 		
-		_player_destination = PBField.new("player_destination", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 14, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		_player_destination = PBField.new("player_destination", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 15, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = _player_destination
 		service.func_ref = Callable(self, "new_player_destination")
@@ -1420,10 +1484,12 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_public_message.value = PublicMessage.new()
 		return _public_message.value
 	
@@ -1457,10 +1523,12 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_handshake.value = Handshake.new()
 		return _handshake.value
 	
@@ -1494,10 +1562,12 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_heartbeat.value = Heartbeat.new()
 		return _heartbeat.value
 	
@@ -1531,10 +1601,12 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_request_granted.value = RequestGranted.new()
 		return _request_granted.value
 	
@@ -1568,10 +1640,12 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_request_denied.value = RequestDenied.new()
 		return _request_denied.value
 	
@@ -1605,10 +1679,12 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_login_request.value = LoginRequest.new()
 		return _login_request.value
 	
@@ -1642,10 +1718,12 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_register_request.value = RegisterRequest.new()
 		return _register_request.value
 	
@@ -1679,10 +1757,12 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_login_success.value = LoginSuccess.new()
 		return _login_success.value
 	
@@ -1716,10 +1796,12 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_client_entered.value = ClientEntered.new()
 		return _client_entered.value
 	
@@ -1753,10 +1835,12 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.FILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_client_left.value = ClientLeft.new()
 		return _client_left.value
 	
@@ -1790,20 +1874,61 @@ class Packet:
 		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		data[12].state = PB_SERVICE_STATE.FILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = JoinRegionRequest.new()
 		return _join_region_request.value
 	
+	var _position: PBField
+	func has_position() -> bool:
+		return data[13].state == PB_SERVICE_STATE.FILLED
+	func get_position() -> Position:
+		return _position.value
+	func clear_position() -> void:
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_position() -> Position:
+		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		data[13].state = PB_SERVICE_STATE.FILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		_position.value = Position.new()
+		return _position.value
+	
 	var _update_player: PBField
 	func has_update_player() -> bool:
-		return data[13].state == PB_SERVICE_STATE.FILLED
+		return data[14].state == PB_SERVICE_STATE.FILLED
 	func get_update_player() -> UpdatePlayer:
 		return _update_player.value
 	func clear_update_player() -> void:
-		data[13].state = PB_SERVICE_STATE.UNFILLED
+		data[14].state = PB_SERVICE_STATE.UNFILLED
 		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_update_player() -> UpdatePlayer:
 		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -1828,19 +1953,21 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		data[13].state = PB_SERVICE_STATE.FILLED
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		data[14].state = PB_SERVICE_STATE.FILLED
 		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-		data[14].state = PB_SERVICE_STATE.UNFILLED
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_update_player.value = UpdatePlayer.new()
 		return _update_player.value
 	
 	var _player_destination: PBField
 	func has_player_destination() -> bool:
-		return data[14].state == PB_SERVICE_STATE.FILLED
+		return data[15].state == PB_SERVICE_STATE.FILLED
 	func get_player_destination() -> PlayerDestination:
 		return _player_destination.value
 	func clear_player_destination() -> void:
-		data[14].state = PB_SERVICE_STATE.UNFILLED
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_player_destination() -> PlayerDestination:
 		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -1865,9 +1992,11 @@ class Packet:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		data[14].state = PB_SERVICE_STATE.FILLED
+		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		data[15].state = PB_SERVICE_STATE.FILLED
 		_player_destination.value = PlayerDestination.new()
 		return _player_destination.value
 	

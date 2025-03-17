@@ -121,10 +121,11 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 
 	// TO FIX -> Load all of this from the database
 	var regionId uint64 = 1
-	var rotationY float64 = math.DegreesToRadians(270)
+	var rotationY float64 = math.DegreesToRadians(180)
 	// TO FIX -> Implement a variable to switch between walk/run
 	var level uint64 = 1
 	var experience uint64 = 1
+	var speed uint64 = 1
 
 	// Create this client's player/character data from the database!
 	state.client.SetPlayerCharacter(objects.CreatePlayer(
@@ -134,6 +135,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 		// Stats
 		level, experience,
 		// Atributes
+		speed,
 	))
 
 	state.logger.Printf("%s logged in as %s", username, user.Nickname)

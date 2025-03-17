@@ -182,16 +182,31 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 	# then is a new player so we need to spawn it
 	if player_id not in _players:
 		# Check if our client id is the same as this update player packet sender id
-		# 
 		var is_my_player_character := player_id == GameManager.client_id
+		
+		# We create an empty array which we will fill with vector2i vectors
+		var spawn_path = []
+		# Get the path from the packet
+		var raw_path = update_player_packet.get_path()
+		# If the path is valid
+		if not raw_path.is_empty():
+			# Iterate over it
+			for position in raw_path:
+				# Just in case its not valid
+				if position == null:
+					continue
+				
+				# Extract the positions as vector2i
+				var vector = Vector2i(position.get_x(), position.get_z())
+				spawn_path.append(vector)
 		
 		# Grab all of the data from the server and use it to create this player character
 		var player := Player.instantiate(
 			player_id,
 			update_player_packet.get_name(),
+			spawn_path,
 			update_player_packet.get_rotation_y(),
-			update_player_packet.get_x(),
-			update_player_packet.get_z(),
+			update_player_packet.get_speed(),
 			is_my_player_character
 		)
 		# Add this player to our list of players
@@ -205,10 +220,25 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 	else:
 		# Fetch the player from our list of players
 		var player: Player = _players[player_id]
-		# Update this player's data
-		player.server_grid_position.x = update_player_packet.get_x()
-		# Ignore the Y axis since our maps will be flat
-		player.server_grid_position.y = update_player_packet.get_z()
+		
+		# Get the path from the packet
+		var raw_path = update_player_packet.get_path()
+		# If the path is valid
+		if not raw_path.is_empty():
+			# We create an empty array which we will fill with vector2i vectors
+			var path = []
+			# Iterate over it
+			for position in raw_path:
+				# Just in case its not valid
+				if position == null:
+					continue
+				
+				# Extract the positions as vector2i
+				var vector = Vector2i(position.get_x(), position.get_z())
+				path.append(vector)
+			
+			# Overwrite our player's path
+			player.update_destination(path)
 
 func _load_map(map: GameManager.Maps) -> void:
 	# Load the next scene

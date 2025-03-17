@@ -73,15 +73,51 @@ func NewLoginSuccess(nickname string) Payload {
 	}
 }
 
+// Used internaly by the server to generate a path of positions
+func NewPosition(x, z uint64) Payload {
+	return &Packet_Position{
+		Position: &Position{
+			X: x,
+			Z: z,
+		},
+	}
+}
+
 // Sent by the server to update a player character
 func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
+	// Create an empty array of Positions
+	var path []*Position
+
+	// If the player has no path set
+	if player.Path == nil || len(player.Path) < 1 {
+		// Just take the current grid position
+		position := player.GetGridPosition
+		path = append(path, &Position{
+			X: position().X,
+			Z: position().Z,
+		})
+	}
+
+	// If the player has a path
+	if len(player.Path) > 0 {
+		// We iterate over the player's path
+		for _, cell := range player.Path {
+			// And we add the positions of every cell in it
+			path = append(path, &Position{
+				X: cell.X,
+				Z: cell.Z,
+			})
+		}
+	}
+
+	// Then we just return the completed packet
 	return &Packet_UpdatePlayer{
 		UpdatePlayer: &UpdatePlayer{
 			Id:        id,
 			Name:      player.Name,
-			X:         player.GetGridPosition().X,
-			Z:         player.GetGridPosition().Z,
+			Path:      path,
 			RotationY: player.RotationY,
+			Speed:     player.Speed,
 		},
 	}
 }
