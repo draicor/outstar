@@ -16,6 +16,14 @@ func Minimum(a, b int) int {
 	return b
 }
 
+// Returns the minimum vale among two unsigned integers
+func MinimumUint64(a, b uint64) uint64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 // Clamps the angle provided to fixed 45° ranges and within a 0-360 degrees range.
 func ClampAngle(angle uint64) uint64 {
 	if angle <= 23 {

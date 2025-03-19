@@ -6,6 +6,7 @@ import (
 	"log"
 	"server/internal/server"
 	"server/internal/server/db"
+	"server/internal/server/math"
 	"server/internal/server/objects"
 	"server/internal/server/pathfinding"
 	"time"
@@ -92,6 +93,7 @@ func (state *Game) updateCharacter() {
 	targetPosition := state.player.GetGridDestination()
 
 	// If the player is already at the target position
+	// This probably never executes, because we have this check in the code that calculates the path
 	if gridPosition == targetPosition {
 		// Make our grid path null and abort
 		state.player.SetGridPath(nil)
@@ -105,35 +107,73 @@ func (state *Game) updateCharacter() {
 		return
 	}
 
-	// Get the next cell from our path
-	nextCell := path[1]
+	// We keep track of the total steps to take
+	totalSteps := uint64(len(path) - 1) // We subtract one because the first doesn't count
 
-	// Get the grid from this region
-	grid := state.client.GetRegion().Grid
+	stepsRemaining := math.MinimumUint64(totalSteps, state.player.Speed)
+	// We keep track of the path we have traversed so we can broadcast it to the client
+	var traversedPath []*pathfinding.Cell
+	// We add the first cell to our traversed path
+	traversedPath = append(traversedPath, path[0])
 
-	// If the next cell exists
-	if nextCell != nil {
-		// If the next cell is valid and available
-		if grid.IsValidCell(nextCell) {
-			// Move our character into that cell
-			grid.SetObject(nextCell, state.player)
+	// We keep track of how many steps we have moved in this tick
+	var steps uint64 = 0
 
+	// Based on our player's speed and the remaining cells to traverse
+	// We determine how many cells we can move
+	for steps < stepsRemaining {
+		// Get the next cell from our path
+		nextCell := path[1]
+
+		// Get the grid from this region
+		grid := state.client.GetRegion().Grid
+
+		// If the next cell exists
+		if nextCell != nil {
+			// If the next cell is valid and available
+			if grid.IsValidCell(nextCell) {
+				// Move our character into that cell
+				grid.SetObject(nextCell, state.player)
+
+				// We add our current cell to the path we have traversed
+				traversedPath = append(traversedPath, nextCell)
+
+				// We overwrite our path variable to remove the first cell
+				path = path[1:]
+				// We mark our step as completed
+				steps++
+
+			} else {
+				// If the next cell is occupied, stop moving this tick
+				break
+			}
 		} else {
-			// FIX THIS to recalculate the path!
-			// If the next cell is not valid, interrupt movement
-			state.player.SetGridPath(nil)
-			// Overwrite our destination with our current position
-			state.player.SetGridDestination(state.player.GetGridPosition())
-			return
+			// If the next cell is invalid, stop moving this tick
+			break
 		}
+	}
+
+	// If we moved at all
+	if steps > 0 {
+		// We update our player's path so we can send the packet with the path we traversed only!
+		state.player.SetGridPath(traversedPath)
+
+		// If we didn't move
+	} else {
+		// Forget about the path we had
+		state.player.SetGridPath(nil)
+		// Overwrite our destination with our current position
+		state.player.SetGridDestination(state.player.GetGridPosition())
+		// Don't send any packets
+		return
 	}
 
 	// Create a packet and broadcast it to everyone to update the character's position
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
 
-	// AFTER we create our packet
-	// Remove the first node from our path and overwrite it
-	state.player.SetGridPath(path[1:])
+	// AFTER we create our packet and send it
+	// We overwrite the path again with the cells that are left
+	state.player.SetGridPath(path)
 
 	// Broadcast the new player position to everyone else
 	state.client.Broadcast(updatePlayerPacket)

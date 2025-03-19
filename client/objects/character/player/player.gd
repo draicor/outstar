@@ -166,9 +166,6 @@ func _move_player(delta: float) -> void:
 		var t : float = elapsed_time / (SERVER_TICK / player_speed)
 		var new_position: Vector3 = current_position.lerp(target_position, t)
 		position = new_position
-	else:
-		position = target_position
-		#position = Utils.map_to_local(grid_position)
 
 # Overwrite our client's grid position locally with the one from the server
 func _sync_player() -> void:
@@ -219,8 +216,8 @@ func update_destination(path: Array) -> void:
 	
 	# If we have a path to traverse (two cells or more)
 	if player_path.size() > 1:
-		# Get the next position in our path as our target_position
-		target_position = Utils.map_to_local(player_path[1])
+		# Get the LAST position in our path as our target_position
+		target_position = Utils.map_to_local(player_path.back())
 		elapsed_time = 0
 	
 	# If we don't have a path, our current_position will be our target_position
