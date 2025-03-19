@@ -220,6 +220,14 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 	else:
 		# Fetch the player from our list of players
 		var player: Player = _players[player_id]
+		# We override the player's speed if it changed
+		if player.player_speed != update_player_packet.get_speed():
+			# Update our player's speed
+			player.player_speed = update_player_packet.get_speed()
+			# Update our player's movement tick
+			player.update_movement_tick()
+			
+		# OPTIONALLY, override the rotation too?
 		
 		# Get the path from the packet
 		var raw_path = update_player_packet.get_path()

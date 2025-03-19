@@ -7,6 +7,9 @@ const Player := preload("res://objects/character/player/player.gd")
 # CONSTANTS
 const SERVER_TICK: float = 0.5
 
+# Tick related data
+var movement_tick: float = SERVER_TICK # Defaults to server_tick
+
 # Spawn data
 var player_id: int
 var player_name: String
@@ -22,10 +25,14 @@ var grid_position: Vector2i
 var grid_destination: Vector2i
 
 # Position is our current point in space but thats built-in Godot
-var current_position: Vector3
-var target_position: Vector3
-var elapsed_time: float = 0.0
+# position: Vector3 # Where our player is in our screen
 
+var local_position: Vector3 # Where our player is in the server
+var interpolated_position: Vector3 # Used in _process to slide the character
+var elapsed_time: float = 0.0
+var next_cell: Vector3 # Next cell our player should move to
+
+var is_moving = false
 # Walking is used to switch between the different animations
 var walking = false
 # Chatting is used to display a bubble on top of the player's head when writing
@@ -59,13 +66,17 @@ static func instantiate(
 	player.player_speed = speed
 	player.my_player_character = is_my_player_character
 	
-	# At spawn, we need to make our positions the same as our spawn position
+	# Overwrite our local copy of the grid positions
 	player.server_grid_position = path.front()
 	player.grid_position = player.server_grid_position
-
+	
+	# Overwrite our local copy of the space positions
+	player.local_position = Utils.map_to_local(player.server_grid_position)
+	player.interpolated_position = player.local_position
+	
 	return player
 
-func _ready() -> void:	
+func _ready() -> void:
 	# Blend animations
 	animation_player.set_blend_time("idle", "walk", 0.2)
 	animation_player.set_blend_time("walk", "idle", 0.2)
@@ -73,15 +84,13 @@ func _ready() -> void:
 	# Connect the signals
 	Signals.ui_chat_input_toggle.connect(_on_chat_input_toggle)
 	
-	# Update our position with the data from the server
-	# We need to override our current and target positions, both used to interpolate
-	current_position = Utils.map_to_local(server_grid_position)
-	target_position = current_position
-	# We also set our position which is where the character is placed at the world
-	position = current_position
+	position = local_position
 
 	# Update any other spawn data here
 	model.rotation.y = model_rotation_y
+	
+	# Update our player's movement tick at spawn
+	update_movement_tick()
 	
 	# Do this only for our player's character
 	if my_player_character:
@@ -123,9 +132,6 @@ func _raycast(mouse_position: Vector2) -> void:
 		# Transform the local space position to our grid coordinate
 		grid_destination = Utils.local_to_map(local_point)
 		
-		# DEBUG
-		print(grid_destination)
-		
 		_rotate_player(grid_destination)
 		
 		# Create a new packet to hold our input velocity
@@ -137,35 +143,70 @@ func _raycast(mouse_position: Vector2) -> void:
 		# Send our new destination to the server
 		WebSocket.send(packet)
 		
+		# DEBUG
+		# print(grid_destination)
 	else:
 		print("no collision detected")
 
-func _process(delta: float) -> void:
-	# Rotate the player before syncing with the server
-	# _rotate_player(grid_destination)
-	
-	# TO FIX -> This should only be called if there is a certain distance
-	# between the client's position and the client's position in the server
-	_sync_player()
-	
+func _process(delta: float) -> void:	
 	# If this is not my player character, move it with the data I got from the server
 	if not my_player_character:
-		_move_player(delta)
-		return
+		if is_moving:
+			_move_player(delta)
+			return
 	
-	_move_player(delta)
+	if is_moving:
+		_move_player(delta)
 
+# Keep characters stuck to the floor
 func _physics_process(delta: float) -> void:
 	# Apply gravity.
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 
+# Called every tick from the _process function
 func _move_player(delta: float) -> void:
-	if elapsed_time < (SERVER_TICK / player_speed):
+	if elapsed_time < movement_tick:
 		elapsed_time += delta
-		var t : float = elapsed_time / (SERVER_TICK / player_speed)
-		var new_position: Vector3 = current_position.lerp(target_position, t)
-		position = new_position
+		var t : float = elapsed_time / movement_tick
+		interpolated_position = local_position.lerp(next_cell, t)
+		position = interpolated_position
+		
+	# If elapsed time is past the tick
+	else:
+		# Snap the player's position
+		local_position = interpolated_position
+		# If we still have a path to traverse (two cells or more)
+		if player_path.size() > 0:
+			# Get the next cell in our path to make it our move target
+			next_cell = Utils.map_to_local(player_path.pop_front())
+			# Reset our move variable 
+			elapsed_time = 0
+		
+		# If we don't have a valid path anymore, we are NOT moving!
+		else:
+			is_moving = false
+
+# Updates the player's path and sets the next cell the player should traverse
+func update_destination(path: Array) -> void:
+	# We add the new path at the end of the previous one
+	player_path.append_array(path)
+	
+	# If we have a path to traverse (two cells or more)
+	if player_path.size() > 1:
+		# Overwrite our server grid position with the data from the server
+		server_grid_position = player_path.pop_front()
+		
+		# Get the first position in our path as our local_position
+		# CAUTION this will make our character rubber band to where he is on the server!
+		local_position = Utils.map_to_local(server_grid_position)
+
+		# Get the next cell in our path to make it our move target
+		next_cell = Utils.map_to_local(player_path.pop_front())
+		
+		# Reset our move variable in _process
+		elapsed_time = 0
+		is_moving = true
 
 # Overwrite our client's grid position locally with the one from the server
 func _sync_player() -> void:
@@ -205,21 +246,6 @@ func _animate_character(direction: Vector3) -> void:
 func new_chat_bubble(message: String) -> void:
 	chat_bubble.set_text(message)
 
-func update_destination(path: Array) -> void:
-	player_path = path
-	# Overwrite our server grid position with the data from the server
-	server_grid_position = player_path.front()
-	
-	# TO FIX, this should be interpolated
-	# Get the first position in our path as our current_position
-	current_position = Utils.map_to_local(server_grid_position)
-	
-	# If we have a path to traverse (two cells or more)
-	if player_path.size() > 1:
-		# Get the LAST position in our path as our target_position
-		target_position = Utils.map_to_local(player_path.back())
-		elapsed_time = 0
-	
-	# If we don't have a path, our current_position will be our target_position
-	else:
-		target_position = current_position
+# Calculates how quickly I should move based on my speed
+func update_movement_tick() -> void:
+	movement_tick = SERVER_TICK / player_speed
