@@ -173,13 +173,19 @@ func _move_player(delta: float) -> void:
 	# If elapsed time is past the tick
 	else:
 		# Snap the player's position
-		local_position = next_cell
+		local_position = position
 		# If we still have a cell to traverse
 		if player_path.size() > 0:
 			# Get the next cell in our path to make it our move target
 			next_cell = Utils.map_to_local(player_path.pop_front())
 			# Reset our move variable 
 			elapsed_time = 0
+			
+			# CAUTION We redo this shit to test
+			elapsed_time += delta
+			var t : float = elapsed_time / movement_tick
+			interpolated_position = local_position.lerp(next_cell, t)
+			position = interpolated_position
 		
 		# If we don't have a valid path anymore, we are NOT moving!
 		else:
