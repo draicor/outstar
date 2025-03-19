@@ -32,7 +32,8 @@ var interpolated_position: Vector3 # Used in _process to slide the character
 var elapsed_time: float = 0.0
 var next_cell: Vector3 # Next cell our player should move to
 
-var is_moving = false
+# Used to determine if the player is already in motion
+var is_in_motion = false
 # Walking is used to switch between the different animations
 var walking = false
 # Chatting is used to display a bubble on top of the player's head when writing
@@ -148,14 +149,11 @@ func _raycast(mouse_position: Vector2) -> void:
 	else:
 		print("no collision detected")
 
-func _process(delta: float) -> void:	
-	# If this is not my player character, move it with the data I got from the server
-	if not my_player_character:
-		if is_moving:
-			_move_player(delta)
-			return
+func _process(delta: float) -> void:
+	# if not my_player_character:
 	
-	if is_moving:
+	# move players with the data from the server
+	if is_in_motion:
 		_move_player(delta)
 
 # Keep characters stuck to the floor
@@ -175,8 +173,8 @@ func _move_player(delta: float) -> void:
 	# If elapsed time is past the tick
 	else:
 		# Snap the player's position
-		local_position = interpolated_position
-		# If we still have a path to traverse (two cells or more)
+		local_position = next_cell
+		# If we still have a cell to traverse
 		if player_path.size() > 0:
 			# Get the next cell in our path to make it our move target
 			next_cell = Utils.map_to_local(player_path.pop_front())
@@ -185,7 +183,7 @@ func _move_player(delta: float) -> void:
 		
 		# If we don't have a valid path anymore, we are NOT moving!
 		else:
-			is_moving = false
+			is_in_motion = false
 
 # Updates the player's path and sets the next cell the player should traverse
 func update_destination(path: Array) -> void:
@@ -194,19 +192,26 @@ func update_destination(path: Array) -> void:
 	
 	# If we have a path to traverse (two cells or more)
 	if player_path.size() > 1:
-		# Overwrite our server grid position with the data from the server
-		server_grid_position = player_path.pop_front()
 		
-		# Get the first position in our path as our local_position
-		# CAUTION this will make our character rubber band to where he is on the server!
-		local_position = Utils.map_to_local(server_grid_position)
+		# If our character is already moving
+		if is_in_motion:
+			# Overwrite our server grid position with the data from the server
+			server_grid_position = player_path.pop_front()
+			
+			# Get the first position in our path as our local_position
+			# CAUTION this will make our character rubber band to where he is on the server!
+			local_position = Utils.map_to_local(server_grid_position)
 
-		# Get the next cell in our path to make it our move target
-		next_cell = Utils.map_to_local(player_path.pop_front())
+			# Get the next cell in our path to make it our move target
+			next_cell = Utils.map_to_local(player_path.pop_front())
+			
+			# Reset our move variable in _process
+			elapsed_time = 0
 		
-		# Reset our move variable in _process
-		elapsed_time = 0
-		is_moving = true
+		# If this is our first move
+		else:
+			next_cell = Utils.map_to_local(player_path.pop_front())
+			is_in_motion = true
 
 # Overwrite our client's grid position locally with the one from the server
 func _sync_player() -> void:

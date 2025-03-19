@@ -125,7 +125,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	// TO FIX -> Implement a variable to switch between walk/run
 	var level uint64 = 1
 	var experience uint64 = 1
-	var speed uint64 = 2
+	var speed uint64 = 1
 
 	// Create this client's player/character data from the database!
 	state.client.SetPlayerCharacter(objects.CreatePlayer(
