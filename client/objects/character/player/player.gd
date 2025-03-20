@@ -16,12 +16,12 @@ var player_name: String
 var model_rotation_y: float
 var player_speed: int
 # Used to spawn the character and also to correct the player's position
-var server_grid_position: Vector2i
+var server_grid_position: Vector2i # ONLY USED AT SPAWN, we could use it to correct our position from the server
 var my_player_character: bool
 # Internal data
 # We store our current grid_position and our grid_destination_position
-var grid_position: Vector2i
-var grid_destination: Vector2i
+var grid_position: Vector2i # NOT IN USE YET, we can use it to correct our player position
+var grid_destination: Vector2i # Used in our raycast, to tell the server where we want to move
 
 # Position is our current point in space but thats built-in Godot
 # position: Vector3 # Where our player is in our screen
@@ -44,7 +44,7 @@ var chatting = false
 var camera : Camera3D
 var raycast : RayCast3D
 # Constants
-const RAYCAST_DISTANCE : float = 20
+const RAYCAST_DISTANCE : float = 20 # 20 meters
 
 @onready var animation_player: AnimationPlayer = $Model/Body/AnimationPlayer
 @onready var model: Node3D = $Model
@@ -135,8 +135,6 @@ func _raycast(mouse_position: Vector2) -> void:
 		# Transform the local space position to our grid coordinate
 		grid_destination = Utils.local_to_map(local_point)
 		
-		_rotate_player(grid_destination)
-		
 		# Create a new packet to hold our input velocity
 		var packet := packets.Packet.new()
 		var player_destination_packet := packet.new_player_destination()
@@ -177,6 +175,10 @@ func _update_player_movement(delta: float) -> void:
 		if player_path.size() > 0:
 			# Get the next cell in our path to make it our move target
 			next_cell = Utils.map_to_local(player_path.pop_front())
+			
+			# Rotate our character towards the next cell
+			_rotate_player(next_cell)
+			
 			# Reset our move variable 
 			movement_elapsed_time = 0
 			
@@ -200,6 +202,10 @@ func _update_player_movement(delta: float) -> void:
 				
 				# Get the next cell in our path to make it our move target
 				next_cell = Utils.map_to_local(player_path.pop_front())
+				
+				# Rotate our character towards the next cell
+				_rotate_player(next_cell)
+				
 				# Reset our move variable 
 				movement_elapsed_time = 0
 				
@@ -255,15 +261,15 @@ func update_destination(new_path: Array) -> void:
 # Overwrite our client's grid position locally with the one from the server
 func _sync_player() -> void:
 	pass
-	# grid_position = player_path.front()
+	# grid_position = server_grid_position
 
-# Rotates our character to look at the target cell
-func _rotate_player(target: Vector2i) -> void:
-	# If we click our own cell, ignore
-	if grid_position == target:
+# Rotates our character to look at the target in space
+func _rotate_player(target: Vector3) -> void:
+	# Can't change rotation within our own cell
+	if position == target:
 		return
 	
-	model.look_at(Utils.map_to_local(target))
+	model.look_at(target)
 
 # Utility function to rotate our model and change the animation
 func _animate_character(direction: Vector3) -> void:
