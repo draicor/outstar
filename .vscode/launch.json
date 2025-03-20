@@ -10,7 +10,7 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/server/main.go",
-      "output": "${workspaceFolder}/server/cmd/mmo-server-v0.0.2.1.exe",
+      "output": "${workspaceFolder}/server/cmd/mmo-server-v0.0.2.2.exe",
     }
   ]
 }
