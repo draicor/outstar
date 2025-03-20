@@ -13,7 +13,6 @@ var movement_tick: float = SERVER_TICK # Defaults to server_tick
 # Spawn data
 var player_id: int
 var player_name: String
-var player_path: Array
 var model_rotation_y: float
 var player_speed: int
 # Used to spawn the character and also to correct the player's position
@@ -27,11 +26,13 @@ var grid_destination: Vector2i
 # Position is our current point in space but thats built-in Godot
 # position: Vector3 # Where our player is in our screen
 
+var player_path: Array # Set at spawn and after server movement
+var player_next_path: Array # Used to store the next path after we complete the first one
+
 var local_position: Vector3 # Where our player is in the server
 var interpolated_position: Vector3 # Used in _process to slide the character
-var elapsed_time: float = 0.0
-var next_cell: Vector3 # Next cell our player should move to
-var player_next_path: Array # Used to store the next path after we complete the first one
+var movement_elapsed_time: float = 0.0 # Used in _process to slide the character
+var next_cell: Vector3 # Used in _process, its the next cell our player should move to
 
 # Used to determine if the player is already in motion
 var is_in_motion = false
@@ -155,7 +156,7 @@ func _process(delta: float) -> void:
 	
 	# move players with the data from the server
 	if is_in_motion:
-		_move_player(delta)
+		_update_player_movement(delta)
 
 # Keep characters stuck to the floor
 func _physics_process(delta: float) -> void:
@@ -163,30 +164,33 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 
-# Called every tick from the _process function
-func _move_player(delta: float) -> void:
-	if elapsed_time < movement_tick:
-		elapsed_time += delta
-		var t : float = elapsed_time / movement_tick
-		interpolated_position = local_position.lerp(next_cell, t)
-		position = interpolated_position
+# Called on tick from the _process function
+func _update_player_movement(delta: float) -> void:
+	if movement_elapsed_time < movement_tick:
+		move_player_locally(delta)
 		
 	# If elapsed time is past the tick
 	else:
-		# Snap the player's position
-		local_position = position
-		# If we still have a cell to traverse
+		# Update the local player position for our interpolated movement
+		local_position = next_cell
+		# If we still have a path to traverse
 		if player_path.size() > 0:
 			# Get the next cell in our path to make it our move target
 			next_cell = Utils.map_to_local(player_path.pop_front())
 			# Reset our move variable 
-			elapsed_time = 0
+			movement_elapsed_time = 0
+			
+			move_player_locally(delta)
 		
 		# If we already completed the path we had
 		else:
 			# Check if we have a second path, if not, we stopped moving
 			if player_next_path.is_empty():
+				# Snap the player's position to the grid after movement ends
+				# So its always exactly at the center of the cell in the grid
+				position = next_cell
 				is_in_motion = false
+				
 			# If we have a second path
 			else:
 				# We add the second path to the current one ignoring the repeated cell
@@ -197,48 +201,56 @@ func _move_player(delta: float) -> void:
 				# Get the next cell in our path to make it our move target
 				next_cell = Utils.map_to_local(player_path.pop_front())
 				# Reset our move variable 
-				elapsed_time = 0
+				movement_elapsed_time = 0
 				
-				# CAUTION We redo this shit to test
-				elapsed_time += delta
-				var t : float = elapsed_time / movement_tick
-				interpolated_position = local_position.lerp(next_cell, t)
-				position = interpolated_position
-				
+				move_player_locally(delta)
+
+# Called on tick by _update_player_movement to interpolate the position of the player
+func move_player_locally(delta: float) -> void:
+	# We use delta time to advance our player's movement
+	movement_elapsed_time += delta
+	# How far we've moved towards our target based on server_tick / player_speed
+	var t : float = movement_elapsed_time / movement_tick
+	# Interpolate our position based on the previous values
+	interpolated_position = local_position.lerp(next_cell, t)
+	# Override our current position in our screen
+	position = interpolated_position
 
 # Updates the player's path and sets the next cell the player should traverse
-func update_destination(path: Array) -> void:	
+func update_destination(new_path: Array) -> void:
 	# If we are already in motion
 	if is_in_motion:
 		# If we haven't completed the first path yet
 		if !player_path.is_empty():
-			player_next_path = path
+			# Find the overlap at the end of our path with the start of the next path
+			var overlap := 0
+			for i in range(min(player_path.size(), new_path.size())):
+				if player_path[player_path.size() - 1 - i] != new_path[i]:
+					break
+				overlap += 1
 			
-		# If the player already completed the first path when we got the new path
+			# Append the new path to our current path after removing the overlap
+			player_path.append_array(new_path.slice(overlap))
+			
+		# If the player already completed the first path
 		else:
 			# We make the new path our current path
-			player_path = path
+			player_path = new_path
 	
 	# If we are not moving
 	else:
 		# We make the new path our current path
-		player_path = path
-	
-	# If we have a path to traverse (two cells or more)
-	if player_path.size() > 1:
+		player_path = new_path
 		
-		# If our character is already moving
-		if is_in_motion:
+	# If we are NOT moving
+	if !is_in_motion:
+		# If we have a path to traverse (two cells or more)
+		if player_path.size() > 1:
 			# Get the next cell in our path to make it our move target
 			next_cell = Utils.map_to_local(player_path.pop_front())
-		
-		# If this is our first move
-		else:
-			next_cell = Utils.map_to_local(player_path.pop_front())
+			# Reset our move variable in _process
+			movement_elapsed_time = 0
 			is_in_motion = true
-	
-	# Reset our move variable in _process
-	elapsed_time = 0
 
 # Overwrite our client's grid position locally with the one from the server
 func _sync_player() -> void:
