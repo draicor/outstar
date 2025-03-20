@@ -31,6 +31,7 @@ var local_position: Vector3 # Where our player is in the server
 var interpolated_position: Vector3 # Used in _process to slide the character
 var elapsed_time: float = 0.0
 var next_cell: Vector3 # Next cell our player should move to
+var player_next_path: Array # Used to store the next path after we complete the first one
 
 # Used to determine if the player is already in motion
 var is_in_motion = false
@@ -180,44 +181,64 @@ func _move_player(delta: float) -> void:
 			next_cell = Utils.map_to_local(player_path.pop_front())
 			# Reset our move variable 
 			elapsed_time = 0
-			
-			# CAUTION We redo this shit to test
-			elapsed_time += delta
-			var t : float = elapsed_time / movement_tick
-			interpolated_position = local_position.lerp(next_cell, t)
-			position = interpolated_position
 		
-		# If we don't have a valid path anymore, we are NOT moving!
+		# If we already completed the path we had
 		else:
-			is_in_motion = false
+			# Check if we have a second path, if not, we stopped moving
+			if player_next_path.is_empty():
+				is_in_motion = false
+			# If we have a second path
+			else:
+				# We add the second path to the current one ignoring the repeated cell
+				player_path.append_array(player_next_path.slice(1))
+				# We clear the next path since we already used it
+				player_next_path = []
+				
+				# Get the next cell in our path to make it our move target
+				next_cell = Utils.map_to_local(player_path.pop_front())
+				# Reset our move variable 
+				elapsed_time = 0
+				
+				# CAUTION We redo this shit to test
+				elapsed_time += delta
+				var t : float = elapsed_time / movement_tick
+				interpolated_position = local_position.lerp(next_cell, t)
+				position = interpolated_position
+				
 
 # Updates the player's path and sets the next cell the player should traverse
-func update_destination(path: Array) -> void:
-	# We add the new path at the end of the previous one
-	player_path.append_array(path)
+func update_destination(path: Array) -> void:	
+	# If we are already in motion
+	if is_in_motion:
+		# If we haven't completed the first path yet
+		if !player_path.is_empty():
+			player_next_path = path
+			
+		# If the player already completed the first path when we got the new path
+		else:
+			# We make the new path our current path
+			player_path = path
+	
+	# If we are not moving
+	else:
+		# We make the new path our current path
+		player_path = path
 	
 	# If we have a path to traverse (two cells or more)
 	if player_path.size() > 1:
 		
 		# If our character is already moving
 		if is_in_motion:
-			# Overwrite our server grid position with the data from the server
-			server_grid_position = player_path.pop_front()
-			
-			# Get the first position in our path as our local_position
-			# CAUTION this will make our character rubber band to where he is on the server!
-			local_position = Utils.map_to_local(server_grid_position)
-
 			# Get the next cell in our path to make it our move target
 			next_cell = Utils.map_to_local(player_path.pop_front())
-			
-			# Reset our move variable in _process
-			elapsed_time = 0
 		
 		# If this is our first move
 		else:
 			next_cell = Utils.map_to_local(player_path.pop_front())
 			is_in_motion = true
+	
+	# Reset our move variable in _process
+	elapsed_time = 0
 
 # Overwrite our client's grid position locally with the one from the server
 func _sync_player() -> void:
