@@ -51,6 +51,10 @@ type Client interface {
 	GetPlayerCharacter() *objects.Player
 	SetPlayerCharacter(*objects.Player)
 
+	// AccountUsername get/set
+	GetAccountUsername() string
+	SetAccountUsername(username string)
+
 	// Region get/set
 	GetRegion() *Region
 	SetRegion(*Region)

@@ -119,6 +119,20 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 		return
 	}
 
+	// Make sure the account is not already connected to a region (logged in)
+	if state.client.GetHub().IsAlreadyConnected(username) {
+		state.logger.Printf("%s is already logged in", user.Nickname)
+		// We override the denied message
+		deniedMessage = packets.NewRequestDenied("Account already connected")
+		state.client.SendPacket(deniedMessage)
+		return
+	}
+
+	// We save the username in our server's memory to prevent others from connecting
+	// On client disconnect, the whole client object gets removed from memory, so we don't
+	// have to set the username when the client leaves
+	state.client.SetAccountUsername(username)
+
 	// TO FIX -> Load all of this from the database
 	var regionId uint64 = 1
 	var rotationY float64 = math.DegreesToRadians(180)

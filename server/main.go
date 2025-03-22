@@ -27,7 +27,7 @@ var schemaGenSql string
 // The client should send this variable upon connection attempt and it
 // should match with the server's version to allow connection!
 
-var version = "0.0.2.2"
+var version = "0.0.2.3"
 
 var (
 	port = flag.Int("port", 31591, "Port to listen on")

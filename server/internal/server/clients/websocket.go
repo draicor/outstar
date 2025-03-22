@@ -25,6 +25,7 @@ type WebSocketClient struct {
 	processingChannel chan *packets.Packet // Channel that holds packets to be sent to the server
 	state             server.ClientState   // In what state the client is in
 	playerCharacter   *objects.Player      // The player's data is stored in his character
+	accountUsername   string               // Username of the account that is connected
 	dbtx              *server.DBTX         // <- FIX dependency
 	logger            *log.Logger
 }
@@ -66,6 +67,14 @@ func (c *WebSocketClient) GetPlayerCharacter() *objects.Player {
 }
 func (c *WebSocketClient) SetPlayerCharacter(playerCharacter *objects.Player) {
 	c.playerCharacter = playerCharacter
+}
+
+// Account username get/set
+func (c *WebSocketClient) GetAccountUsername() string {
+	return c.accountUsername
+}
+func (c *WebSocketClient) SetAccountUsername(username string) {
+	c.accountUsername = username
 }
 
 // Returns the Hub this client is connected to

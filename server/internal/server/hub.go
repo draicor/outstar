@@ -120,14 +120,13 @@ func (h *Hub) Start() {
 
 		// NOTE:
 		// No packets are being sent to the hub's broadcasting channel yet.
-		// I need to overhaul this so its the server instead that sends a packet to every client connected.
-		// Possibly for system messages!
 		// If we get a packet from the broadcast channel
 		case packet := <-h.BroadcastChannel:
 			// Go over every registered client in the Hub (whole server)
 			h.Clients.ForEach(func(id uint64, client Client) {
 				// Check that the sender does not send the packet to itself
 				if client.GetId() != packet.SenderId {
+					// Forces the packet to every client in the server
 					client.ProcessPacket(packet.SenderId, packet.Payload)
 				}
 			})
@@ -163,6 +162,20 @@ func (h *Hub) NewDBTX() *DBTX {
 // Retrieves the client (if found) in the Clients collection
 func (h *Hub) GetClient(id uint64) (Client, bool) {
 	return h.Clients.Get(id)
+}
+
+// Returns true if the account is already logged in
+func (h *Hub) IsAlreadyConnected(username string) bool {
+	found := false
+	// Goes over the whole list of clients
+	h.Clients.ForEachWithBreak(func(id uint64, client Client) bool {
+		// If this account is already connected
+		if client.GetAccountUsername() == username {
+			found = true
+		}
+		return found
+	})
+	return found
 }
 
 // Retrieves the region (if found) in the Regions collection

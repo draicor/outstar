@@ -90,3 +90,28 @@ func (s *MapMutex[T]) Get(id uint64) (T, bool) {
 func (s *MapMutex[T]) Len() int {
 	return len(s.objects)
 }
+
+// Creates a copy of the map, then executes the callback function for each object in the copy
+func (s *MapMutex[T]) ForEachWithBreak(callback func(uint64, T) bool) {
+	// Lock the map so no other goroutine modify it while we are iterating over it
+	s.mutex.Lock()
+	// Create a local copy of the map while holding the lock
+	localCopy := make(map[uint64]T, len(s.objects))
+	for id, obj := range s.objects {
+		localCopy[id] = obj
+	}
+
+	// If the callback function takes a long time to execute, we don't want to hold the lock
+	// for that long as it could block other goroutines from accessing the map,
+	// so we unlock the map after creating the copy, and call the function for the copy instead
+	s.mutex.Unlock()
+
+	// Iterate over the local copy
+	for id, obj := range localCopy {
+		found := callback(id, obj)
+		// Check on every loop if we should quit early
+		if found {
+			break
+		}
+	}
+}
