@@ -34,7 +34,6 @@ message UpdatePlayer {// Sent by the server to update a a player character (Used
   string name = 2;
   repeated Position path = 3; // Array of position messages used to declare a player's path
   double rotation_y = 4;
-  uint64 speed = 5;
 }
 // Target Destination sent by the client (Ignores Y axis (vertical))
 message PlayerDestination { uint64 x = 1; uint64 z = 2;}

@@ -117,7 +117,6 @@ func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
 			Name:      player.Name,
 			Path:      path,
 			RotationY: player.RotationY,
-			Speed:     player.Speed,
 		},
 	}
 }

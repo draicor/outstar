@@ -1220,11 +1220,6 @@ class UpdatePlayer:
 		service.field = _rotation_y
 		data[_rotation_y.tag] = service
 		
-		_speed = PBField.new("speed", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
-		service = PBServiceField.new()
-		service.field = _speed
-		data[_speed.tag] = service
-		
 	var data = {}
 	
 	var _id: PBField
@@ -1264,15 +1259,6 @@ class UpdatePlayer:
 		_rotation_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_rotation_y(value : float) -> void:
 		_rotation_y.value = value
-	
-	var _speed: PBField
-	func get_speed() -> int:
-		return _speed.value
-	func clear_speed() -> void:
-		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_speed(value : int) -> void:
-		_speed.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

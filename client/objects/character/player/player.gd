@@ -14,7 +14,6 @@ var movement_tick: float = SERVER_TICK # Defaults to server_tick
 var player_id: int
 var player_name: String
 var model_rotation_y: float
-var player_speed: int
 # Used to spawn the character and also to correct the player's position
 var server_grid_position: Vector2i # ONLY USED AT SPAWN, we could use it to correct our position from the server
 var my_player_character: bool
@@ -27,7 +26,10 @@ var grid_destination: Vector2i # Used in our raycast, to tell the server where w
 # position: Vector3 # Where our player is in our screen
 
 var player_path: Array # Set at spawn and after server movement
-var player_next_path: Array # Used to store the next path after we complete the first one
+var player_next_tick_path: Array # Used to store the next path
+
+var player_speed: int # Set at spawn and after server movement
+var player_next_tick_speed: int # Used to store the next speed
 
 var local_position: Vector3 # Where our player is in the server
 var interpolated_position: Vector3 # Used in _process to slide the character
@@ -56,7 +58,6 @@ static func instantiate(
 	nickname: String,
 	path: Array,
 	spawn_model_rotation_y: float, # Used to update our model.rotation.y
-	speed: int,
 	is_my_player_character: bool
 ) -> Player:
 	# Instantiate a new empty player character
@@ -66,7 +67,6 @@ static func instantiate(
 	player.player_name = nickname
 	player.player_path = path
 	player.model_rotation_y = spawn_model_rotation_y
-	player.player_speed = speed
 	player.my_player_character = is_my_player_character
 	
 	# Overwrite our local copy of the grid positions
@@ -93,7 +93,7 @@ func _ready() -> void:
 	model.rotation.y = model_rotation_y
 	
 	# Update our player's movement tick at spawn
-	update_movement_tick()
+	update_movement_tick(player_speed)
 	
 	# Do this only for our player's character
 	if my_player_character:
@@ -175,40 +175,37 @@ func _update_player_movement(delta: float) -> void:
 		if player_path.size() > 0:
 			# Get the next cell in our path to make it our move target
 			next_cell = Utils.map_to_local(player_path.pop_front())
-			
 			# Rotate our character towards the next cell
 			_rotate_player(next_cell)
-			
 			# Reset our move variable 
 			movement_elapsed_time = 0
-			
 			move_player_locally(delta)
 		
 		# If we already completed the path we had
 		else:
 			# Check if we have a second path, if not, we stopped moving
-			if player_next_path.is_empty():
+			if player_next_tick_path.is_empty():
 				# Snap the player's position to the grid after movement ends
 				# So its always exactly at the center of the cell in the grid
 				position = next_cell
+				local_position = next_cell
 				is_in_motion = false
 				
 			# If we have a second path
 			else:
-				# We add the second path to the current one ignoring the repeated cell
-				player_path.append_array(player_next_path.slice(1))
+				# We add the second path to the current one
+				player_path.append_array(player_next_tick_path)
 				# We clear the next path since we already used it
-				player_next_path = []
-				
+				player_next_tick_path = []
+				# Update our player's movement tick to match our new path
+				# Without removing -1 because overlap already took care of it
+				update_movement_tick(player_next_tick_speed)
 				# Get the next cell in our path to make it our move target
 				next_cell = Utils.map_to_local(player_path.pop_front())
-				
 				# Rotate our character towards the next cell
 				_rotate_player(next_cell)
-				
 				# Reset our move variable 
 				movement_elapsed_time = 0
-				
 				move_player_locally(delta)
 
 # Called on tick by _update_player_movement to interpolate the position of the player
@@ -235,23 +232,31 @@ func update_destination(new_path: Array) -> void:
 					break
 				overlap += 1
 			
-			# Append the new path to our current path after removing the overlap
-			player_path.append_array(new_path.slice(overlap))
+			var next_path := new_path.slice(overlap)
+			# Append the new path to our next tick path
+			player_next_tick_path.append_array(next_path)
+			# NOTE: we don't remove -1 from this speed
+			# Because the overlap already took care of it
+			player_next_tick_speed = next_path.size()
 			
 		# If the player already completed the first path
 		else:
-			# We make the new path our current path
-			player_path = new_path
+			# Store our next tick move speed after removing the first cell
+			player_next_tick_speed = new_path.size()-1
+			# We make the new path our next path, skipping the current cell
+			player_next_tick_path.append_array(new_path.slice(1))
 	
 	# If we are not moving
 	else:
 		# We make the new path our current path
 		player_path = new_path
 		
-	# If we are NOT moving
-	if !is_in_motion:
 		# If we have a path to traverse (two cells or more)
 		if player_path.size() > 1:
+			# Store this tick move speed after removing the first cell
+			player_speed = player_path.size()-1
+			# Update our player's movement tick to match our new path
+			update_movement_tick(player_speed)
 			# Get the next cell in our path to make it our move target
 			next_cell = Utils.map_to_local(player_path.pop_front())
 			# Reset our move variable in _process
@@ -276,7 +281,7 @@ func _animate_character(direction: Vector3) -> void:
 	# If we are trying to move
 	if direction:
 		# Make our model look at the direction he is moving towards
-		model.look_at(direction + position)
+		# model.look_at(direction + position)
 		
 		# Update the character's state machine
 		if not walking:
@@ -297,5 +302,11 @@ func new_chat_bubble(message: String) -> void:
 	chat_bubble.set_text(message)
 
 # Calculates how quickly I should move based on my speed
-func update_movement_tick() -> void:
-	movement_tick = SERVER_TICK / player_speed
+func update_movement_tick(new_speed: int) -> void:
+	# If new_speed is valid
+	if new_speed > 1:
+		movement_tick = SERVER_TICK / new_speed
+	
+	# If not, just make our movement_tick be our SERVER_TICK
+	else:
+		movement_tick = SERVER_TICK
