@@ -4,6 +4,10 @@ const packets := preload("res://packets.gd")
 const player_scene := preload("res://objects/character/player/player.tscn")
 const Player := preload("res://objects/character/player/player.gd")
 
+# EXPORTED VARIABLES
+@export var rotation_speed: float = 6.0
+@export var RAYCAST_DISTANCE : float = 20 # 20 meters
+
 # CONSTANTS
 const SERVER_TICK: float = 0.5
 
@@ -36,17 +40,19 @@ var interpolated_position: Vector3 # Used in _process to slide the character
 var movement_elapsed_time: float = 0.0 # Used in _process to slide the character
 var next_cell: Vector3 # Used in _process, its the next cell our player should move to
 
-# Used to determine if the player is already in motion
-var is_in_motion = false
-# Walking is used to switch between the different animations
-var walking = false
-# Chatting is used to display a bubble on top of the player's head when writing
-var chatting = false
+# Rotation state
+var is_rotating = false # To prevent movement before rotation ends 
+var rotation_elapsed: float = 0.0 # Used in _process to rotate the character
+var start_yaw: float = 0.0
+var target_yaw: float = 0.0
+
+# Logic variables
+var is_in_motion = false # To determine if the character is already moving
+var is_walking = false # To switch animation state
+var is_typing = false # To display a bubble when typing
 
 var camera : Camera3D
 var raycast : RayCast3D
-# Constants
-const RAYCAST_DISTANCE : float = 20 # 20 meters
 
 @onready var animation_player: AnimationPlayer = $Model/Body/AnimationPlayer
 @onready var model: Node3D = $Model
@@ -110,7 +116,7 @@ func _ready() -> void:
 
 # Toggles the bool that keeps track of the chat
 func _on_chat_input_toggle() -> void:
-	chatting = !chatting
+	is_typing = !is_typing
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("left_click"):
@@ -152,7 +158,8 @@ func _raycast(mouse_position: Vector2) -> void:
 func _process(delta: float) -> void:
 	# if not my_player_character:
 	
-	# move players with the data from the server
+	_rotate_character(delta) # Handle rotation first
+	
 	if is_in_motion:
 		_update_player_movement(delta)
 
@@ -176,7 +183,7 @@ func _update_player_movement(delta: float) -> void:
 			# Get the next cell in our path to make it our move target
 			next_cell = Utils.map_to_local(player_path.pop_front())
 			# Rotate our character towards the next cell
-			_rotate_player(next_cell)
+			_calculate_rotation(next_cell)
 			# Reset our move variable 
 			movement_elapsed_time = 0
 			move_player_locally(delta)
@@ -203,7 +210,7 @@ func _update_player_movement(delta: float) -> void:
 				# Get the next cell in our path to make it our move target
 				next_cell = Utils.map_to_local(player_path.pop_front())
 				# Rotate our character towards the next cell
-				_rotate_player(next_cell)
+				_calculate_rotation(next_cell)
 				# Reset our move variable 
 				movement_elapsed_time = 0
 				move_player_locally(delta)
@@ -268,13 +275,42 @@ func _sync_player() -> void:
 	pass
 	# grid_position = server_grid_position
 
-# Rotates our character to look at the target in space
-func _rotate_player(target: Vector3) -> void:
+# Calculates the rotation
+func _calculate_rotation(target: Vector3) -> void:
 	# Can't change rotation within our own cell
 	if position == target:
 		return
 	
-	model.look_at(target)
+	# Calculate the direction to target
+	var direction := (target - position)
+	# Remove the vertical component for ground-based characters
+	direction.y = 0
+	
+	# Only rotate if we have a valid direction
+	if direction.length() > 0.001:
+		direction = direction.normalized()
+		# Calculate yaw
+		start_yaw = model.rotation.y
+		# Calculate target rotation quaternion
+		# NOTE: Direction has to be negative so the model faces forward
+		target_yaw = atan2(-direction.x, -direction.z)
+		# Reset rotation state
+		rotation_elapsed = 0.0
+		is_rotating = true
+	
+	# No rotation needed
+	else:
+		is_rotating = false
+
+# Rotates our character on tick
+func _rotate_character(delta: float) -> void:
+	if is_rotating:
+		rotation_elapsed = min(rotation_elapsed + rotation_speed * delta, 1.0)
+		model.rotation.y = lerp_angle(start_yaw, target_yaw, rotation_elapsed)
+		
+		# Check if rotation is complete after rotating
+		if rotation_elapsed >= 1.0:
+			is_rotating = false
 
 # Utility function to rotate our model and change the animation
 func _animate_character(direction: Vector3) -> void:
@@ -284,16 +320,16 @@ func _animate_character(direction: Vector3) -> void:
 		# model.look_at(direction + position)
 		
 		# Update the character's state machine
-		if not walking:
-			walking = true
+		if not is_walking:
+			is_walking = true
 			# Only start playing the animation when the state changes
 			animation_player.play("walk")
 	
 	# If we are not trying to move, stop
 	else:
 		# Update the character's state machine
-		if walking:
-			walking = false
+		if is_walking:
+			is_walking = false
 			# Only start playing the animation when the state changes
 			animation_player.play("idle")
 
