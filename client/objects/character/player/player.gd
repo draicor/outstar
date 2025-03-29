@@ -41,15 +41,30 @@ var movement_elapsed_time: float = 0.0 # Used in _process to slide the character
 var next_cell: Vector3 # Used in _process, its the next cell our player should move to
 
 # Rotation state
-var is_rotating = false # To prevent movement before rotation ends 
+var is_rotating: bool = false # To prevent movement before rotation ends 
 var rotation_elapsed: float = 0.0 # Used in _process to rotate the character
 var start_yaw: float = 0.0
 var target_yaw: float = 0.0
 
 # Logic variables
-var is_in_motion = false # To determine if the character is already moving
-var is_walking = false # To switch animation state
-var is_typing = false # To display a bubble when typing
+var is_in_motion: bool = false # If the character is moving
+var is_typing: bool = false # To display a bubble when typing
+
+# Animation state machine
+var current_animation : ASM = ASM.IDLE
+enum ASM {
+	IDLE,
+	WALK,
+	JOG,
+	RUN,
+}
+# We have a dictionary connected to the enum above to switch animation states
+var Animations: Dictionary = {
+	ASM.IDLE: "idle",
+	ASM.WALK: "walk",
+	ASM.JOG: "run",
+	ASM.RUN: "run",
+}
 
 var camera : Camera3D
 var raycast : RayCast3D
@@ -58,6 +73,7 @@ var raycast : RayCast3D
 @onready var model: Node3D = $Model
 @onready var camera_rig: Node3D = $CameraRig
 @onready var chat_bubble: Node3D = $ChatBubbleOrigin/ChatBubble
+
 
 static func instantiate(
 	id: int,
@@ -85,21 +101,29 @@ static func instantiate(
 	
 	return player
 
+
 func _ready() -> void:
 	# Blend animations
 	animation_player.set_blend_time("idle", "walk", 0.2)
-	animation_player.set_blend_time("walk", "idle", 0.2)
+	animation_player.set_blend_time("walk", "idle", 0.15)
+	animation_player.set_blend_time("idle", "run", 0.1)
+	animation_player.set_blend_time("run", "idle", 0.15)
+	animation_player.set_blend_time("walk", "run", 0.15)
+	animation_player.set_blend_time("run", "walk", 0.15)
 	
 	# Connect the signals
 	Signals.ui_chat_input_toggle.connect(_on_chat_input_toggle)
 	
 	position = local_position
-
+	
 	# Update any other spawn data here
 	model.rotation.y = model_rotation_y
 	
 	# Update our player's movement tick at spawn
 	update_movement_tick(player_speed)
+	
+	# Make our character spawn idling
+	_change_animation("idle", 1.0)
 	
 	# Do this only for our player's character
 	if my_player_character:
@@ -114,14 +138,17 @@ func _ready() -> void:
 		# Stores our player character as a global variable
 		GameManager.set_player_character(self)
 
+
 # Toggles the bool that keeps track of the chat
 func _on_chat_input_toggle() -> void:
 	is_typing = !is_typing
+
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("left_click"):
 		var mouse_position : Vector2 = get_viewport().get_mouse_position()
 		_raycast(mouse_position)
+
 
 func _raycast(mouse_position: Vector2) -> void:
 	# If our raycast node is not valid
@@ -155,19 +182,25 @@ func _raycast(mouse_position: Vector2) -> void:
 	else:
 		print("no collision detected")
 
-func _process(delta: float) -> void:
+
+# _process runs every frame (dependent on FPS)
+func _process(_delta: float) -> void:
 	# if not my_player_character:
+	pass
+
+
+# _physics_process runs at a fixed timestep
+# Movement should be handled here because this runs before _process
+func _physics_process(delta: float) -> void:
+	# Apply gravity.
+	if not is_on_floor():
+		velocity += get_gravity() * delta
 	
 	_rotate_character(delta) # Handle rotation first
 	
 	if is_in_motion:
 		_update_player_movement(delta)
 
-# Keep characters stuck to the floor
-func _physics_process(delta: float) -> void:
-	# Apply gravity.
-	if not is_on_floor():
-		velocity += get_gravity() * delta
 
 # Called on tick from the _process function
 func _update_player_movement(delta: float) -> void:
@@ -178,7 +211,8 @@ func _update_player_movement(delta: float) -> void:
 	else:
 		# Update the local player position for our interpolated movement
 		local_position = next_cell
-		# If we still have a path to traverse
+		
+		# If we still have a path to traverse this tick
 		if player_path.size() > 0:
 			# Get the next cell in our path to make it our move target
 			next_cell = Utils.map_to_local(player_path.pop_front())
@@ -187,6 +221,10 @@ func _update_player_movement(delta: float) -> void:
 			# Reset our move variable 
 			movement_elapsed_time = 0
 			move_player_locally(delta)
+			# Update our locomation after moving
+			switch_locomotion(player_speed)
+			
+			print("speed: ", player_speed)
 		
 		# If we already completed the path we had
 		else:
@@ -198,6 +236,10 @@ func _update_player_movement(delta: float) -> void:
 				local_position = next_cell
 				is_in_motion = false
 				
+				# After we stop, we go back to idle
+				current_animation = ASM.IDLE
+				_change_animation("idle", 1.0)
+
 			# If we have a second path
 			else:
 				# We add the second path to the current one
@@ -214,6 +256,27 @@ func _update_player_movement(delta: float) -> void:
 				# Reset our move variable 
 				movement_elapsed_time = 0
 				move_player_locally(delta)
+				# Update our locomotion
+				switch_locomotion(player_next_tick_speed)
+				# We overwrite our speed with the next tick speed
+				player_speed = player_next_tick_speed
+				
+				print("next_speed: ", player_next_tick_speed)
+
+
+# Used to switch the current animation state
+func switch_locomotion(steps: int) -> void:
+	match steps:
+		1: # WALK
+			current_animation = ASM.WALK
+			_change_animation("walk", 0.9)
+		2: # JOG
+			current_animation = ASM.JOG
+			_change_animation("run", 0.65)
+		_: # RUN
+			current_animation = ASM.RUN
+			_change_animation("run", 0.8)
+
 
 # Called on tick by _update_player_movement to interpolate the position of the player
 func move_player_locally(delta: float) -> void:
@@ -226,12 +289,13 @@ func move_player_locally(delta: float) -> void:
 	# Override our current position in our screen
 	position = interpolated_position
 
+
 # Updates the player's path and sets the next cell the player should traverse
 func update_destination(new_path: Array) -> void:
 	# If we are already in motion
 	if is_in_motion:
 		# If we haven't completed the first path yet
-		if !player_path.is_empty():
+		if not player_path.is_empty():
 			# Find the overlap at the end of our path with the start of the next path
 			var overlap := 0
 			for i in range(min(player_path.size(), new_path.size())):
@@ -245,8 +309,24 @@ func update_destination(new_path: Array) -> void:
 			# NOTE: we don't remove -1 from this speed
 			# Because the overlap already took care of it
 			player_next_tick_speed = next_path.size()
+		
+		# If we have completed the first path but NOT the second one
+		elif not player_next_tick_path.is_empty():
+			# We add the second path to the current one
+			player_path.append_array(player_next_tick_path)
+			# We clear the second path since we already used it
+			player_next_tick_path = []
+			# We overwrite our speed with the next tick speed
+			player_speed = player_next_tick_speed
+			# Update our player's movement tick to match our new path
+			update_movement_tick(player_speed)
 			
-		# If the player already completed the first path
+			# Store our next tick move speed after removing the first cell
+			player_next_tick_speed = new_path.size()-1
+			# We make the new path our next path, skipping the current cell
+			player_next_tick_path.append_array(new_path.slice(1))
+			
+		# If the player already completed both paths
 		else:
 			# Store our next tick move speed after removing the first cell
 			player_next_tick_speed = new_path.size()-1
@@ -270,10 +350,12 @@ func update_destination(new_path: Array) -> void:
 			movement_elapsed_time = 0
 			is_in_motion = true
 
+
 # Overwrite our client's grid position locally with the one from the server
 func _sync_player() -> void:
 	pass
 	# grid_position = server_grid_position
+
 
 # Calculates the rotation
 func _calculate_rotation(target: Vector3) -> void:
@@ -302,6 +384,7 @@ func _calculate_rotation(target: Vector3) -> void:
 	else:
 		is_rotating = false
 
+
 # Rotates our character on tick
 func _rotate_character(delta: float) -> void:
 	if is_rotating:
@@ -312,30 +395,21 @@ func _rotate_character(delta: float) -> void:
 		if rotation_elapsed >= 1.0:
 			is_rotating = false
 
-# Utility function to rotate our model and change the animation
-func _animate_character(direction: Vector3) -> void:
-	# If we are trying to move
-	if direction:
-		# Make our model look at the direction he is moving towards
-		# model.look_at(direction + position)
-		
-		# Update the character's state machine
-		if not is_walking:
-			is_walking = true
-			# Only start playing the animation when the state changes
-			animation_player.play("walk")
-	
-	# If we are not trying to move, stop
-	else:
-		# Update the character's state machine
-		if is_walking:
-			is_walking = false
-			# Only start playing the animation when the state changes
-			animation_player.play("idle")
 
-# Used to update the text inside our chat bubble!
+# Animates our character using the animation player
+# IDLE 1.0
+# WALK 0.9 (speed 1)
+# JOG  0.6 (speed 2)
+# RUN  0.8 (speed 3)
+func _change_animation(animation: String, play_rate: float) -> void:
+	animation_player.play(animation)
+	animation_player.speed_scale = play_rate
+
+
+# Used to update the text inside our chat bubble
 func new_chat_bubble(message: String) -> void:
 	chat_bubble.set_text(message)
+
 
 # Calculates how quickly I should move based on my speed
 func update_movement_tick(new_speed: int) -> void:
