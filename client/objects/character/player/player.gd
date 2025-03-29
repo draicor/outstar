@@ -179,8 +179,8 @@ func _raycast(mouse_position: Vector2) -> void:
 		
 		# DEBUG
 		# print(grid_destination)
-	else:
-		print("no collision detected")
+	#else:
+		#print("no collision detected")
 
 
 # _process runs every frame (dependent on FPS)
@@ -223,8 +223,6 @@ func _update_player_movement(delta: float) -> void:
 			move_player_locally(delta)
 			# Update our locomation after moving
 			switch_locomotion(player_speed)
-			
-			print("speed: ", player_speed)
 		
 		# If we already completed the path we had
 		else:
@@ -260,8 +258,6 @@ func _update_player_movement(delta: float) -> void:
 				switch_locomotion(player_next_tick_speed)
 				# We overwrite our speed with the next tick speed
 				player_speed = player_next_tick_speed
-				
-				print("next_speed: ", player_next_tick_speed)
 
 
 # Used to switch the current animation state

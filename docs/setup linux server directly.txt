@@ -51,3 +51,5 @@ systemctl status mmo-server
 # Everytime we update the server, we need to re-compile the binary, upload it to the remote server
 # and then update the service config file and restart it
 # Also, we need to pull the db every now and then from the remote server into a secure location.
+
+# We can remove a file by using the rm command
