@@ -8,6 +8,9 @@ sudo su -
 sudo apt update
 sudo apt install sqlite3
 
+# We access our folder
+cd /home/draicor
+
 # After copying the sqlite db and the server binary to the /home/draicor folder
 # Update the permissions of the file
 chmod +x ./mmo-server-linux-arm64-v0.0.1.0

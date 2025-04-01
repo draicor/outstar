@@ -63,7 +63,6 @@ func CreatePlayer(
 	level uint64,
 	experience uint64,
 	// Atributes
-	speed uint64,
 ) *Player {
 	return &Player{
 		Name:     name,
@@ -75,6 +74,6 @@ func CreatePlayer(
 		Level:      level,
 		Experience: experience,
 		// Attributes
-		Speed: speed,
+		Speed: 3, // Humanoid characters have a max speed of 3 for movement
 	}
 }

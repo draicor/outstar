@@ -3,6 +3,7 @@ package clients
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"server/internal/server"
 	"server/internal/server/objects"
@@ -34,8 +35,8 @@ type WebSocketClient struct {
 // Static function used to create a new WebSocket client from an HTTP connection (which is what Godot will use)
 func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *http.Request) (server.Client, error) {
 	upgrader := websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
+		ReadBufferSize:  2048,                                       // 2KB
+		WriteBufferSize: 1024,                                       // 1KB
 		CheckOrigin:     func(_ *http.Request) bool { return true }, // FIX -> Validate request origin
 	}
 
@@ -45,6 +46,13 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 	// If we found an error creating the WebSocket connection, return the error
 	if err != nil {
 		return nil, err
+	}
+
+	// Get the underlying net.Conn and set TCP_NODELAY
+	err = conn.UnderlyingConn().(*net.TCPConn).SetNoDelay(true)
+	if err != nil {
+		conn.Close() // Close the connection if we can't set NoDelay
+		return nil, fmt.Errorf("failed to set TCP_NODELAY: %v", err)
 	}
 
 	// If no errors were found, create a new WebSocketClient

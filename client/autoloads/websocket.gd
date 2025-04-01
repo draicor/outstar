@@ -1,11 +1,20 @@
 extends Node
 
 const packets := preload("res://packets.gd")
-const heartbeat_wait_time := 10.0
+const heartbeat_wait_time := 30.0
 
 var socket := WebSocketPeer.new()
 var last_state := WebSocketPeer.STATE_CLOSED
 var heartbeat : Timer
+
+func _setup_tcp() -> void:
+	# Setup our WebSocket connection
+	# Disable Nagle's algorithm on the underlying TCP socket
+	socket.set_no_delay(true)
+	# Optimized for real-time small packets
+	socket.inbound_buffer_size = 16384  # 16KB
+	socket.outbound_buffer_size = 8192  # 8KB
+	socket.max_queued_packets = 128
 
 func connect_to_url(url: String, tls_options: TLSOptions = null) -> int:
 	var err := socket.connect_to_url(url, tls_options)
@@ -55,12 +64,15 @@ func poll() -> void:
 	
 	var state := socket.get_ready_state()
 	
-	# If the websocket connection state changed (opened or closed)
+	# If the websocket connection state changed (open or closed)
 	if last_state != state:
 		last_state = state
 		# Send some signals
 		if state == socket.STATE_OPEN:
-			# We create a timer after the connection is sucessful
+			# After the connection is sucessful
+			# We disable Nagle's algorithm and change the buffer size
+			_setup_tcp()
+			# We create a timer
 			heartbeat = new_heartbeat_timer()
 			heartbeat.connect("timeout", _on_heartbeat_timeout)
 			heartbeat.start()
