@@ -190,7 +190,7 @@ class PBPacker:
 			else:
 				varint.append(b)
 				break
-		if varint.size() == 9 && varint[8] == 0xFF:
+		if varint.size() == 9 && (varint[8] & 0x80 != 0):
 			varint.append(0x01)
 		return varint
 
@@ -376,6 +376,19 @@ class PBPacker:
 		else:
 			return data
 
+	static func skip_unknown_field(bytes : PackedByteArray, offset : int, type : int) -> int:
+		if type == PB_TYPE.VARINT:
+			return offset + isolate_varint(bytes, offset).size()
+		if type == PB_TYPE.FIX64:
+			return offset + 8
+		if type == PB_TYPE.LENGTHDEL:
+			var length_bytes : PackedByteArray = isolate_varint(bytes, offset)
+			var length : int = unpack_varint(length_bytes)
+			return offset + length_bytes.size() + length
+		if type == PB_TYPE.FIX32:
+			return offset + 4
+		return PB_ERR.UNDEFINED_STATE
+
 	static func unpack_field(bytes : PackedByteArray, offset : int, field : PBField, type : int, message_func_ref) -> int:
 		if field.rule == PB_RULE.REPEATED && type != PB_TYPE.LENGTHDEL && field.option_packed:
 			var count = isolate_varint(bytes, offset)
@@ -520,6 +533,18 @@ class PBPacker:
 							return res
 						else:
 							break
+				else:
+					var res : int = skip_unknown_field(bytes, offset, tt.type)
+					if res > 0:
+						offset = res
+						if offset == limit:
+							return offset
+						elif offset > limit:
+							return PB_ERR.PACKAGE_SIZE_MISMATCH
+					elif res < 0:
+						return res
+					else:
+						break							
 			else:
 				return offset
 		return PB_ERR.UNDEFINED_STATE
@@ -665,35 +690,43 @@ class PublicMessage:
 	func _init():
 		var service
 		
-		_nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _nickname
-		data[_nickname.tag] = service
+		service.field = __nickname
+		data[__nickname.tag] = service
 		
-		_text = PBField.new("text", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__text = PBField.new("text", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _text
-		data[_text.tag] = service
+		service.field = __text
+		data[__text.tag] = service
 		
 	var data = {}
 	
-	var _nickname: PBField
+	var __nickname: PBField
+	func has_nickname() -> bool:
+		if __nickname.value != null:
+			return true
+		return false
 	func get_nickname() -> String:
-		return _nickname.value
+		return __nickname.value
 	func clear_nickname() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_nickname(value : String) -> void:
-		_nickname.value = value
+		__nickname.value = value
 	
-	var _text: PBField
+	var __text: PBField
+	func has_text() -> bool:
+		if __text.value != null:
+			return true
+		return false
 	func get_text() -> String:
-		return _text.value
+		return __text.value
 	func clear_text() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_text.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__text.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_text(value : String) -> void:
-		_text.value = value
+		__text.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -801,21 +834,25 @@ class RequestDenied:
 	func _init():
 		var service
 		
-		_reason = PBField.new("reason", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__reason = PBField.new("reason", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _reason
-		data[_reason.tag] = service
+		service.field = __reason
+		data[__reason.tag] = service
 		
 	var data = {}
 	
-	var _reason: PBField
+	var __reason: PBField
+	func has_reason() -> bool:
+		if __reason.value != null:
+			return true
+		return false
 	func get_reason() -> String:
-		return _reason.value
+		return __reason.value
 	func clear_reason() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_reason.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__reason.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_reason(value : String) -> void:
-		_reason.value = value
+		__reason.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -842,35 +879,43 @@ class LoginRequest:
 	func _init():
 		var service
 		
-		_username = PBField.new("username", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__username = PBField.new("username", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _username
-		data[_username.tag] = service
+		service.field = __username
+		data[__username.tag] = service
 		
-		_password = PBField.new("password", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__password = PBField.new("password", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _password
-		data[_password.tag] = service
+		service.field = __password
+		data[__password.tag] = service
 		
 	var data = {}
 	
-	var _username: PBField
+	var __username: PBField
+	func has_username() -> bool:
+		if __username.value != null:
+			return true
+		return false
 	func get_username() -> String:
-		return _username.value
+		return __username.value
 	func clear_username() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_username.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__username.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_username(value : String) -> void:
-		_username.value = value
+		__username.value = value
 	
-	var _password: PBField
+	var __password: PBField
+	func has_password() -> bool:
+		if __password.value != null:
+			return true
+		return false
 	func get_password() -> String:
-		return _password.value
+		return __password.value
 	func clear_password() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_password.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__password.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_password(value : String) -> void:
-		_password.value = value
+		__password.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -897,49 +942,61 @@ class RegisterRequest:
 	func _init():
 		var service
 		
-		_username = PBField.new("username", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__username = PBField.new("username", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _username
-		data[_username.tag] = service
+		service.field = __username
+		data[__username.tag] = service
 		
-		_nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _nickname
-		data[_nickname.tag] = service
+		service.field = __nickname
+		data[__nickname.tag] = service
 		
-		_password = PBField.new("password", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__password = PBField.new("password", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _password
-		data[_password.tag] = service
+		service.field = __password
+		data[__password.tag] = service
 		
 	var data = {}
 	
-	var _username: PBField
+	var __username: PBField
+	func has_username() -> bool:
+		if __username.value != null:
+			return true
+		return false
 	func get_username() -> String:
-		return _username.value
+		return __username.value
 	func clear_username() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_username.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__username.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_username(value : String) -> void:
-		_username.value = value
+		__username.value = value
 	
-	var _nickname: PBField
+	var __nickname: PBField
+	func has_nickname() -> bool:
+		if __nickname.value != null:
+			return true
+		return false
 	func get_nickname() -> String:
-		return _nickname.value
+		return __nickname.value
 	func clear_nickname() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_nickname(value : String) -> void:
-		_nickname.value = value
+		__nickname.value = value
 	
-	var _password: PBField
+	var __password: PBField
+	func has_password() -> bool:
+		if __password.value != null:
+			return true
+		return false
 	func get_password() -> String:
-		return _password.value
+		return __password.value
 	func clear_password() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_password.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__password.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_password(value : String) -> void:
-		_password.value = value
+		__password.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -966,21 +1023,25 @@ class LoginSuccess:
 	func _init():
 		var service
 		
-		_nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _nickname
-		data[_nickname.tag] = service
+		service.field = __nickname
+		data[__nickname.tag] = service
 		
 	var data = {}
 	
-	var _nickname: PBField
+	var __nickname: PBField
+	func has_nickname() -> bool:
+		if __nickname.value != null:
+			return true
+		return false
 	func get_nickname() -> String:
-		return _nickname.value
+		return __nickname.value
 	func clear_nickname() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_nickname(value : String) -> void:
-		_nickname.value = value
+		__nickname.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1007,21 +1068,25 @@ class ClientEntered:
 	func _init():
 		var service
 		
-		_nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _nickname
-		data[_nickname.tag] = service
+		service.field = __nickname
+		data[__nickname.tag] = service
 		
 	var data = {}
 	
-	var _nickname: PBField
+	var __nickname: PBField
+	func has_nickname() -> bool:
+		if __nickname.value != null:
+			return true
+		return false
 	func get_nickname() -> String:
-		return _nickname.value
+		return __nickname.value
 	func clear_nickname() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_nickname(value : String) -> void:
-		_nickname.value = value
+		__nickname.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1048,35 +1113,43 @@ class ClientLeft:
 	func _init():
 		var service
 		
-		_id = PBField.new("id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__id = PBField.new("id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _id
-		data[_id.tag] = service
+		service.field = __id
+		data[__id.tag] = service
 		
-		_nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _nickname
-		data[_nickname.tag] = service
+		service.field = __nickname
+		data[__nickname.tag] = service
 		
 	var data = {}
 	
-	var _id: PBField
+	var __id: PBField
+	func has_id() -> bool:
+		if __id.value != null:
+			return true
+		return false
 	func get_id() -> int:
-		return _id.value
+		return __id.value
 	func clear_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+		__id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_id(value : int) -> void:
-		_id.value = value
+		__id.value = value
 	
-	var _nickname: PBField
+	var __nickname: PBField
+	func has_nickname() -> bool:
+		if __nickname.value != null:
+			return true
+		return false
 	func get_nickname() -> String:
-		return _nickname.value
+		return __nickname.value
 	func clear_nickname() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__nickname.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_nickname(value : String) -> void:
-		_nickname.value = value
+		__nickname.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1103,21 +1176,25 @@ class JoinRegionRequest:
 	func _init():
 		var service
 		
-		_region_id = PBField.new("region_id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__region_id = PBField.new("region_id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _region_id
-		data[_region_id.tag] = service
+		service.field = __region_id
+		data[__region_id.tag] = service
 		
 	var data = {}
 	
-	var _region_id: PBField
+	var __region_id: PBField
+	func has_region_id() -> bool:
+		if __region_id.value != null:
+			return true
+		return false
 	func get_region_id() -> int:
-		return _region_id.value
+		return __region_id.value
 	func clear_region_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_region_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+		__region_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_region_id(value : int) -> void:
-		_region_id.value = value
+		__region_id.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1144,35 +1221,43 @@ class Position:
 	func _init():
 		var service
 		
-		_x = PBField.new("x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__x = PBField.new("x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _x
-		data[_x.tag] = service
+		service.field = __x
+		data[__x.tag] = service
 		
-		_z = PBField.new("z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__z = PBField.new("z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _z
-		data[_z.tag] = service
+		service.field = __z
+		data[__z.tag] = service
 		
 	var data = {}
 	
-	var _x: PBField
+	var __x: PBField
+	func has_x() -> bool:
+		if __x.value != null:
+			return true
+		return false
 	func get_x() -> int:
-		return _x.value
+		return __x.value
 	func clear_x() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+		__x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_x(value : int) -> void:
-		_x.value = value
+		__x.value = value
 	
-	var _z: PBField
+	var __z: PBField
+	func has_z() -> bool:
+		if __z.value != null:
+			return true
+		return false
 	func get_z() -> int:
-		return _z.value
+		return __z.value
 	func clear_z() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+		__z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_z(value : int) -> void:
-		_z.value = value
+		__z.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1199,66 +1284,79 @@ class UpdatePlayer:
 	func _init():
 		var service
 		
-		_id = PBField.new("id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__id = PBField.new("id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _id
-		data[_id.tag] = service
+		service.field = __id
+		data[__id.tag] = service
 		
-		_name = PBField.new("name", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__name = PBField.new("name", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = _name
-		data[_name.tag] = service
+		service.field = __name
+		data[__name.tag] = service
 		
-		_path = PBField.new("path", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 3, true, [])
+		var __path_default: Array[Position] = []
+		__path = PBField.new("path", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 3, true, __path_default)
 		service = PBServiceField.new()
-		service.field = _path
+		service.field = __path
 		service.func_ref = Callable(self, "add_path")
-		data[_path.tag] = service
+		data[__path.tag] = service
 		
-		_rotation_y = PBField.new("rotation_y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		__rotation_y = PBField.new("rotation_y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
-		service.field = _rotation_y
-		data[_rotation_y.tag] = service
+		service.field = __rotation_y
+		data[__rotation_y.tag] = service
 		
 	var data = {}
 	
-	var _id: PBField
+	var __id: PBField
+	func has_id() -> bool:
+		if __id.value != null:
+			return true
+		return false
 	func get_id() -> int:
-		return _id.value
+		return __id.value
 	func clear_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+		__id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_id(value : int) -> void:
-		_id.value = value
+		__id.value = value
 	
-	var _name: PBField
+	var __name: PBField
+	func has_name() -> bool:
+		if __name.value != null:
+			return true
+		return false
 	func get_name() -> String:
-		return _name.value
+		return __name.value
 	func clear_name() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_name.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+		__name.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_name(value : String) -> void:
-		_name.value = value
+		__name.value = value
 	
-	var _path: PBField
-	func get_path() -> Array:
-		return _path.value
+	var __path: PBField
+	func get_path() -> Array[Position]:
+		return __path.value
 	func clear_path() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_path.value = []
+		__path.value.clear()
 	func add_path() -> Position:
 		var element = Position.new()
-		_path.value.append(element)
+		__path.value.append(element)
 		return element
 	
-	var _rotation_y: PBField
+	var __rotation_y: PBField
+	func has_rotation_y() -> bool:
+		if __rotation_y.value != null:
+			return true
+		return false
 	func get_rotation_y() -> float:
-		return _rotation_y.value
+		return __rotation_y.value
 	func clear_rotation_y() -> void:
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_rotation_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+		__rotation_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_rotation_y(value : float) -> void:
-		_rotation_y.value = value
+		__rotation_y.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1285,35 +1383,43 @@ class PlayerDestination:
 	func _init():
 		var service
 		
-		_x = PBField.new("x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__x = PBField.new("x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _x
-		data[_x.tag] = service
+		service.field = __x
+		data[__x.tag] = service
 		
-		_z = PBField.new("z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__z = PBField.new("z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _z
-		data[_z.tag] = service
+		service.field = __z
+		data[__z.tag] = service
 		
 	var data = {}
 	
-	var _x: PBField
+	var __x: PBField
+	func has_x() -> bool:
+		if __x.value != null:
+			return true
+		return false
 	func get_x() -> int:
-		return _x.value
+		return __x.value
 	func clear_x() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+		__x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_x(value : int) -> void:
-		_x.value = value
+		__x.value = value
 	
-	var _z: PBField
+	var __z: PBField
+	func has_z() -> bool:
+		if __z.value != null:
+			return true
+		return false
 	func get_z() -> int:
-		return _z.value
+		return __z.value
 	func clear_z() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+		__z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_z(value : int) -> void:
-		_z.value = value
+		__z.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1340,651 +1446,683 @@ class Packet:
 	func _init():
 		var service
 		
-		_sender_id = PBField.new("sender_id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__sender_id = PBField.new("sender_id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = _sender_id
-		data[_sender_id.tag] = service
+		service.field = __sender_id
+		data[__sender_id.tag] = service
 		
-		_public_message = PBField.new("public_message", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__public_message = PBField.new("public_message", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _public_message
+		service.field = __public_message
 		service.func_ref = Callable(self, "new_public_message")
-		data[_public_message.tag] = service
+		data[__public_message.tag] = service
 		
-		_handshake = PBField.new("handshake", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__handshake = PBField.new("handshake", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _handshake
+		service.field = __handshake
 		service.func_ref = Callable(self, "new_handshake")
-		data[_handshake.tag] = service
+		data[__handshake.tag] = service
 		
-		_heartbeat = PBField.new("heartbeat", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__heartbeat = PBField.new("heartbeat", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _heartbeat
+		service.field = __heartbeat
 		service.func_ref = Callable(self, "new_heartbeat")
-		data[_heartbeat.tag] = service
+		data[__heartbeat.tag] = service
 		
-		_request_granted = PBField.new("request_granted", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__request_granted = PBField.new("request_granted", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _request_granted
+		service.field = __request_granted
 		service.func_ref = Callable(self, "new_request_granted")
-		data[_request_granted.tag] = service
+		data[__request_granted.tag] = service
 		
-		_request_denied = PBField.new("request_denied", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__request_denied = PBField.new("request_denied", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _request_denied
+		service.field = __request_denied
 		service.func_ref = Callable(self, "new_request_denied")
-		data[_request_denied.tag] = service
+		data[__request_denied.tag] = service
 		
-		_login_request = PBField.new("login_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__login_request = PBField.new("login_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _login_request
+		service.field = __login_request
 		service.func_ref = Callable(self, "new_login_request")
-		data[_login_request.tag] = service
+		data[__login_request.tag] = service
 		
-		_register_request = PBField.new("register_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 8, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__register_request = PBField.new("register_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 8, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _register_request
+		service.field = __register_request
 		service.func_ref = Callable(self, "new_register_request")
-		data[_register_request.tag] = service
+		data[__register_request.tag] = service
 		
-		_login_success = PBField.new("login_success", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 9, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__login_success = PBField.new("login_success", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 9, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _login_success
+		service.field = __login_success
 		service.func_ref = Callable(self, "new_login_success")
-		data[_login_success.tag] = service
+		data[__login_success.tag] = service
 		
-		_client_entered = PBField.new("client_entered", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 10, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__client_entered = PBField.new("client_entered", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 10, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _client_entered
+		service.field = __client_entered
 		service.func_ref = Callable(self, "new_client_entered")
-		data[_client_entered.tag] = service
+		data[__client_entered.tag] = service
 		
-		_client_left = PBField.new("client_left", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 11, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__client_left = PBField.new("client_left", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 11, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _client_left
+		service.field = __client_left
 		service.func_ref = Callable(self, "new_client_left")
-		data[_client_left.tag] = service
+		data[__client_left.tag] = service
 		
-		_join_region_request = PBField.new("join_region_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 12, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__join_region_request = PBField.new("join_region_request", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 12, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _join_region_request
+		service.field = __join_region_request
 		service.func_ref = Callable(self, "new_join_region_request")
-		data[_join_region_request.tag] = service
+		data[__join_region_request.tag] = service
 		
-		_position = PBField.new("position", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 13, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__position = PBField.new("position", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 13, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _position
+		service.field = __position
 		service.func_ref = Callable(self, "new_position")
-		data[_position.tag] = service
+		data[__position.tag] = service
 		
-		_update_player = PBField.new("update_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 14, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__update_player = PBField.new("update_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 14, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _update_player
+		service.field = __update_player
 		service.func_ref = Callable(self, "new_update_player")
-		data[_update_player.tag] = service
+		data[__update_player.tag] = service
 		
-		_player_destination = PBField.new("player_destination", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 15, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__player_destination = PBField.new("player_destination", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 15, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = _player_destination
+		service.field = __player_destination
 		service.func_ref = Callable(self, "new_player_destination")
-		data[_player_destination.tag] = service
+		data[__player_destination.tag] = service
 		
 	var data = {}
 	
-	var _sender_id: PBField
+	var __sender_id: PBField
+	func has_sender_id() -> bool:
+		if __sender_id.value != null:
+			return true
+		return false
 	func get_sender_id() -> int:
-		return _sender_id.value
+		return __sender_id.value
 	func clear_sender_id() -> void:
 		data[1].state = PB_SERVICE_STATE.UNFILLED
-		_sender_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+		__sender_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_sender_id(value : int) -> void:
-		_sender_id.value = value
+		__sender_id.value = value
 	
-	var _public_message: PBField
+	var __public_message: PBField
 	func has_public_message() -> bool:
-		return data[2].state == PB_SERVICE_STATE.FILLED
+		if __public_message.value != null:
+			return true
+		return false
 	func get_public_message() -> PublicMessage:
-		return _public_message.value
+		return __public_message.value
 	func clear_public_message() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_public_message() -> PublicMessage:
 		data[2].state = PB_SERVICE_STATE.FILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_public_message.value = PublicMessage.new()
-		return _public_message.value
+		__public_message.value = PublicMessage.new()
+		return __public_message.value
 	
-	var _handshake: PBField
+	var __handshake: PBField
 	func has_handshake() -> bool:
-		return data[3].state == PB_SERVICE_STATE.FILLED
+		if __handshake.value != null:
+			return true
+		return false
 	func get_handshake() -> Handshake:
-		return _handshake.value
+		return __handshake.value
 	func clear_handshake() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_handshake() -> Handshake:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		data[3].state = PB_SERVICE_STATE.FILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = Handshake.new()
-		return _handshake.value
+		__handshake.value = Handshake.new()
+		return __handshake.value
 	
-	var _heartbeat: PBField
+	var __heartbeat: PBField
 	func has_heartbeat() -> bool:
-		return data[4].state == PB_SERVICE_STATE.FILLED
+		if __heartbeat.value != null:
+			return true
+		return false
 	func get_heartbeat() -> Heartbeat:
-		return _heartbeat.value
+		return __heartbeat.value
 	func clear_heartbeat() -> void:
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_heartbeat() -> Heartbeat:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
 		data[4].state = PB_SERVICE_STATE.FILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = Heartbeat.new()
-		return _heartbeat.value
+		__heartbeat.value = Heartbeat.new()
+		return __heartbeat.value
 	
-	var _request_granted: PBField
+	var __request_granted: PBField
 	func has_request_granted() -> bool:
-		return data[5].state == PB_SERVICE_STATE.FILLED
+		if __request_granted.value != null:
+			return true
+		return false
 	func get_request_granted() -> RequestGranted:
-		return _request_granted.value
+		return __request_granted.value
 	func clear_request_granted() -> void:
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_request_granted() -> RequestGranted:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
 		data[5].state = PB_SERVICE_STATE.FILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = RequestGranted.new()
-		return _request_granted.value
+		__request_granted.value = RequestGranted.new()
+		return __request_granted.value
 	
-	var _request_denied: PBField
+	var __request_denied: PBField
 	func has_request_denied() -> bool:
-		return data[6].state == PB_SERVICE_STATE.FILLED
+		if __request_denied.value != null:
+			return true
+		return false
 	func get_request_denied() -> RequestDenied:
-		return _request_denied.value
+		return __request_denied.value
 	func clear_request_denied() -> void:
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_request_denied() -> RequestDenied:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
 		data[6].state = PB_SERVICE_STATE.FILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = RequestDenied.new()
-		return _request_denied.value
+		__request_denied.value = RequestDenied.new()
+		return __request_denied.value
 	
-	var _login_request: PBField
+	var __login_request: PBField
 	func has_login_request() -> bool:
-		return data[7].state == PB_SERVICE_STATE.FILLED
+		if __login_request.value != null:
+			return true
+		return false
 	func get_login_request() -> LoginRequest:
-		return _login_request.value
+		return __login_request.value
 	func clear_login_request() -> void:
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_login_request() -> LoginRequest:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
 		data[7].state = PB_SERVICE_STATE.FILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = LoginRequest.new()
-		return _login_request.value
+		__login_request.value = LoginRequest.new()
+		return __login_request.value
 	
-	var _register_request: PBField
+	var __register_request: PBField
 	func has_register_request() -> bool:
-		return data[8].state == PB_SERVICE_STATE.FILLED
+		if __register_request.value != null:
+			return true
+		return false
 	func get_register_request() -> RegisterRequest:
-		return _register_request.value
+		return __register_request.value
 	func clear_register_request() -> void:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_register_request() -> RegisterRequest:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
 		data[8].state = PB_SERVICE_STATE.FILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = RegisterRequest.new()
-		return _register_request.value
+		__register_request.value = RegisterRequest.new()
+		return __register_request.value
 	
-	var _login_success: PBField
+	var __login_success: PBField
 	func has_login_success() -> bool:
-		return data[9].state == PB_SERVICE_STATE.FILLED
+		if __login_success.value != null:
+			return true
+		return false
 	func get_login_success() -> LoginSuccess:
-		return _login_success.value
+		return __login_success.value
 	func clear_login_success() -> void:
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_login_success() -> LoginSuccess:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
 		data[9].state = PB_SERVICE_STATE.FILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = LoginSuccess.new()
-		return _login_success.value
+		__login_success.value = LoginSuccess.new()
+		return __login_success.value
 	
-	var _client_entered: PBField
+	var __client_entered: PBField
 	func has_client_entered() -> bool:
-		return data[10].state == PB_SERVICE_STATE.FILLED
+		if __client_entered.value != null:
+			return true
+		return false
 	func get_client_entered() -> ClientEntered:
-		return _client_entered.value
+		return __client_entered.value
 	func clear_client_entered() -> void:
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_client_entered() -> ClientEntered:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
 		data[10].state = PB_SERVICE_STATE.FILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = ClientEntered.new()
-		return _client_entered.value
+		__client_entered.value = ClientEntered.new()
+		return __client_entered.value
 	
-	var _client_left: PBField
+	var __client_left: PBField
 	func has_client_left() -> bool:
-		return data[11].state == PB_SERVICE_STATE.FILLED
+		if __client_left.value != null:
+			return true
+		return false
 	func get_client_left() -> ClientLeft:
-		return _client_left.value
+		return __client_left.value
 	func clear_client_left() -> void:
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_client_left() -> ClientLeft:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
 		data[11].state = PB_SERVICE_STATE.FILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = ClientLeft.new()
-		return _client_left.value
+		__client_left.value = ClientLeft.new()
+		return __client_left.value
 	
-	var _join_region_request: PBField
+	var __join_region_request: PBField
 	func has_join_region_request() -> bool:
-		return data[12].state == PB_SERVICE_STATE.FILLED
+		if __join_region_request.value != null:
+			return true
+		return false
 	func get_join_region_request() -> JoinRegionRequest:
-		return _join_region_request.value
+		return __join_region_request.value
 	func clear_join_region_request() -> void:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_join_region_request() -> JoinRegionRequest:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
 		data[12].state = PB_SERVICE_STATE.FILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = JoinRegionRequest.new()
-		return _join_region_request.value
+		__join_region_request.value = JoinRegionRequest.new()
+		return __join_region_request.value
 	
-	var _position: PBField
+	var __position: PBField
 	func has_position() -> bool:
-		return data[13].state == PB_SERVICE_STATE.FILLED
+		if __position.value != null:
+			return true
+		return false
 	func get_position() -> Position:
-		return _position.value
+		return __position.value
 	func clear_position() -> void:
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_position() -> Position:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		data[13].state = PB_SERVICE_STATE.FILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = Position.new()
-		return _position.value
+		__position.value = Position.new()
+		return __position.value
 	
-	var _update_player: PBField
+	var __update_player: PBField
 	func has_update_player() -> bool:
-		return data[14].state == PB_SERVICE_STATE.FILLED
+		if __update_player.value != null:
+			return true
+		return false
 	func get_update_player() -> UpdatePlayer:
-		return _update_player.value
+		return __update_player.value
 	func clear_update_player() -> void:
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_update_player() -> UpdatePlayer:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
 		data[14].state = PB_SERVICE_STATE.FILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = UpdatePlayer.new()
-		return _update_player.value
+		__update_player.value = UpdatePlayer.new()
+		return __update_player.value
 	
-	var _player_destination: PBField
+	var __player_destination: PBField
 	func has_player_destination() -> bool:
-		return data[15].state == PB_SERVICE_STATE.FILLED
+		if __player_destination.value != null:
+			return true
+		return false
 	func get_player_destination() -> PlayerDestination:
-		return _player_destination.value
+		return __player_destination.value
 	func clear_player_destination() -> void:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		_player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_player_destination() -> PlayerDestination:
-		_public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		_handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		_heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[4].state = PB_SERVICE_STATE.UNFILLED
-		_request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[5].state = PB_SERVICE_STATE.UNFILLED
-		_request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[6].state = PB_SERVICE_STATE.UNFILLED
-		_login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		_register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		_login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[9].state = PB_SERVICE_STATE.UNFILLED
-		_client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[10].state = PB_SERVICE_STATE.UNFILLED
-		_client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[11].state = PB_SERVICE_STATE.UNFILLED
-		_join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
-		_position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		_update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
 		data[15].state = PB_SERVICE_STATE.FILLED
-		_player_destination.value = PlayerDestination.new()
-		return _player_destination.value
+		__player_destination.value = PlayerDestination.new()
+		return __player_destination.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
