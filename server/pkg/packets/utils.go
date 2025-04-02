@@ -16,9 +16,11 @@ func NewPublicMessage(nickname string, text string) Payload {
 }
 
 // Sent by server after client connects
-func NewHandshake() Payload {
+func NewHandshake(version string) Payload {
 	return &Packet_Handshake{
-		Handshake: &Handshake{},
+		Handshake: &Handshake{
+			Version: version,
+		},
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"log"
 	"server/internal/server"
 	"server/internal/server/db"
+	"server/internal/server/info"
 
 	"server/pkg/packets"
 )
@@ -34,7 +35,11 @@ func (state *Connected) SetClient(client server.Client) {
 
 func (state *Connected) OnEnter() {
 	// A newly connected client will receive its own ID
-	state.client.SendPacket(packets.NewHandshake())
+	state.client.SendPacket(packets.NewHandshake(info.Version))
+
+	// TO FIX
+	// This shouldn't be changing the state to authentication instantly
+
 	// After sending the Handshake packet to the client, switch to the Authentication state
 	state.client.SetState(&Authentication{})
 }

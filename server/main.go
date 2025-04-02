@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"server/internal/server"
 	"server/internal/server/clients"
+	"server/internal/server/info"
 
 	_ "embed" // allows the use of the go:embed directive
 
@@ -27,8 +28,6 @@ var schemaGenSql string
 // The client should send this variable upon connection attempt and it
 // should match with the server's version to allow connection!
 
-var version = "0.0.2.5"
-
 var (
 	port = flag.Int("port", 31591, "Port to listen on")
 )
@@ -38,7 +37,7 @@ func main() {
 	// Reads the OS command-line flags
 	flag.Parse()
 
-	log.Printf("Starting server v %s", version)
+	log.Printf("Starting server v %s", info.Version)
 
 	// Get the absolute directory of the executable (Cross platform)
 	execPath, err := osext.ExecutableFolder()

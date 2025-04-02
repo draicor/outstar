@@ -10,7 +10,7 @@ option go_package = "pkg/packets";
 // Chat
 message PublicMessage { string nickname = 1; string text = 2; } // Sent by client to communicate with other clients in the area
 // Connection
-message Handshake {} // Sent by server after client connects
+message Handshake { string version = 1; } // Sent by server after client connects
 message Heartbeat {} // Used to keep connection alive
 // Authentication
 message RequestGranted {} // Sent by server if request was successful
@@ -25,7 +25,7 @@ message LoginSuccess { string nickname = 1; } // Sent by the server after succes
 // Notifies
 // TO FIX add uint64 id in client entered so we can send our player data directly!
 message ClientEntered { string nickname = 1; } // Sent by the client once his client is ready, broadcasted to everyone
-message ClientLeft { uint64 id =1; string nickname = 2; } // Broadcast by the server if a client leaves
+message ClientLeft { uint64 id = 1; string nickname = 2; } // Broadcast by the server if a client leaves
 // Region
 message JoinRegionRequest { uint64 region_id = 1; } // Sent by the client to request joining a new region
 message Position { uint64 x = 1; uint64 z = 2; } // Sent by the server to describe positions in a path.

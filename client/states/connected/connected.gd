@@ -45,10 +45,18 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	# If the packet is a handshake packet
 	if packet.has_handshake():
 		# We get the sender_id and store it on our client
-		_handle_packet_handshake(packet.get_sender_id())
+		_handle_packet_handshake(packet.get_sender_id(), packet.get_handshake().get_version())
 
-func _handle_packet_handshake(sender_id: int) -> void:
+func _handle_packet_handshake(sender_id: int, server_version: String) -> void:
 	# We save the client ID in the GameManager Autoload
 	GameManager.client_id = sender_id
-	# We can then transition into the Authentication scene
-	GameManager.set_state(GameManager.State.AUTHENTICATION)
+	
+	# Read-only at runtime
+	var client_version = ProjectSettings.get_setting("application/config/version", "0.0.0.0")
+	
+	# If both versions are the same
+	if server_version == client_version:
+		# We can then transition into the Authentication scene
+		GameManager.set_state(GameManager.State.AUTHENTICATION)
+	else:
+		status.text = "Client v%s is no longer supported.\nPlease update to version %s" % [client_version, server_version]

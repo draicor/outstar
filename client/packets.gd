@@ -753,7 +753,25 @@ class Handshake:
 	func _init():
 		var service
 		
+		__version = PBField.new("version", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = __version
+		data[__version.tag] = service
+		
 	var data = {}
+	
+	var __version: PBField
+	func has_version() -> bool:
+		if __version.value != null:
+			return true
+		return false
+	func get_version() -> String:
+		return __version.value
+	func clear_version() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__version.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_version(value : String) -> void:
+		__version.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
