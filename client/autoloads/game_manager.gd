@@ -7,8 +7,7 @@ enum State {
 	GAME,
 }
 
-# Replace with Dictionary[State, String] in new version of Godot v4.4+
-var _states_scenes: Dictionary = {
+var _states_scenes: Dictionary[State, String] = {
 	State.CONNECTED: "res://states/connected/connected.tscn",
 	State.AUTHENTICATION: "res://states/authentication/authentication.tscn",
 	State.GAME: "res://states/game/game.tscn",
@@ -19,8 +18,7 @@ enum Maps {
 	PROTOTYPE,
 }
 
-# Replace with Dictionary[Maps, String] in new version of Godot v4.4+
-var maps_scenes: Dictionary = {
+var maps_scenes: Dictionary[Maps, String] = {
 	Maps.PROTOTYPE: "res://maps/prototype/prototype.tscn"
 }
 

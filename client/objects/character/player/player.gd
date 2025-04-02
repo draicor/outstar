@@ -59,7 +59,7 @@ enum ASM {
 	RUN,
 }
 # We have a dictionary connected to the enum above to switch animation states
-var Animations: Dictionary = {
+var Animations: Dictionary[ASM, String] = {
 	ASM.IDLE: "idle",
 	ASM.WALK: "walk",
 	ASM.JOG: "run",

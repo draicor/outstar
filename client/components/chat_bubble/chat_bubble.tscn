@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://cv2i471rse4tl"]
 
-[ext_resource type="Script" path="res://components/chat_bubble/chat_bubble.gd" id="1_v28gq"]
+[ext_resource type="Script" uid="uid://ddr153l86dhag" path="res://components/chat_bubble/chat_bubble.gd" id="1_v28gq"]
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_81cm0"]
 viewport_path = NodePath("Sprite3D/SubViewport")

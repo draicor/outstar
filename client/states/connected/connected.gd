@@ -8,13 +8,12 @@ enum Server {
 	LOCAL,
 	REMOTE,
 }
-# We have a dictionary connected to the enum above to switch
-# between local and remote testing
-var ip: Dictionary = {
+# Used to switch between local and remote testing
+var ip: Dictionary[Server, String] = {
 	Server.LOCAL: "localhost",
 	Server.REMOTE: "64.223.161.129"
 }
-var port: Dictionary = {
+var port: Dictionary[Server, int] = {
 	Server.LOCAL: 31591,
 	Server.REMOTE: 31591
 }

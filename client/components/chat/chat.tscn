@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c0e51fcsnsimq"]
 
-[ext_resource type="Script" path="res://components/chat/chat.gd" id="1_6nsy3"]
+[ext_resource type="Script" uid="uid://b6ydwib42upx" path="res://components/chat/chat.gd" id="1_6nsy3"]
 
 [node name="Chat" type="Control"]
 clip_contents = true

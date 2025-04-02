@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cuiehkfa05m8f"]
 
-[ext_resource type="Script" path="res://classes/message/message.gd" id="1_hj30e"]
+[ext_resource type="Script" uid="uid://bbeegav10paro" path="res://classes/message/message.gd" id="1_hj30e"]
 
 [node name="Message" type="RichTextLabel"]
 custom_minimum_size = Vector2(0, 23)

@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://x0epwfo5cr8"]
 
-[ext_resource type="Script" path="res://states/game/game.gd" id="1_t5g5c"]
+[ext_resource type="Script" uid="uid://bupkb86ykt0jg" path="res://states/game/game.gd" id="1_t5g5c"]
 [ext_resource type="PackedScene" uid="uid://c0e51fcsnsimq" path="res://components/chat/chat.tscn" id="2_wrs1w"]
 
 [node name="Game" type="Node"]

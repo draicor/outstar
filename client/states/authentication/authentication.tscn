@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://d0cnml7abwrk2"]
 
-[ext_resource type="Script" path="res://states/authentication/authentication.gd" id="1_k6pie"]
+[ext_resource type="Script" uid="uid://k2gup60pylmn" path="res://states/authentication/authentication.gd" id="1_k6pie"]
 
 [node name="Authentication" type="Node"]
 script = ExtResource("1_k6pie")

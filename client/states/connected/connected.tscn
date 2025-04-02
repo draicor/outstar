@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cb1jlrw8ajygu"]
 
-[ext_resource type="Script" path="res://states/connected/connected.gd" id="1_nxvia"]
+[ext_resource type="Script" uid="uid://bbrbn0fnbcibw" path="res://states/connected/connected.gd" id="1_nxvia"]
 
 [node name="Connected" type="Node"]
 script = ExtResource("1_nxvia")

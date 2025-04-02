@@ -9,7 +9,7 @@ const game_escape_menu_scene: PackedScene = preload("res://components/escape_men
 var _current_map_scene: Node
 
 # Map of all the players in this region, where the key is the player's ID
-var _players: Dictionary
+var _players: Dictionary[int, Player]
 
 # User Interface Variables
 @onready var ui_canvas: CanvasLayer = $UI
