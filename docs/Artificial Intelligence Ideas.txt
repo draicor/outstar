@@ -1,0 +1,17 @@
+Goals:
+- Guard
+- Kill
+- Dodge
+- Cover
+- Ambush
+
+Actions:
+- Idle
+- Dodge
+- Block
+- AttackRanged
+- AttackMelee
+- MoveTo
+- AttackRangedFromCover
+- DodgeCovered
+- BlindAttackRangedFromCover

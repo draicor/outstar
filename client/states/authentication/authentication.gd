@@ -2,6 +2,7 @@ extends Node
 
 const packets := preload("res://packets.gd")
 
+@onready var clients_online: Label = $UI/MarginContainer/VBoxContainer/ClientsOnline
 @onready var username_input: LineEdit = $UI/MarginContainer/VBoxContainer/Username
 @onready var password_input: LineEdit = $UI/MarginContainer/VBoxContainer/Password
 @onready var nickname_input: LineEdit = $UI/MarginContainer/VBoxContainer/Nickname
@@ -29,6 +30,8 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_request_granted_packet()
 	elif packet.has_login_success():
 		_handle_login_success(packet.get_login_success())
+	elif packet.has_server_metrics():
+		_handle_server_metrics(packet.get_server_metrics())
 
 # We need to get the _text from the event but we ignore it because
 # we only care about the event itself, not the text being sent by it
@@ -60,6 +63,10 @@ func _handle_login_success(login_success_packet: packets.LoginSuccess) -> void:
 	# We store the info of our client sent by the server
 	GameManager.client_nickname = login_success_packet.get_nickname()
 	GameManager.set_state(GameManager.State.GAME)
+
+func _handle_server_metrics(server_metrics_packet: packets.ServerMetrics) -> void:
+	var metrics_players_online := server_metrics_packet.get_players_online()
+	clients_online.text = "Clients online: " + str(metrics_players_online)
 
 func _on_register_button_pressed() -> void:
 	# We validate all fields before we even try to talk to the server

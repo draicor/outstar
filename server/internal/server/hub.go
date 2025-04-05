@@ -239,3 +239,8 @@ func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 		}
 	}
 }
+
+// Returns the total number of clients connected to the Hub
+func (h *Hub) GetClientsOnline() uint64 {
+	return uint64(h.Clients.Len())
+}

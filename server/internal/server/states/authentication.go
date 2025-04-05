@@ -39,7 +39,9 @@ func (state *Authentication) SetClient(client server.Client) {
 }
 
 func (state *Authentication) OnEnter() {
-	// Pass
+	// Send the client the server's info
+	// We send the number of clients online minus one so our own client doesn't count
+	state.client.SendPacket(packets.NewServerMetrics(state.client.GetHub().GetClientsOnline() - 1))
 }
 
 func (state *Authentication) HandlePacket(senderId uint64, payload packets.Payload) {

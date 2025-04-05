@@ -34,19 +34,37 @@ func (state *Connected) SetClient(client server.Client) {
 }
 
 func (state *Connected) OnEnter() {
-	// A newly connected client will receive its own ID
+	// A newly connected client will receive its own ID and the server's version
 	state.client.SendPacket(packets.NewHandshake(info.Version))
-
-	// TO FIX
-	// This shouldn't be changing the state to authentication instantly
-
-	// After sending the Handshake packet to the client, switch to the Authentication state
-	state.client.SetState(&Authentication{})
 }
 
 func (state *Connected) HandlePacket(senderId uint64, payload packets.Payload) {
-	// On this state, we don't need to listen for any packets yet
-	// We'll implement a version check packet before sending the Handshake packet in the future
+	// We listen for the handshake packet from the client
+
+	// If this packet was sent by our client
+	if senderId == state.client.GetId() {
+		// Switch based on the type of packet
+		// We also save the casted packet in case we need to access specific fields
+		switch casted_payload := payload.(type) {
+
+		// HANDSHAKE
+		case *packets.Packet_Handshake:
+			state.HandleHandshake(casted_payload.Handshake)
+
+		case nil:
+			// Ignore packet if not a valid payload type
+		default:
+			// Ignore packet if no payload was sent
+		}
+	}
+}
+
+func (state *Connected) HandleHandshake(payload *packets.Handshake) {
+	// Compare the client's version to the server's version as a precaution
+	if payload.Version == info.Version {
+		// Switch this client to the Authentication state
+		state.client.SetState(&Authentication{})
+	}
 }
 
 func (state *Connected) OnExit() {

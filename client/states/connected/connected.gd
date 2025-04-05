@@ -56,7 +56,18 @@ func _handle_packet_handshake(sender_id: int, server_version: String) -> void:
 	
 	# If both versions are the same
 	if server_version == client_version:
-		# We can then transition into the Authentication scene
-		GameManager.set_state(GameManager.State.AUTHENTICATION)
+		# We create a handshake packet to send to server our client's version
+		var packet := packets.Packet.new()
+		var handshake := packet.new_handshake()
+		handshake.set_version(client_version)
+		
+		# This serializes and sends our message
+		var err := WebSocket.send(packet)
+		# If we sent the packet
+		if !err:
+			# We can then transition into the Authentication scene
+			GameManager.set_state(GameManager.State.AUTHENTICATION)
+		else:
+			status.text = "You have been disconnected from the server"
 	else:
 		status.text = "Client v%s is no longer supported.\nPlease update to version %s" % [client_version, server_version]

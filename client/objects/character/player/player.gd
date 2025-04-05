@@ -11,6 +11,10 @@ const Player := preload("res://objects/character/player/player.gd")
 # CONSTANTS
 const SERVER_TICK: float = 0.5
 
+# Prediction system
+var predicted_path: Array = []
+var is_predicting: bool = false
+
 # Tick related data
 var movement_tick: float = SERVER_TICK # Defaults to server_tick
 
@@ -66,9 +70,11 @@ var Animations: Dictionary[ASM, String] = {
 	ASM.RUN: "run",
 }
 
+# Camera variables
 var camera : Camera3D
 var raycast : RayCast3D
 
+# Scene nodes
 @onready var animation_player: AnimationPlayer = $Model/Body/AnimationPlayer
 @onready var model: Node3D = $Model
 @onready var camera_rig: Node3D = $CameraRig

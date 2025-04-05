@@ -31,6 +31,15 @@ func NewHeartbeat() Payload {
 	}
 }
 
+// Sent by server with server info to the client
+func NewServerMetrics(playersOnline uint64) Payload {
+	return &Packet_ServerMetrics{
+		ServerMetrics: &ServerMetrics{
+			PlayersOnline: playersOnline,
+		},
+	}
+}
+
 // Sent by server if request was successful
 func NewRequestGranted() Payload {
 	return &Packet_RequestGranted{
