@@ -13,7 +13,11 @@ const SERVER_TICK: float = 0.5
 
 # Prediction system
 var predicted_path: Array = []
+var full_predicted_path: Array = []
 var is_predicting: bool = false
+var current_segment_index: int = 0
+var confirmed_segments: Array = [] # Segments validated by the server
+var server_validated_index: int = 0 # Validated by the server
 
 # Tick related data
 var movement_tick: float = SERVER_TICK # Defaults to server_tick
@@ -156,6 +160,9 @@ func _input(event: InputEvent) -> void:
 		_raycast(mouse_position)
 
 
+# Casts a ray from our camera to our mouse position and predicts the full path
+# the player will have to traverse to get to that destination, then sends a packet
+# to the server with the destination they want to reach
 func _raycast(mouse_position: Vector2) -> void:
 	# If our raycast node is not valid
 	if not raycast:
@@ -174,19 +181,52 @@ func _raycast(mouse_position: Vector2) -> void:
 		# Transform the local space position to our grid coordinate
 		grid_destination = Utils.local_to_map(local_point)
 		
-		# Create a new packet to hold our input velocity
-		var packet := packets.Packet.new()
-		var player_destination_packet := packet.new_player_destination()
-		player_destination_packet.set_x(grid_destination.x)
-		player_destination_packet.set_z(grid_destination.y)
+		# Clean up any previous prediction
+		_cleanup_prediction()
 		
-		# Send our new destination to the server
-		WebSocket.send(packet)
-		
-		# DEBUG
-		# print(grid_destination)
-	#else:
-		#print("no collision detected")
+		# Generate and store full predicted path
+		full_predicted_path = _predict_path(grid_position, grid_destination)
+		# If we have a valid path after prediction
+		if full_predicted_path.size() > 1:
+			is_predicting = true
+			
+			# Start moving through the predicted path immediately
+			player_path = full_predicted_path.duplicate()
+			if player_path.size() > 1:
+				player_speed = player_path.size()-1
+				update_movement_tick(player_speed)
+				next_cell = Utils.map_to_local(player_path[0])
+				player_path.remove_at(0)
+				movement_elapsed_time = 0
+				is_in_motion = true
+			
+			# Create a new packet to send our full grid destination to the server
+			var packet := packets.Packet.new()
+			var player_destination_packet := packet.new_player_destination()
+			player_destination_packet.set_x(grid_destination.x)
+			player_destination_packet.set_z(grid_destination.y)
+			
+			# Send our new destination to the server
+			WebSocket.send(packet)
+			
+			# DEBUG
+			# print(grid_destination)
+		#else:
+			#print("no collision detected")
+
+
+# Simple straight-line prediction
+func _predict_path(from: Vector2i, to: Vector2i) -> Array:
+	var path = []
+	var current = from
+	path.append(current)
+	
+	while current != to:
+		var dir = (to - current).sign()
+		current += dir
+		path.append(current)
+	
+	return path
 
 
 # _process runs every frame (dependent on FPS)
@@ -217,6 +257,9 @@ func _update_player_movement(delta: float) -> void:
 	else:
 		# Update the local player position for our interpolated movement
 		local_position = next_cell
+		# Update our local grid position
+		# NOTE: We can use grid_position to display our coordinates in the HUD
+		grid_position = Utils.local_to_map(local_position)
 		
 		# If we still have a path to traverse this tick
 		if player_path.size() > 0:
@@ -238,6 +281,8 @@ func _update_player_movement(delta: float) -> void:
 				# So its always exactly at the center of the cell in the grid
 				position = next_cell
 				local_position = next_cell
+				# Update our local grid position
+				grid_position = Utils.local_to_map(local_position)
 				is_in_motion = false
 				
 				# After we stop, we go back to idle
@@ -294,6 +339,14 @@ func move_player_locally(delta: float) -> void:
 
 # Updates the player's path and sets the next cell the player should traverse
 func update_destination(new_path: Array) -> void:
+	# Handles local player prediction
+	if my_player_character and is_predicting:
+		# Only reconcile if this is a server update (not empty and different start point)
+		if new_path.size() > 0 and (player_path.size() == 0 or new_path[0] != player_path[0]):
+			print("Reconcile attempt")
+			_reconcile_movement(new_path)
+			return
+	
 	# If we are already in motion
 	if is_in_motion:
 		# If we haven't completed the first path yet
@@ -305,6 +358,7 @@ func update_destination(new_path: Array) -> void:
 					break
 				overlap += 1
 			
+			# Add remaining path to next tick
 			var next_path := new_path.slice(overlap)
 			# Append the new path to our next tick path
 			player_next_tick_path.append_array(next_path)
@@ -335,14 +389,15 @@ func update_destination(new_path: Array) -> void:
 			# We make the new path our next path, skipping the current cell
 			player_next_tick_path.append_array(new_path.slice(1))
 	
-	# If we are not moving
+	# If we are not moving, start new movement
 	else:
 		# We make the new path our current path
-		player_path = new_path
+		player_path = new_path.duplicate()
+		print("bottom of update_destination ", player_path)
 		
 		# If we have a path to traverse (two cells or more)
 		if player_path.size() > 1:
-			# Store this tick move speed after removing the first cell
+			# Store this tick move speed before removing the first cell
 			player_speed = player_path.size()-1
 			# Update our player's movement tick to match our new path
 			update_movement_tick(player_speed)
@@ -351,6 +406,67 @@ func update_destination(new_path: Array) -> void:
 			# Reset our move variable in _process
 			movement_elapsed_time = 0
 			is_in_motion = true
+
+
+# Handles reconciliation between client prediction and server authority
+func _reconcile_movement(server_path: Array) -> void:
+	if not is_predicting:
+		return
+	
+	# Get our exact current position in the path
+	var current_cell = Utils.local_to_map(position)
+	var client_path_index = full_predicted_path.find(current_cell)
+	var server_path_index = full_predicted_path.find(server_path.back())
+	
+	print("client: ", client_path_index, "/", full_predicted_path.size()-1)
+	print("server: ", server_path_index, "/", full_predicted_path.size()-1)
+	
+	# Complete mismatch, reset to server's path
+	if server_path_index == -1:
+		print("Complete mismatch, overwriting predicted path with server path")
+		player_path = server_path.duplicate()
+		full_predicted_path = server_path.duplicate()
+		_cleanup_prediction()
+	
+	else:
+		# If we have completed the full path according to the server
+		if server_path_index >= full_predicted_path.size() - 1:
+			print("we have completed our path according to the server")
+			_cleanup_prediction()
+			return
+		
+		# Only correct if server is significantly ahead (at least 2 cells)
+		if server_path_index > client_path_index + 1:
+			print("Correction needed, jumping ahead to server position")
+			# Jump forward to server's position
+			player_path = full_predicted_path.slice(server_path_index)
+			
+			# If moving between cells, complete current move immediately
+			if is_in_motion:
+				next_cell = Utils.map_to_local(player_path[0])
+				position = next_cell
+				local_position = next_cell
+				grid_position = Utils.local_to_map(next_cell)
+				movement_elapsed_time = 0
+	
+	# Start moving if we have a path but we aren't moving
+	if not is_in_motion and player_path.size() > 0:
+		# Store this tick move speed before removing the first cell
+		player_speed = player_path.size()-1
+		# Update our player's movement tick to match our new path
+		update_movement_tick(player_speed)
+		next_cell = Utils.map_to_local(player_path[1])
+		player_path.remove_at(0) # Remove current position
+		movement_elapsed_time = 0
+		is_in_motion = true
+
+
+# Clean up prediction state
+func _cleanup_prediction() -> void:
+	is_predicting = false
+	full_predicted_path = []
+	server_validated_index = 0
+	confirmed_segments = []
 
 
 # Overwrite our client's grid position locally with the one from the server
@@ -415,10 +531,13 @@ func new_chat_bubble(message: String) -> void:
 
 # Calculates how quickly I should move based on my speed
 func update_movement_tick(new_speed: int) -> void:
+	# Clamp speed to maximum 3
+	if new_speed > 3:
+		new_speed = 3
+		
 	# If new_speed is valid
 	if new_speed > 1:
 		movement_tick = SERVER_TICK / new_speed
-	
 	# If not, just make our movement_tick be our SERVER_TICK
 	else:
 		movement_tick = SERVER_TICK

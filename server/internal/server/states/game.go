@@ -261,6 +261,10 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 
 // Sent from the client to the server to request setting a new destination for their player character
 func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
+	// CAUTION, for testing only!
+	// Simulate 2 second delay
+	time.Sleep(2 * time.Second)
+
 	// Get the grid from this region
 	grid := state.client.GetRegion().Grid
 	// Get the cell the player wants to access
