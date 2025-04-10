@@ -236,6 +236,7 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 				var vector = Vector2i(position.get_x(), position.get_z())
 				path.append(vector)
 			
+			# CAUTION testing stuff
 			# Overwrite our player's path
 			player.update_destination(path)
 

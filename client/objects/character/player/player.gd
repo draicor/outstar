@@ -42,8 +42,14 @@ var rotation_elapsed: float = 0.0 # Used in _process to rotate the character
 var start_yaw: float = 0.0
 var target_yaw: float = 0.0
 
+# Client prediction
+var is_predicting: bool = false
+var predicted_path: Array = [] # Holds our most recent predicted_path
+var unconfirmed_traversed_path: Array = [] # Holds every vector2i coordinate the player has moved to locally
+
 # Logic variables
-var is_in_motion: bool = false # If the character is moving
+var in_motion: bool = false # If the character is moving
+var autopilot_active: bool = false # If the server is forcing the player to move
 var is_typing: bool = false # To display a bubble when typing
 
 # Animation state machine
@@ -111,6 +117,7 @@ func _ready() -> void:
 	Signals.ui_chat_input_toggle.connect(_on_chat_input_toggle)
 	
 	position = interpolated_position # Has to be set here after the scene has been created
+	unconfirmed_traversed_path.append(grid_position) # Add our spawn position to our unconfirmed path
 	
 	# Update any other spawn data here
 	model.rotation.y = model_rotation_y
@@ -147,8 +154,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _raycast(mouse_position: Vector2) -> void:
-	# If our raycast node is not valid
-	if not raycast:
+	# If our client is being moved automatically or our raycast node is invalid
+	if autopilot_active or not raycast:
 		return
 	
 	# Cast a ray from our camera to our mouse position
@@ -161,17 +168,70 @@ func _raycast(mouse_position: Vector2) -> void:
 	if raycast.is_colliding():
 		# Grab the collision point
 		var local_point : Vector3 = raycast.get_collision_point()
+			
 		# Transform the local space position to our grid coordinate
 		grid_destination = Utils.local_to_map(local_point)
+		# Generate and store a path prediction towards the destination we want to reach
+		predicted_path = _predict_path(grid_position, grid_destination)
+		is_predicting = true
 		
-		# Create a new packet to hold our input and send it to the server
-		var packet := _create_player_destination_packet(grid_destination)
-		WebSocket.send(packet)
-		
-		# DEBUG
-		# print(grid_destination)
-	#else:
-		#print("no collision detected")
+		if in_motion:
+			print("Recalculating...")
+			predicted_path = _predict_path(Utils.local_to_map(next_cell), grid_destination)
+			# If the next predicted path is valid
+			if predicted_path.size() > 1:
+				player_path = [] # Clear the current path
+				
+				# If we are already at the first position
+				if predicted_path[0] == Utils.local_to_map(next_cell):
+					# Skip the current cell
+					player_next_tick_path = predicted_path.slice(1)
+				else:
+					# Override our next tick path with the full predicted path
+					player_next_tick_path = predicted_path
+				
+				# Store the next tick speed to be used next tick
+				player_next_tick_speed = player_next_tick_path.size()
+				print(player_next_tick_speed)
+				
+				# Create a new packet to hold our input and send it to the server
+				var packet := _create_player_destination_packet(grid_destination)
+				WebSocket.send(packet)
+				
+		# If we are IDLE
+		else:
+			# If the predicted path is valid
+			if predicted_path.size() > 1:
+				# Make this predicted path our current path and start moving right away
+				player_path = predicted_path.duplicate()
+				# Update our player's speed to match our new path (remove overlap)
+				update_movement_tick(player_path.size()-1)
+				_setup_next_movement_step(false)
+				
+				# Create a new packet to hold our input and send it to the server
+				var packet := _create_player_destination_packet(grid_destination)
+				WebSocket.send(packet)
+				
+				# DEBUG
+				# print(grid_destination)
+		#else:
+			#print("no collision detected")
+
+
+func _predict_path(from: Vector2i, to: Vector2i) -> Array:
+	var path = []
+	# We make our starting position be the first element in our path
+	var current = from
+	path.append(current)
+	
+	# While we haven't reached our destination
+	while current != to:
+		# Keep heading towards our target, one cell at a time and add it to our path array
+		var dir = (to - current).sign()
+		current += dir
+		path.append(current)
+	
+	return path
 
 
 # Creates and returns a player_destination_packet
@@ -192,24 +252,34 @@ func _physics_process(delta: float) -> void:
 	
 	_rotate_character(delta) # Handle rotation first
 	
-	if is_in_motion:
+	if in_motion:
 		_update_player_movement(delta)
 
 
 # Called on tick from the _process function
 func _update_player_movement(delta: float) -> void:
 	if movement_elapsed_time < movement_tick:
-		move_player_locally(delta)
+		move_and_slide_player(delta)
 		
 	# If elapsed time is past the tick
 	else:
 		# Update the local player position for our interpolated movement
 		interpolated_position = next_cell
+		# Keep track of our position in the grid, locally
+		grid_position = Utils.local_to_map(interpolated_position)
+		
+		# If our traversed path doesn't have our current grid position, add it
+		if not unconfirmed_traversed_path.has(grid_position):
+			unconfirmed_traversed_path.append(grid_position)
 		
 		# If we still have a path to traverse this tick
 		if player_path.size() > 0:
+			# Append our next step since we are already moving towards it
+			# so it doesn't desync, because the server packet will arrive before we finish
+			unconfirmed_traversed_path.append(player_path[0])
+			
 			_setup_next_movement_step(true)
-			move_player_locally(delta)
+			move_and_slide_player(delta)
 			# Update our locomation after moving
 			switch_locomotion(player_speed)
 		
@@ -221,9 +291,11 @@ func _update_player_movement(delta: float) -> void:
 				# So its always exactly at the center of the cell in the grid
 				position = next_cell
 				interpolated_position = next_cell
-				is_in_motion = false
+				# After IDLE, we set is motion to false and turn off autopilot too
+				in_motion = false
+				autopilot_active = false
 				
-				switch_locomotion(0) # 0 steps means IDLE
+				switch_locomotion(0) # IDLE
 
 			# If we have a second path
 			else:
@@ -231,21 +303,11 @@ func _update_player_movement(delta: float) -> void:
 				player_path.append_array(player_next_tick_path)
 				# We clear the next path since we already used it
 				player_next_tick_path = []
-				# Update our player's movement tick to match our new path
-				# Without removing -1 because overlap already took care of it
+				# Update our player's speed that we had previously calculated (overlap already removed)
 				update_movement_tick(player_next_tick_speed)
 				_setup_next_movement_step(true)
-				move_player_locally(delta)
-				# Update our locomotion
 				switch_locomotion(player_next_tick_speed)
-				# We overwrite our speed with the next tick speed
-				player_speed = player_next_tick_speed
-		
-		# After moving a cell in the grid,
-		# Keep track of our position in the grid, locally
-		if grid_position != Utils.local_to_map(interpolated_position):
-			grid_position = Utils.local_to_map(interpolated_position)
-			print(grid_position)
+				move_and_slide_player(delta)
 
 
 # Used to switch the current animation state
@@ -256,7 +318,7 @@ func switch_locomotion(steps: int) -> void:
 
 
 # Called on tick by _update_player_movement to interpolate the position of the player
-func move_player_locally(delta: float) -> void:
+func move_and_slide_player(delta: float) -> void:
 	# We use delta time to advance our player's movement
 	movement_elapsed_time += delta
 	# How far we've moved towards our target based on server_tick / player_speed
@@ -267,8 +329,29 @@ func move_player_locally(delta: float) -> void:
 
 # Updates the player's path and sets the next cell the player should traverse
 func update_destination(new_path: Array) -> void:
+	# If we are ahead of the server (we predicted our path and moved already)
+	if not unconfirmed_traversed_path.is_empty():
+		var confirmed_steps: int = _validate_move_prediction(unconfirmed_traversed_path, new_path)
+		# If none of the steps from the packet was valid
+		if confirmed_steps == 0:
+			print("RE-SYNC needed, resetting unconfirmed path")
+			autopilot_active = true
+			unconfirmed_traversed_path = []
+			player_path = []
+			
+			# CAUTION
+			# Teleport the player to the correct server position first
+			grid_position = new_path[0]
+			interpolated_position = Utils.map_to_local(grid_position)
+		
+		# If we have at least one confirmed step
+		else:
+			# Remove it from the unconfirmed_traversed_path array and exit early
+			unconfirmed_traversed_path = unconfirmed_traversed_path.slice(confirmed_steps)
+			return
+	
 	# If we are already in motion
-	if is_in_motion:
+	if in_motion:
 		# If we haven't completed the first path yet
 		if not player_path.is_empty():
 			# Find the overlap at the end of our path with the start of the next path
@@ -287,10 +370,8 @@ func update_destination(new_path: Array) -> void:
 			player_path.append_array(player_next_tick_path)
 			# We clear the second path since we already used it
 			player_next_tick_path = []
-			# We overwrite our speed with the next tick speed
-			player_speed = player_next_tick_speed
-			# Update our player's movement tick to match our new path
-			update_movement_tick(player_speed)
+			# Update our player's speed that we had previously calculated (overlap already removed)
+			update_movement_tick(player_next_tick_speed)
 			
 			# Store our next tick move speed after removing the first cell
 			player_next_tick_speed = new_path.size()-1
@@ -311,13 +392,30 @@ func update_destination(new_path: Array) -> void:
 		
 		# If we have a path to traverse (two cells or more)
 		if player_path.size() > 1:
-			# Store this tick move speed after removing the first cell
-			player_speed = player_path.size()-1
-			# Update our player's movement tick to match our new path
-			update_movement_tick(player_speed)
+			# Update our player's speed to match our new path (remove overlap)
+			update_movement_tick(player_path.size()-1)
 			_setup_next_movement_step(false)
-			is_in_motion = true
 
+
+# Compares the traversed path by the client to the server path (true authoritative path)
+# and returns an integer with the number of confirmed steps
+func _validate_move_prediction(client_path, authoritative_path) -> int:
+	print("client prediction: ", client_path)
+	print("server path: ", authoritative_path)
+	
+	var confirmed_steps = 0
+	# For each cell in the server's path
+	for i in range(authoritative_path.size()):
+		# Iterate over the 3 oldest steps our character traversed in the client
+		for j in range(min(client_path.size(), 3)):
+			# If one of the 3 steps we predicted was part of our server packet
+			if authoritative_path[i] == client_path[j]:
+				# If the paths converged, we need to check by how much
+				# If this step was further ahead, overwrite our variable
+				if confirmed_steps < j+1:
+					confirmed_steps = j+1
+	
+	return confirmed_steps
 
 # Prepare the variables before starting a new move
 func _setup_next_movement_step(should_rotate: bool) -> void:
@@ -331,6 +429,8 @@ func _setup_next_movement_step(should_rotate: bool) -> void:
 		
 	# Reset our move variable in _process
 	movement_elapsed_time = 0
+	# Specify our character is moving
+	in_motion = true
 
 
 func _calculate_path_overlap(current_path: Array, new_path: Array) -> int:
@@ -402,4 +502,5 @@ func new_chat_bubble(message: String) -> void:
 func update_movement_tick(new_speed: int) -> void:
 	# Clamp speed to 1-3 range
 	new_speed = clamp(new_speed, 1, 3)
+	player_speed = new_speed # Overwrite our player's speed
 	movement_tick = SERVER_TICK / new_speed

@@ -91,7 +91,7 @@ func (h *Hub) Start() {
 	log.Println("Starting hub...")
 
 	// Create a new region called Prototype with a grid of (X by Z) squares
-	h.CreateRegion("Prototype", "prototype", 16, 30)
+	h.CreateRegion("Prototype", "prototype", 20, 40)
 
 	// TO IMPLEMENT -> Adding static obstacles to the current map
 	// add obstacles [20, 33] = "stone_column", rotate it by 30°

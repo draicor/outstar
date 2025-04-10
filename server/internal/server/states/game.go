@@ -15,7 +15,8 @@ import (
 )
 
 // SERVER TICKS
-const PlayerTick float64 = 0.5 // Player Movement Tick
+// Player movement runs at 2Hz (0.5s ticks)
+const PlayerMoveTick float64 = 0.5
 
 type Game struct {
 	client                 server.Client
@@ -186,7 +187,7 @@ func (state *Game) updateCharacter() {
 
 // Runs in a loop updating the player
 func (state *Game) playerUpdateLoop(ctx context.Context) {
-	ticker := time.NewTicker(time.Duration(PlayerTick*1000) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(PlayerMoveTick*1000) * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
@@ -262,8 +263,8 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 // Sent from the client to the server to request setting a new destination for their player character
 func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 	// CAUTION, for testing only!
-	// Simulate 2 second delay
-	time.Sleep(2 * time.Second)
+	// Simulate 500ms delay
+	time.Sleep(1000 * time.Millisecond)
 
 	// Get the grid from this region
 	grid := state.client.GetRegion().Grid
