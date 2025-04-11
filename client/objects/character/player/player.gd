@@ -176,7 +176,7 @@ func _raycast(mouse_position: Vector2) -> void:
 		is_predicting = true
 		
 		if in_motion:
-			print("Recalculating...")
+			print("Recalculating new prediction...")
 			predicted_path = _predict_path(Utils.local_to_map(next_cell), grid_destination)
 			# If the next predicted path is valid
 			if predicted_path.size() > 1:
@@ -204,6 +204,8 @@ func _raycast(mouse_position: Vector2) -> void:
 			if predicted_path.size() > 1:
 				# Make this predicted path our current path and start moving right away
 				player_path = predicted_path.duplicate()
+				# CAUTION:
+				# This is NOT organized in batches of 3 steps.. so this wont work
 				# Update our player's speed to match our new path (remove overlap)
 				update_movement_tick(player_path.size()-1)
 				_setup_next_movement_step(false)
@@ -277,7 +279,6 @@ func _update_player_movement(delta: float) -> void:
 			# Append our next step since we are already moving towards it
 			# so it doesn't desync, because the server packet will arrive before we finish
 			unconfirmed_traversed_path.append(player_path[0])
-			
 			_setup_next_movement_step(true)
 			move_and_slide_player(delta)
 			# Update our locomation after moving
@@ -329,26 +330,29 @@ func move_and_slide_player(delta: float) -> void:
 
 # Updates the player's path and sets the next cell the player should traverse
 func update_destination(new_path: Array) -> void:
-	# If we are ahead of the server (we predicted our path and moved already)
-	if not unconfirmed_traversed_path.is_empty():
-		var confirmed_steps: int = _validate_move_prediction(unconfirmed_traversed_path, new_path)
-		# If none of the steps from the packet was valid
-		if confirmed_steps == 0:
-			print("RE-SYNC needed, resetting unconfirmed path")
-			autopilot_active = true
-			unconfirmed_traversed_path = []
-			player_path = []
+	# Only do the reconciliation for my player, not the other players
+	if my_player_character and is_predicting:
+		# If we are ahead of the server (we predicted our path and moved already)
+		if not unconfirmed_traversed_path.is_empty():
+			var confirmed_steps: int = _validate_move_prediction(unconfirmed_traversed_path, new_path)
+			# If none of the steps from the packet was valid
+			if confirmed_steps == 0:
+				print("RE-SYNC needed, resetting unconfirmed path")
+				autopilot_active = true
+				unconfirmed_traversed_path = []
+				player_path = []
+				
+				# CAUTION
+				# Teleport the player to the correct server position
+				# Replace this with a graceful prediction from current pos to server_pos
+				grid_position = new_path[0]
+				interpolated_position = Utils.map_to_local(grid_position)
 			
-			# CAUTION
-			# Teleport the player to the correct server position first
-			grid_position = new_path[0]
-			interpolated_position = Utils.map_to_local(grid_position)
-		
-		# If we have at least one confirmed step
-		else:
-			# Remove it from the unconfirmed_traversed_path array and exit early
-			unconfirmed_traversed_path = unconfirmed_traversed_path.slice(confirmed_steps)
-			return
+			# If we have at least one confirmed step
+			else:
+				# Remove it from the unconfirmed_traversed_path array and exit early
+				unconfirmed_traversed_path = unconfirmed_traversed_path.slice(confirmed_steps)
+				return
 	
 	# If we are already in motion
 	if in_motion:
