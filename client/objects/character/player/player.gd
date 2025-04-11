@@ -174,27 +174,15 @@ func _raycast(mouse_position: Vector2) -> void:
 		grid_destination = Utils.local_to_map(local_point)
 		
 		if in_motion and is_predicting:
-			print("was moving and clicked again...")
 			# Generate and store a path prediction towards the destination we want to reach
 			# Take into consideration I'm between cells, so take the next_cell and not my current cell
 			var prediction = _predict_path(Utils.local_to_map(next_cell), grid_destination)
 			# If the predicted path is valid
 			if prediction.size() > 1:
-				# If we are already at the first position
-				if prediction[0] == Utils.local_to_map(next_cell):
-					# Skip the current cell
-					prediction = prediction.slice(1)
-				
-				# Only get the first 4 cells from our prediction for this tick
-				predicted_path = Utils.pop_multiple_front(prediction, 4)
-				# Store the remaining prediction for next tick
-				next_tick_predicted_path = prediction
-				# Prepare everything to move correctly this tick
-				update_movement_tick(predicted_path.size()-1)
-				_setup_next_movement_step(predicted_path, false)
-				
-				# Store the next tick speed to be used next tick
-				next_tick_player_speed = next_tick_predicted_path.size()
+				# Since we are already between cells,
+				# we need to wait until we complete our current tick movement,
+				# so we store our prediction for the next tick
+				next_tick_predicted_path = prediction.slice(1)
 				
 				# Create a new packet to hold our input and send it to the server
 				var packet := _create_player_destination_packet(grid_destination)
@@ -207,13 +195,10 @@ func _raycast(mouse_position: Vector2) -> void:
 			# If the prediction is valid
 			# Make this prediction our current path and start moving right away
 			if prediction.size() > 1:
-				# Only get the first 4 cells from our prediction for this tick
+				# Because we were idling, we need the first 4 cells for this tick
 				predicted_path = Utils.pop_multiple_front(prediction, 4)
 				# Store the remaining prediction for next tick
 				next_tick_predicted_path = prediction
-				# Store the next tick speed to be used next tick
-				next_tick_player_speed = next_tick_predicted_path.size()
-				
 				# Prepare everything to move correctly this tick
 				update_movement_tick(predicted_path.size()-1)
 				_setup_next_movement_step(predicted_path, false)
@@ -287,13 +272,14 @@ func _update_player_movement(delta: float) -> void:
 		# If this is our character and we are predicting
 		if my_player_character and is_predicting:
 			if predicted_path.size() > 0:
-				# Append our next step since we are already moving towards it
-				# so it doesn't desync, because the server packet will arrive before we finish
+				# Append our next step since we are already moving towards it to prevent desync,
+				# because the server packet might arrive before we finish moving
 				unconfirmed_traversed_path.append(predicted_path[0])
+				# Update our speed, adjust our locomotion and start moving
 				_setup_next_movement_step(predicted_path, true)
 				move_and_slide_player(delta)
-				# Update our locomation after moving
 				switch_locomotion(player_speed)
+			
 			# If we already completed the path we had
 			else:
 				# Check if we have a second predicted path, if not, we stopped moving
@@ -305,20 +291,16 @@ func _update_player_movement(delta: float) -> void:
 					# After IDLE, we set is motion to false and turn off autopilot too
 					in_motion = false
 					autopilot_active = false
-					is_predicting = false
-					
 					switch_locomotion(0) # IDLE
-
+				
 				# If we have a next tick predicted path
 				else:
-					# We add the second predicted path to the current one
-					predicted_path.append_array(next_tick_predicted_path)
-					# We clear the next predicted path since we already used it
-					next_tick_predicted_path = []
-					# Update our player's speed that we had previously calculated (overlap already removed)
-					update_movement_tick(next_tick_player_speed)
+					# Only get the first 3 cells from our next tick path
+					predicted_path.append_array(Utils.pop_multiple_front(next_tick_predicted_path, 3))
+					# Update our speed, adjust our locomotion and start moving
+					update_movement_tick(predicted_path.size())
 					_setup_next_movement_step(predicted_path, true)
-					switch_locomotion(next_tick_player_speed)
+					switch_locomotion(player_speed) # update_movement_tick updated this
 					move_and_slide_player(delta)
 		
 		
@@ -329,10 +311,10 @@ func _update_player_movement(delta: float) -> void:
 				# Append our next step since we are already moving towards it
 				# so it doesn't desync, because the server packet will arrive before we finish
 				unconfirmed_traversed_path.append(player_path[0])
+				# Update our speed, adjust our locomotion and start moving
 				_setup_next_movement_step(player_path, true)
-				move_and_slide_player(delta)
-				# Update our locomation after moving
 				switch_locomotion(player_speed)
+				move_and_slide_player(delta)
 			
 			# If we already completed the path we had
 			else:
@@ -345,20 +327,17 @@ func _update_player_movement(delta: float) -> void:
 					# After IDLE, we set is motion to false and turn off autopilot too
 					in_motion = false
 					autopilot_active = false
-					
 					switch_locomotion(0) # IDLE
 
 				# If we have a second path
 				else:
-					# We add the second path to the current one
-					player_path.append_array(next_tick_player_path)
-					# We clear the next path since we already used it
-					next_tick_player_path = []
-					# Update our player's speed that we had previously calculated (overlap already removed)
-					update_movement_tick(next_tick_player_speed)
+					# Only get the first 3 cells from our next tick path
+					player_path.append_array(Utils.pop_multiple_front(next_tick_player_path, 3))
+					# Update our speed, adjust our locomotion and start moving
+					update_movement_tick(player_path.size())
 					_setup_next_movement_step(player_path, true)
-					switch_locomotion(next_tick_player_speed)
 					move_and_slide_player(delta)
+					switch_locomotion(player_speed)  # update_movement_tick updated this
 
 
 # Used to switch the current animation state
@@ -379,23 +358,26 @@ func move_and_slide_player(delta: float) -> void:
 
 
 # Updates the player's path and sets the next cell the player should traverse
+# CAUTION
+# I PROBABLY HAVE TO REMOVE THE NEXT_TICK_PLAYER_SPEED FROM HERE
 func update_destination(new_path: Array) -> void:
 	# Only do the reconciliation for my player, not the other players
 	if my_player_character and is_predicting:
-		# If we are ahead of the server (we predicted our path and moved already)
+		# We are ahead of the server (we predicted our path and moved already)
+		# If we have unconfirmed movement
 		if not unconfirmed_traversed_path.is_empty():
 			var confirmed_steps: int = _validate_move_prediction(unconfirmed_traversed_path, new_path)
 			# If none of the steps from the packet was valid
 			if confirmed_steps == 0:
-				print("RE-SYNC needed, resetting unconfirmed path")
-				autopilot_active = true
+				print("Synchronizing")
+				#autopilot_active = true # NOTE this will be implemented soon
 				unconfirmed_traversed_path = []
 				player_path = []
 				
 				# CAUTION
 				# Teleport the player to the correct server position
 				# Replace this with a graceful prediction from current pos to server_pos
-				grid_position = new_path[0]
+				grid_position = new_path.pop_back()
 				interpolated_position = Utils.map_to_local(grid_position)
 			
 			# If we have at least one confirmed step
@@ -404,51 +386,35 @@ func update_destination(new_path: Array) -> void:
 				unconfirmed_traversed_path = unconfirmed_traversed_path.slice(confirmed_steps)
 				return
 	
-	# If we are already in motion
-	if in_motion:
-		# If we haven't completed the first path yet
-		if not player_path.is_empty():
-			# Find the overlap at the end of our path with the start of the next path
-			var overlap := _calculate_path_overlap(player_path, new_path)
-			
-			var next_path := new_path.slice(overlap)
-			# Append the new path to our next tick path
-			next_tick_player_path.append_array(next_path)
-			# NOTE: we don't remove -1 from this speed
-			# Because the overlap already took care of it
-			next_tick_player_speed = next_path.size()
-		
-		# If we have completed the first path but NOT the second one
-		elif not next_tick_player_path.is_empty():
-			# We add the second path to the current one
-			player_path.append_array(next_tick_player_path)
-			# We clear the second path since we already used it
-			next_tick_player_path = []
-			# Update our player's speed that we had previously calculated (overlap already removed)
-			update_movement_tick(next_tick_player_speed)
-			
-			# Store our next tick move speed after removing the first cell
-			next_tick_player_speed = new_path.size()-1
-			# We make the new path our next path, skipping the current cell
-			next_tick_player_path.append_array(new_path.slice(1))
-			
-		# If the player already completed both paths
-		else:
-			# Store our next tick move speed after removing the first cell
-			next_tick_player_speed = new_path.size()-1
-			# We make the new path our next path, skipping the current cell
-			next_tick_player_path.append_array(new_path.slice(1))
-	
-	# If we are not moving
 	else:
-		# We make the new path our current path
-		player_path = new_path
+		if in_motion:
+			# If we haven't completed the first path yet
+			if not player_path.is_empty():
+				# Find the overlap at the end of our path with the start of the next path
+				var overlap := _calculate_path_overlap(player_path, new_path)
+				var next_path := new_path.slice(overlap)
+				# Append the new path to our next tick path
+				next_tick_player_path.append_array(next_path)
+			
+			# If we have completed the first path but NOT the second one
+			elif not next_tick_player_path.is_empty():
+				# Get the first 3 cells from our next tick path
+				player_path.append_array(Utils.pop_multiple_front(next_tick_player_path, 3))
+				
+			# If the player already completed both paths
+			else:
+				# We make the new path our next path, skipping the current cell
+				next_tick_player_path.append_array(new_path.slice(1))
 		
-		# If we have a path to traverse (two cells or more)
-		if player_path.size() > 1:
-			# Update our player's speed to match our new path (remove overlap)
-			update_movement_tick(player_path.size()-1)
-			_setup_next_movement_step(player_path, false)
+		# If we are idling
+		else:
+			# If we have a path to traverse (two cells or more)
+			if new_path.size() > 1:
+				# We make the new path our current path
+				player_path = new_path
+				# Update our player's speed to match our new path (remove overlap)
+				update_movement_tick(player_path.size()-1)
+				_setup_next_movement_step(player_path, false) # This starts movement
 
 
 # Compares the traversed path by the client to the server path (true authoritative path)

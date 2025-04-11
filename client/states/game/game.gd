@@ -236,9 +236,8 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 				var vector = Vector2i(position.get_x(), position.get_z())
 				path.append(vector)
 			
-			# CAUTION testing stuff
 			# Update this player's movement
-			# player.update_destination(path)
+			player.update_destination(path)
 
 func _load_map(map: GameManager.Maps) -> void:
 	# Load the next scene
