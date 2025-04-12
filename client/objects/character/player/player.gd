@@ -161,6 +161,7 @@ func _input(event: InputEvent) -> void:
 		_raycast(mouse_position)
 
 
+# Used to cast a ray from the camera view to the mouse position
 func _raycast(mouse_position: Vector2) -> void:
 	# If our client is being moved automatically or our raycast node is invalid
 	if autopilot_active or not raycast:
@@ -191,7 +192,29 @@ func _raycast(mouse_position: Vector2) -> void:
 				# Since we are already between cells,
 				# we need to wait until we complete our current tick movement,
 				# so we store our prediction for the next tick
-				next_tick_predicted_path = prediction.slice(1)
+				# next_tick_predicted_path = prediction.slice(1)
+				
+				print("raycast: ", next_tick_predicted_path)
+				print("gridpos: ", grid_position)
+				print("next_cell: ", Utils.local_to_map(next_cell))
+				print("current path: ", predicted_path)
+				print("next_predict: ", prediction)
+				
+				# Since we are in between cells, we need to remove from the prediction,
+				# both cells, the departure and next cell before we made the second click
+				# Removing current cell
+				var overlap := prediction.find(Utils.local_to_map(next_cell))
+				if overlap != -1:
+					prediction.remove_at(overlap)
+				
+				# Removing target cell from the first prediction
+				if predicted_path.size() > 0:
+					overlap = prediction.find(predicted_path[0])
+					if overlap != -1:
+						prediction.remove_at(overlap)
+				
+				next_tick_predicted_path = prediction
+				print("raycast: ", next_tick_predicted_path)
 				
 				# Create a new packet to hold our input and send it to the server
 				var packet := _create_player_destination_packet(grid_destination)
@@ -309,8 +332,13 @@ func _update_player_movement(delta: float) -> void:
 				
 				# If we have a next tick predicted path
 				else:
+					print(predicted_path)
+					
 					# Only get the first 3 cells from our next tick path
 					predicted_path.append_array(Utils.pop_multiple_front(next_tick_predicted_path, 3))
+					
+					print(predicted_path)
+					
 					# Update our speed, adjust our locomotion and start moving
 					update_movement_tick(predicted_path.size())
 					_setup_next_movement_step(predicted_path, true)
