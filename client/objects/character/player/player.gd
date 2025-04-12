@@ -194,27 +194,30 @@ func _raycast(mouse_position: Vector2) -> void:
 				# so we store our prediction for the next tick
 				# next_tick_predicted_path = prediction.slice(1)
 				
-				print("raycast: ", next_tick_predicted_path)
-				print("gridpos: ", grid_position)
+				print("next_tick_predicted_path: ", next_tick_predicted_path)
+				print("grid_position: ", grid_position)
 				print("next_cell: ", Utils.local_to_map(next_cell))
-				print("current path: ", predicted_path)
-				print("next_predict: ", prediction)
+				print("currentpredicted_path path: ", predicted_path)
+				print("prediction: ", prediction)
 				
 				# Since we are in between cells, we need to remove from the prediction,
 				# both cells, the departure and next cell before we made the second click
-				# Removing current cell
-				var overlap := prediction.find(Utils.local_to_map(next_cell))
-				if overlap != -1:
-					prediction.remove_at(overlap)
 				
 				# Removing target cell from the first prediction
 				if predicted_path.size() > 0:
-					overlap = prediction.find(predicted_path[0])
+					var overlap := prediction.find(predicted_path[0])
 					if overlap != -1:
 						prediction.remove_at(overlap)
+					
+						# Removing current cell ONLY if we removed the target cell too
+						overlap = prediction.find(Utils.local_to_map(next_cell))
+						if overlap != -1:
+							prediction.remove_at(overlap)
+					
+					
 				
 				next_tick_predicted_path = prediction
-				print("raycast: ", next_tick_predicted_path)
+				print("final next_tick_predicted_path: ", next_tick_predicted_path)
 				
 				# Create a new packet to hold our input and send it to the server
 				var packet := _create_player_destination_packet(grid_destination)
@@ -332,12 +335,8 @@ func _update_player_movement(delta: float) -> void:
 				
 				# If we have a next tick predicted path
 				else:
-					print(predicted_path)
-					
 					# Only get the first 3 cells from our next tick path
 					predicted_path.append_array(Utils.pop_multiple_front(next_tick_predicted_path, 3))
-					
-					print(predicted_path)
 					
 					# Update our speed, adjust our locomotion and start moving
 					update_movement_tick(predicted_path.size())
