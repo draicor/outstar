@@ -197,26 +197,46 @@ func _raycast(mouse_position: Vector2) -> void:
 				print("next_tick_predicted_path: ", next_tick_predicted_path)
 				print("grid_position: ", grid_position)
 				print("next_cell: ", Utils.local_to_map(next_cell))
-				print("currentpredicted_path path: ", predicted_path)
+				print("predicted_path: ", predicted_path)
 				print("prediction: ", prediction)
 				
 				# Since we are in between cells, we need to remove from the prediction,
 				# both cells, the departure and next cell before we made the second click
 				
-				# Removing target cell from the first prediction
 				if predicted_path.size() > 0:
-					var overlap := prediction.find(predicted_path[0])
-					if overlap != -1:
-						prediction.remove_at(overlap)
+					# If my grid position is not the same as my next_cell position
+					if grid_position != Utils.local_to_map(next_cell):
+						# If my next_cell position in the current path is the first
+						# position of my new prediction, remove it from the new prediction,
+						# and then calculate the overlap between both paths
+						if Utils.local_to_map(next_cell) == prediction[0]:
+							prediction.remove_at(0)
+							var overlap := _calculate_path_overlap(predicted_path, prediction)
+							prediction = prediction.slice(overlap)
 					
-						# Removing current cell ONLY if we removed the target cell too
-						overlap = prediction.find(Utils.local_to_map(next_cell))
+					# If the first cell in my current path is in my prediction
+					elif prediction.find(predicted_path[0]):
+						# Removing the target cell from the first prediction,
+						# to prevent stalling in the cell I was trying to reach
+						# CAUTION
+						
+						var overlap := prediction.find(predicted_path[0])
 						if overlap != -1:
 							prediction.remove_at(overlap)
+						
+							# Removing current cell ONLY if we removed the target cell too,
+							# this prevents sliding if I do a 180° turn
+							overlap = prediction.find(Utils.local_to_map(next_cell))
+							if overlap != -1:
+								prediction.remove_at(overlap)
 					
-					
+					# We update the modified prediction
+					next_tick_predicted_path = prediction
 				
-				next_tick_predicted_path = prediction
+				# If our predicted path was already empty, skip the first cell since its repeated
+				else:
+					next_tick_predicted_path = prediction.slice(1)
+				
 				print("final next_tick_predicted_path: ", next_tick_predicted_path)
 				
 				# Create a new packet to hold our input and send it to the server
