@@ -11,7 +11,7 @@ const MAX_WIDTH = 190 # Max width in pixels
 const CHAT_BUBBLE_ORIGIN_Y_OFFSET = 0.1 # Used to multiply against the number of lines
 const FADE_IN_DURATION = 0.25
 const FADE_OUT_DURATION = 0.25
-const CHAT_SPEECH_DISPLAY_TIME = 5.0 # Time before fading out the speech bubble
+const CHAT_SPEECH_DISPLAY_TIME = 15.0 # Time before fading out the speech bubble
 
 var is_bubble_active = false # Used to reset the timer and update the text without fading
 var fade_tween: Tween
@@ -19,7 +19,7 @@ var fade_tween: Tween
 # To get a character's width and height:
 # print(label.get_theme_font("normal_font").get_string_size("a"))
 
-# TO UPGRADE
+# NOTE
 # REPLACE PANEL CONTAINER WITH A NINE PATCH RECT with a custom texture!
 
 func _init() -> void:

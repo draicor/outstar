@@ -237,7 +237,7 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 				path.append(vector)
 			
 			# Update this player's movement
-			player.update_destination(path)
+			# player.update_destination(path)
 
 func _load_map(map: GameManager.Maps) -> void:
 	# Load the next scene

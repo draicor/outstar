@@ -9,7 +9,8 @@ const Player := preload("res://objects/character/player/player.gd")
 @export var RAYCAST_DISTANCE : float = 20 # 20 meters
 
 # CONSTANTS
-const SERVER_TICK: float = 0.5
+const SERVER_TICK: float = 0.5 # Controls local player move speed
+const DIRECTION_THRESHOLD := 0.01 # Accounts for floating point imprecision
 
 # Tick related data
 var movement_tick: float = SERVER_TICK # Defaults to server_tick
@@ -18,9 +19,8 @@ var movement_tick: float = SERVER_TICK # Defaults to server_tick
 var player_id: int
 var player_name: String
 var model_rotation_y: float
-# Used to spawn the character and also to correct the player's position
-var server_grid_position: Vector2i # ONLY USED AT SPAWN FOR NOW, we will use it to correct our local grid position compared to the server
-var my_player_character: bool
+var server_grid_position: Vector2i # Used to spawn the character and also to correct the player's position
+var my_player_character: bool # Used to differentiate my character from remote players
 
 # Internal data
 var grid_position: Vector2i # Keeps track of our grid position locally
@@ -30,13 +30,14 @@ var player_path: Array # Set at spawn and after server movement
 var next_tick_player_path: Array # Used to store the next path
 
 var player_speed: int # Set at spawn and after server movement
-var next_tick_player_speed: int # Used to store the next speed
 
 var interpolated_position: Vector3 # Used to smoothly slide our character in our game client
 var movement_elapsed_time: float = 0.0 # Used in _process to slide the character
 var next_cell: Vector3 # Used in _process, its the next cell our player should move to
 
 # Rotation state
+var forward_direction: Vector3 # Used to keep track of our current forward direction
+var previous_forward_direction: Vector3 # We compare against this to check if we need to rotate
 var is_rotating: bool = false # To prevent movement before rotation ends 
 var rotation_elapsed: float = 0.0 # Used in _process to rotate the character
 var start_yaw: float = 0.0
@@ -72,6 +73,9 @@ var locomotion := {
 # Camera variables
 var camera : Camera3D
 var raycast : RayCast3D
+
+# Debugging
+var debugging_enabled: bool = true
 
 @onready var animation_player: AnimationPlayer = $Model/Body/AnimationPlayer
 @onready var model: Node3D = $Model
@@ -122,6 +126,9 @@ func _ready() -> void:
 	
 	# Update any other spawn data here
 	model.rotation.y = model_rotation_y
+	# Convert our model's y-rotation (radians) to a forward direction vector
+	forward_direction = Vector3(-sin(model_rotation_y), 0, -cos(model_rotation_y))
+	previous_forward_direction = forward_direction # At spawn, we make them equal
 	
 	# Update our player's movement tick at spawn
 	update_movement_tick(player_speed)
@@ -173,10 +180,12 @@ func _raycast(mouse_position: Vector2) -> void:
 		# Transform the local space position to our grid coordinate
 		grid_destination = Utils.local_to_map(local_point)
 		
+		# If we were already predicting a path and moving towards it
 		if in_motion and is_predicting:
-			# Generate and store a path prediction towards the destination we want to reach
+			# Generate and store another path prediction towards the destination we want to reach
 			# Take into consideration I'm between cells, so take the next_cell and not my current cell
 			var prediction = _predict_path(Utils.local_to_map(next_cell), grid_destination)
+			
 			# If the predicted path is valid
 			if prediction.size() > 1:
 				# Since we are already between cells,
@@ -214,7 +223,9 @@ func _raycast(mouse_position: Vector2) -> void:
 		#else:
 			#print("no collision detected")
 
-
+# NOTE
+# Simple straight line prediction for now, this needs to be replaced with A*
+# Predicts a path from a grid position to another grid position
 func _predict_path(from: Vector2i, to: Vector2i) -> Array:
 	var path = []
 	# We make our starting position be the first element in our path
@@ -251,6 +262,9 @@ func _physics_process(delta: float) -> void:
 	
 	if in_motion:
 		_update_player_movement(delta)
+	
+	if debugging_enabled:
+		DebugDraw3D.draw_line(position, position + forward_direction * 1, Color.RED) # 2 meters forward line
 
 
 # Called on tick from the _process function
@@ -358,8 +372,6 @@ func move_and_slide_player(delta: float) -> void:
 
 
 # Updates the player's path and sets the next cell the player should traverse
-# CAUTION
-# I PROBABLY HAVE TO REMOVE THE NEXT_TICK_PLAYER_SPEED FROM HERE
 func update_destination(new_path: Array) -> void:
 	# Only do the reconciliation for my player, not the other players
 	if my_player_character and is_predicting:
@@ -471,26 +483,35 @@ func _calculate_path_overlap(current_path: Array, new_path: Array) -> int:
 
 # Calculates the rotation
 func _calculate_rotation(target: Vector3) -> void:
-	# Can't change rotation within our own cell
+	# Skip if we clicked our current cell
 	if position == target:
+		is_rotating = false
 		return
 	
 	# Calculate the direction to target
-	var direction := (target - position)
+	forward_direction = (target - position)
 	# Remove the vertical component for ground-based characters
-	direction.y = 0
+	forward_direction.y = 0
 	
-	# Only rotate if we have a valid direction
-	if direction.length() > 0.001:
-		direction = direction.normalized()
+	# Normalize our forward direction for comparison with the previous forward direction
+	var normalized_forward_direction: Vector3 = Vector3.ZERO
+	if forward_direction.length() > 0:
+		normalized_forward_direction = forward_direction.normalized()
+	
+	# Check if direction has changed significantly AND we have a valid forward direction
+	if (normalized_forward_direction.distance_to(previous_forward_direction) > DIRECTION_THRESHOLD) and forward_direction.length() > 0.001:
+		forward_direction = normalized_forward_direction
 		# Calculate yaw
 		start_yaw = model.rotation.y
 		# Calculate target rotation quaternion
 		# NOTE: Direction has to be negative so the model faces forward
-		target_yaw = atan2(-direction.x, -direction.z)
+		target_yaw = atan2(-forward_direction.x, -forward_direction.z)
 		# Reset rotation state
 		rotation_elapsed = 0.0
 		is_rotating = true
+		
+		# Store the new forward direction
+		previous_forward_direction = forward_direction
 	
 	# No rotation needed
 	else:
