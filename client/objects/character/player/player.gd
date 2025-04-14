@@ -158,14 +158,15 @@ func _on_chat_input_toggle() -> void:
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("left_click"):
 		var mouse_position : Vector2 = get_viewport().get_mouse_position()
-		_raycast(mouse_position)
+		_click_to_move(mouse_position)
 
 
 # Used to cast a ray from the camera view to the mouse position
-func _raycast(mouse_position: Vector2) -> void:
+func _mouse_raycast(mouse_position: Vector2) -> Vector3:
+	var vector: Vector3 = Vector3.ZERO
 	# If our client is being moved automatically or our raycast node is invalid
 	if autopilot_active or not raycast:
-		return
+		return vector
 	
 	# Cast a ray from our camera to our mouse position
 	raycast.target_position = camera.project_local_ray_normal(mouse_position) * RAYCAST_DISTANCE
@@ -176,98 +177,64 @@ func _raycast(mouse_position: Vector2) -> void:
 	# If we collided with something
 	if raycast.is_colliding():
 		# Grab the collision point
-		var local_point : Vector3 = raycast.get_collision_point()
-			
-		# Transform the local space position to our grid coordinate
-		grid_destination = Utils.local_to_map(local_point)
+		return raycast.get_collision_point()
+	
+	return vector
+
+
+# Casts a raycast from the mouse position to get our destination cell,
+# and then attempts to predict a path towards that cell to move our character
+func _click_to_move(mouse_position: Vector2) -> void:
+	# Grab the collision point from our mouse click
+	var local_point : Vector3 = _mouse_raycast(mouse_position)
+	# If the point was invalid, exit
+	if local_point == Vector3.ZERO:
+		return
 		
-		# If we were already predicting a path and moving towards it
-		if in_motion and is_predicting:
-			# Generate and store another path prediction towards the destination we want to reach
-			# Take into consideration I'm between cells, so take the next_cell and not my current cell
-			var prediction = _predict_path(Utils.local_to_map(next_cell), grid_destination)
+	# Transform the local space position to our grid coordinate
+	var new_destination: Vector2i = Utils.local_to_map(local_point)
+	
+	# If we were already predicting a path and moving towards it
+	if in_motion and is_predicting:
+		# Generate and store another path prediction towards the destination we want to reach,
+		# using our future grid_destination as our starting point
+		var prediction = _predict_path(grid_destination, new_destination)
+		
+		# If the predicted path is valid
+		if prediction.size() > 1:
+			# Append the new prediction for next tick, removing the first cell since its repeated
+			next_tick_predicted_path.append_array(prediction.slice(1))
 			
-			# If the predicted path is valid
-			if prediction.size() > 1:
-				# Since we are already between cells,
-				# we need to wait until we complete our current tick movement,
-				# so we store our prediction for the next tick
-				# next_tick_predicted_path = prediction.slice(1)
-				
-				print("next_tick_predicted_path: ", next_tick_predicted_path)
-				print("grid_position: ", grid_position)
-				print("next_cell: ", Utils.local_to_map(next_cell))
-				print("predicted_path: ", predicted_path)
-				print("prediction: ", prediction)
-				
-				# Since we are in between cells, we need to remove from the prediction,
-				# both cells, the departure and next cell before we made the second click
-				
-				if predicted_path.size() > 0:
-					# If my grid position is not the same as my next_cell position
-					if grid_position != Utils.local_to_map(next_cell):
-						# If my next_cell position in the current path is the first
-						# position of my new prediction, remove it from the new prediction,
-						# and then calculate the overlap between both paths
-						if Utils.local_to_map(next_cell) == prediction[0]:
-							prediction.remove_at(0)
-							var overlap := _calculate_path_overlap(predicted_path, prediction)
-							prediction = prediction.slice(overlap)
-					
-					# If the first cell in my current path is in my prediction
-					elif prediction.find(predicted_path[0]):
-						# Removing the target cell from the first prediction,
-						# to prevent stalling in the cell I was trying to reach
-						# CAUTION
-						
-						var overlap := prediction.find(predicted_path[0])
-						if overlap != -1:
-							prediction.remove_at(overlap)
-						
-							# Removing current cell ONLY if we removed the target cell too,
-							# this prevents sliding if I do a 180° turn
-							overlap = prediction.find(Utils.local_to_map(next_cell))
-							if overlap != -1:
-								prediction.remove_at(overlap)
-					
-					# We update the modified prediction
-					next_tick_predicted_path = prediction
-				
-				# If our predicted path was already empty, skip the first cell since its repeated
-				else:
-					next_tick_predicted_path = prediction.slice(1)
-				
-				print("final next_tick_predicted_path: ", next_tick_predicted_path)
-				
-				# Create a new packet to hold our input and send it to the server
-				var packet := _create_player_destination_packet(grid_destination)
-				WebSocket.send(packet)
-				
-		# If we are IDLE
-		else:
-			# Generate and store a path prediction towards the destination we want to reach
-			var prediction = _predict_path(grid_position, grid_destination)
-			# If the prediction is valid
-			# Make this prediction our current path and start moving right away
-			if prediction.size() > 1:
-				# Because we were idling, we need the first 4 cells for this tick
-				predicted_path = Utils.pop_multiple_front(prediction, 4)
-				# Store the remaining prediction for next tick
-				next_tick_predicted_path = prediction
-				# Prepare everything to move correctly this tick
-				update_movement_tick(predicted_path.size()-1)
-				_setup_next_movement_step(predicted_path, false)
-				
-				is_predicting = true
-				
-				# Create a new packet to hold our input and send it to the server
-				var packet := _create_player_destination_packet(grid_destination)
-				WebSocket.send(packet)
-				
-				# DEBUG
-				# print(grid_destination)
-		#else:
-			#print("no collision detected")
+			# Overwrite our new grid destination
+			grid_destination = new_destination
+			# Create a new packet to hold our input and send it to the server
+			var packet := _create_player_destination_packet(grid_destination)
+			WebSocket.send(packet)
+			
+	# If we are IDLE
+	else:
+		# Generate and store a path prediction towards the destination we want to reach
+		# NOTE grid_position should be the same as grid_destination here
+		var prediction = _predict_path(grid_position, new_destination)
+		# If the prediction is valid
+		# Make this prediction our current path and start moving right away
+		if prediction.size() > 1:
+			# Because we were idling, we need the first 4 cells for this tick
+			predicted_path = Utils.pop_multiple_front(prediction, 4)
+			# Store the remaining prediction for next tick
+			next_tick_predicted_path = prediction
+			# Prepare everything to move correctly this tick
+			update_movement_tick(predicted_path.size()-1)
+			_setup_next_movement_step(predicted_path, false)
+			
+			is_predicting = true
+			
+			# Overwrite our new grid destination
+			grid_destination = new_destination
+			# Create a new packet to hold our input and send it to the server
+			var packet := _create_player_destination_packet(grid_destination)
+			WebSocket.send(packet)
+
 
 # NOTE
 # Simple straight line prediction for now, this needs to be replaced with A*
