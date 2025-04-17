@@ -264,7 +264,7 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 	// CAUTION, for testing only!
 	// Simulate 500ms delay
-	time.Sleep(2000 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	// Get the grid from this region
 	grid := state.client.GetRegion().Grid

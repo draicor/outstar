@@ -47,7 +47,7 @@ var target_yaw: float = 0.0
 var is_predicting: bool = false
 var predicted_path: Array = [] # Holds our most recent predicted_path
 var next_tick_predicted_path: Array = [] # Used to store our next tick predicted path
-var unconfirmed_traversed_path: Array = [] # Holds every vector2i coordinate the player has moved to locally
+var unconfirmed_path: Array = [] # Holds every vector2i coordinate the player has moved to locally
 
 # Logic variables
 var in_motion: bool = false # If the character is moving
@@ -122,7 +122,6 @@ func _ready() -> void:
 	Signals.ui_chat_input_toggle.connect(_on_chat_input_toggle)
 	
 	position = interpolated_position # Has to be set here after the scene has been created
-	unconfirmed_traversed_path.append(grid_position) # Add our spawn position to our unconfirmed path
 	
 	# Update any other spawn data here
 	model.rotation.y = model_rotation_y
@@ -202,7 +201,9 @@ func _click_to_move(mouse_position: Vector2) -> void:
 		
 		# If the predicted path is valid
 		if prediction.size() > 1:
-			# Append the new prediction for next tick, removing the first cell since its repeated
+			unconfirmed_path.append_array(prediction)
+			
+			# Append the new prediction for next tick, removing the first cell since its repeated 
 			next_tick_predicted_path.append_array(prediction.slice(1))
 			
 			# Overwrite our new grid destination
@@ -219,6 +220,7 @@ func _click_to_move(mouse_position: Vector2) -> void:
 		# If the prediction is valid
 		# Make this prediction our current path and start moving right away
 		if prediction.size() > 1:
+			unconfirmed_path.append_array(prediction)
 			# Because we were idling, we need the first 4 cells for this tick
 			predicted_path = Utils.pop_multiple_front(prediction, 4)
 			# Store the remaining prediction for next tick
@@ -276,8 +278,11 @@ func _physics_process(delta: float) -> void:
 	if in_motion:
 		_update_player_movement(delta)
 	
-	if debugging_enabled:
-		DebugDraw3D.draw_line(position, position + forward_direction * 1, Color.RED) # 2 meters forward line
+	if my_player_character:
+		if debugging_enabled:
+			DebugDraw3D.draw_line(position, position + forward_direction * 1, Color.RED) # 1 meter forward line
+			_draw_circle(Utils.map_to_local(grid_destination), 0.5, Color.RED, 16) # Grid destination
+			_draw_circle(Utils.map_to_local(grid_position), 0.5, Color.GREEN, 16) # Grid position
 
 
 # Called on tick from the _process function
@@ -292,16 +297,9 @@ func _update_player_movement(delta: float) -> void:
 		# Keep track of our position in the grid, locally
 		grid_position = Utils.local_to_map(interpolated_position)
 		
-		# If our traversed path doesn't have our current grid position, add it
-		if not unconfirmed_traversed_path.has(grid_position):
-			unconfirmed_traversed_path.append(grid_position)
-		
 		# If this is our character and we are predicting
 		if my_player_character and is_predicting:
 			if predicted_path.size() > 0:
-				# Append our next step since we are already moving towards it to prevent desync,
-				# because the server packet might arrive before we finish moving
-				unconfirmed_traversed_path.append(predicted_path[0])
 				# Update our speed, adjust our locomotion and start moving
 				_setup_next_movement_step(predicted_path, true)
 				move_and_slide_player(delta)
@@ -331,14 +329,10 @@ func _update_player_movement(delta: float) -> void:
 					switch_locomotion(player_speed) # update_movement_tick updated this
 					move_and_slide_player(delta)
 		
-		
 		# Every other player or us if we are not predicting
 		else:
 			# If we still have a path to traverse this tick
 			if player_path.size() > 0:
-				# Append our next step since we are already moving towards it
-				# so it doesn't desync, because the server packet will arrive before we finish
-				unconfirmed_traversed_path.append(player_path[0])
 				# Update our speed, adjust our locomotion and start moving
 				_setup_next_movement_step(player_path, true)
 				switch_locomotion(player_speed)
@@ -391,13 +385,13 @@ func update_destination(new_path: Array) -> void:
 	if my_player_character and is_predicting:
 		# We are ahead of the server (we predicted our path and moved already)
 		# If we have unconfirmed movement
-		if not unconfirmed_traversed_path.is_empty():
-			var confirmed_steps: int = _validate_move_prediction(unconfirmed_traversed_path, new_path)
+		if not unconfirmed_path.is_empty():
+			var confirmed_steps: int = _validate_move_prediction(unconfirmed_path, new_path)
 			# If none of the steps from the packet was valid
 			if confirmed_steps == 0:
 				print("Synchronizing")
 				#autopilot_active = true # NOTE this will be implemented soon
-				unconfirmed_traversed_path = []
+				unconfirmed_path = []
 				player_path = []
 				
 				# CAUTION
@@ -405,11 +399,12 @@ func update_destination(new_path: Array) -> void:
 				# Replace this with a graceful prediction from current pos to server_pos
 				grid_position = new_path.pop_back()
 				interpolated_position = Utils.map_to_local(grid_position)
+				position = interpolated_position
 			
 			# If we have at least one confirmed step
 			else:
-				# Remove it from the unconfirmed_traversed_path array and exit early
-				unconfirmed_traversed_path = unconfirmed_traversed_path.slice(confirmed_steps)
+				# Remove it from the unconfirmed_path array and exit early
+				unconfirmed_path = unconfirmed_path.slice(confirmed_steps)
 				return
 	
 	else:
@@ -446,15 +441,18 @@ func update_destination(new_path: Array) -> void:
 # Compares the traversed path by the client to the server path (true authoritative path)
 # and returns an integer with the number of confirmed steps
 func _validate_move_prediction(client_path, authoritative_path) -> int:
-	print("client prediction: ", client_path)
-	print("server path: ", authoritative_path)
-	
 	var confirmed_steps = 0
-	# For each cell in the server's path
+	# If we are only checking the same tick, use 4, but if we have multiple ticks then take 3,
+	# because the server repeats the end/start cell every move packet
+	var max_steps = 4
+	if client_path.size() > 4:
+		max_steps = 3
+		
+	# Check all cells in the servers packet
 	for i in range(authoritative_path.size()):
-		# Iterate over the 3 oldest steps our character traversed in the client
-		for j in range(min(client_path.size(), 3)):
-			# If one of the 3 steps we predicted was part of our server packet
+		# Iterate over the oldest cells our character traversed in the client
+		for j in range(min(client_path.size(), max_steps)):
+			# If one of the cells we predicted was part of our server packet
 			if authoritative_path[i] == client_path[j]:
 				# If the paths converged, we need to check by how much
 				# If this step was further ahead, overwrite our variable
@@ -559,3 +557,19 @@ func update_movement_tick(new_speed: int) -> void:
 	new_speed = clamp(new_speed, 1, 3)
 	player_speed = new_speed # Overwrite our player's speed
 	movement_tick = SERVER_TICK / new_speed
+
+
+# Used to draw a circle for debugging purposes
+func _draw_circle(center: Vector3, radius: float, color: Color, resolution: int = 16):
+	var points = PackedVector3Array()
+	
+	#Generate points around the circle
+	for i in range(resolution + 1): # +1 to close the loop
+		var angle = i * (TAU/resolution) # TAU = 2*PI
+		var x = center.x + cos(angle) * radius
+		var z = center.z + sin(angle) * radius
+		points.append(Vector3(x, center.y, z))
+	
+	# Draw lines between each point
+	for i in range(points.size() - 1):
+		DebugDraw3D.draw_line(points[i], points[i + 1], color)
