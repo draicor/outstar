@@ -200,8 +200,12 @@ func _click_to_move(mouse_position: Vector2) -> void:
 		var prediction = _predict_path(grid_destination, new_destination)
 		
 		# If the predicted path is valid
-		if prediction.size() > 1:
-			unconfirmed_path.append_array(prediction)
+		if prediction.size() > 0:
+			# Only remove duplicate if the last unconfirmed cell matches first predicted cell
+			if unconfirmed_path.size() > 0 and unconfirmed_path[-1] == prediction[0]:
+				unconfirmed_path.append_array(prediction.slice(1))
+			else:
+				unconfirmed_path.append_array(prediction)
 			
 			# Append the new prediction for next tick, removing the first cell since its repeated 
 			next_tick_predicted_path.append_array(prediction.slice(1))
@@ -219,7 +223,7 @@ func _click_to_move(mouse_position: Vector2) -> void:
 		var prediction = _predict_path(grid_position, new_destination)
 		# If the prediction is valid
 		# Make this prediction our current path and start moving right away
-		if prediction.size() > 1:
+		if prediction.size() > 0:
 			unconfirmed_path.append_array(prediction)
 			# Because we were idling, we need the first 4 cells for this tick
 			predicted_path = Utils.pop_multiple_front(prediction, 4)
@@ -387,6 +391,7 @@ func update_destination(new_path: Array) -> void:
 		# If we have unconfirmed movement
 		if not unconfirmed_path.is_empty():
 			var confirmed_steps: int = _validate_move_prediction(unconfirmed_path, new_path)
+			
 			# If none of the steps from the packet was valid
 			if confirmed_steps == 0:
 				print("Synchronizing")
@@ -441,25 +446,25 @@ func update_destination(new_path: Array) -> void:
 # Compares the traversed path by the client to the server path (true authoritative path)
 # and returns an integer with the number of confirmed steps
 func _validate_move_prediction(client_path, authoritative_path) -> int:
+	print("client: ", client_path)
+	print("server: ", authoritative_path)
+	
 	var confirmed_steps = 0
-	# If we are only checking the same tick, use 4, but if we have multiple ticks then take 3,
-	# because the server repeats the end/start cell every move packet
-	var max_steps = 4
-	if client_path.size() > 4:
-		max_steps = 3
+	var max_cells = 4
 		
 	# Check all cells in the servers packet
 	for i in range(authoritative_path.size()):
-		# Iterate over the oldest cells our character traversed in the client
-		for j in range(min(client_path.size(), max_steps)):
+		# Only check unconfirmed portion of client path
+		for j in range(confirmed_steps, min(client_path.size(), confirmed_steps + max_cells)):
 			# If one of the cells we predicted was part of our server packet
 			if authoritative_path[i] == client_path[j]:
-				# If the paths converged, we need to check by how much
-				# If this step was further ahead, overwrite our variable
-				if confirmed_steps < j+1:
-					confirmed_steps = j+1
+				confirmed_steps = j+1
+				break # Move to next cell once we find a match
 	
-	return confirmed_steps
+	if client_path.size() > 4:
+		return min(confirmed_steps, 3)
+	else:
+		return min(confirmed_steps, 4)
 
 # Prepare the variables before starting a new move
 func _setup_next_movement_step(path: Array, should_rotate: bool) -> void:

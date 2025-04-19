@@ -12,6 +12,7 @@ type Player struct {
 	// Pathfinding
 	Destination *pathfinding.Cell   // Where the player wants to go
 	Path        []*pathfinding.Cell // The path the player will take in a single tick
+	FullPath    []*pathfinding.Cell // The full path the player will take
 	// Stats
 	Level      uint64
 	Experience uint64
@@ -52,6 +53,25 @@ func (player *Player) GetGridPath() []*pathfinding.Cell {
 // Updates this object's grid path
 func (player *Player) SetGridPath(newPath []*pathfinding.Cell) {
 	player.Path = newPath
+}
+
+// Returns this object's grid full path
+func (player *Player) GetGridFullPath() []*pathfinding.Cell {
+	return player.FullPath
+}
+
+// Updates this object's grid full path
+func (player *Player) SetGridFullPath(newPath []*pathfinding.Cell) {
+	player.FullPath = newPath
+}
+
+// Appends a new path to the end of the existent path
+func (player *Player) AppendGridFullPath(newPath []*pathfinding.Cell) {
+	// If we have a valid path
+	if len(newPath) > 0 {
+		// Append the new path to our previous path
+		player.FullPath = append(player.GetGridFullPath(), newPath...)
+	}
 }
 
 // Static function to create a new player

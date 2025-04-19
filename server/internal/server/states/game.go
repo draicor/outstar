@@ -89,24 +89,16 @@ func (state *Game) OnEnter() {
 
 // Attempts to keep an accurate representation of the character's position on the server
 func (state *Game) updateCharacter() {
-	// Get the player's current grid position and destination
-	gridPosition := state.player.GetGridPosition()
-	targetPosition := state.player.GetGridDestination()
-
-	// If the player is already at the target position
-	// This probably never executes, because we have this check in the code that calculates the path
-	if gridPosition == targetPosition {
-		// Make our grid path null and abort
-		state.player.SetGridPath(nil)
-		return
-	}
-
-	// Get the path for this player
-	path := state.player.GetGridPath()
+	// Get the full path for this player
+	fullPath := state.player.GetGridFullPath()
 	// If no valid path is found or our path is not long enough, abort
-	if path == nil || len(path) < 1 {
+	if fullPath == nil || len(fullPath) < 1 {
 		return
 	}
+
+	// Get the steps the player will move this tick from the full path
+	capacity := math.Minimum(len(fullPath), 4) // 4 cells (max 3 steps per tick)
+	path := fullPath[:capacity]
 
 	// We keep track of the total steps to take
 	totalSteps := uint64(len(path) - 1) // We subtract one because the first doesn't count
@@ -161,7 +153,8 @@ func (state *Game) updateCharacter() {
 
 		// If we didn't move
 	} else {
-		// Forget about the path we had
+		// Forget about the paths we had
+		state.player.SetGridFullPath(nil)
 		state.player.SetGridPath(nil)
 		// Overwrite our destination with our current position
 		state.player.SetGridDestination(state.player.GetGridPosition())
@@ -173,8 +166,8 @@ func (state *Game) updateCharacter() {
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
 
 	// AFTER we create our packet and send it
-	// We overwrite the path again with the cells that are left
-	state.player.SetGridPath(path)
+	// We remove from the full path the steps we moved
+	state.player.SetGridFullPath(fullPath[capacity-1:])
 
 	// Broadcast the new player position to everyone else
 	state.client.Broadcast(updatePlayerPacket)
@@ -261,6 +254,7 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 }
 
 // Sent from the client to the server to request setting a new destination for their player character
+// The new path will be appended to the end of the first one
 func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 	// CAUTION, for testing only!
 	// Simulate 500ms delay
@@ -276,15 +270,21 @@ func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 		previousDestination := state.player.GetGridDestination()
 		// If the new destination is NOT the same one we already had
 		if previousDestination != destination {
-			// Calculate the shortest path from our current cell to our destination cell
-			path := grid.AStar(state.player.Position, destination)
+			// Calculate the shortest path from our first destination to our new destination cell
+			secondPath := grid.AStar(previousDestination, destination)
 
-			// If the path is not empty
-			if len(path) > 0 {
-				// Set this path as our character's path
-				state.player.SetGridPath(path)
+			// If the second path is not empty
+			if len(secondPath) > 1 {
+				// If we already had a path
+				if len(state.player.GetGridFullPath()) > 0 {
+					// Append the new path to the end of our previous path
+					state.player.AppendGridFullPath(secondPath[1:])
+				} else {
+					// If we had no path, use the full path
+					state.player.SetGridFullPath(secondPath)
+				}
 
-				// Overwrite our previous destination
+				// Overwrite the destination
 				state.player.SetGridDestination(destination)
 			}
 		}

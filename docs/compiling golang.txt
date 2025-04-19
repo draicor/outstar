@@ -65,8 +65,3 @@ go env -w GOOS=linux
 go env -w GOARCH=arm64
 
 go build -o cmd/mmo-server-linux-arm64-v0.0.1.0 main.go # Raspberry pi 64 bits
-
-# To upload the server file to the linux machine remotely using powershell:
-scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\db.sqlite draicor@64.223.161.129:/home/draicor/
-
-scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\mmo-server-linux-arm64-v0.0.1.0 draicor@64.223.161.129:/home/draicor/
