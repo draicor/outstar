@@ -74,9 +74,6 @@ var locomotion := {
 var camera : Camera3D
 var raycast : RayCast3D
 
-# Debugging
-var debugging_enabled: bool = true
-
 @onready var animation_player: AnimationPlayer = $Model/Body/AnimationPlayer
 @onready var model: Node3D = $Model
 @onready var camera_rig: Node3D = $CameraRig
@@ -283,7 +280,7 @@ func _physics_process(delta: float) -> void:
 		_update_player_movement(delta)
 	
 	if my_player_character:
-		if debugging_enabled:
+		if OS.is_debug_build():  # Only draw in editor/debug builds
 			DebugDraw3D.draw_line(position, position + forward_direction * 1, Color.RED) # 1 meter forward line
 			_draw_circle(Utils.map_to_local(grid_destination), 0.5, Color.RED, 16) # Grid destination
 			_draw_circle(Utils.map_to_local(grid_position), 0.5, Color.GREEN, 16) # Grid position
@@ -445,12 +442,9 @@ func update_destination(new_path: Array) -> void:
 
 # Compares the traversed path by the client to the server path (true authoritative path)
 # and returns an integer with the number of confirmed steps
-func _validate_move_prediction(client_path, authoritative_path) -> int:
-	print("client: ", client_path)
-	print("server: ", authoritative_path)
-	
+func _validate_move_prediction(client_path, authoritative_path) -> int:	
 	var confirmed_steps = 0
-	var max_cells = 4
+	var max_cells = 4 if client_path.size() <= 4 else 3
 		
 	# Check all cells in the servers packet
 	for i in range(authoritative_path.size()):
@@ -462,8 +456,10 @@ func _validate_move_prediction(client_path, authoritative_path) -> int:
 				break # Move to next cell once we find a match
 	
 	if client_path.size() > 4:
+		# Never confirm more than 3 steps for subsequent movements
 		return min(confirmed_steps, 3)
 	else:
+		# Never confirm more than 4 steps for initial movement
 		return min(confirmed_steps, 4)
 
 # Prepare the variables before starting a new move
