@@ -299,17 +299,13 @@ func _update_player_movement(delta: float) -> void:
 	grid_position = Utils.local_to_map(interpolated_position)
 	
 	if my_player_character and is_predicting:
-		_process_path_segment(delta, predicted_path, true)
+		_process_path_segment(delta, predicted_path, next_tick_predicted_path)
 	else:
-		_process_path_segment(delta, server_path, false)
+		_process_path_segment(delta, server_path, next_tick_server_path)
 
 
 # Helper function to process the movement logic for both local and remote players
-func _process_path_segment(delta: float, path: Array, is_prediction: bool) -> void:
-	# Switch between predicted path and server path
-	var current_path = predicted_path if is_prediction else server_path
-	var next_path = next_tick_predicted_path if is_prediction else next_tick_server_path
-	
+func _process_path_segment(delta: float, current_path: Array, next_path: Array) -> void:	
 	# If our current path still has cells remaining
 	if current_path.size() > 0:
 		_setup_next_movement_step(current_path, true)
@@ -319,7 +315,8 @@ func _process_path_segment(delta: float, path: Array, is_prediction: bool) -> vo
 	elif next_path.size() > 0:
 		# Get the first 3 cells from our next tick path
 		current_path.append_array(Utils.pop_multiple_front(next_path, 3))
-		update_player_speed(current_path.size()) # Update speed only once per segment
+		# Update speed only once per path segment
+		update_player_speed(current_path.size())
 		_setup_next_movement_step(current_path, true)
 		move_and_slide_player(delta)
 		_switch_locomotion(player_speed)
@@ -331,8 +328,8 @@ func _process_path_segment(delta: float, path: Array, is_prediction: bool) -> vo
 # so its always exactly at the center of the cell in the grid,
 # stops movement and switches the character back to idle animation
 func _complete_movement() -> void:
-	position = next_cell
 	interpolated_position = next_cell
+	position = next_cell
 	# After IDLE, we set is motion to false and turn off autopilot too
 	in_motion = false
 	autopilot_active = false
@@ -342,8 +339,8 @@ func _complete_movement() -> void:
 # Used to switch the current animation state
 func _switch_locomotion(steps: int) -> void:
 	var settings = locomotion.get(steps, locomotion[0]) # Defaults to IDLE
-	current_animation = settings.state
 	_change_animation(settings.animation, settings.play_rate)
+	current_animation = settings.state # This has no use yet, but I'll use it to prevent actions while moving, etc.
 
 
 # Called on tick by _update_player_movement to interpolate the position of the player
@@ -524,6 +521,7 @@ func _rotate_character(delta: float) -> void:
 			is_rotating = false
 
 
+# Changes the current animation and its play_rate as well
 func _change_animation(animation: String, play_rate: float) -> void:
 	animation_player.play(animation)
 	animation_player.speed_scale = play_rate
