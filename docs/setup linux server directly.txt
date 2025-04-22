@@ -1,7 +1,11 @@
 ####################################################################################################
 # Setup the linux server to host the server directly
 
-# To upload the server file to the linux machine remotely using powershell:
+# To upload client files to linux using powershell:
+scp C:\Users\Draicor\Documents\Draicor\mmo\client\bin\linux\libdd3d.linux.editor.x86_64.so draicor@64.223.161.129:/home/draicor/mmo/client/linux/
+scp C:\Users\Draicor\Documents\Draicor\mmo\client\bin\linux\mmo_client_linux_v0.0.2.6.x86_64 draicor@64.223.161.129:/home/draicor/mmo/client/linux/
+
+# To upload the server files to linux using powershell:
 scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\db.sqlite draicor@64.223.161.129:/home/draicor/
 
 scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\mmo-server-linux-arm64-v0.0.1.0 draicor@64.223.161.129:/home/draicor/
@@ -60,4 +64,5 @@ systemctl status mmo-server
 # and then update the service config file and restart it
 # Also, we need to pull the db every now and then from the remote server into a secure location.
 
-# We can remove a file by using the rm command
+# rm to remove a file
+# mkdir to create a folder

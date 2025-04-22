@@ -3,8 +3,9 @@
 [ext_resource type="Script" uid="uid://bflh4x8wu5ha6" path="res://objects/character/player/player.gd" id="1_jpa1g"]
 [ext_resource type="PackedScene" uid="uid://cv2i471rse4tl" path="res://components/chat_bubble/chat_bubble.tscn" id="2_gmfbp"]
 
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_kh6hq"]
-resource_local_to_scene = true
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_634de"]
+radius = 0.3
+height = 1.75
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_74fks"]
 resource_name = "Beta_Joints_MAT1"
@@ -3902,8 +3903,9 @@ collision_layer = 2
 script = ExtResource("1_jpa1g")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-shape = SubResource("CylinderShape3D_kh6hq")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_634de")
+debug_color = Color(0, 0.6, 0.701961, 1)
 
 [node name="Model" type="Node3D" parent="."]
 

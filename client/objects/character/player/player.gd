@@ -5,8 +5,10 @@ const player_scene := preload("res://objects/character/player/player.tscn")
 const Player := preload("res://objects/character/player/player.gd")
 
 # EXPORTED VARIABLES
-@export var rotation_speed: float = 6.0
-@export var RAYCAST_DISTANCE : float = 20 # 20 meters
+@export var ROTATION_SPEED: float = 6.0
+@export var RAYCAST_DISTANCE: float = 20 # 20 meters
+@export var CAMERA_NEAR_PLANE: float = 0.1
+@export var CAMERA_FAR_PLANE: float = 100
 
 # CONSTANTS
 const SERVER_TICK: float = 0.5 # Controls local player move speed
@@ -137,9 +139,15 @@ func _ready() -> void:
 	if my_player_character:
 		# Add a camera to our character
 		camera = Camera3D.new()
+		# Camera settings
+		camera.near = CAMERA_NEAR_PLANE
+		camera.far = CAMERA_FAR_PLANE
+		
 		camera_rig.add_child(camera)
 		# Add a raycast 3d node to our camera
 		raycast = RayCast3D.new()
+		raycast.collision_mask = 3 # Mask 1+2
+		raycast.add_exception(self) # Ignore my own Player
 		
 		camera.add_child(raycast)
 		
@@ -513,7 +521,7 @@ func _calculate_rotation(target: Vector3) -> void:
 # Rotates our character on tick
 func _rotate_character(delta: float) -> void:
 	if is_rotating:
-		rotation_elapsed = min(rotation_elapsed + rotation_speed * delta, 1.0)
+		rotation_elapsed = min(rotation_elapsed + ROTATION_SPEED * delta, 1.0)
 		model.rotation.y = lerp_angle(start_yaw, target_yaw, rotation_elapsed)
 		
 		# Check if rotation is complete after rotating
