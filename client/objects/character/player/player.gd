@@ -99,6 +99,7 @@ static func instantiate(
 	# Overwrite our local copy of the grid positions
 	player.server_grid_position = path.front()
 	player.grid_position = player.server_grid_position
+	player.grid_destination = player.grid_position
 	
 	# Overwrite our local copy of the space positions
 	player.interpolated_position = Utils.map_to_local(player.server_grid_position)
@@ -127,7 +128,7 @@ func _ready() -> void:
 	previous_forward_direction = forward_direction # At spawn, we make them equal
 	
 	# Update our player's movement tick at spawn
-	update_movement_tick(player_speed)
+	update_player_speed(player_speed)
 	
 	# Make our character spawn idling
 	_change_animation("idle", 1.0)
@@ -227,7 +228,7 @@ func _click_to_move(mouse_position: Vector2) -> void:
 			# Store the remaining prediction for next tick
 			next_tick_predicted_path = prediction
 			# Prepare everything to move correctly this tick
-			update_movement_tick(predicted_path.size()-1)
+			update_player_speed(predicted_path.size()-1)
 			_setup_next_movement_step(predicted_path, false)
 			
 			is_predicting = true
@@ -291,7 +292,7 @@ func _update_player_movement(delta: float) -> void:
 	if movement_elapsed_time < movement_tick:
 		move_and_slide_player(delta)
 		
-	# If elapsed time is past the tick
+	# If elapsed time is past the tick, it means we completed the step
 	else:
 		# Update the local player position for our interpolated movement
 		interpolated_position = next_cell
@@ -300,49 +301,28 @@ func _update_player_movement(delta: float) -> void:
 		
 		# If this is our character and we are predicting
 		if my_player_character and is_predicting:
+			# If my current path still has cells available
 			if predicted_path.size() > 0:
-				# Update our speed, adjust our locomotion and start moving
+				# Update our tick duration, start sliding and adjust our locomotion
 				_setup_next_movement_step(predicted_path, true)
 				move_and_slide_player(delta)
 				switch_locomotion(player_speed)
 			
-			# If we already completed the path we had
+			# If we already completed this tick's path
 			else:
-				# Check if we have a second predicted path, if not, we stopped moving
-				if next_tick_predicted_path.is_empty():
-					# Snap the player's position to the grid after movement ends
-					# So its always exactly at the center of the cell in the grid
-					position = next_cell
-					interpolated_position = next_cell
-					# After IDLE, we set is motion to false and turn off autopilot too
-					in_motion = false
-					autopilot_active = false
-					switch_locomotion(0) # IDLE
-				
-				# If we have a next tick predicted path
-				else:
+				# Check if we have a second predicted path
+				if next_tick_predicted_path.size() > 0:
 					# Only get the first 3 cells from our next tick path
 					predicted_path.append_array(Utils.pop_multiple_front(next_tick_predicted_path, 3))
 					
-					# Update our speed, adjust our locomotion and start moving
-					update_movement_tick(predicted_path.size())
+					# Update our speed, tick duration, start sliding and adjust our locomotion
+					update_player_speed(predicted_path.size())
 					_setup_next_movement_step(predicted_path, true)
-					switch_locomotion(player_speed) # update_movement_tick updated this
 					move_and_slide_player(delta)
-		
-		# Every other player or us if we are not predicting
-		else:
-			# If we still have a path to traverse this tick
-			if player_path.size() > 0:
-				# Update our speed, adjust our locomotion and start moving
-				_setup_next_movement_step(player_path, true)
-				switch_locomotion(player_speed)
-				move_and_slide_player(delta)
-			
-			# If we already completed the path we had
-			else:
-				# Check if we have a second path, if not, we stopped moving
-				if next_tick_player_path.is_empty():
+					switch_locomotion(player_speed)
+				
+				# We completed movement
+				else:
 					# Snap the player's position to the grid after movement ends
 					# So its always exactly at the center of the cell in the grid
 					position = next_cell
@@ -351,16 +331,39 @@ func _update_player_movement(delta: float) -> void:
 					in_motion = false
 					autopilot_active = false
 					switch_locomotion(0) # IDLE
-
-				# If we have a second path
-				else:
+		
+		# Remote players
+		else:
+			# If my current path still has cells available
+			if player_path.size() > 0:
+				# Update our tick duration, start sliding and adjust our locomotion
+				_setup_next_movement_step(player_path, true)
+				move_and_slide_player(delta)
+				switch_locomotion(player_speed)
+			
+			# If we already completed this tick's path
+			else:
+				# Check if we have a second predicted path
+				if next_tick_player_path.size() > 0:
 					# Only get the first 3 cells from our next tick path
 					player_path.append_array(Utils.pop_multiple_front(next_tick_player_path, 3))
-					# Update our speed, adjust our locomotion and start moving
-					update_movement_tick(player_path.size())
+					
+					# Update our speed, tick duration, start sliding and adjust our locomotion
+					update_player_speed(player_path.size())
 					_setup_next_movement_step(player_path, true)
 					move_and_slide_player(delta)
-					switch_locomotion(player_speed)  # update_movement_tick updated this
+					switch_locomotion(player_speed)
+					
+				# We completed movement
+				else:
+					# Snap the player's position to the grid after movement ends
+					# So its always exactly at the center of the cell in the grid
+					position = next_cell
+					interpolated_position = next_cell
+					# After IDLE, we set is motion to false and turn off autopilot too
+					in_motion = false
+					autopilot_active = false
+					switch_locomotion(0) # IDLE
 
 
 # Used to switch the current animation state
@@ -409,6 +412,7 @@ func update_destination(new_path: Array) -> void:
 				unconfirmed_path = unconfirmed_path.slice(confirmed_steps)
 				return
 	
+	# Remote players
 	else:
 		if in_motion:
 			# If we haven't completed the first path yet
@@ -421,8 +425,11 @@ func update_destination(new_path: Array) -> void:
 			
 			# If we have completed the first path but NOT the second one
 			elif not next_tick_player_path.is_empty():
-				# Get the first 3 cells from our next tick path
-				player_path.append_array(Utils.pop_multiple_front(next_tick_player_path, 3))
+				# Find the overlap at the end of our path with the start of the next path
+				var overlap := _calculate_path_overlap(next_tick_player_path, new_path)
+				var next_path := new_path.slice(overlap)
+				# Append the new path to our next tick path
+				next_tick_player_path.append_array(next_path)
 				
 			# If the player already completed both paths
 			else:
@@ -436,7 +443,7 @@ func update_destination(new_path: Array) -> void:
 				# We make the new path our current path
 				player_path = new_path
 				# Update our player's speed to match our new path (remove overlap)
-				update_movement_tick(player_path.size()-1)
+				update_player_speed(player_path.size()-1)
 				_setup_next_movement_step(player_path, false) # This starts movement
 
 
@@ -471,6 +478,8 @@ func _setup_next_movement_step(path: Array, should_rotate: bool) -> void:
 	if should_rotate:
 		# Rotate our character towards the next cell
 		_calculate_rotation(next_cell)
+	
+	_calculate_step_duration(grid_position, Utils.local_to_map(next_cell))
 		
 	# Reset our move variable in _process
 	movement_elapsed_time = 0
@@ -552,12 +561,32 @@ func new_chat_bubble(message: String) -> void:
 	chat_bubble.set_text(message)
 
 
-# Calculates how quickly I should move based on my speed
-func update_movement_tick(new_speed: int) -> void:
+# Should be called once per path slice to recalculate the move speed
+func update_player_speed(new_speed: int) -> void:
 	# Clamp speed to 1-3 range
-	new_speed = clamp(new_speed, 1, 3)
-	player_speed = new_speed # Overwrite our player's speed
-	movement_tick = SERVER_TICK / new_speed
+	player_speed = clamp(new_speed, 1, 3)
+
+
+# Returns true if the next step is going to be a diagonal step
+func _is_step_diagonal(current: Vector2i, next: Vector2i) -> bool:
+	return abs(next.x - current.x) > 0 && abs(next.y - current.y) > 0
+
+
+# Calculates how long should this tick last and updates the tick accordingly
+func update_movement_tick(is_diagonal: bool) -> void:
+	if is_diagonal:
+		# Diagonal movement should take longer because its more distance
+		movement_tick = (SERVER_TICK / player_speed) * 1.414 # sqrt(2) = 1.414
+	else:
+		movement_tick = SERVER_TICK / player_speed
+
+
+# Used to update this step movement tick
+func _calculate_step_duration(current: Vector2i, next: Vector2i) -> void:
+	if _is_step_diagonal(current, next):
+		update_movement_tick(true)
+	else:
+		update_movement_tick(false)
 
 
 # Used to draw a circle for debugging purposes

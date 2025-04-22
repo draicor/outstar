@@ -256,9 +256,7 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 // Sent from the client to the server to request setting a new destination for their player character
 // The new path will be appended to the end of the first one
 func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
-	// CAUTION, for testing only!
-	// Simulate 500ms delay
-	// time.Sleep(100 * time.Millisecond)
+	// time.Sleep(500 * time.Millisecond) // Simulate 500ms delay
 
 	// Get the grid from this region
 	grid := state.client.GetRegion().Grid
