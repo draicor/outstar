@@ -411,26 +411,13 @@ func update_destination(new_path: Array[Vector2i]) -> void:
 				if last_valid_position == Vector2i(-1, -1):
 					last_valid_position = server_grid_position
 				
-				# Teleport the player to the last valid server position
-				predicted_path = [last_valid_position]
-				grid_position = last_valid_position
-				immediate_grid_destination = last_valid_position
-				# Make the next step be the correct server position
-				predicted_path.append(server_grid_position)
-				
-				# Generate and store another path prediction towards the destination we want to reach,
-				# using our immediate grid destination as our starting point
-				var prediction := _predict_path(server_grid_position, grid_destination)
-				
-				# If the predicted path is valid
-				if prediction.size() > 0:
-					# Overwrite the next tick predicted path, removing the first cell since its repeated 
-					next_tick_predicted_path = prediction.slice(1)
+				# Calculate correction path 
+				var correction_path: Array[Vector2i] = _calculate_path_correction(grid_position, last_valid_position, grid_destination)
+				_apply_path_correction(correction_path)
 				
 				# Reset this so we don't desync next tick
 				unconfirmed_path = []
 				server_path = []
-				
 				return
 			
 			# If our prediction was valid
@@ -472,6 +459,35 @@ func update_destination(new_path: Array[Vector2i]) -> void:
 				# Update our player's speed to match our new path (remove overlap)
 				update_player_speed(server_path.size()-1)
 				_setup_next_movement_step(server_path, false) # This starts movement
+
+
+# Calculates the transition path from current position to corrected path to original destination
+func _calculate_path_correction(current: Vector2i, correction: Vector2i, destination: Vector2i) -> Array[Vector2i]:
+	var path: Array[Vector2i] = []
+	
+	# Path from current position to last valid server position
+	var to_correction: Array[Vector2i] = _predict_path(current, correction)
+	
+	# Path from correction to destination
+	var to_destination: Array[Vector2i] = _predict_path(correction, destination)
+	
+	# Combine paths (excluding duplicate correction point)
+	path.append_array(to_correction)
+	if to_destination.size() > 1:
+		path.append_array(to_destination.slice(1))
+	
+	return path
+
+
+# Used to reconcile movement with the server
+func _apply_path_correction(new_path: Array[Vector2i]) -> void:
+	# Overwriting previous path without finishing current step
+	predicted_path = new_path # CAUTION
+	immediate_grid_destination = new_path.back() # CAUTION could be more than 3 steps?
+	
+	# Update speed for new path
+	update_player_speed(new_path.size()) # CAUTION could be using the correct speed?
+	_setup_next_movement_step(new_path, true) # Accurately rotating towards next cell
 
 
 # Find the cell position where the client's prediction diverted from the server's prediction
