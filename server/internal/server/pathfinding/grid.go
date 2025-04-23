@@ -135,23 +135,46 @@ func (grid *Grid) LocalToMap(x, z uint64) *Cell {
 	return grid.cells[index]
 }
 
-func (grid *Grid) IsValidCell(cell *Cell) bool {
+func (grid *Grid) IsCellReachable(cell *Cell) bool {
 	if cell != nil {
-		// Check if the cell is reachable and available
-		if cell.Reachable && cell.Object == nil {
+		// Check if the cell is reachable
+		if cell.Reachable {
 			return true
 		}
 	}
 
-	return false // Cell is not valid or already occupied
+	return false // Cell is not reachable
 }
 
-// Gets the cell at that point in space if the cell is reachable and unoccupied
+func (grid *Grid) IsCellAvailable(cell *Cell) bool {
+	if cell != nil {
+		// Check if the cell is available
+		if cell.Object == nil {
+			return true
+		}
+	}
+
+	return false // Cell is already occupied
+}
+
+// Returns the cell at that point in space if the cell is reachable, even if its occupied
+func (grid *Grid) GetCell(x uint64, z uint64) *Cell {
+	// Get the grid cell at this point
+	cell := grid.LocalToMap(x, z)
+	// If cell is reachable
+	if grid.IsCellReachable(cell) {
+		return cell
+	}
+
+	return nil // Cell not valid
+}
+
+// Returns the cell at that point in space if the cell is reachable and unoccupied
 func (grid *Grid) GetValidCell(x uint64, z uint64) *Cell {
 	// Get the grid cell at this point
 	cell := grid.LocalToMap(x, z)
-	// If valid, return it
-	if grid.IsValidCell(cell) {
+	// If cell is both reachable and available, the nits valid
+	if grid.IsCellReachable(cell) && grid.IsCellAvailable(cell) {
 		return cell
 	}
 
@@ -285,7 +308,7 @@ func (grid *Grid) GetNeighbors(cell *Cell, size int) []*Cell {
 			// Check if the neighbor is within the grid bounds
 			if x < grid.maxWidth {
 				if z < grid.maxHeight {
-					// Check if the neighbor is reachable and unoccupied
+					// Get the neighbor AFTER checking if its occupied
 					cell := grid.GetValidCell(x, z)
 					// If the cell is valid
 					if cell != nil {
@@ -301,7 +324,7 @@ func (grid *Grid) GetNeighbors(cell *Cell, size int) []*Cell {
 
 // A* Pathfinding Algorithm
 // Returns a path as an array of pointers to Cell or an empty array if no path was valid
-func (grid *Grid) AStar(start, goal *Cell) []*Cell {
+func (grid *Grid) AStar(start *Cell, goal *Cell) []*Cell {
 	// We have two sets, one has nodes to check and the other nodes that have been revised
 	openSet := make(PriorityQueue, 0)
 	heap.Init(&openSet)
@@ -341,8 +364,8 @@ func (grid *Grid) AStar(start, goal *Cell) []*Cell {
 
 		// Explore the neighbors next to our current cell (up to 1 cell away from our current cell)
 		for _, neighborCell := range grid.GetNeighbors(current.Cell, 1) {
-			// Skip if the neighbor is already in the closed set OR if the neighbor is not reachable or already occupied
-			if _, exists := closedSet[neighborCell]; exists || !grid.IsValidCell(neighborCell) {
+			// Skip if the cell is already in the closed set OR if the cell is not reachable OR if the cell is occupied
+			if _, exists := closedSet[neighborCell]; exists || !grid.IsCellReachable(neighborCell) || !grid.IsCellAvailable(neighborCell) {
 				continue
 			}
 

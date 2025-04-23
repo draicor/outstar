@@ -27,9 +27,10 @@ var my_player_character: bool # Used to differentiate my character from remote p
 # Internal data
 var grid_position: Vector2i # Keeps track of our grid position locally
 var grid_destination: Vector2i # Used in _raycast(), to tell the server where we want to move
+var immediate_grid_destination: Vector2i # Used in case we want to change route in transit
 
-var server_path: Array # Set at spawn and after server movement
-var next_tick_server_path: Array # Used to store the next server path
+var server_path: Array[Vector2i] # Set at spawn and after server movement
+var next_tick_server_path: Array[Vector2i] # Used to store the next server path
 
 var player_speed: int # Set at spawn and after server movement
 
@@ -47,9 +48,9 @@ var target_yaw: float = 0.0
 
 # Client prediction
 var is_predicting: bool = false
-var predicted_path: Array = [] # Holds our most recent predicted_path
-var next_tick_predicted_path: Array = [] # Used to store our next tick predicted path
-var unconfirmed_path: Array = [] # Holds every vector2i coordinate the player has moved to locally
+var predicted_path: Array[Vector2i] = [] # Holds our most recent predicted_path
+var next_tick_predicted_path: Array[Vector2i] = [] # Used to store our next tick predicted path
+var unconfirmed_path: Array[Vector2i] = [] # Holds every vector2i coordinate the player has moved to locally
 
 # Logic variables
 var in_motion: bool = false # If the character is moving
@@ -85,7 +86,7 @@ var raycast : RayCast3D
 static func instantiate(
 	id: int,
 	nickname: String,
-	path: Array,
+	path: Array[Vector2i],
 	spawn_model_rotation_y: float, # Used to update our model.rotation.y
 	is_my_player_character: bool
 ) -> Player:
@@ -101,7 +102,8 @@ static func instantiate(
 	# Overwrite our local copy of the grid positions
 	player.server_grid_position = path.front()
 	player.grid_position = player.server_grid_position
-	player.grid_destination = player.grid_position
+	player.grid_destination = player.server_grid_position
+	player.immediate_grid_destination = player.server_grid_position
 	
 	# Overwrite our local copy of the space positions
 	player.interpolated_position = Utils.map_to_local(player.server_grid_position)
@@ -199,60 +201,59 @@ func _click_to_move(mouse_position: Vector2) -> void:
 	# Transform the local space position to our grid coordinate
 	var new_destination: Vector2i = Utils.local_to_map(local_point)
 	
-	# If we were already predicting a path and moving towards it
-	if in_motion and is_predicting:
-		# Generate and store another path prediction towards the destination we want to reach,
-		# using our future grid_destination as our starting point
-		var prediction = _predict_path(grid_destination, new_destination)
-		
-		# If the predicted path is valid
-		if prediction.size() > 0:
-			# Only remove duplicate if the last unconfirmed cell matches first predicted cell
-			if unconfirmed_path.size() > 0 and unconfirmed_path[-1] == prediction[0]:
-				unconfirmed_path.append_array(prediction.slice(1))
-			else:
-				unconfirmed_path.append_array(prediction)
-			
-			# Append the new prediction for next tick, removing the first cell since its repeated 
-			next_tick_predicted_path.append_array(prediction.slice(1))
-			
-			# Overwrite our new grid destination
-			grid_destination = new_destination
-			# Create a new packet to hold our input and send it to the server
-			var packet := _create_player_destination_packet(grid_destination)
-			WebSocket.send(packet)
-			
-	# If we are IDLE
-	else:
+	# CAUTION
+	# Bug here, I can click outside the grid, I need to add the grid size from, 
+	# the server and then check if the grid location is reachable and unoccupied before
+	# setting it as my new_destination!!
+	
+	# If we are not moving
+	if not in_motion:
 		# Generate and store a path prediction towards the destination we want to reach
-		# NOTE grid_position should be the same as grid_destination here
 		var prediction = _predict_path(grid_position, new_destination)
 		# If the prediction is valid
 		# Make this prediction our current path and start moving right away
 		if prediction.size() > 0:
-			unconfirmed_path.append_array(prediction)
 			# Because we were idling, we need the first 4 cells for this tick
 			predicted_path = Utils.pop_multiple_front(prediction, 4)
-			# Store the remaining prediction for next tick
+			# Get our immediate grid destination (this tick)
+			immediate_grid_destination = predicted_path.back()
+			# We add to our local unconfirmed path the next steps we'll take
+			unconfirmed_path.append_array(predicted_path)
+			
+			# Store the remaining prediction (if any) for next tick
 			next_tick_predicted_path = prediction
 			# Prepare everything to move correctly this tick
 			update_player_speed(predicted_path.size()-1)
 			_setup_next_movement_step(predicted_path, false)
 			
 			is_predicting = true
+			# Overwrite our new grid destination
+			grid_destination = new_destination
+			
+			# NOTE: We need to send the packet here ONCE, when movement starts only!
+			# Create a new packet to hold our input and send it to the server
+			var packet := _create_player_destination_packet(immediate_grid_destination)
+			WebSocket.send(packet)
+			
+	# If we were already moving
+	else:
+		# Generate and store another path prediction towards the destination we want to reach,
+		# using our immediate grid destination as our starting point
+		var prediction = _predict_path(immediate_grid_destination, new_destination)
+		
+		# If the predicted path is valid
+		if prediction.size() > 0:
+			# Overwrite the next tick predicted path, removing the first cell since its repeated 
+			next_tick_predicted_path = prediction.slice(1)
 			
 			# Overwrite our new grid destination
 			grid_destination = new_destination
-			# Create a new packet to hold our input and send it to the server
-			var packet := _create_player_destination_packet(grid_destination)
-			WebSocket.send(packet)
 
 
-# NOTE
 # Simple straight line prediction for now, this needs to be replaced with A*
 # Predicts a path from a grid position to another grid position
-func _predict_path(from: Vector2i, to: Vector2i) -> Array:
-	var path = []
+func _predict_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
+	var path: Array[Vector2i] = []
 	# We make our starting position be the first element in our path
 	var current = from
 	path.append(current)
@@ -292,7 +293,8 @@ func _physics_process(delta: float) -> void:
 		if OS.is_debug_build():  # Only draw in editor/debug builds
 			DebugDraw3D.draw_line(position, position + forward_direction * 1, Color.RED) # 1 meter forward line
 			_draw_circle(Utils.map_to_local(grid_destination), 0.5, Color.RED, 16) # Grid destination
-			_draw_circle(Utils.map_to_local(grid_position), 0.5, Color.GREEN, 16) # Grid position
+			_draw_circle(Utils.map_to_local(immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
+			_draw_circle(Utils.map_to_local(grid_position), 0.3, Color.GREEN, 16) # Grid position
 
 
 # Called on tick from the _process function
@@ -313,7 +315,7 @@ func _update_player_movement(delta: float) -> void:
 
 
 # Helper function to process the movement logic for both local and remote players
-func _process_path_segment(delta: float, current_path: Array, next_path: Array) -> void:	
+func _process_path_segment(delta: float, current_path: Array[Vector2i], next_path: Array[Vector2i]) -> void:
 	# If our current path still has cells remaining
 	if current_path.size() > 0:
 		_setup_next_movement_step(current_path, true)
@@ -323,11 +325,27 @@ func _process_path_segment(delta: float, current_path: Array, next_path: Array) 
 	elif next_path.size() > 0:
 		# Get the first 3 cells from our next tick path
 		current_path.append_array(Utils.pop_multiple_front(next_path, 3))
+		# Update our immediate grid destination
+		immediate_grid_destination = current_path.back()
+		
 		# Update speed only once per path segment
 		update_player_speed(current_path.size())
 		_setup_next_movement_step(current_path, true)
 		move_and_slide_player(delta)
 		_switch_locomotion(player_speed)
+		
+		# Only one packet should be sent when updating the path
+		if my_player_character and is_predicting:
+			if unconfirmed_path.size() > 0 and current_path.size() > 1:
+				if unconfirmed_path.back() == current_path.front():
+					unconfirmed_path.append_array(current_path.slice(1))
+			else:
+				unconfirmed_path.append_array(current_path)
+				
+			# Create a new packet to report our new immediate destination to the server
+			var packet := _create_player_destination_packet(immediate_grid_destination)
+			WebSocket.send(packet)
+		
 	else:
 		_complete_movement()
 
@@ -362,35 +380,66 @@ func move_and_slide_player(delta: float) -> void:
 
 
 # Updates the player's path and sets the next cell the player should traverse
-func update_destination(new_path: Array) -> void:
+func update_destination(new_path: Array[Vector2i]) -> void:
+	# Store the last cell in this path as our server_grid_position
+	server_grid_position = new_path.back()
+	
 	# Only do the reconciliation for my player, not the other players
 	if my_player_character and is_predicting:
-		# We are ahead of the server (we predicted our path and moved already)
-		# If we have unconfirmed movement
+		# If we are already at the same position as the server
+		if server_grid_position == grid_position:
+			unconfirmed_path = []
+			server_path = []
+			return
+		
+		# If we will be at the same position at the end of this tick
+		if predicted_path.size() > 0:
+			if server_grid_position == immediate_grid_destination:
+				unconfirmed_path = []
+				server_path = []
+				return
+		
+		# If we have unconfirmed movement (We are ahead of the server)
 		if not unconfirmed_path.is_empty():
-			var confirmed_steps: int = _validate_move_prediction(unconfirmed_path, new_path)
+			# Construct a client path from the steps we have taken and the ones we'll take this tick
+			var local_path_this_tick: Array[Vector2i] = unconfirmed_path.duplicate()
+			local_path_this_tick.append_array(predicted_path)
 			
-			# If none of the steps from the packet was valid
-			if confirmed_steps == 0:
-				print("Synchronizing")
-				#autopilot_active = true # NOTE this will be implemented soon
+			# If we strayed from the server path
+			if not _prediction_was_valid(local_path_this_tick, server_grid_position):
+				var last_valid_position: Vector2i = _find_last_valid_client_position(local_path_this_tick, new_path)
+				if last_valid_position == Vector2i(-1, -1):
+					last_valid_position = server_grid_position
+				
+				# Teleport the player to the last valid server position
+				predicted_path = [last_valid_position]
+				grid_position = last_valid_position
+				immediate_grid_destination = last_valid_position
+				# Make the next step be the correct server position
+				predicted_path.append(server_grid_position)
+				
+				# Generate and store another path prediction towards the destination we want to reach,
+				# using our immediate grid destination as our starting point
+				var prediction := _predict_path(server_grid_position, grid_destination)
+				
+				# If the predicted path is valid
+				if prediction.size() > 0:
+					# Overwrite the next tick predicted path, removing the first cell since its repeated 
+					next_tick_predicted_path = prediction.slice(1)
+				
+				# Reset this so we don't desync next tick
 				unconfirmed_path = []
 				server_path = []
 				
-				# CAUTION
-				# Teleport the player to the correct server position
-				# Replace this with a graceful prediction from current pos to server_pos
-				grid_position = new_path.pop_back()
-				interpolated_position = Utils.map_to_local(grid_position)
-				position = interpolated_position
+				return
 			
-			# If we have at least one confirmed step
+			# If our prediction was valid
 			else:
-				# Remove it from the unconfirmed_path array and exit early
-				unconfirmed_path = unconfirmed_path.slice(confirmed_steps)
+				unconfirmed_path = []
+				server_path = []
 				return
 	
-	# Remote players
+	# Remote players are always in sync
 	else:
 		if in_motion:
 			# If we haven't completed the first path yet
@@ -425,30 +474,31 @@ func update_destination(new_path: Array) -> void:
 				_setup_next_movement_step(server_path, false) # This starts movement
 
 
-# Compares the traversed path by the client to the server path (true authoritative path)
-# and returns an integer with the number of confirmed steps
-func _validate_move_prediction(client_path, authoritative_path) -> int:	
-	var confirmed_steps = 0
-	var max_cells = 4 if client_path.size() <= 4 else 3
-		
-	# Check all cells in the servers packet
-	for i in range(authoritative_path.size()):
-		# Only check unconfirmed portion of client path
-		for j in range(confirmed_steps, min(client_path.size(), confirmed_steps + max_cells)):
-			# If one of the cells we predicted was part of our server packet
-			if authoritative_path[i] == client_path[j]:
-				confirmed_steps = j+1
-				break # Move to next cell once we find a match
+# Find the cell position where the client's prediction diverted from the server's prediction
+func _find_last_valid_client_position(traversed_path: Array[Vector2i], authoritative_path: Array[Vector2i]) -> Vector2i:
+	var last_valid_position := Vector2i(-1, -1) # Invalid position
+	var min_length: int = min(traversed_path.size(), authoritative_path.size())
 	
-	if client_path.size() > 4:
-		# Never confirm more than 3 steps for subsequent movements
-		return min(confirmed_steps, 3)
+	# Compare both arrays looking for the last valid position
+	for i in range(min_length):
+		if traversed_path[i] == authoritative_path[i]:
+			last_valid_position = traversed_path[i]
+		else:
+			break
+	
+	return last_valid_position
+
+
+# Determines if the last valid server position is anywhere in my local traversed path
+func _prediction_was_valid(client_path: Array[Vector2i], last_valid_position: Vector2i) -> bool:
+	# Look for the index of the element
+	if client_path.find(last_valid_position) == -1:
+		return false
 	else:
-		# Never confirm more than 4 steps for initial movement
-		return min(confirmed_steps, 4)
+		return true
 
 # Prepare the variables before starting a new move
-func _setup_next_movement_step(path: Array, should_rotate: bool) -> void:
+func _setup_next_movement_step(path: Array[Vector2i], should_rotate: bool) -> void:
 	# Get the next cell from this path to make it our next move target
 	next_cell = Utils.map_to_local(path.pop_front())
 	
@@ -465,7 +515,7 @@ func _setup_next_movement_step(path: Array, should_rotate: bool) -> void:
 	in_motion = true
 
 
-func _calculate_path_overlap(current_path: Array, new_path: Array) -> int:
+func _calculate_path_overlap(current_path: Array[Vector2i], new_path: Array[Vector2i]) -> int:
 	var overlap: int = 0
 	for i in range(min(current_path.size(), new_path.size())):
 		if current_path[current_path.size()-1-i] != new_path[i]:

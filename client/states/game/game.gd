@@ -185,7 +185,7 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		var is_my_player_character := player_id == GameManager.client_id
 		
 		# We create an empty array which we will fill with vector2i vectors
-		var spawn_path = []
+		var spawn_path: Array[Vector2i] = []
 		# Get the path from the packet
 		var raw_path = update_player_packet.get_path()
 		# If the path is valid
@@ -225,7 +225,7 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		# If the path is valid
 		if not raw_path.is_empty():
 			# We create an empty array which we will fill with vector2i vectors
-			var path = []
+			var path: Array[Vector2i] = []
 			# Iterate over it
 			for position in raw_path:
 				# Just in case its not valid

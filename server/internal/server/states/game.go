@@ -123,8 +123,8 @@ func (state *Game) updateCharacter() {
 
 		// If the next cell exists
 		if nextCell != nil {
-			// If the next cell is valid and available
-			if grid.IsValidCell(nextCell) {
+			// If the next cell is both reachable and not occupied
+			if grid.IsCellReachable(nextCell) && grid.IsCellAvailable(nextCell) {
 				// Move our character into that cell
 				grid.SetObject(nextCell, state.player)
 
@@ -137,7 +137,7 @@ func (state *Game) updateCharacter() {
 				steps++
 
 			} else {
-				// If the next cell is occupied, stop moving this tick
+				// If the next cell is not valid or occupied, stop moving this tick
 				break
 			}
 		} else {
@@ -263,7 +263,7 @@ func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 	// Get the cell the player wants to access
 	destination := grid.LocalToMap(payload.X, payload.Z)
 	// Only update the player's destination if the cell is valid and unoccupied
-	if grid.IsValidCell(destination) {
+	if grid.IsCellReachable(destination) && grid.IsCellAvailable(destination) {
 		// We compare our new destination to our previous one
 		previousDestination := state.player.GetGridDestination()
 		// If the new destination is NOT the same one we already had
