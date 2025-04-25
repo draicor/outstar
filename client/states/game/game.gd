@@ -184,27 +184,14 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		# Check if our client id is the same as this update player packet sender id
 		var is_my_player_character := player_id == GameManager.client_id
 		
-		# We create an empty array which we will fill with vector2i vectors
-		var spawn_path: Array[Vector2i] = []
-		# Get the path from the packet
-		var raw_path = update_player_packet.get_path()
-		# If the path is valid
-		if not raw_path.is_empty():
-			# Iterate over it
-			for position in raw_path:
-				# Just in case its not valid
-				if position == null:
-					continue
-				
-				# Extract the positions as vector2i
-				var vector = Vector2i(position.get_x(), position.get_z())
-				spawn_path.append(vector)
+		# Get the spawn position from the packet
+		var spawn_position: Vector2i = Vector2i(update_player_packet.get_position().get_x(), update_player_packet.get_position().get_z())
 		
 		# Grab all of the data from the server and use it to create this player character
 		var player := Player.instantiate(
 			player_id,
 			update_player_packet.get_name(),
-			spawn_path,
+			spawn_position,
 			update_player_packet.get_rotation_y(),
 			is_my_player_character
 		)
@@ -220,24 +207,10 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		# Fetch the player from our list of players
 		var player: Player = _players[player_id]
 		
-		# Get the path from the packet
-		var raw_path = update_player_packet.get_path()
-		# If the path is valid
-		if not raw_path.is_empty():
-			# We create an empty array which we will fill with vector2i vectors
-			var path: Array[Vector2i] = []
-			# Iterate over it
-			for position in raw_path:
-				# Just in case its not valid
-				if position == null:
-					continue
-				
-				# Extract the positions as vector2i
-				var vector = Vector2i(position.get_x(), position.get_z())
-				path.append(vector)
-			
-			# Update this player's movement
-			player.update_destination(path)
+		# Get the server position from the packet
+		var server_position: Vector2i = Vector2i(update_player_packet.get_position().get_x(), update_player_packet.get_position().get_z())
+		# Update this player's movement
+		player.update_destination(server_position)
 
 func _load_map(map: GameManager.Maps) -> void:
 	# Load the next scene

@@ -10,9 +10,7 @@ type Player struct {
 	Position  *pathfinding.Cell // Where this player is
 	RotationY float64           // Model look at rotation
 	// Pathfinding
-	Destination *pathfinding.Cell   // Where the player wants to go
-	Path        []*pathfinding.Cell // The path the player will take in a single tick
-	FullPath    []*pathfinding.Cell // The full path the player will take
+	Destination *pathfinding.Cell // Where the player wants to go
 	// Stats
 	Level      uint64
 	Experience uint64
@@ -23,6 +21,11 @@ type Player struct {
 // Returns this object's model look at rotation
 func (player *Player) GetRotation() float64 {
 	return player.RotationY
+}
+
+// Updates this object's model look at rotation
+func (player *Player) SetRotation(newRotation float64) {
+	player.RotationY = newRotation
 }
 
 // Returns the cell where this object is
@@ -43,35 +46,6 @@ func (player *Player) GetGridDestination() *pathfinding.Cell {
 // Updates this object's grid destination cell
 func (player *Player) SetGridDestination(cell *pathfinding.Cell) {
 	player.Destination = cell
-}
-
-// Returns this object's path
-func (player *Player) GetGridPath() []*pathfinding.Cell {
-	return player.Path
-}
-
-// Updates this object's grid path
-func (player *Player) SetGridPath(newPath []*pathfinding.Cell) {
-	player.Path = newPath
-}
-
-// Returns this object's grid full path
-func (player *Player) GetGridFullPath() []*pathfinding.Cell {
-	return player.FullPath
-}
-
-// Updates this object's grid full path
-func (player *Player) SetGridFullPath(newPath []*pathfinding.Cell) {
-	player.FullPath = newPath
-}
-
-// Appends a new path to the end of the existent path
-func (player *Player) AppendGridFullPath(newPath []*pathfinding.Cell) {
-	// If we have a valid path
-	if len(newPath) > 0 {
-		// Append the new path to our previous path
-		player.FullPath = append(player.GetGridFullPath(), newPath...)
-	}
 }
 
 // Static function to create a new player

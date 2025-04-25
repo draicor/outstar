@@ -12,8 +12,6 @@ type Object interface {
 	SetGridPosition(cell *Cell)    // Updates this object's grid cell position
 	GetGridDestination() *Cell     // Returns the cell where the object wants to move
 	SetGridDestination(cell *Cell) // Updates this object's grid destination cell
-	GetGridPath() []*Cell          // Returns this object's path
-	SetGridPath([]*Cell)           // Updates this object's grid path
 }
 
 // Represents a node in the priority queue

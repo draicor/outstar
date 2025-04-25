@@ -8,7 +8,6 @@ import (
 	"server/internal/server/db"
 	"server/internal/server/math"
 	"server/internal/server/objects"
-	"server/internal/server/pathfinding"
 	"time"
 
 	"server/pkg/packets"
@@ -54,16 +53,6 @@ func (state *Game) OnEnter() {
 	// Move the client to the region his character is at
 	state.client.GetHub().JoinRegion(state.client.GetId(), state.player.RegionId)
 
-	// Make our character's destination target be our spawn cell so he doesn't move at spawn
-	// We use grid destination on the update loop, so if its not set it will crash
-	state.player.SetGridDestination(state.player.GetGridPosition())
-
-	// Create a spawn path that only has one element, our spawn position
-	var spawnPath []*pathfinding.Cell
-	spawnPath = append(spawnPath, state.player.GetGridPosition())
-	// Overwrite our path to hold our grid position
-	state.player.SetGridPath(spawnPath)
-
 	// Create an update packet to be sent to everyone in this region
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
 
@@ -79,7 +68,7 @@ func (state *Game) OnEnter() {
 		state.client.SendPacket(updatePlayerPacket)
 	})
 
-	//	Start the player update loop in its own co-routine
+	// Start the player update loop in its own co-routine
 	if state.cancelPlayerUpdateLoop == nil {
 		ctx, cancel := context.WithCancel(context.Background())
 		state.cancelPlayerUpdateLoop = cancel
@@ -87,97 +76,83 @@ func (state *Game) OnEnter() {
 	}
 }
 
-// Attempts to keep an accurate representation of the character's position on the server
+// Keeps an accurate representation of the character's position on the server
 func (state *Game) updateCharacter() {
-	// Get the full path for this player
-	fullPath := state.player.GetGridFullPath()
-	// If no valid path is found or our path is not long enough, abort
-	if fullPath == nil || len(fullPath) < 1 {
+	// If we are already at our destination, we are done moving
+	if state.player.GetGridPosition() == state.player.GetGridDestination() {
 		return
 	}
 
-	// Get the steps the player will move this tick from the full path
-	capacity := math.Minimum(len(fullPath), 4) // 4 cells (max 3 steps per tick)
-	path := fullPath[:capacity]
+	// Get the grid from this region
+	grid := state.client.GetRegion().Grid
 
-	// We keep track of the total steps to take
-	totalSteps := uint64(len(path) - 1) // We subtract one because the first doesn't count
+	// Calculate the shortest path from our position to our new destination cell
+	path := grid.AStar(state.player.GetGridPosition(), state.player.GetGridDestination())
 
-	stepsRemaining := math.MinimumUint64(totalSteps, state.player.Speed)
-	// We keep track of the path we have traversed so we can broadcast it to the client
-	var traversedPath []*pathfinding.Cell
-	// We add the first cell to our traversed path
-	traversedPath = append(traversedPath, path[0])
+	// If the path is valid
+	if len(path) > 1 {
+		// We keep track of our steps
+		var steps uint64 = 0
+		totalSteps := uint64(len(path) - 1) // We subtract one because the first doesn't count
 
-	// We keep track of how many steps we have moved in this tick
-	var steps uint64 = 0
-
-	// Based on our player's speed and the remaining cells to traverse
-	// We determine how many cells we can move
-	for steps < stepsRemaining {
-		// Get the next cell from our path
-		nextCell := path[1]
+		// We account for our max distance per tick here using Speed
+		stepsRemaining := math.MinimumUint64(totalSteps, state.player.Speed)
 
 		// Get the grid from this region
 		grid := state.client.GetRegion().Grid
 
-		// If the next cell exists
-		if nextCell != nil {
-			// If the next cell is both reachable and not occupied
-			if grid.IsCellReachable(nextCell) && grid.IsCellAvailable(nextCell) {
-				// Move our character into that cell
-				grid.SetObject(nextCell, state.player)
+		// Based on our player's speed and the remaining cells to traverse
+		// We determine how many cells we can move
+		for steps < stepsRemaining {
+			// Get the next cell from our path
+			nextCell := path[1]
 
-				// We add our current cell to the path we have traversed
-				traversedPath = append(traversedPath, nextCell)
+			// If the next cell exists
+			if nextCell != nil {
+				// If the next cell is both reachable and not occupied
+				if grid.IsCellReachable(nextCell) && grid.IsCellAvailable(nextCell) {
+					// Move our character into that cell in our region grid
+					grid.SetObject(nextCell, state.player)
+					// Keep track of our position in our player character
+					state.player.SetGridPosition(nextCell)
+					// We overwrite our path variable to remove the first cell
+					path = path[1:]
+					// We mark our step as completed
+					steps++
 
-				// We overwrite our path variable to remove the first cell
-				path = path[1:]
-				// We mark our step as completed
-				steps++
-
+				} else {
+					// If the next cell is not valid or occupied
+					fmt.Println("Next cell is not valid or occupied")
+					break
+				}
 			} else {
-				// If the next cell is not valid or occupied
-				fmt.Println("Next cell is not valid or occupied")
+				// If the next cell is invalid
+				fmt.Println("Next cell is invalid")
 				break
 			}
-		} else {
-			// If the next cell is invalid
-			fmt.Println("Next cell is invalid")
-			break
 		}
-	}
-
-	// If we moved at all
-	if steps > 0 {
-		// We update our player's path so we can send the packet with the path we traversed only!
-		state.player.SetGridPath(traversedPath)
 
 		// If we didn't move
-	} else {
-		fmt.Println("We didn't move for some reason, so abort...")
-		state.player.SetGridFullPath(nil)
-		state.player.SetGridPath(nil)
-		state.player.SetGridDestination(state.player.GetGridPosition())
+		if steps == 0 {
+			fmt.Println("We didn't move for some reason, so abort...")
+			// We forget about our destination since its not reachable
+			state.player.SetGridDestination(state.player.GetGridPosition())
+		}
 
-		return
+		// Create a packet and broadcast it to everyone to update the character's position
+		updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
+
+		// Only if we moved
+		if steps > 0 {
+			// Broadcast the new player position to everyone else
+			state.client.Broadcast(updatePlayerPacket)
+		}
+
+		// Send the update to the client that owns this character,
+		// so they can ensure they are in sync with the server.
+		// We are sending this in a goroutine so we don't block our game loop
+		go state.client.SendPacket(updatePlayerPacket)
 	}
-
-	// Create a packet and broadcast it to everyone to update the character's position
-	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
-
-	// Broadcast the new player position to everyone else
-	state.client.Broadcast(updatePlayerPacket)
-
-	// Send the update to the client that owns this character, so they can ensure
-	// they are in sync with the server
-	// We are sending this in a goroutine so we don't block our game loop
-	go state.client.SendPacket(updatePlayerPacket)
-
-	// AFTER we create our packet and send it
-	// We remove from the full path the steps we moved minus one,
-	// the last cell is the start cell for the next tick
-	state.player.SetGridFullPath(fullPath[capacity-1:])
 }
 
 // Runs in a loop updating the player
@@ -256,7 +231,6 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 }
 
 // Sent from the client to the server to request setting a new destination for their player character
-// The new path will be appended to the end of the first one
 func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 	// time.Sleep(500 * time.Millisecond) // Simulate 500ms delay
 
@@ -270,26 +244,10 @@ func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 		previousDestination := state.player.GetGridDestination()
 		// If the new destination is NOT the same one we already had
 		if previousDestination != destination {
-			// Calculate the shortest path from our first destination to our new destination cell
-			secondPath := grid.AStar(previousDestination, destination)
-
-			// If the second path is not empty
-			if len(secondPath) > 1 {
-				// If we already had a path
-				if len(state.player.GetGridFullPath()) > 0 {
-					// Append the new path to the end of our previous path
-					state.player.AppendGridFullPath(secondPath[1:])
-				} else {
-					// If we had no path, use the full path
-					state.player.SetGridFullPath(secondPath)
-				}
-
-				// Overwrite the destination
-				state.player.SetGridDestination(destination)
-			}
-		}
-		// Our new destination is the same as our previous one, so ignore this packet
-	}
+			// Overwrite the destination
+			state.player.SetGridDestination(destination)
+		} // New destination is the same as our previous one, ignore
+	} // New destination was invalid, ignore
 }
 
 func (state *Game) OnExit() {

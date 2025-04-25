@@ -1357,12 +1357,11 @@ class UpdatePlayer:
 		service.field = __name
 		data[__name.tag] = service
 		
-		var __path_default: Array[Position] = []
-		__path = PBField.new("path", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 3, true, __path_default)
+		__position = PBField.new("position", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = __path
-		service.func_ref = Callable(self, "add_path")
-		data[__path.tag] = service
+		service.field = __position
+		service.func_ref = Callable(self, "new_position")
+		data[__position.tag] = service
 		
 		__rotation_y = PBField.new("rotation_y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
 		service = PBServiceField.new()
@@ -1397,16 +1396,19 @@ class UpdatePlayer:
 	func set_name(value : String) -> void:
 		__name.value = value
 	
-	var __path: PBField
-	func get_path() -> Array[Position]:
-		return __path.value
-	func clear_path() -> void:
+	var __position: PBField
+	func has_position() -> bool:
+		if __position.value != null:
+			return true
+		return false
+	func get_position() -> Position:
+		return __position.value
+	func clear_position() -> void:
 		data[3].state = PB_SERVICE_STATE.UNFILLED
-		__path.value.clear()
-	func add_path() -> Position:
-		var element = Position.new()
-		__path.value.append(element)
-		return element
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_position() -> Position:
+		__position.value = Position.new()
+		return __position.value
 	
 	var __rotation_y: PBField
 	func has_rotation_y() -> bool:

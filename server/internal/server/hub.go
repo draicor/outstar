@@ -231,6 +231,10 @@ func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 			// TO FIX <- GET THIS FROM THE DATABASE!
 			playerSpawnCell := region.Grid.GetSpawnCell(0, 0)
 
+			// Update the position and destination for this player character
+			client.GetPlayerCharacter().SetGridPosition(playerSpawnCell)
+			client.GetPlayerCharacter().SetGridDestination(playerSpawnCell)
+
 			// Place the player in the grid for this region
 			region.Grid.SetObject(playerSpawnCell, client.GetPlayerCharacter())
 
