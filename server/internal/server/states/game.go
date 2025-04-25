@@ -137,11 +137,13 @@ func (state *Game) updateCharacter() {
 				steps++
 
 			} else {
-				// If the next cell is not valid or occupied, stop moving this tick
+				// If the next cell is not valid or occupied
+				fmt.Println("Next cell is not valid or occupied")
 				break
 			}
 		} else {
-			// If the next cell is invalid, stop moving this tick
+			// If the next cell is invalid
+			fmt.Println("Next cell is invalid")
 			break
 		}
 	}
@@ -153,29 +155,29 @@ func (state *Game) updateCharacter() {
 
 		// If we didn't move
 	} else {
-		// Forget about the paths we had
+		fmt.Println("We didn't move for some reason, so abort...")
 		state.player.SetGridFullPath(nil)
 		state.player.SetGridPath(nil)
-		// Overwrite our destination with our current position
 		state.player.SetGridDestination(state.player.GetGridPosition())
-		// Don't send any packets
+
 		return
 	}
 
 	// Create a packet and broadcast it to everyone to update the character's position
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
 
-	// AFTER we create our packet and send it
-	// We remove from the full path the steps we moved
-	state.player.SetGridFullPath(fullPath[capacity-1:])
-
 	// Broadcast the new player position to everyone else
 	state.client.Broadcast(updatePlayerPacket)
 
 	// Send the update to the client that owns this character, so they can ensure
-	// they are in sync with the server (this can cause rubber banding)
+	// they are in sync with the server
 	// We are sending this in a goroutine so we don't block our game loop
 	go state.client.SendPacket(updatePlayerPacket)
+
+	// AFTER we create our packet and send it
+	// We remove from the full path the steps we moved minus one,
+	// the last cell is the start cell for the next tick
+	state.player.SetGridFullPath(fullPath[capacity-1:])
 }
 
 // Runs in a loop updating the player
@@ -286,6 +288,7 @@ func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 				state.player.SetGridDestination(destination)
 			}
 		}
+		// Our new destination is the same as our previous one, so ignore this packet
 	}
 }
 

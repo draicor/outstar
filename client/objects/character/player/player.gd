@@ -192,6 +192,10 @@ func _mouse_raycast(mouse_position: Vector2) -> Vector3:
 # Casts a raycast from the mouse position to get our destination cell,
 # and then attempts to predict a path towards that cell to move our character
 func _click_to_move(mouse_position: Vector2) -> void:
+	# If we are in autopilot, prevent mouse input
+	if autopilot_active:
+		return
+	
 	# Grab the collision point from our mouse click
 	var local_point : Vector3 = _mouse_raycast(mouse_position)
 	# If the point was invalid, exit
@@ -295,6 +299,7 @@ func _physics_process(delta: float) -> void:
 			_draw_circle(Utils.map_to_local(grid_destination), 0.5, Color.RED, 16) # Grid destination
 			_draw_circle(Utils.map_to_local(immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
 			_draw_circle(Utils.map_to_local(grid_position), 0.3, Color.GREEN, 16) # Grid position
+			_draw_circle(Utils.map_to_local(server_grid_position), 0.6, Color.REBECCA_PURPLE, 16) # Server position for my character
 
 
 # Called on tick from the _process function
@@ -341,10 +346,11 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 					unconfirmed_path.append_array(current_path.slice(1))
 			else:
 				unconfirmed_path.append_array(current_path)
-				
-			# Create a new packet to report our new immediate destination to the server
-			var packet := _create_player_destination_packet(immediate_grid_destination)
-			WebSocket.send(packet)
+			
+			if not autopilot_active:
+				# Create a new packet to report our new immediate destination to the server
+				var packet := _create_player_destination_packet(immediate_grid_destination)
+				WebSocket.send(packet)
 		
 	else:
 		_complete_movement()
@@ -390,6 +396,7 @@ func update_destination(new_path: Array[Vector2i]) -> void:
 		if server_grid_position == grid_position:
 			unconfirmed_path = []
 			server_path = []
+			autopilot_active = false
 			return
 		
 		# If we will be at the same position at the end of this tick
@@ -397,6 +404,7 @@ func update_destination(new_path: Array[Vector2i]) -> void:
 			if server_grid_position == immediate_grid_destination:
 				unconfirmed_path = []
 				server_path = []
+				autopilot_active = false
 				return
 		
 		# If we have unconfirmed movement (We are ahead of the server)
@@ -407,12 +415,8 @@ func update_destination(new_path: Array[Vector2i]) -> void:
 			
 			# If we strayed from the server path
 			if not _prediction_was_valid(local_path_this_tick, server_grid_position):
-				var last_valid_position: Vector2i = _find_last_valid_client_position(local_path_this_tick, new_path)
-				if last_valid_position == Vector2i(-1, -1):
-					last_valid_position = server_grid_position
-				
-				# Calculate correction path 
-				var correction_path: Array[Vector2i] = _calculate_path_correction(grid_position, last_valid_position, grid_destination)
+				# Calculate correction path from current local position to last valid server position
+				var correction_path: Array[Vector2i] = _calculate_path_correction(grid_position, server_grid_position, grid_destination)
 				_apply_path_correction(correction_path)
 				
 				# Reset this so we don't desync next tick
@@ -481,28 +485,8 @@ func _calculate_path_correction(current: Vector2i, correction: Vector2i, destina
 
 # Used to reconcile movement with the server
 func _apply_path_correction(new_path: Array[Vector2i]) -> void:
-	# Overwriting previous path without finishing current step
-	predicted_path = new_path # CAUTION
-	immediate_grid_destination = new_path.back() # CAUTION could be more than 3 steps?
-	
-	# Update speed for new path
-	update_player_speed(new_path.size()) # CAUTION could be using the correct speed?
-	_setup_next_movement_step(new_path, true) # Accurately rotating towards next cell
-
-
-# Find the cell position where the client's prediction diverted from the server's prediction
-func _find_last_valid_client_position(traversed_path: Array[Vector2i], authoritative_path: Array[Vector2i]) -> Vector2i:
-	var last_valid_position := Vector2i(-1, -1) # Invalid position
-	var min_length: int = min(traversed_path.size(), authoritative_path.size())
-	
-	# Compare both arrays looking for the last valid position
-	for i in range(min_length):
-		if traversed_path[i] == authoritative_path[i]:
-			last_valid_position = traversed_path[i]
-		else:
-			break
-	
-	return last_valid_position
+	autopilot_active = true
+	next_tick_predicted_path = new_path
 
 
 # Determines if the last valid server position is anywhere in my local traversed path
@@ -518,7 +502,7 @@ func _setup_next_movement_step(path: Array[Vector2i], should_rotate: bool) -> vo
 	# Get the next cell from this path to make it our next move target
 	next_cell = Utils.map_to_local(path.pop_front())
 	
-	# CAUTION: rotation should happen AFTER updating next_cell
+	# CAUTION rotation should happen AFTER updating next_cell
 	if should_rotate:
 		# Rotate our character towards the next cell
 		_calculate_rotation(next_cell)
