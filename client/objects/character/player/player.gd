@@ -221,7 +221,7 @@ func _click_to_move(mouse_position: Vector2) -> void:
 			# Get our immediate grid destination (this tick)
 			immediate_grid_destination = predicted_path.back()
 			# We add to our local unconfirmed path the next steps we'll take
-			unconfirmed_path.append_array(predicted_path)
+			unconfirmed_path.append(immediate_grid_destination)
 			
 			# Store the remaining prediction (if any) for next tick
 			next_tick_predicted_path = prediction
@@ -338,12 +338,8 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		move_and_slide_player(delta)
 		_switch_locomotion(player_speed)
 		
-		if my_player_character and is_predicting:
-			if unconfirmed_path.size() > 0 and current_path.size() > 1:
-				if unconfirmed_path.back() == current_path.front():
-					unconfirmed_path.append_array(current_path.slice(1))
-			else:
-				unconfirmed_path.append_array(current_path)
+		if my_player_character:
+			unconfirmed_path.append(immediate_grid_destination)
 			
 			# Only send a packet if we are not correcting our position
 			if not autopilot_active:
@@ -367,7 +363,6 @@ func _complete_movement() -> void:
 	if autopilot_active:
 		# If we are at the same position as in the server
 		if grid_position == server_grid_position and immediate_grid_destination == server_grid_position and grid_position == grid_destination:
-			unconfirmed_path = []
 			autopilot_active = false
 		else:
 			# If our position is not synced, predict a path from our current grid position to the server position,
@@ -379,6 +374,8 @@ func _complete_movement() -> void:
 				predicted_path.append_array(Utils.pop_multiple_front(next_tick_predicted_path, 3))
 				# Update our immediate grid destination
 				immediate_grid_destination = predicted_path.back()
+				
+				unconfirmed_path.append(immediate_grid_destination)
 				
 				# Update speed only once per path segment
 				update_player_speed(predicted_path.size()-1)
@@ -421,6 +418,7 @@ func update_destination(new_server_position: Vector2i) -> void:
 	server_grid_position = new_server_position
 
 
+# Called when we receive a new position packet to move remote players (always in sync)
 func _handle_remote_player_movement(new_server_position: Vector2i) -> void:
 	var next_path: Array[Vector2i] = _predict_path(server_grid_position, new_server_position)
 	# If our next path is valid
@@ -438,35 +436,19 @@ func _handle_remote_player_movement(new_server_position: Vector2i) -> void:
 			_setup_next_movement_step(server_path, true) # This starts movement
 
 
+# Called when we receive a new position packet from the server to make sure we are synced locally
 func _handle_server_reconciliation(new_server_position: Vector2i) -> void:
-	# If we are already at the same position as the server
-	if new_server_position == grid_position:
-		unconfirmed_path = []
-		return
-	
-	# If we will be at the same position at the end of this tick
-	if predicted_path.size() > 0:
-		if new_server_position == immediate_grid_destination:
+	if _prediction_was_valid(unconfirmed_path.duplicate(), new_server_position):
+		if new_server_position == grid_destination:
 			unconfirmed_path = []
 			return
-	
-	# If we have unconfirmed movement (We are ahead of the server)
-	if not unconfirmed_path.is_empty():
-		# Construct a client path from the steps we have taken and the ones we'll take this tick
-		var local_path_this_tick: Array[Vector2i] = unconfirmed_path.duplicate()
-		local_path_this_tick.append_array(predicted_path)
-		
-		# If we strayed from the server path
-		if not _prediction_was_valid(local_path_this_tick, new_server_position):
-			# NOTE Calculate correction from our current destination to the valid server position!
-			var correction_path: Array[Vector2i] = _predict_path(grid_destination, new_server_position)
-			if correction_path.size() > 1:
-				_apply_path_correction(correction_path)
-		
-		# If our prediction was valid
 		else:
-			unconfirmed_path = []
 			return
+	else: # If our prediction was invalid
+		# Calculate correction from our grid_destination to the last valid server position!
+		var correction_path: Array[Vector2i] = _predict_path(grid_destination, new_server_position)
+		if correction_path.size() > 1:
+			_apply_path_correction(correction_path)
 
 
 # Used to reconcile movement with the server
