@@ -386,6 +386,7 @@ func _complete_movement() -> void:
 			else:
 				# If the prediction is not valid, force us to the correct position
 				_force_player_to(server_grid_position)
+				autopilot_active = false
 
 
 func _force_player_to(new_grid_position) -> void:
@@ -395,7 +396,6 @@ func _force_player_to(new_grid_position) -> void:
 	interpolated_position = Utils.map_to_local(new_grid_position)
 	position = interpolated_position
 	unconfirmed_path = []
-	autopilot_active = false
 
 # Used to switch the current animation state
 func _switch_locomotion(steps: int) -> void:
