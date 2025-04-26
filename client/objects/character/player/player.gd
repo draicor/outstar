@@ -384,18 +384,12 @@ func _complete_movement() -> void:
 				update_player_speed(predicted_path.size()-1)
 				_setup_next_movement_step(predicted_path, false)
 			else:
-				# If the prediction is not valid, force us to the correct position
-				_force_player_to(server_grid_position)
+				# To prevent an input lock, we turn off autopilot if we get here
 				autopilot_active = false
+				# Reset our destinations
+				grid_destination = grid_position
+				immediate_grid_destination = grid_position
 
-
-func _force_player_to(new_grid_position) -> void:
-	grid_position = new_grid_position
-	immediate_grid_destination = new_grid_position
-	grid_destination = new_grid_position
-	interpolated_position = Utils.map_to_local(new_grid_position)
-	position = interpolated_position
-	unconfirmed_path = []
 
 # Used to switch the current animation state
 func _switch_locomotion(steps: int) -> void:
@@ -468,9 +462,6 @@ func _handle_server_reconciliation(new_server_position: Vector2i) -> void:
 			var correction_path: Array[Vector2i] = _predict_path(grid_destination, new_server_position)
 			if correction_path.size() > 1:
 				_apply_path_correction(correction_path)
-			else:
-				# If for some reason we can't trace a path, force us to the correct position
-				_force_player_to(server_grid_position)
 		
 		# If our prediction was valid
 		else:
