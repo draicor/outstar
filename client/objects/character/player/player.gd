@@ -370,24 +370,32 @@ func _complete_movement() -> void:
 			unconfirmed_path = []
 			autopilot_active = false
 		else:
+			# If our position is not synced, predict a path from our current grid position to the server position,
+			# and store it to be used next tick
 			next_tick_predicted_path = _predict_path(grid_position, server_grid_position)
+			# If our prediction is valid
 			if next_tick_predicted_path.size() > 1:
-				print(next_tick_predicted_path.size())
-				# Update our player's speed to match our new path (remove overlap)
-				update_player_speed(next_tick_predicted_path.size()-1)
-				_setup_next_movement_step(next_tick_predicted_path, true) # This starts movement
+				# Get the first 3 cells from our next tick path
+				predicted_path.append_array(Utils.pop_multiple_front(next_tick_predicted_path, 3))
+				# Update our immediate grid destination
+				immediate_grid_destination = predicted_path.back()
+				
+				# Update speed only once per path segment
+				update_player_speed(predicted_path.size()-1)
+				_setup_next_movement_step(predicted_path, false)
 			else:
-				_force_teleport(server_grid_position)
-				autopilot_active = false
+				# If the prediction is not valid, force us to the correct position
+				_force_player_to(server_grid_position)
 
 
-func _force_teleport(new_grid_position) -> void:
+func _force_player_to(new_grid_position) -> void:
 	grid_position = new_grid_position
 	immediate_grid_destination = new_grid_position
 	grid_destination = new_grid_position
 	interpolated_position = Utils.map_to_local(new_grid_position)
-	# position = interpolated_position
+	position = interpolated_position
 	unconfirmed_path = []
+	autopilot_active = false
 
 # Used to switch the current animation state
 func _switch_locomotion(steps: int) -> void:
@@ -456,14 +464,13 @@ func _handle_server_reconciliation(new_server_position: Vector2i) -> void:
 		
 		# If we strayed from the server path
 		if not _prediction_was_valid(local_path_this_tick, new_server_position):
-			# Calculate correction path
-			var correction_path: Array[Vector2i] = _predict_path(immediate_grid_destination, new_server_position)
+			# NOTE Calculate correction from our current destination to the valid server position!
+			var correction_path: Array[Vector2i] = _predict_path(grid_destination, new_server_position)
 			if correction_path.size() > 1:
-				print("apply correction")
 				_apply_path_correction(correction_path)
 			else:
-				print("force tp")
-				_force_teleport(server_grid_position)
+				# If for some reason we can't trace a path, force us to the correct position
+				_force_player_to(server_grid_position)
 		
 		# If our prediction was valid
 		else:
@@ -474,16 +481,19 @@ func _handle_server_reconciliation(new_server_position: Vector2i) -> void:
 # Used to reconcile movement with the server
 func _apply_path_correction(new_path: Array[Vector2i]) -> void:
 	if not autopilot_active:
+		# If our character is idle
 		if not in_motion:
-			print("correcting while idle")
+			# Overwrite our next tick path with the correction path
 			next_tick_predicted_path = new_path
-			# Prepare everything to move correctly this tick
+			# Prepare everything to move correctly next tick
 			update_player_speed(next_tick_predicted_path.size()-1)
 			_setup_next_movement_step(next_tick_predicted_path, false)
 		else:
-			print("correcting while moving")
-			next_tick_predicted_path.append_array(new_path)
+			# If we were already moving just append the correction path
+			# while removing the overlapping cell
+			next_tick_predicted_path.append_array(new_path.slice(1))
 		
+		# Turn on autopilot either way so the player can't keep sending packets
 		autopilot_active = true
 
 
