@@ -110,3 +110,12 @@ func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
 		},
 	}
 }
+
+// Sent by both client and server to update a player character's movement speed
+func NewUpdateSpeed(newSpeed uint64) Payload {
+	return &Packet_UpdateSpeed{
+		UpdateSpeed: &UpdateSpeed{
+			Speed: newSpeed,
+		},
+	}
+}

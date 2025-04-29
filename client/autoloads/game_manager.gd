@@ -1,5 +1,7 @@
 extends Node
 
+const Player := preload("res://objects/character/player/player.gd")
+
 # Game States
 enum State {
 	CONNECTED,
@@ -25,7 +27,7 @@ var maps_scenes: Dictionary[Maps, String] = {
 # Expose the client's data globally
 var client_id: int
 var client_nickname: String
-var player_character: CharacterBody3D
+var player_character: Player
 # Internal variables
 var _current_scene_root: Node
 
@@ -43,5 +45,5 @@ func set_state(state: State) -> void:
 	add_child(_current_scene_root)
 
 # After instancing the player character, store it as a global variable
-func set_player_character(player_node: CharacterBody3D):
+func set_player_character(player_node: Player):
 	player_character = player_node

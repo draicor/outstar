@@ -200,6 +200,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_PlayerDestination:
 			state.HandlePlayerDestination(casted_payload.PlayerDestination)
 
+		// UPDATE SPEED
+		case *packets.Packet_UpdateSpeed:
+			state.HandleUpdateSpeed(casted_payload.UpdateSpeed)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -248,6 +252,20 @@ func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 			state.player.SetGridDestination(destination)
 		} // New destination is the same as our previous one, ignore
 	} // New destination was invalid, ignore
+}
+
+// Sent by the client to request updating the movement speed
+func (state *Game) HandleUpdateSpeed(payload *packets.UpdateSpeed) {
+	newSpeed := payload.Speed
+	if newSpeed != state.player.GetSpeed() {
+		state.player.SetSpeed(newSpeed)
+
+		// Create an update speed packet to be sent to our new client
+		// NOTE: use GetSpeed() because SetSpeed() has some validation, don't use newSpeed directly
+		updateSpeedPacket := packets.NewUpdateSpeed(state.player.GetSpeed())
+		state.client.SendPacket(updateSpeedPacket)
+
+	} // If the client sent the same speed, ignore
 }
 
 func (state *Game) OnExit() {

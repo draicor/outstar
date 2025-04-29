@@ -18,4 +18,5 @@ signal heartbeat_received
 # Input signals
 signal ui_escape_menu_toggle
 signal ui_chat_input_toggle
+signal ui_change_move_speed_button
 #signal ui_disconnect

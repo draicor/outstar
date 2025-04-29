@@ -32,7 +32,8 @@ var immediate_grid_destination: Vector2i # Used in case we want to change route 
 var server_path: Array[Vector2i] # Set at spawn and after server movement
 var next_tick_server_path: Array[Vector2i] # Used to store the next server path
 
-var player_speed: int # Set at spawn and after server movement
+var player_speed: int = 3 # Defaults to 3 at spawn
+var cells_to_move_this_tick: int
 
 var interpolated_position: Vector3 # Used to smoothly slide our character in our game client
 var movement_elapsed_time: float = 0.0 # Used in _process to slide the character
@@ -119,9 +120,6 @@ func _ready() -> void:
 	animation_player.set_blend_time("run", "idle", 0.15)
 	animation_player.set_blend_time("run", "walk", 0.15)
 	
-	# Connect the signals
-	Signals.ui_chat_input_toggle.connect(_on_chat_input_toggle)
-	
 	position = interpolated_position # Has to be set here after the scene has been created
 	
 	# Update any other spawn data here
@@ -138,6 +136,10 @@ func _ready() -> void:
 	
 	# Do this only for our player's character
 	if my_player_character:
+		# Connect the signals ONLY for our player character!
+		Signals.ui_chat_input_toggle.connect(_handle_signal_ui_chat_input_toggle)
+		Signals.ui_change_move_speed_button.connect(_handle_signal_ui_update_speed_button)
+	
 		# Add a camera to our character
 		camera = Camera3D.new()
 		# Camera settings
@@ -157,9 +159,29 @@ func _ready() -> void:
 
 
 # Toggles the bool that keeps track of the chat
-func _on_chat_input_toggle() -> void:
+func _handle_signal_ui_chat_input_toggle() -> void:
 	is_typing = !is_typing
 
+
+# Request the server to change the movement speed of my player
+func _handle_signal_ui_update_speed_button() -> void:
+	_cycle_movement_speed()
+
+
+# Create a new packet to hold our new speed and send it to the server
+# Switches the current movement speed like this:
+# walk -> jog -> run -> walk -> jog -> run -> etc
+func _cycle_movement_speed() -> void:
+	var packet: packets.Packet
+	match player_speed:
+		1:
+			packet = _create_update_speed_packet(ASM.JOG)
+		2:
+			packet = _create_update_speed_packet(ASM.RUN)
+		_:
+			packet = _create_update_speed_packet(ASM.WALK)
+			
+	WebSocket.send(packet)
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("left_click"):
@@ -215,19 +237,22 @@ func _click_to_move(mouse_position: Vector2) -> void:
 		var prediction = _predict_path(grid_position, new_destination)
 		# If the prediction is valid
 		# Make this prediction our current path and start moving right away
-		if prediction.size() > 0:
-			# Because we were idling, we need the first 4 cells for this tick
-			predicted_path = Utils.pop_multiple_front(prediction, 4)
+		if prediction.size() > 1:
+			# Because we were idling, we need to get 1 more cell for this tick
+			predicted_path = Utils.pop_multiple_front(prediction, player_speed+1)
 			# Get our immediate grid destination (this tick)
 			immediate_grid_destination = predicted_path.back()
+			# Remove the first cell from the predicted_path because we are already there
+			predicted_path = predicted_path.slice(1)
 			# We add to our local unconfirmed path the next steps we'll take
 			unconfirmed_path.append(immediate_grid_destination)
 			
 			# Store the remaining prediction (if any) for next tick
 			next_tick_predicted_path = prediction
 			# Prepare everything to move correctly this tick
-			update_player_speed(predicted_path.size()-1)
-			_setup_next_movement_step(predicted_path, false)
+			cells_to_move_this_tick = predicted_path.size()
+			_setup_next_movement_step(predicted_path, true)
+			_switch_locomotion(cells_to_move_this_tick)
 			
 			is_predicting = true
 			# Overwrite our new grid destination
@@ -280,6 +305,14 @@ func _create_player_destination_packet(grid_pos: Vector2i) -> packets.Packet:
 	return packet
 
 
+# Creates and returns an update_speed packet
+func _create_update_speed_packet(new_speed: int) -> packets.Packet:
+	var packet := packets.Packet.new()
+	var update_speed_packet := packet.new_update_speed()
+	update_speed_packet.set_speed(new_speed)
+	return packet
+	
+
 # _physics_process runs at a fixed timestep
 # Movement should be handled here because this runs before _process
 func _physics_process(delta: float) -> void:
@@ -324,19 +357,19 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 	if current_path.size() > 0:
 		_setup_next_movement_step(current_path, true)
 		move_and_slide_player(delta)
-		_switch_locomotion(player_speed)
+		_switch_locomotion(cells_to_move_this_tick)
 	# If our current path has no more cells but our next path does
 	elif next_path.size() > 0:
-		# Get the first 3 cells from our next tick path
-		current_path.append_array(Utils.pop_multiple_front(next_path, 3))
+		# Get the first cells from our next tick path (based on our speed)
+		current_path.append_array(Utils.pop_multiple_front(next_path, player_speed))
 		# Update our immediate grid destination
 		immediate_grid_destination = current_path.back()
 		
 		# Update speed only once per path segment
-		update_player_speed(current_path.size())
+		cells_to_move_this_tick = current_path.size()
 		_setup_next_movement_step(current_path, true)
 		move_and_slide_player(delta)
-		_switch_locomotion(player_speed)
+		_switch_locomotion(cells_to_move_this_tick)
 		
 		if my_player_character:
 			unconfirmed_path.append(immediate_grid_destination)
@@ -358,27 +391,28 @@ func _complete_movement() -> void:
 	interpolated_position = next_cell
 	position = next_cell
 	in_motion = false
-	_switch_locomotion(0) # IDLE
+	_switch_locomotion(ASM.IDLE)
 	
 	if autopilot_active:
 		# If we are at the same position as in the server
-		if grid_position == server_grid_position and immediate_grid_destination == server_grid_position and grid_position == grid_destination:
+		if grid_position == server_grid_position and immediate_grid_destination == server_grid_position or grid_position == grid_destination:
 			autopilot_active = false
+			grid_destination = grid_position
 		else:
 			# If our position is not synced, predict a path from our current grid position to the server position,
 			# and store it to be used next tick
 			next_tick_predicted_path = _predict_path(grid_position, server_grid_position)
 			# If our prediction is valid
-			if next_tick_predicted_path.size() > 1:
-				# Get the first 3 cells from our next tick path
-				predicted_path.append_array(Utils.pop_multiple_front(next_tick_predicted_path, 3))
+			if next_tick_predicted_path.size() > 0:
+				# Get the first cells from our next tick path (based on our speed)
+				predicted_path.append_array(Utils.pop_multiple_front(next_tick_predicted_path, player_speed+1))
 				# Update our immediate grid destination
 				immediate_grid_destination = predicted_path.back()
 				
 				unconfirmed_path.append(immediate_grid_destination)
 				
-				# Update speed only once per path segment
-				update_player_speed(predicted_path.size()-1)
+				# Update only once per path segment
+				cells_to_move_this_tick = predicted_path.size()-1
 				_setup_next_movement_step(predicted_path, false)
 			else:
 				# To prevent an input lock, we turn off autopilot if we get here
@@ -390,7 +424,7 @@ func _complete_movement() -> void:
 
 # Used to switch the current animation state
 func _switch_locomotion(steps: int) -> void:
-	var settings = locomotion.get(steps, locomotion[0]) # Defaults to IDLE
+	var settings = locomotion.get(steps, locomotion[ASM.IDLE]) # Defaults to IDLE
 	_change_animation(settings.animation, settings.play_rate)
 	current_animation = settings.state # This has no use yet, but I'll use it to prevent actions while moving, etc.
 
@@ -431,8 +465,8 @@ func _handle_remote_player_movement(new_server_position: Vector2i) -> void:
 		else:
 			# We make the new path our current path
 			server_path = next_path
-			# Update our player's speed to match our new path (remove overlap)
-			update_player_speed(server_path.size()-1)
+			# Update our new path (remove overlap)
+			cells_to_move_this_tick = server_path.size()-1
 			_setup_next_movement_step(server_path, true) # This starts movement
 
 
@@ -447,7 +481,7 @@ func _handle_server_reconciliation(new_server_position: Vector2i) -> void:
 	else: # If our prediction was invalid
 		# Calculate correction from our grid_destination to the last valid server position!
 		var correction_path: Array[Vector2i] = _predict_path(grid_destination, new_server_position)
-		if correction_path.size() > 1:
+		if correction_path.size() > 0:
 			_apply_path_correction(correction_path)
 
 
@@ -459,7 +493,7 @@ func _apply_path_correction(new_path: Array[Vector2i]) -> void:
 			# Overwrite our next tick path with the correction path
 			next_tick_predicted_path = new_path
 			# Prepare everything to move correctly next tick
-			update_player_speed(next_tick_predicted_path.size()-1)
+			cells_to_move_this_tick = next_tick_predicted_path.size()-1
 			_setup_next_movement_step(next_tick_predicted_path, false)
 		else:
 			# If we were already moving just append the correction path
@@ -587,9 +621,9 @@ func _is_step_diagonal(current: Vector2i, next: Vector2i) -> bool:
 func update_movement_tick(is_diagonal: bool) -> void:
 	if is_diagonal:
 		# Diagonal movement should take longer because its more distance
-		movement_tick = (SERVER_TICK / player_speed) * 1.414 # sqrt(2) = 1.414
+		movement_tick = (SERVER_TICK / cells_to_move_this_tick) * 1.414 # sqrt(2) = 1.414
 	else:
-		movement_tick = SERVER_TICK / player_speed
+		movement_tick = SERVER_TICK / cells_to_move_this_tick
 
 
 # Used to update this step movement tick

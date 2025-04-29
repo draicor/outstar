@@ -18,15 +18,17 @@ var _players: Dictionary[int, Player]
 var chat_input: LineEdit
 var game_escape_menu
 
+
 func _ready() -> void:
 	_initialize()
 	# Send a packet to the server to let everyone know we joined
 	_send_client_entered_packet()
 	
-	# TO FIX
+	# CAUTION
 	# We need to get which map to load from the server instead!
 	# Loads the map from our game manager
 	_load_map(GameManager.Maps.PROTOTYPE)
+
 
 func _initialize() -> void:
 	# Get access to the child nodes of the chat UI
@@ -46,11 +48,13 @@ func _initialize() -> void:
 	game_escape_menu = game_escape_menu_scene.instantiate()
 	ui_canvas.add_child(game_escape_menu)
 
+
 # If our connection to the server closed
 func _on_websocket_connection_closed() -> void:
 	chat.error("You have been disconnected from the server")
 	# Display some kind of dialog box that the user can accept to go back to
 	# the main menu
+
 
 func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()
@@ -67,6 +71,9 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_request_denied_packet(packet.get_request_denied().get_reason())
 	elif packet.has_update_player():
 		_handle_update_player_packet(packet.get_update_player())
+	elif packet.has_update_speed():
+		_handle_update_speed_packet(sender_id, packet.get_update_speed())
+
 
 # Print the message into our chat window and update that player's chat bubble
 func _handle_public_message_packet(sender_id: int, packet_public_message: packets.PublicMessage) -> void:
@@ -81,6 +88,7 @@ func _handle_public_message_packet(sender_id: int, packet_public_message: packet
 			# Update their chat bubble to reflect the text
 			player.new_chat_bubble(packet_public_message.get_text())
 
+
 # We send a heartbeat packet to the server every time the timer timeouts
 func _on_websocket_heartbeat_attempt() -> void:
 	# We create a new packet of type heartbeat
@@ -93,11 +101,13 @@ func _on_websocket_heartbeat_attempt() -> void:
 	if !err:
 		Signals.heartbeat_sent.emit()
 
+
 # When a new client connects, we print the message into our chat window
 func _handle_client_entered_packet(_nickname: String) -> void:
 	pass
 	# When a client enters, we need to send our own data to him so he can
 	# store it locally!
+
 
 # When a client leaves, print the message into our chat window
 # If that client was on our player list, we destroy his character to free resources
@@ -115,7 +125,8 @@ func _handle_client_left_packet(client_left_packet: packets.ClientLeft) -> void:
 	
 	# Displays a message in the chat window
 	# chat.info("%s left" % client_left_packet.get_nickname())
-	
+
+
 # if our client presses the enter key in the chat
 func _on_chat_input_text_submitted(text: String) -> void:
 	# Ignore this if the message was empty and release focus!
@@ -142,15 +153,18 @@ func _on_chat_input_text_submitted(text: String) -> void:
 	# We clear the line edit
 	chat_input.text = ""
 
+
 # If the ui_escape key is pressed, toggle the escape menu
 func _on_ui_escape_menu_toggle() -> void:
 	game_escape_menu.toggle()
+
 
 # If the ui_enter key is pressed, toggle the chat input
 func _on_ui_chat_input_toggle() -> void:
 	chat_input.visible = !chat_input.visible
 	if chat_input.visible:
 		chat_input.grab_focus()
+
 
 func _send_client_entered_packet() -> bool:
 	# We create a new packet
@@ -166,6 +180,7 @@ func _send_client_entered_packet() -> bool:
 	else:
 		return true
 
+
 func _handle_request_denied_packet(reason: String) -> void:
 	# Just jog the error to console for now
 	print(reason)
@@ -174,6 +189,7 @@ func _handle_request_denied_packet(reason: String) -> void:
 	# We need to have a Callable that we assign a different function
 	# everytime we want to request something to the server so we don't
 	# have a packet type for every type of request unless we have to!
+
 
 func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) -> void:
 	var player_id := update_player_packet.get_id()
@@ -211,6 +227,13 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		var server_position: Vector2i = Vector2i(update_player_packet.get_position().get_x(), update_player_packet.get_position().get_z())
 		# Update this player's movement
 		player.update_destination(server_position)
+
+
+func _handle_update_speed_packet(sender_id: int, update_speed_packet: packets.UpdateSpeed) -> void:
+	# If this packet came from our own client
+	if sender_id == GameManager.client_id:
+		GameManager.player_character.update_player_speed(update_speed_packet.get_speed())
+
 
 func _load_map(map: GameManager.Maps) -> void:
 	# Load the next scene

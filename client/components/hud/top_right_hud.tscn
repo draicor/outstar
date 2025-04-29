@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3 uid="uid://dmxqcb7os6xxx"]
+
+[ext_resource type="Script" uid="uid://dcx0bk5g57rdo" path="res://components/hud/top_right_hud.gd" id="1_e2m3u"]
+
+[node name="TopRightHUD" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_e2m3u")
+
+[node name="ChangeMoveSpeed" type="Button" parent="."]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0
+text = "Update Speed"
+
+[connection signal="button_down" from="ChangeMoveSpeed" to="." method="_on_change_move_speed_button_down"]

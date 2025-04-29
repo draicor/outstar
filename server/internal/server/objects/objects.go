@@ -2,6 +2,8 @@ package objects
 
 import "server/internal/server/pathfinding"
 
+const MAX_SPEED uint64 = 3
+
 type Player struct {
 	Name string
 	// Model string // Determines which model should godot load
@@ -48,6 +50,17 @@ func (player *Player) SetGridDestination(cell *pathfinding.Cell) {
 	player.Destination = cell
 }
 
+// Returns this character's move speed
+func (player *Player) GetSpeed() uint64 {
+	return player.Speed
+}
+
+// Updates this character's move speed
+func (player *Player) SetSpeed(newSpeed uint64) {
+	// If trying to move faster than allowed
+	player.Speed = min(newSpeed, MAX_SPEED)
+}
+
 // Static function to create a new player
 func CreatePlayer(
 	name string,
@@ -68,6 +81,6 @@ func CreatePlayer(
 		Level:      level,
 		Experience: experience,
 		// Attributes
-		Speed: 3, // Humanoid characters have a max speed of 3 for movement
+		Speed: MAX_SPEED, // At spawn start with run enabled by default
 	}
 }

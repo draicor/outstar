@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://x0epwfo5cr8"]
+[gd_scene load_steps=4 format=3 uid="uid://x0epwfo5cr8"]
 
 [ext_resource type="Script" uid="uid://bupkb86ykt0jg" path="res://states/game/game.gd" id="1_t5g5c"]
+[ext_resource type="PackedScene" uid="uid://dmxqcb7os6xxx" path="res://components/hud/top_right_hud.tscn" id="2_bryld"]
 [ext_resource type="PackedScene" uid="uid://c0e51fcsnsimq" path="res://components/chat/chat.tscn" id="2_wrs1w"]
 
 [node name="Game" type="Node"]
@@ -20,3 +21,13 @@ alignment = 2
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 8
+
+[node name="TopRightHUD" parent="UI" instance=ExtResource("2_bryld")]
+custom_minimum_size = Vector2(120, 0)
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -120.0
+offset_top = 5.0
+offset_bottom = 5.0
+grow_horizontal = 0

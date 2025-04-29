@@ -1,3 +1,5 @@
+Button
+Control
 Label
 RayCast3D
 Timer
@@ -11,4 +13,3 @@ Label3D
 Camera3D
 OmniLight3D
 RemoteTransform3D
-CollisionShape3D
