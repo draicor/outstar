@@ -1,16 +1,26 @@
-[gd_scene load_steps=2 format=3 uid="uid://dmxqcb7os6xxx"]
+[gd_scene load_steps=3 format=3 uid="uid://dmxqcb7os6xxx"]
 
 [ext_resource type="Script" uid="uid://dcx0bk5g57rdo" path="res://components/hud/top_right_hud.gd" id="1_e2m3u"]
+[ext_resource type="Texture2D" uid="uid://d7y1th8uypdj" path="res://assets/icons/icon_walk.png" id="2_oe82i"]
 
 [node name="TopRightHUD" type="Control"]
+custom_minimum_size = Vector2(41, 36)
 layout_mode = 3
-anchors_preset = 0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1319.0
+offset_bottom = -288.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_e2m3u")
 
 [node name="ChangeMoveSpeed" type="Button" parent="."]
 layout_mode = 0
-offset_right = 8.0
-offset_bottom = 8.0
-text = "Update Speed"
+offset_right = 82.0
+offset_bottom = 72.0
+scale = Vector2(0.5, 0.5)
+icon = ExtResource("2_oe82i")
+icon_alignment = 1
 
 [connection signal="button_down" from="ChangeMoveSpeed" to="." method="_on_change_move_speed_button_down"]

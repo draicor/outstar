@@ -23,11 +23,12 @@ size_flags_horizontal = 0
 size_flags_vertical = 8
 
 [node name="TopRightHUD" parent="UI" instance=ExtResource("2_bryld")]
-custom_minimum_size = Vector2(120, 0)
+custom_minimum_size = Vector2(41, 0)
 anchors_preset = 1
 anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -120.0
-offset_top = 5.0
-offset_bottom = 5.0
+anchor_bottom = 0.0
+offset_left = -41.0
+offset_right = 0.0
+offset_bottom = 36.0
 grow_horizontal = 0
+grow_vertical = 1
