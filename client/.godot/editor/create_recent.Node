@@ -1,9 +1,10 @@
+TextureRect
+MarginContainer
 Button
 Control
 Label
 RayCast3D
 Timer
-MarginContainer
 PanelContainer
 SubViewportContainer
 Node3D
@@ -12,4 +13,3 @@ Sprite3D
 Label3D
 Camera3D
 OmniLight3D
-RemoteTransform3D

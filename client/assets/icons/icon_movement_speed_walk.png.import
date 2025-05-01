@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b8jdxnahttox7"
-path="res://.godot/imported/icon_jog.png-20b67811b6f656a8c2cb8860de8b78aa.ctex"
+uid="uid://pfpsq4hsvyxn"
+path="res://.godot/imported/icon_movement_speed_walk.png-3009fcde9051fcf65e245d208bf607af.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/icon_jog.png"
-dest_files=["res://.godot/imported/icon_jog.png-20b67811b6f656a8c2cb8860de8b78aa.ctex"]
+source_file="res://assets/icons/icon_movement_speed_walk.png"
+dest_files=["res://.godot/imported/icon_movement_speed_walk.png-3009fcde9051fcf65e245d208bf607af.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://del4ldtlei83b"
-path="res://.godot/imported/icon_run.png-92243a28def626c53c8161c4d809e049.ctex"
+uid="uid://codmi0sf4a76y"
+path="res://.godot/imported/icon_movement_speed_jog.png-90ee1093eb150c850d61eb509920d7b2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/icon_run.png"
-dest_files=["res://.godot/imported/icon_run.png-92243a28def626c53c8161c4d809e049.ctex"]
+source_file="res://assets/icons/icon_movement_speed_jog.png"
+dest_files=["res://.godot/imported/icon_movement_speed_jog.png-90ee1093eb150c850d61eb509920d7b2.ctex"]
 
 [params]
 

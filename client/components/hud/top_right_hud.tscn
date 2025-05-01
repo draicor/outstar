@@ -1,26 +1,32 @@
 [gd_scene load_steps=3 format=3 uid="uid://dmxqcb7os6xxx"]
 
 [ext_resource type="Script" uid="uid://dcx0bk5g57rdo" path="res://components/hud/top_right_hud.gd" id="1_e2m3u"]
-[ext_resource type="Texture2D" uid="uid://d7y1th8uypdj" path="res://assets/icons/icon_walk.png" id="2_oe82i"]
+[ext_resource type="Texture2D" uid="uid://dahiyd6f371gx" path="res://assets/icons/icon_movement_speed_run.png" id="2_oe82i"]
 
 [node name="TopRightHUD" type="Control"]
-custom_minimum_size = Vector2(41, 36)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_right = -1319.0
-offset_bottom = -288.0
-grow_horizontal = 2
-grow_vertical = 2
+anchors_preset = 0
+offset_right = 64.0
+offset_bottom = 64.0
 script = ExtResource("1_e2m3u")
 
-[node name="ChangeMoveSpeed" type="Button" parent="."]
+[node name="TextureRect" type="TextureRect" parent="."]
 layout_mode = 0
-offset_right = 82.0
-offset_bottom = 72.0
-scale = Vector2(0.5, 0.5)
-icon = ExtResource("2_oe82i")
-icon_alignment = 1
+offset_right = 64.0
+offset_bottom = 64.0
+texture = ExtResource("2_oe82i")
 
-[connection signal="button_down" from="ChangeMoveSpeed" to="." method="_on_change_move_speed_button_down"]
+[node name="ChangeMoveSpeed" type="Button" parent="TextureRect"]
+layout_mode = 0
+offset_right = 64.0
+offset_bottom = 64.0
+tooltip_text = "Movement Speed"
+theme_override_constants/outline_size = 0
+theme_override_constants/h_separation = 0
+theme_override_constants/icon_max_width = 0
+theme_override_constants/align_to_largest_stylebox = 0
+theme_override_constants/line_spacing = 0
+flat = true
+
+[connection signal="button_down" from="TextureRect/ChangeMoveSpeed" to="." method="_on_change_move_speed_button_down"]
