@@ -1,0 +1,43 @@
+https://www.youtube.com/watch?v=xGHgA5oftxY
+How to export from Mixamo to Godot and use Animation Libraries
+
+
+FEMALE LOCOMOTION
+female_idle -> Idle (#8, 250 frames)
+female_walk -> Walking (#3, 29 frames)
+female_run -> Medium Run (#1, 17 frames)
+
+
+MALE LOCOMOTION
+male_idle -> Idle (#4, 250 frames)
+male_walk -> Standard Walk (#41, 35 frames)
+male_jog -> Running (#25, 25 frames)
+male_run -> Standard Run (#1, 22 frames)
+
+
+RIFLE
+rifle_relaxed_idle -> Rifle Idle (#1, 257 frames)
+rifle_relaxed_walk -> Rifle Walk (#5, 39 frames)
+rifle_ready_idle -> Idle (#13, 63 frames)
+rifle_ready_walk -> Walk Forward (#15, 30 frames)
+rifle_ready_reload -> Reloading (#5, 99 frames) Arm-Height 0
+rifle_aim_idle -> Rifle Idle (#6, 94 frames)
+rifle_aim_walk -> Walking (#45, 41 frames)
+rifle_aim_fire_single_slow -> Firing Rifle (#8, 35 frames)
+rifle_aim_fire_single_fast -> Firing Rifle (#3, 8 frames)
+rifle_aim_reload -> Reloading (#5, 99 frames) Arm-Height 100
+rifle_unequip -> Rifle Put Away (#12, 69 frames)
+
+
+PISTOL
+pistol_idle -> Pistol Idle (#4, 40 frames), Arm-Space 56
+pistol_walk -> Pistol Walk (#3, 24 frames), Arm-Space 56
+pistol_jog -> Pistol Run (#1, 22 frames), Arm-Space 56
+pistol_run -> Pistol Run (#2, 15 frames), Arm-Space 56
+pistol_melee -> Pistol Whip (#13, 77 frames), Arm-Space 56
+pistol_holster -> Pistol Aim (#26, 213 frames), Arm-Space 56
+pistol_kneel_idle -> Pistol Kneeling Idle (#1, 114 frames), Arm-Space 56
+pistol_idle_to_pistol_kneel_idle -> Pistol Stand To Kneel (#4, 30 frames), Arm-Space 56
+pistol_kneel_idle_to_pistol_idle -> Pistol Kneel To Stand (#2, 41 frames), Arm-Space 56
+pistol_equip_unequip -> SPLIT & FIX Grab Rifle And Put Back (#4, 144 frames) Speed 100
+pistol_fire -> MISSING (Create from pistol_idle...)
