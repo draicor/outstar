@@ -62,6 +62,9 @@ func _on_login_button_pressed() -> void:
 func _handle_login_success(login_success_packet: packets.LoginSuccess) -> void:
 	# We store the info of our client sent by the server
 	GameManager.client_nickname = login_success_packet.get_nickname()
+	# Emit this signal to start the heartbeat timer in our WebSocket class
+	Signals.login_success.emit()
+	# Move this player to the GAME state
 	GameManager.set_state(GameManager.State.GAME)
 
 func _handle_server_metrics(server_metrics_packet: packets.ServerMetrics) -> void:

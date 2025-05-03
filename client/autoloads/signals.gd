@@ -12,6 +12,9 @@ signal packet_received(packet: packets.Packet)
 signal heartbeat_attempt
 signal heartbeat_sent
 
+# Login signals
+signal login_success
+
 # Multiplayer packets
 signal heartbeat_received
 

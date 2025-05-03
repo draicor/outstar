@@ -10,17 +10,22 @@ import (
 	"server/internal/server/math"
 	"server/internal/server/objects"
 	"strings"
+	"time"
 
 	"server/pkg/packets"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
+const disconnectTimeout time.Duration = 2 // 2 minutes
+
 type Authentication struct {
-	client  server.Client
-	logger  *log.Logger
-	queries *db.Queries
-	dbCtx   context.Context
+	client          server.Client
+	logger          *log.Logger
+	queries         *db.Queries
+	dbCtx           context.Context
+	lastActivity    time.Time   // Track last activity
+	inactivityTimer *time.Timer // Disconnects player due to inactivity
 }
 
 func (state *Authentication) GetName() string {
@@ -39,6 +44,17 @@ func (state *Authentication) SetClient(client server.Client) {
 }
 
 func (state *Authentication) OnEnter() {
+	// Keep track of last activity time
+	state.lastActivity = time.Now()
+
+	// Create a timer that will disconnect after two minutes
+	state.inactivityTimer = time.AfterFunc(disconnectTimeout*time.Minute, func() {
+		// Check that our client hasn't disconnected already
+		if state.client != nil {
+			state.client.Close("authentication timeout")
+		}
+	})
+
 	// Send the client the server's info
 	// We send the number of clients online minus one so our own client doesn't count
 	state.client.SendPacket(packets.NewServerMetrics(state.client.GetHub().GetClientsOnline() - 1))
@@ -47,6 +63,17 @@ func (state *Authentication) OnEnter() {
 func (state *Authentication) HandlePacket(senderId uint64, payload packets.Payload) {
 	// If this packet was sent by our client
 	if senderId == state.client.GetId() {
+
+		// Reset activity timer on any packet
+		state.lastActivity = time.Now()
+		if state.inactivityTimer != nil {
+			// If timer already fired, client should be disconnected
+			if !state.inactivityTimer.Stop() {
+				return
+			}
+			state.inactivityTimer.Reset(disconnectTimeout * time.Minute)
+		}
+
 		// Switch based on the type of packet
 		// We also save the casted packet in case we need to access specific fields
 		switch casted_payload := payload.(type) {
@@ -321,5 +348,8 @@ func capitalize(text string) (string, error) {
 }
 
 func (state *Authentication) OnExit() {
-	// pass
+	// Stop the timer when leaving this state
+	if state.inactivityTimer != nil {
+		state.inactivityTimer.Stop()
+	}
 }
