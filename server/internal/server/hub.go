@@ -227,6 +227,9 @@ func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 			// Save the new region pointer in the client
 			client.SetRegion(region)
 
+			// Send this client this region's metadata
+			client.SendPacket(packets.NewRegionData(region.GetId(), region.Grid.GetMaxWidth(), region.Grid.GetMaxHeight()))
+
 			// SPAWN THIS CHARACTER AT THE ORIGIN for now
 			// TO FIX <- GET THIS FROM THE DATABASE!
 			playerSpawnCell := region.Grid.GetSpawnCell(0, 0)

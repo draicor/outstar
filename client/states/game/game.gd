@@ -21,13 +21,6 @@ var game_escape_menu
 
 func _ready() -> void:
 	_initialize()
-	# Send a packet to the server to let everyone know we joined
-	_send_client_entered_packet()
-	
-	# CAUTION
-	# We need to get which map to load from the server instead!
-	# Loads the map from our game manager
-	_load_map(GameManager.Maps.PROTOTYPE)
 
 
 func _initialize() -> void:
@@ -73,7 +66,8 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_update_player_packet(packet.get_update_player())
 	elif packet.has_update_speed():
 		_handle_update_speed_packet(sender_id, packet.get_update_speed())
-
+	elif packet.has_region_data():
+		_handle_region_data_packet(packet.get_region_data())
 
 # Print the message into our chat window and update that player's chat bubble
 func _handle_public_message_packet(sender_id: int, packet_public_message: packets.PublicMessage) -> void:
@@ -120,6 +114,8 @@ func _handle_client_left_packet(client_left_packet: packets.ClientLeft) -> void:
 		var player: Player = _players[player_id]
 		# If its valid
 		if player:
+			# Remove this player from our grid
+			RegionManager.remove_object(player.server_grid_position, player)
 			# Destroy it
 			player.queue_free()
 	
@@ -225,6 +221,12 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		
 		# Get the server position from the packet
 		var server_position: Vector2i = Vector2i(update_player_packet.get_position().get_x(), update_player_packet.get_position().get_z())
+		
+		# Remove the player from the grid position it was
+		RegionManager.remove_object(player.server_grid_position, player)
+		# Add the player to the new position in the grid
+		RegionManager.set_object(server_position, player)
+		
 		# Update this player's movement
 		player.update_destination(server_position)
 
@@ -235,9 +237,26 @@ func _handle_update_speed_packet(sender_id: int, update_speed_packet: packets.Up
 		GameManager.player_character.update_player_speed(update_speed_packet.get_speed())
 
 
-func _load_map(map: GameManager.Maps) -> void:
+func _handle_region_data_packet(region_data_packet: packets.RegionData) -> void:
+	var region_id: int = region_data_packet.get_region_id()	
+	
+	if region_id in RegionManager.Maps.values():
+		RegionManager.update_region_data(region_id, region_data_packet.get_grid_width(), region_data_packet.get_grid_height())
+		
+		_load_map(region_id as RegionManager.Maps)
+		# Send a packet to the server to let everyone know we joined
+		_send_client_entered_packet()
+	else:
+		# If the region id is invalid, load the prototype map
+		_load_map(RegionManager.Maps.PROTOTYPE)
+		# CAUTION
+		# Replace this with a request to the server to switch us to another map
+
+
+# Used to switch regions/maps
+func _load_map(map: RegionManager.Maps) -> void:
 	# Load the next scene
-	var map_scene: PackedScene = load(GameManager.maps_scenes[map])
+	var map_scene: PackedScene = load(RegionManager.maps_scenes[map])
 	# Create the map scene
 	_current_map_scene = map_scene.instantiate()
 	# Add it to the game root

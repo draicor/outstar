@@ -14,14 +14,36 @@ func _ready() -> void:
 
 # Request the server to change the movement speed
 func _on_change_move_speed_button_down() -> void:
-	# Only send the packet to update our speed if we are IDLE
-	if GameManager.player_character.current_animation == GameManager.player_character.ASM.IDLE:
-		if GameManager.player_character.player_speed == 1:
-			texture_rect.texture = jog_texture
+		# Only send the packet to update our speed if we are IDLE
+	if GameManager.player_character.current_animation != GameManager.player_character.ASM.IDLE:
+		return
+	
+	# Left click increases speed
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		print("Left click detected, increase speed")
+		if GameManager.player_character.player_speed == 3:
+			print("Already at max speed, ignore this")
+			return
+		# If I was jogging, start running
 		elif GameManager.player_character.player_speed == 2:
 			texture_rect.texture = run_texture
-		elif GameManager.player_character.player_speed == 3:
+			Signals.ui_change_move_speed_button.emit(3) # RUN
+		# If I was walking, start jogging
+		elif GameManager.player_character.player_speed == 1:
+			texture_rect.texture = jog_texture
+			Signals.ui_change_move_speed_button.emit(2) # JOG
+	
+	# Right click decreases speed
+	elif Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+		print("Right click detected, decrease speed")
+		if GameManager.player_character.player_speed == 1:
+			print("Already at min speed, ignore this")
+			return
+		# If I was jogging, start walking
+		elif GameManager.player_character.player_speed == 2:
 			texture_rect.texture = walk_texture
-		
-		# Report it to the rest of the code
-		Signals.ui_change_move_speed_button.emit()
+			Signals.ui_change_move_speed_button.emit(1) # WALK
+		# If I was running, start jogging
+		elif GameManager.player_character.player_speed == 3:
+			texture_rect.texture = jog_texture
+			Signals.ui_change_move_speed_button.emit(2) # JOG

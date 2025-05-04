@@ -56,6 +56,15 @@ func NewRequestDenied(reason string) Payload {
 	}
 }
 
+// Sent by the client after successful login
+func NewLoginSuccess(nickname string) Payload {
+	return &Packet_LoginSuccess{
+		LoginSuccess: &LoginSuccess{
+			Nickname: nickname,
+		},
+	}
+}
+
 // Sent by the client once he arrives and broadcasted to everyone
 func NewClientEntered(nickname string) Payload {
 	return &Packet_ClientEntered{
@@ -75,11 +84,13 @@ func NewClientLeft(id uint64, nickname string) Payload {
 	}
 }
 
-// Sent by the client after successful login
-func NewLoginSuccess(nickname string) Payload {
-	return &Packet_LoginSuccess{
-		LoginSuccess: &LoginSuccess{
-			Nickname: nickname,
+// Sent by the server as metadata (map name, grid size, static obstacles?, gates?)
+func NewRegionData(regionId uint64, gridWidth uint64, gridHeight uint64) Payload {
+	return &Packet_RegionData{
+		RegionData: &RegionData{
+			RegionId:   regionId,
+			GridWidth:  gridWidth,
+			GridHeight: gridHeight,
 		},
 	}
 }

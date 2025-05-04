@@ -1280,6 +1280,87 @@ class JoinRegionRequest:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
+class RegionData:
+	func _init():
+		var service
+		
+		__region_id = PBField.new("region_id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __region_id
+		data[__region_id.tag] = service
+		
+		__grid_width = PBField.new("grid_width", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __grid_width
+		data[__grid_width.tag] = service
+		
+		__grid_height = PBField.new("grid_height", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __grid_height
+		data[__grid_height.tag] = service
+		
+	var data = {}
+	
+	var __region_id: PBField
+	func has_region_id() -> bool:
+		if __region_id.value != null:
+			return true
+		return false
+	func get_region_id() -> int:
+		return __region_id.value
+	func clear_region_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__region_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_region_id(value : int) -> void:
+		__region_id.value = value
+	
+	var __grid_width: PBField
+	func has_grid_width() -> bool:
+		if __grid_width.value != null:
+			return true
+		return false
+	func get_grid_width() -> int:
+		return __grid_width.value
+	func clear_grid_width() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__grid_width.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_grid_width(value : int) -> void:
+		__grid_width.value = value
+	
+	var __grid_height: PBField
+	func has_grid_height() -> bool:
+		if __grid_height.value != null:
+			return true
+		return false
+	func get_grid_height() -> int:
+		return __grid_height.value
+	func clear_grid_height() -> void:
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__grid_height.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_grid_height(value : int) -> void:
+		__grid_height.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
 class Position:
 	func _init():
 		var service
@@ -1633,25 +1714,31 @@ class Packet:
 		service.func_ref = Callable(self, "new_join_region_request")
 		data[__join_region_request.tag] = service
 		
-		__position = PBField.new("position", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 14, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__region_data = PBField.new("region_data", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 14, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = __region_data
+		service.func_ref = Callable(self, "new_region_data")
+		data[__region_data.tag] = service
+		
+		__position = PBField.new("position", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 15, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = __position
 		service.func_ref = Callable(self, "new_position")
 		data[__position.tag] = service
 		
-		__update_player = PBField.new("update_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 15, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__update_player = PBField.new("update_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 16, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = __update_player
 		service.func_ref = Callable(self, "new_update_player")
 		data[__update_player.tag] = service
 		
-		__player_destination = PBField.new("player_destination", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 16, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__player_destination = PBField.new("player_destination", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 17, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = __player_destination
 		service.func_ref = Callable(self, "new_player_destination")
 		data[__player_destination.tag] = service
 		
-		__update_speed = PBField.new("update_speed", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 17, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__update_speed = PBField.new("update_speed", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 18, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = __update_speed
 		service.func_ref = Callable(self, "new_update_speed")
@@ -1706,14 +1793,16 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__public_message.value = PublicMessage.new()
 		return __public_message.value
 	
@@ -1751,14 +1840,16 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__handshake.value = Handshake.new()
 		return __handshake.value
 	
@@ -1796,14 +1887,16 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__heartbeat.value = Heartbeat.new()
 		return __heartbeat.value
 	
@@ -1841,14 +1934,16 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__server_metrics.value = ServerMetrics.new()
 		return __server_metrics.value
 	
@@ -1886,14 +1981,16 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__request_granted.value = RequestGranted.new()
 		return __request_granted.value
 	
@@ -1931,14 +2028,16 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__request_denied.value = RequestDenied.new()
 		return __request_denied.value
 	
@@ -1976,14 +2075,16 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__login_request.value = LoginRequest.new()
 		return __login_request.value
 	
@@ -2021,14 +2122,16 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__register_request.value = RegisterRequest.new()
 		return __register_request.value
 	
@@ -2066,14 +2169,16 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__login_success.value = LoginSuccess.new()
 		return __login_success.value
 	
@@ -2111,14 +2216,16 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__client_entered.value = ClientEntered.new()
 		return __client_entered.value
 	
@@ -2156,14 +2263,16 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.FILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__client_left.value = ClientLeft.new()
 		return __client_left.value
 	
@@ -2201,16 +2310,65 @@ class Packet:
 		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		data[13].state = PB_SERVICE_STATE.FILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = JoinRegionRequest.new()
 		return __join_region_request.value
+	
+	var __region_data: PBField
+	func has_region_data() -> bool:
+		if __region_data.value != null:
+			return true
+		return false
+	func get_region_data() -> RegionData:
+		return __region_data.value
+	func clear_region_data() -> void:
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_region_data() -> RegionData:
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		__server_metrics.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		data[14].state = PB_SERVICE_STATE.FILLED
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		__region_data.value = RegionData.new()
+		return __region_data.value
 	
 	var __position: PBField
 	func has_position() -> bool:
@@ -2220,7 +2378,7 @@ class Packet:
 	func get_position() -> Position:
 		return __position.value
 	func clear_position() -> void:
-		data[14].state = PB_SERVICE_STATE.UNFILLED
+		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_position() -> Position:
 		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -2247,13 +2405,15 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		data[14].state = PB_SERVICE_STATE.FILLED
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		data[15].state = PB_SERVICE_STATE.FILLED
 		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = Position.new()
 		return __position.value
 	
@@ -2265,7 +2425,7 @@ class Packet:
 	func get_update_player() -> UpdatePlayer:
 		return __update_player.value
 	func clear_update_player() -> void:
-		data[15].state = PB_SERVICE_STATE.UNFILLED
+		data[16].state = PB_SERVICE_STATE.UNFILLED
 		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_update_player() -> UpdatePlayer:
 		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -2292,13 +2452,15 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		data[15].state = PB_SERVICE_STATE.FILLED
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		data[16].state = PB_SERVICE_STATE.FILLED
 		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_player.value = UpdatePlayer.new()
 		return __update_player.value
 	
@@ -2310,7 +2472,7 @@ class Packet:
 	func get_player_destination() -> PlayerDestination:
 		return __player_destination.value
 	func clear_player_destination() -> void:
-		data[16].state = PB_SERVICE_STATE.UNFILLED
+		data[17].state = PB_SERVICE_STATE.UNFILLED
 		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_player_destination() -> PlayerDestination:
 		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -2337,13 +2499,15 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		data[16].state = PB_SERVICE_STATE.FILLED
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		data[17].state = PB_SERVICE_STATE.FILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-		data[17].state = PB_SERVICE_STATE.UNFILLED
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__player_destination.value = PlayerDestination.new()
 		return __player_destination.value
 	
@@ -2355,7 +2519,7 @@ class Packet:
 	func get_update_speed() -> UpdateSpeed:
 		return __update_speed.value
 	func clear_update_speed() -> void:
-		data[17].state = PB_SERVICE_STATE.UNFILLED
+		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 	func new_update_speed() -> UpdateSpeed:
 		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -2382,13 +2546,15 @@ class Packet:
 		data[12].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[13].state = PB_SERVICE_STATE.UNFILLED
-		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[14].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		data[17].state = PB_SERVICE_STATE.FILLED
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		data[18].state = PB_SERVICE_STATE.FILLED
 		__update_speed.value = UpdateSpeed.new()
 		return __update_speed.value
 	

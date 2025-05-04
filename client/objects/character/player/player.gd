@@ -164,25 +164,15 @@ func _handle_signal_ui_chat_input_toggle() -> void:
 
 
 # Request the server to change the movement speed of my player
-func _handle_signal_ui_update_speed_button() -> void:
-	_cycle_movement_speed()
-
-
-# Create a new packet to hold our new speed and send it to the server
-# Switches the current movement speed like this:
-# walk -> jog -> run -> walk -> jog -> run -> etc
-func _cycle_movement_speed() -> void:
+func _handle_signal_ui_update_speed_button(new_move_speed: int) -> void:
 	var packet: packets.Packet
-	match player_speed:
-		1:
-			packet = _create_update_speed_packet(ASM.JOG)
-		2:
-			packet = _create_update_speed_packet(ASM.RUN)
-		_:
-			packet = _create_update_speed_packet(ASM.WALK)
-			
+	packet = _create_update_speed_packet(new_move_speed)
 	WebSocket.send(packet)
 
+
+# CAUTION
+# Move this to main.gd, all input should be there
+# It should also check what we clicked to see if we attacked/moved/interacted, etc
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("left_click"):
 		var mouse_position : Vector2 = get_viewport().get_mouse_position()

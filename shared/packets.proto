@@ -29,8 +29,13 @@ message ClientEntered { string nickname = 1; } // Sent by the client once his cl
 message ClientLeft { uint64 id = 1; string nickname = 2; } // Broadcast by the server if a client leaves
 // Region
 message JoinRegionRequest { uint64 region_id = 1; } // Sent by the client to request joining a new region
-message Position { uint64 x = 1; uint64 z = 2; } // Sent by the server to describe positions in a path.
-message UpdatePlayer {// Sent by the server to update a a player character (Used to spawn as well)
+message RegionData { // Sent by the server as metadata (grid data, static obstacles, gates)
+  uint64 region_id = 1;
+  uint64 grid_width = 2;
+  uint64 grid_height = 3;
+}
+message Position { uint64 x = 1; uint64 z = 2; } // Used to broadcast positions in a region
+message UpdatePlayer { // Sent by the server to update a a player character (Used to spawn as well)
   uint64 id = 1;
   string name = 2;
   Position position = 3;
@@ -61,10 +66,11 @@ message Packet {
     ClientLeft client_left = 12; // Server
     // Region
     JoinRegionRequest join_region_request = 13; // Client
+    RegionData region_data = 14; // Server
     // Player
-    Position position = 14;
-    UpdatePlayer update_player = 15; // Server
-    PlayerDestination player_destination = 16; // Both
-    UpdateSpeed update_speed = 17; // Both
+    Position position = 15;
+    UpdatePlayer update_player = 16; // Server
+    PlayerDestination player_destination = 17; // Both
+    UpdateSpeed update_speed = 18; // Both
   }
 }

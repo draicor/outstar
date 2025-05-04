@@ -19,9 +19,6 @@ type Region struct {
 	// Name of this region
 	Name string
 
-	// Map name for this region, this should match on both server and client
-	GameMap string
-
 	// Packets in this channel will be processed by all connected clients except the sender
 	BroadcastChannel chan *packets.Packet
 
@@ -54,7 +51,6 @@ func (r *Region) SetId(id uint64) {
 func CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint64) *Region {
 	return &Region{
 		Name:                name,
-		GameMap:             gameMap,
 		Clients:             adt.NewMapMutex[Client](),
 		BroadcastChannel:    make(chan *packets.Packet),
 		AddClientChannel:    make(chan Client),
@@ -67,7 +63,7 @@ func CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint
 // Listens for packets on each channel
 func (r *Region) Start() {
 	// Log into the console which region this is and whats its grid size
-	r.logger.Printf("%s region created (%dx%d)...", r.Name, r.Grid.GetMaxWidth(), r.Grid.GetMaxHeight())
+	r.logger.Printf("%s region [%d] created (%dx%d)...", r.Name, r.GetId(), r.Grid.GetMaxWidth(), r.Grid.GetMaxHeight())
 
 	// Infinite for loop
 	for {

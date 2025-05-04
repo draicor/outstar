@@ -7,8 +7,8 @@
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 64.0
-offset_bottom = 64.0
+offset_right = 48.0
+offset_bottom = 48.0
 script = ExtResource("1_e2m3u")
 
 [node name="TextureRect" type="TextureRect" parent="."]
@@ -27,6 +27,7 @@ theme_override_constants/h_separation = 0
 theme_override_constants/icon_max_width = 0
 theme_override_constants/align_to_largest_stylebox = 0
 theme_override_constants/line_spacing = 0
+button_mask = 3
 flat = true
 
 [connection signal="button_down" from="TextureRect/ChangeMoveSpeed" to="." method="_on_change_move_speed_button_down"]

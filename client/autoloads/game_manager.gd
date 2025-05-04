@@ -15,21 +15,13 @@ var _states_scenes: Dictionary[State, String] = {
 	State.GAME: "res://states/game/game.tscn",
 }
 
-# Game Maps
-enum Maps {
-	PROTOTYPE,
-}
-
-var maps_scenes: Dictionary[Maps, String] = {
-	Maps.PROTOTYPE: "res://maps/prototype/prototype.tscn"
-}
-
 # Expose the client's data globally
 var client_id: int
 var client_nickname: String
 var player_character: Player
 # Internal variables
 var _current_scene_root: Node
+
 
 # A method to change the game's state
 func set_state(state: State) -> void:
@@ -43,6 +35,7 @@ func set_state(state: State) -> void:
 	
 	# Add it to the root
 	add_child(_current_scene_root)
+
 
 # After instancing the player character, store it as a global variable
 func set_player_character(player_node: Player):
