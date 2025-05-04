@@ -3,6 +3,7 @@ extends CharacterBody3D
 const packets := preload("res://packets.gd")
 const player_scene := preload("res://objects/character/player/player.tscn")
 const Player := preload("res://objects/character/player/player.gd")
+const Pathfinder = preload("res://autoloads/pathfinder.gd")
 
 # EXPORTED VARIABLES
 @export var ROTATION_SPEED: float = 6.0
@@ -216,10 +217,14 @@ func _click_to_move(mouse_position: Vector2) -> void:
 	# Transform the local space position to our grid coordinate
 	var new_destination: Vector2i = Utils.local_to_map(local_point)
 	
-	# CAUTION
-	# Bug here, I can click outside the grid, I need to add the grid size from, 
-	# the server and then check if the grid location is reachable and unoccupied before
-	# setting it as my new_destination!!
+	# If the new destination is not walkable, abort
+	if not RegionManager.is_cell_reachable(new_destination):
+		return
+	
+	# CAUTION extend this code to interact differently with objects and players, etc
+	# If the new destination is already occupied, abort
+	if not RegionManager.is_cell_available(new_destination):
+		return
 	
 	# If we are not moving
 	if not in_motion:
@@ -268,22 +273,9 @@ func _click_to_move(mouse_position: Vector2) -> void:
 			grid_destination = new_destination
 
 
-# Simple straight line prediction for now, this needs to be replaced with A*
-# Predicts a path from a grid position to another grid position
+# Predicts a path from a grid position to another grid position using A*
 func _predict_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
-	var path: Array[Vector2i] = []
-	# We make our starting position be the first element in our path
-	var current = from
-	path.append(current)
-	
-	# While we haven't reached our destination
-	while current != to:
-		# Keep heading towards our target, one cell at a time and add it to our path array
-		var dir = (to - current).sign()
-		current += dir
-		path.append(current)
-	
-	return path
+	return Pathfinder.find_path(from, to, RegionManager.grid_width, RegionManager.grid_height)
 
 
 # Creates and returns a player_destination_packet

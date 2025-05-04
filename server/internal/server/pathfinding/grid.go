@@ -71,7 +71,7 @@ type Cell struct {
 	X         uint64 // Left/Right
 	Z         uint64 // Forward/Backward
 	Reachable bool   // Whether this cell can be reached/stepped onto
-	Object    Object // Generic interface object
+	Object    Object // Reference to a generic occupying object (interface)
 }
 
 // A single node in the A* algorithm
@@ -349,9 +349,8 @@ func (grid *Grid) AStar(start *Cell, goal *Cell) []*Cell {
 		lowestElement := heap.Pop(&openSet).(*PriorityNode)
 		current := lowestElement.Node
 
-		// If the current node is the goal node
+		// If goal reached
 		if current.Cell == goal {
-			// Reconstruct and return the path
 			return ReconstructPath(current)
 		}
 
@@ -360,10 +359,10 @@ func (grid *Grid) AStar(start *Cell, goal *Cell) []*Cell {
 		// Remove from the open set map
 		delete(openSetMap, current.Cell)
 
-		// Explore the neighbors next to our current cell (up to 1 cell away from our current cell)
+		// Explore neighbors
 		for _, neighborCell := range grid.GetNeighbors(current.Cell, 1) {
-			// Skip if the cell is already in the closed set OR if the cell is not reachable OR if the cell is occupied
-			if _, exists := closedSet[neighborCell]; exists || !grid.IsCellReachable(neighborCell) || !grid.IsCellAvailable(neighborCell) {
+			// Skip if the cell is already in the closed set OR if the cell is not reachable OR if the cell is occupied AND is NOT the goal cell
+			if _, exists := closedSet[neighborCell]; exists || !grid.IsCellReachable(neighborCell) || !grid.IsCellAvailable(neighborCell) && neighborCell != goal {
 				continue
 			}
 
@@ -376,15 +375,14 @@ func (grid *Grid) AStar(start *Cell, goal *Cell) []*Cell {
 				}
 			}
 
-			// Check if the neighbor is already in the open set
+			// Check if neighbor is in open set
 			neighborNode, exists := openSetMap[neighborCell]
 			// If its NOT in the open set map OR we updated the G cost of that node
 			if !exists || tentativeG < neighborNode.G {
 				// If the node is NOT in the open set map
 				if !exists {
-					// We create the node
+					// We create the node and add it to the open set map
 					neighborNode = &Node{Cell: neighborCell}
-					// We add it to the open set map
 					openSetMap[neighborCell] = neighborNode
 				}
 				// Calculate the data for this neighbor node

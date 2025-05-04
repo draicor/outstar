@@ -19,10 +19,10 @@ func _on_change_move_speed_button_down() -> void:
 		return
 	
 	# Left click increases speed
-	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		print("Left click detected, increase speed")
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+		# Left click detected, increase speed
 		if GameManager.player_character.player_speed == 3:
-			print("Already at max speed, ignore this")
+			# Already at max speed, ignore this
 			return
 		# If I was jogging, start running
 		elif GameManager.player_character.player_speed == 2:
@@ -34,10 +34,10 @@ func _on_change_move_speed_button_down() -> void:
 			Signals.ui_change_move_speed_button.emit(2) # JOG
 	
 	# Right click decreases speed
-	elif Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
-		print("Right click detected, decrease speed")
+	elif Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		# Right click detected, decrease speed
 		if GameManager.player_character.player_speed == 1:
-			print("Already at min speed, ignore this")
+			# Already at min speed, ignore this
 			return
 		# If I was jogging, start walking
 		elif GameManager.player_character.player_speed == 2:

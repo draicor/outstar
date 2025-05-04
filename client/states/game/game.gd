@@ -210,6 +210,10 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		# Add this player to our list of players
 		_players[player_id] = player
 		
+		if not is_my_player_character:
+			# Add the player to the new position in my local grid
+			RegionManager.set_object(spawn_position, player)
+		
 		# Spawn the player
 		_current_map_scene.add_child(player)
 	
@@ -224,7 +228,7 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		
 		# Remove the player from the grid position it was
 		RegionManager.remove_object(player.server_grid_position, player)
-		# Add the player to the new position in the grid
+		# Add the player to the new position in my local grid
 		RegionManager.set_object(server_position, player)
 		
 		# Update this player's movement
