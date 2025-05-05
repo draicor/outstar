@@ -306,8 +306,8 @@ func (grid *Grid) GetNeighbors(cell *Cell, size int) []*Cell {
 			// Check if the neighbor is within the grid bounds
 			if x < grid.maxWidth {
 				if z < grid.maxHeight {
-					// Get the neighbor AFTER checking if its occupied
-					cell := grid.GetValidCell(x, z)
+					// Get the neighbor WITHOUT checking if its occupied
+					cell := grid.GetCell(x, z)
 					// If the cell is valid
 					if cell != nil {
 						// Add it to the list of neighbors
@@ -322,7 +322,7 @@ func (grid *Grid) GetNeighbors(cell *Cell, size int) []*Cell {
 
 // A* Pathfinding Algorithm
 // Returns a path as an array of pointers to Cell or an empty array if no path was valid
-func (grid *Grid) AStar(start *Cell, goal *Cell) []*Cell {
+func (grid *Grid) AStar(start *Cell, goal *Cell, character Object) []*Cell {
 	// We have two sets, one has nodes to check and the other nodes that have been revised
 	openSet := make(PriorityQueue, 0)
 	heap.Init(&openSet)
@@ -361,9 +361,20 @@ func (grid *Grid) AStar(start *Cell, goal *Cell) []*Cell {
 
 		// Explore neighbors
 		for _, neighborCell := range grid.GetNeighbors(current.Cell, 1) {
-			// Skip if the cell is already in the closed set OR if the cell is not reachable OR if the cell is occupied AND is NOT the goal cell
-			if _, exists := closedSet[neighborCell]; exists || !grid.IsCellReachable(neighborCell) || !grid.IsCellAvailable(neighborCell) && neighborCell != goal {
+			// Skip if the cell is already in the closed set, skip
+			if _, exists := closedSet[neighborCell]; exists {
 				continue
+			}
+			// If the cell is not walkable, skip
+			if !grid.IsCellReachable(neighborCell) {
+				continue
+			}
+			// If the cell is occupied AND is NOT the goal cell
+			if !grid.IsCellAvailable(neighborCell) && neighborCell != goal {
+				// If whoever is occupying the cell is NOT myself, then its occupied, skip
+				if neighborCell.Object != character {
+					continue
+				}
 			}
 
 			// Calculate tentative G cost

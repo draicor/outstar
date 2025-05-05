@@ -275,7 +275,7 @@ func _click_to_move(mouse_position: Vector2) -> void:
 
 # Predicts a path from a grid position to another grid position using A*
 func _predict_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
-	return Pathfinder.find_path(from, to, RegionManager.grid_width, RegionManager.grid_height)
+	return Pathfinder.find_path(from, to, RegionManager.grid_width, RegionManager.grid_height, self)
 
 
 # Creates and returns a player_destination_packet

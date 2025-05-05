@@ -53,7 +53,7 @@ static func _reconstruct_path(end_node: AStarNode) -> Array[Vector2i]:
 
 # A* Pathfinding Algorithm
 # Returns a path as an array Vector2i or an empty array if no path was valid
-static func find_path(start: Vector2i, goal: Vector2i, grid_width: int, grid_height: int) -> Array[Vector2i]:
+static func find_path(start: Vector2i, goal: Vector2i, grid_width: int, grid_height: int, character: Object) -> Array[Vector2i]:
 	# We get our objects from our cache so we don't reallocate resources
 	var cache = _get_reusable_objects()
 	var open_set: PriorityQueue = cache.open_set
@@ -87,13 +87,16 @@ static func find_path(start: Vector2i, goal: Vector2i, grid_width: int, grid_hei
 		
 		# Explore neighbors
 		for neighbor_pos in get_neighbors(current_pos, grid_width, grid_height):
-			# Skip if the cell is already in the closed set OR if the cell is not reachable OR if the cell is occupied
+			# Skip if the cell is already in the closed set
 			if neighbor_pos in closed_set:
 				continue
+			#  Skip if the cell is not reachable
 			if not RegionManager.is_cell_reachable(neighbor_pos):
 				continue
 			if not RegionManager.is_cell_available(neighbor_pos) and neighbor_pos != goal:
-				continue
+				# Skip if the cell is occupied by another character other than myself
+				if RegionManager.get_object(neighbor_pos) != character:
+					continue
 			
 			# Cost calculation (10 for straight, 14 for diagonal)
 			var is_diagonal = (neighbor_pos.x != current_pos.x) and (neighbor_pos.y != current_pos.y)

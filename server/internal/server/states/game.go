@@ -87,7 +87,7 @@ func (state *Game) updateCharacter() {
 	grid := state.client.GetRegion().Grid
 
 	// Calculate the shortest path from our position to our new destination cell
-	path := grid.AStar(state.player.GetGridPosition(), state.player.GetGridDestination())
+	path := grid.AStar(state.player.GetGridPosition(), state.player.GetGridDestination(), state.player)
 
 	// If the path is valid
 	if len(path) > 1 {
