@@ -3,7 +3,7 @@ extends CharacterBody3D
 const packets := preload("res://packets.gd")
 const player_scene := preload("res://objects/character/player/player.tscn")
 const Player := preload("res://objects/character/player/player.gd")
-const Pathfinder = preload("res://autoloads/pathfinder.gd")
+const Pathfinding = preload("res://classes/pathfinding/pathfinding.gd")
 
 # EXPORTED VARIABLES
 @export var ROTATION_SPEED: float = 6.0
@@ -76,7 +76,7 @@ var locomotion := {
 }
 
 # Camera variables
-var camera : Camera3D
+var camera : PlayerCamera
 var raycast : RayCast3D
 
 @onready var animation_player: AnimationPlayer = $Model/Body/AnimationPlayer
@@ -142,7 +142,7 @@ func _ready() -> void:
 		Signals.ui_change_move_speed_button.connect(_handle_signal_ui_update_speed_button)
 	
 		# Add a camera to our character
-		camera = Camera3D.new()
+		camera = PlayerCamera.new()
 		# Camera settings
 		camera.near = CAMERA_NEAR_PLANE
 		camera.far = CAMERA_FAR_PLANE
@@ -275,7 +275,7 @@ func _click_to_move(mouse_position: Vector2) -> void:
 
 # Predicts a path from a grid position to another grid position using A*
 func _predict_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
-	return Pathfinder.find_path(from, to, RegionManager.grid_width, RegionManager.grid_height, self)
+	return Pathfinding.find_path(from, to, RegionManager.grid_width, RegionManager.grid_height, self)
 
 
 # Creates and returns a player_destination_packet

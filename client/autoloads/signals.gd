@@ -22,4 +22,6 @@ signal heartbeat_received
 signal ui_escape_menu_toggle
 #signal ui_disconnect
 signal ui_chat_input_toggle
+signal ui_zoom_in
+signal ui_zoom_out
 signal ui_change_move_speed_button(new_move_speed: int)
