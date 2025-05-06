@@ -31,7 +31,7 @@ var immediate_grid_destination: Vector2i # Used in case we want to change route 
 var server_path: Array[Vector2i] # Set at spawn and after server movement
 var next_tick_server_path: Array[Vector2i] # Used to store the next server path
 
-var player_speed: int = 3 # Defaults to 3 at spawn
+var player_speed: int = 2 # Defaults to JOG at spawn
 var cells_to_move_this_tick: int
 
 var interpolated_position: Vector3 # Used to smoothly slide our character in our game client
@@ -402,8 +402,11 @@ func _complete_movement() -> void:
 func _switch_locomotion(steps: int) -> void:
 	var settings = locomotion.get(steps, locomotion[ASM.IDLE]) # Defaults to IDLE
 	_change_animation(settings.animation, settings.play_rate)
-	current_animation = settings.state # This has no use yet, but I'll use it to prevent actions while moving, etc.
-
+	current_animation = settings.state
+	
+	# Only emit this signal for my own character
+	if my_player_character:
+		Signals.player_locomotion_changed.emit()
 
 # Called on tick by _update_player_movement to interpolate the position of the player
 func move_and_slide_player(delta: float) -> void:

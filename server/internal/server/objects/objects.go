@@ -81,6 +81,6 @@ func CreatePlayer(
 		Level:      level,
 		Experience: experience,
 		// Attributes
-		Speed: MAX_SPEED, // At spawn start with run enabled by default
+		Speed: 2, // At spawn start with jog enabled by default
 	}
 }

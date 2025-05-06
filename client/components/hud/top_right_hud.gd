@@ -7,15 +7,30 @@ extends Control
 
 @onready var texture_rect: TextureRect = $TextureRect
 
+var button_enabled: bool = true # Enabled by default
+
 
 func _ready() -> void:
-	texture_rect.texture = run_texture
+	Signals.player_locomotion_changed.connect(_handle_signal_player_locomotion_changed)
+	# Defaults to JOG at spawn
+	texture_rect.texture = jog_texture
+
+
+# Toggles this button based on the current locomotion state of the player
+func _handle_signal_player_locomotion_changed() -> void:
+	# If we are IDLE, enable the button
+	if GameManager.player_character.current_animation == GameManager.player_character.ASM.IDLE:
+		button_enabled = true
+		texture_rect.self_modulate = Color(1.0, 1.0, 1.0, 1.0)
+	else:
+		button_enabled = false
+		texture_rect.self_modulate = Color(1.0, 1.0, 1.0, 0.33)
+		
 
 
 # Request the server to change the movement speed
 func _on_change_move_speed_button_down() -> void:
-	# Only send the packet to update our speed if we are IDLE
-	if GameManager.player_character.current_animation != GameManager.player_character.ASM.IDLE:
+	if not button_enabled:
 		return
 	
 	# Left click increases speed
