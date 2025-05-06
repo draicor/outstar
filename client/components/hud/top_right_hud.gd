@@ -14,7 +14,7 @@ func _ready() -> void:
 
 # Request the server to change the movement speed
 func _on_change_move_speed_button_down() -> void:
-		# Only send the packet to update our speed if we are IDLE
+	# Only send the packet to update our speed if we are IDLE
 	if GameManager.player_character.current_animation != GameManager.player_character.ASM.IDLE:
 		return
 	

@@ -18,10 +18,12 @@ signal login_success
 # Multiplayer packets
 signal heartbeat_received
 
-# Input signals
+# User Interface signals
 signal ui_escape_menu_toggle
 #signal ui_disconnect
 signal ui_chat_input_toggle
 signal ui_zoom_in
 signal ui_zoom_out
+signal ui_rotate_camera_left
+signal ui_rotate_camera_right
 signal ui_change_move_speed_button(new_move_speed: int)

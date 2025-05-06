@@ -8,8 +8,6 @@ const Pathfinding = preload("res://classes/pathfinding/pathfinding.gd")
 # EXPORTED VARIABLES
 @export var ROTATION_SPEED: float = 6.0
 @export var RAYCAST_DISTANCE: float = 20 # 20 meters
-@export var CAMERA_NEAR_PLANE: float = 0.1
-@export var CAMERA_FAR_PLANE: float = 100
 
 # CONSTANTS
 const SERVER_TICK: float = 0.5 # Controls local player move speed
@@ -81,7 +79,7 @@ var raycast : RayCast3D
 
 @onready var animation_player: AnimationPlayer = $Model/Body/AnimationPlayer
 @onready var model: Node3D = $Model
-@onready var camera_rig: Node3D = $CameraRig
+@onready var camera_rig: Node3D = $CameraPivot/CameraRig
 @onready var chat_bubble: Node3D = $ChatBubbleOrigin/ChatBubble
 
 
@@ -141,12 +139,8 @@ func _ready() -> void:
 		Signals.ui_chat_input_toggle.connect(_handle_signal_ui_chat_input_toggle)
 		Signals.ui_change_move_speed_button.connect(_handle_signal_ui_update_speed_button)
 	
-		# Add a camera to our character
-		camera = PlayerCamera.new()
-		# Camera settings
-		camera.near = CAMERA_NEAR_PLANE
-		camera.far = CAMERA_FAR_PLANE
-		
+		# Add our player camera to our camera rig
+		camera = PlayerCamera.new()		
 		camera_rig.add_child(camera)
 		# Add a raycast 3d node to our camera
 		raycast = RayCast3D.new()
