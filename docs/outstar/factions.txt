@@ -1,0 +1,30 @@
+SENTINELS (Loyalists)
+Order at any cost.
+The last defenders of a crumbling system.
+Soldiers and bureaucrats who believe law is the only thing standing between humanity and chaos.
+They hunt reavers, protect trade lanes and secretly profit from the corruption they're sworn to fight.
+
+REAVERS (Anarchists)
+Burn the system.
+Libertarians, smugglers and warlords who see all laws as chains to be broken.
+They raid, steal and leave no survivors.
+
+SAGES (Pragmatics)
+Knowledge is power.
+Researchers, engineers and relic-hunters.
+They see the Evangelists as lunatics, Capitalists as vultures and Reavers as idiots. 
+
+EVANGELISTS (Believers)
+Only the faithful will ascend.
+A doomsday cult that worships relics.
+They burn heretics and use unstable holy tech even if it kills them. 
+
+CAPITALISTS (Industrialists)
+Everyone has a price.
+They own stations, manipulate markets and hire "deniable assets".
+To them, war is just business.
+
+COMMONERS (Workers)
+The system runs on our backs.
+Miners, mechanics and haulers who keep the lights on.
+They're exploited by every other faction, some want revolution, most just want a fair day's pay.

@@ -1,0 +1,79 @@
+PLANETS
+The Scourge reacts uniquely on each planet,
+ mutating life on Eden, singing on Veyth, lurking in Kharxis’ depths.
+These worlds were never meant for us. They were a test, one that we're failing.
+
+-EDEN
+Humans have always been bad at irony.
+Closest to the system's star (a dim red dwarf),
+From orbit, Eden still looks alive.
+A swirl of emerald and gold, wrapped in lazy storms.
+The sky has a perpetual amber haze. The atmosphere is thick, humid and toxic.
+The forests move. Bioluminescent fungi climb over the wreckage of the Ark Fleet,
+ their tendrils pulsing like veins.
+Their spores glow in your lungs if you breathe them.
+Black rain falls, carrying dissolved Scourge particles.
+The Capitalists built their station above the poison, Eden's Rib floats above the storms,
+ where the air is filtered and the rich control the markets.
+
+-VEYTH
+As deadly as it is beautiful, it doesn't care if you live.
+Located in the middle, the planet is tidally locked (one side eternal day, the other endless night).
+The atmosphere is thin and corrosive. 
+The day side is a desert of fused glass, forged by ancient orbital strikes.
+Walk too far, and your boots melt to your feet.
+The night side is worse—a cathedral of ice where the Evangelists carve their prayers into,
+ glaciers of frozen ammonia that weep black tears. 
+Between them, in the razor-thin twilight zone,
+ lies the only habitable strip,
+ littered with ship graveyards repurposed as slums,
+ where the last free humans scurry like roaches.
+And the wind never stops howling. The Evangelists say it’s God singing.
+Everyone else knows it’s just the sound of a planet dying.
+
+-KHARXIS
+Farthest from the star, drifting in perpetual twilight.
+Kharxis, eats the hopeful. The surface is a global ice sheet covering a subsurface ocean.
+The sky has auroras that flicker with Scourge energy, luring the devout to their deaths.
+The ice stretches forever, broken only by the jagged metal teeth of mining rigs.
+They drill toward the black ocean below, where the water is thick with things that shouldn’t be there.
+Sometimes, a drill breaks through, and the liquid that surges up isn’t water.
+The Capitalists sell it as "miracle fuel." The Commoners know better—they’ve seen what happens when you touch it.
+Machines sent into the ocean return empty, their cameras filled with static.
+
+
+ASTEROID BELTS
+The factions must navigate two nightmares,
+ the planets and the monsters in the gaps between.
+
+-ASHEN BELT
+Between Eden and Veyth, the Ashen Belt churns—a graveyard of broken ships.
+This is no ordinary debris field.
+The asteroids here are stitched together with salvaged hulls,
+ forming labyrinthine strongholds that drift on erratic orbits.
+The Ashen Belt’s real curse? The Scourge left scars here.
+Some asteroids hum with dormant energy, and the Reavers dare each other to touch them.
+The ones who do either die—or come back changed, their eyes flickering with something not human.
+In the Ashen Belt you'll find the Rust Circus, a hollowed-out colony ship turned fight club;
+ Black Anchor Station, a pirate haven built inside the carcass of an Ark Fleet dreadnought;
+ and The Screaming Maw, a derelict mining rig where Reavers broadcast their raids live.
+
+- FARSEER'S BELT
+Between Veyth and Kharxis, the Farseer’s Belt spins slow and heavy,
+ its ice-black asteroids veined with strange metals.
+This is where the system’s outcasts go to disappear.
+The Reavers here are different. Colder. Weirder.
+They say the belt whispers to them. They’re not lying.
+This belt doesn’t just hide Reavers. It hides what the Scourge didn’t finish.
+The Evangelists send pilgrims here to die. The Sages send probes that never return.
+And the Reavers? They laugh, patch their ships with scrap, and dive deeper into the dark.
+In here You'll find the Hollow Vaults, ancient alien ruins, half-melted, where Reavers trade in relics;
+the Driftgrave, a necropolis of wrecked ships, strung with flickering lanterns made from stolen clone vats;
+and also, the Last Broadcast Array, a shattered comms hub that still picks up signals—sometimes from dead ships,
+ sometimes from something beyond the system.
+
+
+TYPES OF STATIONS
+-FREEPORTS (Mixed control among all factions)
+-STRONGHOLDS (Controlled by one faction)
+-HAVENS (Lawless)
