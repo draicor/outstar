@@ -261,6 +261,13 @@ func (c *WebSocketClient) Close(reason string) {
 	if c.GetPlayerCharacter() != nil {
 		// Server logging
 		c.logger.Printf("%s %s", c.playerCharacter.Name, reason)
+
+		// Store this player's region and position on logout
+		err := c.GetHub().SaveCharacterPosition(c)
+		if err != nil {
+			c.logger.Printf("Failed to save position %v", err)
+		}
+
 		// Broadcast to everyone that this client left before we remove it from the hub/region
 		c.Broadcast(packets.NewClientLeft(c.id, c.playerCharacter.Name))
 

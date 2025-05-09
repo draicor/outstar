@@ -87,6 +87,7 @@ func _on_register_button_pressed() -> void:
 	register_request.set_username(username_input.text)
 	register_request.set_nickname(nickname_input.text)
 	register_request.set_password(password_input.text)
+	register_request.set_gender("male")
 	# Serialize and send it to the server
 	var err := WebSocket.send(packet)
 	if err:

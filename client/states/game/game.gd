@@ -242,7 +242,7 @@ func _handle_update_speed_packet(sender_id: int, update_speed_packet: packets.Up
 
 
 func _handle_region_data_packet(region_data_packet: packets.RegionData) -> void:
-	var region_id: int = region_data_packet.get_region_id()	
+	var region_id: int = region_data_packet.get_region_id()
 	
 	if region_id in RegionManager.Maps.values():
 		RegionManager.update_region_data(region_id, region_data_packet.get_grid_width(), region_data_packet.get_grid_height())

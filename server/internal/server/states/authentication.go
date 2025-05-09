@@ -265,17 +265,28 @@ func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *pac
 		return
 	}
 
-	// TO FIX -> Save all of the DEFAULT character data to the database
-
 	// Attempt to register a new user
-	_, err = state.client.GetHub().CreateUser(username, nickname, string(passwordHash))
+	user, err := state.client.GetHub().CreateUser(username, nickname, string(passwordHash), payload.Gender)
 	if err != nil {
-		state.logger.Printf("Error registering user (Database failure)")
-		state.client.SendPacket(deniedMessage)
+		var reason string
+		if strings.Contains(err.Error(), "UNIQUE constraint") {
+			if strings.Contains(err.Error(), "username") {
+				reason = "Username already exists"
+			} else if strings.Contains(err.Error(), "nickname") {
+				reason = "Nickname already exists"
+			} else {
+				reason = "Account creation failed"
+			}
+		} else {
+			reason = "Internal server error"
+			state.logger.Printf("Registration error :%v", err)
+		}
+
+		state.client.SendPacket(packets.NewRequestDenied(reason))
 		return
 	}
 
-	state.logger.Printf("New user %s registered successfully", nickname)
+	state.logger.Printf("New user %s registered successfully (ID: %d)", nickname, user.ID)
 	state.client.SendPacket(packets.NewRequestGranted())
 }
 

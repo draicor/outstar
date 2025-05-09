@@ -3,11 +3,13 @@ package server
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"server/internal/server/adt"
 	"server/internal/server/db"
 	"server/internal/server/objects"
+	"server/internal/server/pathfinding"
 	"server/pkg/packets"
 	"time"
 )
@@ -218,9 +220,13 @@ func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 			// Send this client this region's metadata
 			client.SendPacket(packets.NewRegionData(region.GetId(), region.Grid.GetMaxWidth(), region.Grid.GetMaxHeight()))
 
-			// SPAWN THIS CHARACTER AT THE ORIGIN for now
-			// TO FIX <- GET THIS FROM THE DATABASE!
-			playerSpawnCell := region.Grid.GetSpawnCell(0, 0)
+			// Load region and position from the database for this player
+			playerSpawnCell, err := h.LoadCharacterPosition(client)
+			if err != nil {
+				log.Println("Error loading character position from DB: ", err)
+			}
+
+			// playerSpawnCell := region.Grid.GetSpawnCell(0, 0)
 
 			// Update the position and destination for this player character
 			client.GetPlayerCharacter().SetGridPosition(playerSpawnCell)
@@ -240,15 +246,64 @@ func (h *Hub) GetClientsOnline() uint64 {
 	return uint64(h.Clients.Len())
 }
 
-// DATABASE METHODS handlers in our Hub
-func (h *Hub) CreateUser(username, nickname, passwordHash string) (db.User, error) {
+// DATABASE USER OPERATIONS HANDLERS
+func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	return h.queries.CreateUser(ctx, db.CreateUserParams{
+
+	tx, err := h.Database.BeginTx(ctx, nil)
+	if err != nil {
+		return db.User{}, fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	q := h.queries.WithTx(tx)
+
+	// Step 1: Create User (without character_id)
+	user, err := q.CreateUser(ctx, db.CreateUserParams{
 		Username:     username,
 		Nickname:     nickname,
 		PasswordHash: passwordHash,
 	})
+	if err != nil {
+		return db.User{}, fmt.Errorf("create user: %w", err)
+	}
+
+	// Step 2: Create Character
+	character, err := q.CreateCharacter(ctx, db.CreateCharacterParams{
+		UserID: user.ID,
+		Gender: gender,
+		MapID:  1, // We could have the player choose his starting location
+		X:      0, // Update this depending on the spawn location?
+		Z:      0, // Update this depending on the spawn location?
+		Hp:     100,
+		MaxHp:  100,
+	})
+	if err != nil {
+		return db.User{}, fmt.Errorf("create character: %w", err)
+	}
+
+	// Step 3: Update user with character_id
+	if err := q.SetUserCharacterID(ctx, db.SetUserCharacterIDParams{
+		ID:          user.ID,
+		CharacterID: sql.NullInt64{Int64: character.ID, Valid: true},
+	}); err != nil {
+		return db.User{}, fmt.Errorf("set character id: %w", err)
+	}
+
+	// Get complete user data before committing
+	fullUser, err := q.GetUserByID(ctx, user.ID)
+	if err != nil {
+		return db.User{}, fmt.Errorf("get user: %w", err)
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return db.User{}, fmt.Errorf("commit transaction: %w", err)
+	}
+
+	// Return complete user data
+	return fullUser, nil
 }
 
 func (h *Hub) GetUserByUsername(username string) (db.User, error) {
@@ -261,4 +316,49 @@ func (h *Hub) GetUserByNickname(nickname string) (db.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	return h.queries.GetUserByNickname(ctx, nickname)
+}
+
+// DATABASE CHARACTER OPERATIONS HANDLERS
+func (h *Hub) SaveCharacterPosition(client Client) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	character := client.GetPlayerCharacter()
+	username := client.GetAccountUsername()
+
+	user, err := h.queries.GetUserByUsername(ctx, username)
+	if err != nil {
+		return fmt.Errorf("failed to fetch username: %w", err)
+	}
+
+	return h.queries.UpdateCharacterPosition(ctx, db.UpdateCharacterPositionParams{
+		MapID: int64(character.RegionId),
+		X:     int64(character.GetGridPosition().X),
+		Z:     int64(character.GetGridPosition().Z),
+		ID:    user.CharacterID.Int64,
+	})
+}
+
+func (h *Hub) LoadCharacterPosition(client Client) (*pathfinding.Cell, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	username := client.GetAccountUsername()
+
+	user, err := h.queries.GetUserByUsername(ctx, username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch username: %w", err)
+	}
+
+	position, err := h.queries.GetCharacterPosition(ctx, user.CharacterID.Int64)
+	if err != nil {
+		return nil, fmt.Errorf("load character position: %w", err)
+	}
+
+	// Missing region ID from here!!
+	return &pathfinding.Cell{
+		X:         uint64(position.X),
+		Z:         uint64(position.Z),
+		Reachable: true,
+	}, nil
 }

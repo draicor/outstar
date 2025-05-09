@@ -7,14 +7,53 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
+const createCharacter = `-- name: CreateCharacter :one
+INSERT INTO characters (user_id, gender, map_id, x, z, hp, max_hp)
+VALUES (?, ?, ?, ?, ?, ?, ?)
+RETURNING id, user_id, gender, map_id, x, z, hp, max_hp
+`
+
+type CreateCharacterParams struct {
+	UserID int64
+	Gender string
+	MapID  int64
+	X      int64
+	Z      int64
+	Hp     int64
+	MaxHp  int64
+}
+
+// Character Operations
+func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams) (Character, error) {
+	row := q.db.QueryRowContext(ctx, createCharacter,
+		arg.UserID,
+		arg.Gender,
+		arg.MapID,
+		arg.X,
+		arg.Z,
+		arg.Hp,
+		arg.MaxHp,
+	)
+	var i Character
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Gender,
+		&i.MapID,
+		&i.X,
+		&i.Z,
+		&i.Hp,
+		&i.MaxHp,
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (
-  username, nickname, password_hash
-) VALUES (
-  ?, ?, ?
-)
+INSERT INTO users (username, nickname, password_hash)
+VALUES (?, ?, ?)
 RETURNING id, username, nickname, password_hash
 `
 
@@ -24,9 +63,17 @@ type CreateUserParams struct {
 	PasswordHash string
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+type CreateUserRow struct {
+	ID           int64
+	Username     string
+	Nickname     string
+	PasswordHash string
+}
+
+// User Operations
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
 	row := q.db.QueryRowContext(ctx, createUser, arg.Username, arg.Nickname, arg.PasswordHash)
-	var i User
+	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
@@ -36,9 +83,123 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const getCharacterByID = `-- name: GetCharacterByID :one
+SELECT id, user_id, gender, map_id, x, z, hp, max_hp FROM characters WHERE id = ?
+`
+
+func (q *Queries) GetCharacterByID(ctx context.Context, id int64) (Character, error) {
+	row := q.db.QueryRowContext(ctx, getCharacterByID, id)
+	var i Character
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Gender,
+		&i.MapID,
+		&i.X,
+		&i.Z,
+		&i.Hp,
+		&i.MaxHp,
+	)
+	return i, err
+}
+
+const getCharacterByUserID = `-- name: GetCharacterByUserID :one
+SELECT id, user_id, gender, map_id, x, z, hp, max_hp FROM characters WHERE user_id = ?
+`
+
+func (q *Queries) GetCharacterByUserID(ctx context.Context, userID int64) (Character, error) {
+	row := q.db.QueryRowContext(ctx, getCharacterByUserID, userID)
+	var i Character
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Gender,
+		&i.MapID,
+		&i.X,
+		&i.Z,
+		&i.Hp,
+		&i.MaxHp,
+	)
+	return i, err
+}
+
+const getCharacterPosition = `-- name: GetCharacterPosition :one
+SELECT map_id, x, z FROM characters WHERE id = ? LIMIT 1
+`
+
+type GetCharacterPositionRow struct {
+	MapID int64
+	X     int64
+	Z     int64
+}
+
+func (q *Queries) GetCharacterPosition(ctx context.Context, id int64) (GetCharacterPositionRow, error) {
+	row := q.db.QueryRowContext(ctx, getCharacterPosition, id)
+	var i GetCharacterPositionRow
+	err := row.Scan(&i.MapID, &i.X, &i.Z)
+	return i, err
+}
+
+const getFullCharacterData = `-- name: GetFullCharacterData :one
+SELECT
+  c.id, c.gender, c.map_id, c.x, c.z, c.hp, c.max_hp,
+  u.username, u.nickname
+FROM characters c
+JOIN users u ON c.user_id = u.id
+WHERE c.id = ?
+`
+
+type GetFullCharacterDataRow struct {
+	ID       int64
+	Gender   string
+	MapID    int64
+	X        int64
+	Z        int64
+	Hp       int64
+	MaxHp    int64
+	Username string
+	Nickname string
+}
+
+func (q *Queries) GetFullCharacterData(ctx context.Context, id int64) (GetFullCharacterDataRow, error) {
+	row := q.db.QueryRowContext(ctx, getFullCharacterData, id)
+	var i GetFullCharacterDataRow
+	err := row.Scan(
+		&i.ID,
+		&i.Gender,
+		&i.MapID,
+		&i.X,
+		&i.Z,
+		&i.Hp,
+		&i.MaxHp,
+		&i.Username,
+		&i.Nickname,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, username, nickname, password_hash, character_id FROM users WHERE id = ?
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Nickname,
+		&i.PasswordHash,
+		&i.CharacterID,
+	)
+	return i, err
+}
+
 const getUserByNickname = `-- name: GetUserByNickname :one
-SELECT id, username, nickname, password_hash FROM users
-WHERE nickname = ? LIMIT 1
+SELECT id, username, nickname, password_hash, character_id
+FROM users
+WHERE nickname = ?
+LIMIT 1
 `
 
 func (q *Queries) GetUserByNickname(ctx context.Context, nickname string) (User, error) {
@@ -49,13 +210,16 @@ func (q *Queries) GetUserByNickname(ctx context.Context, nickname string) (User,
 		&i.Username,
 		&i.Nickname,
 		&i.PasswordHash,
+		&i.CharacterID,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, nickname, password_hash FROM users
-WHERE username = ? LIMIT 1
+SELECT id, username, nickname, password_hash, character_id
+FROM users
+WHERE username = ? COLLATE NOCASE
+LIMIT 1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -66,6 +230,61 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.Username,
 		&i.Nickname,
 		&i.PasswordHash,
+		&i.CharacterID,
 	)
 	return i, err
+}
+
+const setUserCharacterID = `-- name: SetUserCharacterID :exec
+UPDATE users SET character_id = ? WHERE id = ?
+`
+
+type SetUserCharacterIDParams struct {
+	CharacterID sql.NullInt64
+	ID          int64
+}
+
+func (q *Queries) SetUserCharacterID(ctx context.Context, arg SetUserCharacterIDParams) error {
+	_, err := q.db.ExecContext(ctx, setUserCharacterID, arg.CharacterID, arg.ID)
+	return err
+}
+
+const updateCharacterPosition = `-- name: UpdateCharacterPosition :exec
+UPDATE characters
+SET map_id = ?, x = ?, z = ?
+WHERE id = ?
+`
+
+type UpdateCharacterPositionParams struct {
+	MapID int64
+	X     int64
+	Z     int64
+	ID    int64
+}
+
+func (q *Queries) UpdateCharacterPosition(ctx context.Context, arg UpdateCharacterPositionParams) error {
+	_, err := q.db.ExecContext(ctx, updateCharacterPosition,
+		arg.MapID,
+		arg.X,
+		arg.Z,
+		arg.ID,
+	)
+	return err
+}
+
+const updateCharacterStats = `-- name: UpdateCharacterStats :exec
+UPDATE characters
+set hp = ?, max_hp = ?
+WHERE id = ?
+`
+
+type UpdateCharacterStatsParams struct {
+	Hp    int64
+	MaxHp int64
+	ID    int64
+}
+
+func (q *Queries) UpdateCharacterStats(ctx context.Context, arg UpdateCharacterStatsParams) error {
+	_, err := q.db.ExecContext(ctx, updateCharacterStats, arg.Hp, arg.MaxHp, arg.ID)
+	return err
 }

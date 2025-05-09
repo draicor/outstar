@@ -21,6 +21,7 @@ message RegisterRequest { // Sent by client to register
   string username = 1;
   string nickname = 2;
   string password = 3;
+  string gender = 4;
 }
 message LoginSuccess { string nickname = 1; } // Sent by the server after successful login
 // Notifies
