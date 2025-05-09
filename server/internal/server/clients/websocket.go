@@ -27,7 +27,6 @@ type WebSocketClient struct {
 	state             server.ClientState   // In what state the client is in
 	playerCharacter   *objects.Player      // The player's data is stored in his character
 	accountUsername   string               // Username of the account that is connected
-	dbtx              *server.DBTX         // <- FIX dependency
 	logger            *log.Logger
 }
 
@@ -63,7 +62,6 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 		sendChannel:       make(chan *packets.Packet, 128), // Buffered channel of 128 packets, drops packets if full
 		processingChannel: make(chan *packets.Packet, 32),  // Buffered channel of 32 packets, drops packets if full
 		logger:            log.New(log.Writer(), "", log.LstdFlags),
-		dbtx:              hub.NewDBTX(), // <- FIX dependency
 	}
 
 	return client, nil
@@ -322,9 +320,4 @@ func (c *WebSocketClient) SetState(state server.ClientState) {
 		c.state.SetClient(c)
 		c.state.OnEnter()
 	}
-}
-
-// Returns the database transaction context from this client
-func (c *WebSocketClient) GetDBTX() *server.DBTX {
-	return c.dbtx
 }

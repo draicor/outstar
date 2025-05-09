@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"server/internal/server"
-	"server/internal/server/db"
 	"server/internal/server/math"
 	"server/internal/server/objects"
 	"time"
@@ -22,8 +21,6 @@ type Game struct {
 	player                 *objects.Player
 	cancelPlayerUpdateLoop context.CancelFunc
 	logger                 *log.Logger
-	queries                *db.Queries
-	dbCtx                  context.Context
 }
 
 func (state *Game) GetName() string {
@@ -36,8 +33,6 @@ func (state *Game) SetClient(client server.Client) {
 	state.client = client
 	// We save the client's character data into this state too
 	state.player = client.GetPlayerCharacter()
-	state.queries = client.GetDBTX().Queries
-	state.dbCtx = client.GetDBTX().Ctx
 
 	// Logging data in the server console
 	prefix := fmt.Sprintf("Client %d [%s]: ", client.GetId(), state.GetName())

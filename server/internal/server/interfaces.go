@@ -43,10 +43,6 @@ type Client interface {
 	// Updates the state of this client
 	SetState(newState ClientState)
 
-	// REMOVE THIS DEPENDENCY
-	// Get reference to the database transaction context for this client
-	GetDBTX() *DBTX
-
 	// PlayerCharacter get/set
 	GetPlayerCharacter() *objects.Player
 	SetPlayerCharacter(*objects.Player)

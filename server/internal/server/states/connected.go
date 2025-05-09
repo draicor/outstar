@@ -1,21 +1,17 @@
 package states
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"server/internal/server"
-	"server/internal/server/db"
 	"server/internal/server/info"
 
 	"server/pkg/packets"
 )
 
 type Connected struct {
-	client  server.Client
-	logger  *log.Logger
-	queries *db.Queries
-	dbCtx   context.Context
+	client server.Client
+	logger *log.Logger
 }
 
 func (state *Connected) GetName() string {
@@ -25,8 +21,6 @@ func (state *Connected) GetName() string {
 func (state *Connected) SetClient(client server.Client) {
 	// We save the client's data into this state
 	state.client = client
-	state.queries = client.GetDBTX().Queries
-	state.dbCtx = client.GetDBTX().Ctx
 
 	// Logging data in the server console
 	prefix := fmt.Sprintf("Client %d [%s]: ", client.GetId(), state.GetName())

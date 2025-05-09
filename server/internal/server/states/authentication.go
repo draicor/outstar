@@ -1,12 +1,10 @@
 package states
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
 	"server/internal/server"
-	"server/internal/server/db"
 	"server/internal/server/math"
 	"server/internal/server/objects"
 	"strings"
@@ -22,8 +20,6 @@ const disconnectTimeout time.Duration = 2 // 2 minutes
 type Authentication struct {
 	client          server.Client
 	logger          *log.Logger
-	queries         *db.Queries
-	dbCtx           context.Context
 	lastActivity    time.Time   // Track last activity
 	inactivityTimer *time.Timer // Disconnects player due to inactivity
 }
@@ -35,8 +31,6 @@ func (state *Authentication) GetName() string {
 func (state *Authentication) SetClient(client server.Client) {
 	// We save the client's data into this state
 	state.client = client
-	state.queries = client.GetDBTX().Queries
-	state.dbCtx = client.GetDBTX().Ctx
 
 	// Logging data in the server console
 	prefix := fmt.Sprintf("Client %d [%s]: ", client.GetId(), state.GetName())
@@ -133,7 +127,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	deniedMessage := packets.NewRequestDenied("Invalid username or password")
 
 	// Check if the username exists in the database (case insensitive)
-	user, err := state.queries.GetUserByUsername(state.dbCtx, username)
+	user, err := state.client.GetHub().GetUserByUsername(username)
 	if err != nil {
 		state.logger.Printf("Username %s error: %v", username, err)
 		state.client.SendPacket(deniedMessage)
@@ -206,7 +200,7 @@ func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *pac
 	}
 
 	// Check if the username already exists in the database
-	_, err = state.queries.GetUserByUsername(state.dbCtx, username)
+	_, err = state.client.GetHub().GetUserByUsername(username)
 	// If we DIDN'T FIND an error, then we found a user, that means username is already in use
 	if err == nil {
 		reason := fmt.Sprintf("Username %s already in use", username)
@@ -237,7 +231,7 @@ func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *pac
 	}
 
 	// Check if the nickname already exists in the database
-	_, err = state.queries.GetUserByNickname(state.dbCtx, nickname)
+	_, err = state.client.GetHub().GetUserByNickname(nickname)
 	// If we DIDN'T FIND an error, then we found a user, that means nickname is already in use
 	if err == nil {
 		reason := fmt.Sprintf("Nickname %s already in use", nickname)
@@ -274,11 +268,7 @@ func (state *Authentication) HandleRegisterRequest(senderId uint64, payload *pac
 	// TO FIX -> Save all of the DEFAULT character data to the database
 
 	// Attempt to register a new user
-	_, err = state.queries.CreateUser(state.dbCtx, db.CreateUserParams{
-		Username:     username,
-		Nickname:     nickname,
-		PasswordHash: string(passwordHash),
-	})
+	_, err = state.client.GetHub().CreateUser(username, nickname, string(passwordHash))
 	if err != nil {
 		state.logger.Printf("Error registering user (Database failure)")
 		state.client.SendPacket(deniedMessage)
