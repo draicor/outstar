@@ -19,6 +19,7 @@ import (
 // WebSocketClient
 type WebSocketClient struct {
 	id                uint64               // Ephemeral ID for this connection
+	characterId       int64                // Character ID stored in the db (only for server use)
 	connection        *websocket.Conn      // Websocket connection to the godot client
 	hub               *server.Hub          // Hub that this client connected to
 	region            *server.Region       // Region that this client is at
@@ -65,6 +66,14 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 	}
 
 	return client, nil
+}
+
+// CharacterID get/set
+func (c *WebSocketClient) GetCharacterId() int64 {
+	return c.characterId
+}
+func (c *WebSocketClient) SetCharacterId(id int64) {
+	c.characterId = id
 }
 
 // Character get/set

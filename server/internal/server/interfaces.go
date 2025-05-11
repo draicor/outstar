@@ -43,6 +43,10 @@ type Client interface {
 	// Updates the state of this client
 	SetState(newState ClientState)
 
+	// CharacterID get/set
+	GetCharacterId() int64
+	SetCharacterId(id int64)
+
 	// PlayerCharacter get/set
 	GetPlayerCharacter() *objects.Player
 	SetPlayerCharacter(*objects.Player)

@@ -324,18 +324,12 @@ func (h *Hub) SaveCharacterPosition(client Client) error {
 	defer cancel()
 
 	character := client.GetPlayerCharacter()
-	username := client.GetAccountUsername()
-
-	user, err := h.queries.GetUserByUsername(ctx, username)
-	if err != nil {
-		return fmt.Errorf("failed to fetch username: %w", err)
-	}
 
 	return h.queries.UpdateCharacterPosition(ctx, db.UpdateCharacterPositionParams{
 		MapID: int64(character.RegionId),
 		X:     int64(character.GetGridPosition().X),
 		Z:     int64(character.GetGridPosition().Z),
-		ID:    user.CharacterID.Int64,
+		ID:    client.GetCharacterId(),
 	})
 }
 
@@ -343,14 +337,7 @@ func (h *Hub) LoadCharacterPosition(client Client) (*pathfinding.Cell, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	username := client.GetAccountUsername()
-
-	user, err := h.queries.GetUserByUsername(ctx, username)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch username: %w", err)
-	}
-
-	position, err := h.queries.GetCharacterPosition(ctx, user.CharacterID.Int64)
+	position, err := h.queries.GetCharacterPosition(ctx, client.GetCharacterId())
 	if err != nil {
 		return nil, fmt.Errorf("load character position: %w", err)
 	}

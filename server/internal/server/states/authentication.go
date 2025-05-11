@@ -155,8 +155,10 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	// On client disconnect, the whole client object gets removed from memory, so we don't
 	// have to set the username when the client leaves
 	state.client.SetAccountUsername(username)
+	state.client.SetCharacterId(user.CharacterID.Int64)
 
 	// TO FIX -> Load all of this from the database
+
 	var regionId uint64 = 1
 	var rotationY float64 = math.DegreesToRadians(180) // Start looking south
 	var level uint64 = 1
