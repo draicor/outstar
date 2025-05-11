@@ -189,12 +189,27 @@ func (h *Hub) CreateRegion(name string, gameMap string, gridWidth uint64, gridHe
 	go region.Start()
 }
 
-// Registers the client to this region if it exists and its available
-func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
+// Fetches the region from the database for this client and spawns him there if valid
+func (h *Hub) JoinRegion(clientId uint64) {
 	// Search for this client by id
 	client, clientExists := h.GetClient(clientId)
 	// If the client is online and exists
 	if clientExists {
+
+		// Load position data from the database for this player
+		spawnPosition, err := h.LoadCharacterPosition(client)
+		if err != nil {
+			log.Println("Error loading character position from DB: ", err)
+		}
+		// Convert our spawn position as a cell in our grid
+		playerSpawnCell := &pathfinding.Cell{
+			X:         uint64(spawnPosition.X),
+			Z:         uint64(spawnPosition.Z),
+			Reachable: true,
+		}
+		// Store the regionId and mapId from the database
+		regionId := uint64(spawnPosition.RegionID)
+		mapId := uint64(spawnPosition.MapID)
 
 		// Search for this region by id
 		region, regionExists := h.GetRegionById(regionId)
@@ -202,31 +217,28 @@ func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 		if regionExists {
 
 			// TO DO ->
-			// CHECK IF CLIENT CAN JOIN THIS REGION (LEVEL REQ)
+			// CHECK IF CLIENT CAN JOIN THIS REGION (REGION NOT FULL/I HAVE ACCESS TO ENTER IT)
 
+			// TO FIX
+			// This shouldn't be a problem if I was logged off
 			// If the client was already at another region
-			if client.GetRegion() != nil {
-				// Broadcast to everyone that this client left this region!
-				client.Broadcast(packets.NewClientLeft(client.GetId(), client.GetPlayerCharacter().Name))
-				// Unregister the client from that region
-				client.GetRegion().RemoveClientChannel <- client
-			}
+			//if client.GetRegion() != nil {
+			// Broadcast to everyone that this client left this region!
+			//client.Broadcast(packets.NewClientLeft(client.GetId(), client.GetPlayerCharacter().Name))
+			// Unregister the client from that region
+			//client.GetRegion().RemoveClientChannel <- client
+			//}
 
 			// Register the client to the new region
 			region.AddClientChannel <- client
 			// Save the new region pointer in the client
 			client.SetRegion(region)
+			// Save the region ID and map ID in the character
+			client.GetPlayerCharacter().SetRegionId(regionId)
+			client.GetPlayerCharacter().SetMapId(mapId)
 
 			// Send this client this region's metadata
 			client.SendPacket(packets.NewRegionData(region.GetId(), region.Grid.GetMaxWidth(), region.Grid.GetMaxHeight()))
-
-			// Load region and position from the database for this player
-			playerSpawnCell, err := h.LoadCharacterPosition(client)
-			if err != nil {
-				log.Println("Error loading character position from DB: ", err)
-			}
-
-			// playerSpawnCell := region.Grid.GetSpawnCell(0, 0)
 
 			// Update the position and destination for this player character
 			client.GetPlayerCharacter().SetGridPosition(playerSpawnCell)
@@ -240,6 +252,8 @@ func (h *Hub) JoinRegion(clientId uint64, regionId uint64) {
 		}
 	}
 }
+
+// I NEED TO MAKE ANOTHER FUNCTION CALLED SWITCH_REGION for players that are already online and change maps!
 
 // Returns the total number of clients connected to the Hub
 func (h *Hub) GetClientsOnline() uint64 {
@@ -271,13 +285,14 @@ func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.Us
 
 	// Step 2: Create Character
 	character, err := q.CreateCharacter(ctx, db.CreateCharacterParams{
-		UserID: user.ID,
-		Gender: gender,
-		MapID:  1, // We could have the player choose his starting location
-		X:      0, // Update this depending on the spawn location?
-		Z:      0, // Update this depending on the spawn location?
-		Hp:     100,
-		MaxHp:  100,
+		UserID:   user.ID,
+		Gender:   gender,
+		RegionID: 1, // We could have the player choose his starting location
+		MapID:    1, // We could have the player choose his starting location
+		X:        0, // Update this depending on the spawn location?
+		Z:        0, // Update this depending on the spawn location?
+		Hp:       100,
+		MaxHp:    100,
 	})
 	if err != nil {
 		return db.User{}, fmt.Errorf("create character: %w", err)
@@ -326,14 +341,15 @@ func (h *Hub) SaveCharacterPosition(client Client) error {
 	character := client.GetPlayerCharacter()
 
 	return h.queries.UpdateCharacterPosition(ctx, db.UpdateCharacterPositionParams{
-		MapID: int64(character.RegionId),
-		X:     int64(character.GetGridPosition().X),
-		Z:     int64(character.GetGridPosition().Z),
-		ID:    client.GetCharacterId(),
+		RegionID: int64(character.GetRegionId()),
+		MapID:    int64(character.GetMapId()),
+		X:        int64(character.GetGridPosition().X),
+		Z:        int64(character.GetGridPosition().Z),
+		ID:       client.GetCharacterId(), // Character ID to find it in the DB
 	})
 }
 
-func (h *Hub) LoadCharacterPosition(client Client) (*pathfinding.Cell, error) {
+func (h *Hub) LoadCharacterPosition(client Client) (*db.GetCharacterPositionRow, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
@@ -342,10 +358,5 @@ func (h *Hub) LoadCharacterPosition(client Client) (*pathfinding.Cell, error) {
 		return nil, fmt.Errorf("load character position: %w", err)
 	}
 
-	// Missing region ID from here!!
-	return &pathfinding.Cell{
-		X:         uint64(position.X),
-		Z:         uint64(position.Z),
-		Reachable: true,
-	}, nil
+	return &position, nil
 }

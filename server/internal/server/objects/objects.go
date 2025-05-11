@@ -7,7 +7,8 @@ const MAX_SPEED uint64 = 3
 type Player struct {
 	Name string
 	// Model string // Determines which model should godot load
-	RegionId uint64
+	regionId uint64 // Which server region this player is at
+	mapId    uint64 // Which map file should this client load
 	// Position
 	Position  *pathfinding.Cell // Where this player is
 	RotationY float64           // Model look at rotation
@@ -20,42 +21,50 @@ type Player struct {
 	Speed uint64 // Cells per tick
 }
 
-// Returns this object's model look at rotation
+// RegionId get/set
+func (player *Player) GetRegionId() uint64 {
+	return player.regionId
+}
+func (player *Player) SetRegionId(regionId uint64) {
+	player.regionId = regionId
+}
+
+// MapId get/set
+func (player *Player) GetMapId() uint64 {
+	return player.mapId
+}
+func (player *Player) SetMapId(mapId uint64) {
+	player.mapId = mapId
+}
+
+// Model look at rotation get/set
 func (player *Player) GetRotation() float64 {
 	return player.RotationY
 }
-
-// Updates this object's model look at rotation
 func (player *Player) SetRotation(newRotation float64) {
 	player.RotationY = newRotation
 }
 
-// Returns the cell where this object is
+// Grid Position get/set
 func (player *Player) GetGridPosition() *pathfinding.Cell {
 	return player.Position
 }
-
-// Updates this object's grid cell position
 func (player *Player) SetGridPosition(cell *pathfinding.Cell) {
 	player.Position = cell
 }
 
-// Returns the cell where the object wants to move
+// Grid Destination get/set
 func (player *Player) GetGridDestination() *pathfinding.Cell {
 	return player.Destination
 }
-
-// Updates this object's grid destination cell
 func (player *Player) SetGridDestination(cell *pathfinding.Cell) {
 	player.Destination = cell
 }
 
-// Returns this character's move speed
+// Move speed get/set
 func (player *Player) GetSpeed() uint64 {
 	return player.Speed
 }
-
-// Updates this character's move speed
 func (player *Player) SetSpeed(newSpeed uint64) {
 	// If trying to move faster than allowed
 	player.Speed = min(newSpeed, MAX_SPEED)
@@ -64,7 +73,6 @@ func (player *Player) SetSpeed(newSpeed uint64) {
 // Static function to create a new player
 func CreatePlayer(
 	name string,
-	regionId uint64,
 	rotationY float64,
 	// Stats
 	level uint64,
@@ -72,8 +80,7 @@ func CreatePlayer(
 	// Atributes
 ) *Player {
 	return &Player{
-		Name:     name,
-		RegionId: regionId,
+		Name: name,
 		// Position
 		Position:  nil,
 		RotationY: rotationY, // Look at direction

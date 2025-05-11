@@ -158,15 +158,13 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	state.client.SetCharacterId(user.CharacterID.Int64)
 
 	// TO FIX -> Load all of this from the database
-
-	var regionId uint64 = 1
 	var rotationY float64 = math.DegreesToRadians(180) // Start looking south
 	var level uint64 = 1
 	var experience uint64 = 1
 
 	// Create this client's player/character data from the database!
 	state.client.SetPlayerCharacter(objects.CreatePlayer(
-		user.Nickname, regionId,
+		user.Nickname,
 		// Position
 		rotationY,
 		// Stats

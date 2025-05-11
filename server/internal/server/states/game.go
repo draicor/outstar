@@ -43,10 +43,10 @@ func (state *Game) OnEnter() {
 	// Add this client's character to the player map of the hub with the same ID as its client ID
 	go state.client.GetHub().SharedObjects.Players.Add(state.player, state.client.GetId())
 
-	state.logger.Printf("%s added to region %d", state.player.Name, state.player.RegionId)
+	// Move the client to the region his character is at in the database
+	state.client.GetHub().JoinRegion(state.client.GetId())
 
-	// Move the client to the region his character is at
-	state.client.GetHub().JoinRegion(state.client.GetId(), state.player.RegionId)
+	state.logger.Printf("%s added to region %d", state.player.Name, state.player.GetRegionId())
 
 	// Create an update packet to be sent to everyone in this region
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)

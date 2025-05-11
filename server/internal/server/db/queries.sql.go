@@ -11,19 +11,20 @@ import (
 )
 
 const createCharacter = `-- name: CreateCharacter :one
-INSERT INTO characters (user_id, gender, map_id, x, z, hp, max_hp)
-VALUES (?, ?, ?, ?, ?, ?, ?)
-RETURNING id, user_id, gender, map_id, x, z, hp, max_hp
+INSERT INTO characters (user_id, gender, region_id, map_id, x, z, hp, max_hp)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, user_id, gender, region_id, map_id, x, z, hp, max_hp
 `
 
 type CreateCharacterParams struct {
-	UserID int64
-	Gender string
-	MapID  int64
-	X      int64
-	Z      int64
-	Hp     int64
-	MaxHp  int64
+	UserID   int64
+	Gender   string
+	RegionID int64
+	MapID    int64
+	X        int64
+	Z        int64
+	Hp       int64
+	MaxHp    int64
 }
 
 // Character Operations
@@ -31,6 +32,7 @@ func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams
 	row := q.db.QueryRowContext(ctx, createCharacter,
 		arg.UserID,
 		arg.Gender,
+		arg.RegionID,
 		arg.MapID,
 		arg.X,
 		arg.Z,
@@ -42,6 +44,7 @@ func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams
 		&i.ID,
 		&i.UserID,
 		&i.Gender,
+		&i.RegionID,
 		&i.MapID,
 		&i.X,
 		&i.Z,
@@ -84,7 +87,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 }
 
 const getCharacterByID = `-- name: GetCharacterByID :one
-SELECT id, user_id, gender, map_id, x, z, hp, max_hp FROM characters WHERE id = ?
+SELECT id, user_id, gender, region_id, map_id, x, z, hp, max_hp FROM characters WHERE id = ?
 `
 
 func (q *Queries) GetCharacterByID(ctx context.Context, id int64) (Character, error) {
@@ -94,6 +97,7 @@ func (q *Queries) GetCharacterByID(ctx context.Context, id int64) (Character, er
 		&i.ID,
 		&i.UserID,
 		&i.Gender,
+		&i.RegionID,
 		&i.MapID,
 		&i.X,
 		&i.Z,
@@ -104,7 +108,7 @@ func (q *Queries) GetCharacterByID(ctx context.Context, id int64) (Character, er
 }
 
 const getCharacterByUserID = `-- name: GetCharacterByUserID :one
-SELECT id, user_id, gender, map_id, x, z, hp, max_hp FROM characters WHERE user_id = ?
+SELECT id, user_id, gender, region_id, map_id, x, z, hp, max_hp FROM characters WHERE user_id = ?
 `
 
 func (q *Queries) GetCharacterByUserID(ctx context.Context, userID int64) (Character, error) {
@@ -114,6 +118,7 @@ func (q *Queries) GetCharacterByUserID(ctx context.Context, userID int64) (Chara
 		&i.ID,
 		&i.UserID,
 		&i.Gender,
+		&i.RegionID,
 		&i.MapID,
 		&i.X,
 		&i.Z,
@@ -124,25 +129,31 @@ func (q *Queries) GetCharacterByUserID(ctx context.Context, userID int64) (Chara
 }
 
 const getCharacterPosition = `-- name: GetCharacterPosition :one
-SELECT map_id, x, z FROM characters WHERE id = ? LIMIT 1
+SELECT region_id, map_id, x, z FROM characters WHERE id = ? LIMIT 1
 `
 
 type GetCharacterPositionRow struct {
-	MapID int64
-	X     int64
-	Z     int64
+	RegionID int64
+	MapID    int64
+	X        int64
+	Z        int64
 }
 
 func (q *Queries) GetCharacterPosition(ctx context.Context, id int64) (GetCharacterPositionRow, error) {
 	row := q.db.QueryRowContext(ctx, getCharacterPosition, id)
 	var i GetCharacterPositionRow
-	err := row.Scan(&i.MapID, &i.X, &i.Z)
+	err := row.Scan(
+		&i.RegionID,
+		&i.MapID,
+		&i.X,
+		&i.Z,
+	)
 	return i, err
 }
 
 const getFullCharacterData = `-- name: GetFullCharacterData :one
 SELECT
-  c.id, c.gender, c.map_id, c.x, c.z, c.hp, c.max_hp,
+  c.id, c.gender, c.region_id, c.map_id, c.x, c.z, c.hp, c.max_hp,
   u.username, u.nickname
 FROM characters c
 JOIN users u ON c.user_id = u.id
@@ -152,6 +163,7 @@ WHERE c.id = ?
 type GetFullCharacterDataRow struct {
 	ID       int64
 	Gender   string
+	RegionID int64
 	MapID    int64
 	X        int64
 	Z        int64
@@ -167,6 +179,7 @@ func (q *Queries) GetFullCharacterData(ctx context.Context, id int64) (GetFullCh
 	err := row.Scan(
 		&i.ID,
 		&i.Gender,
+		&i.RegionID,
 		&i.MapID,
 		&i.X,
 		&i.Z,
@@ -251,19 +264,21 @@ func (q *Queries) SetUserCharacterID(ctx context.Context, arg SetUserCharacterID
 
 const updateCharacterPosition = `-- name: UpdateCharacterPosition :exec
 UPDATE characters
-SET map_id = ?, x = ?, z = ?
+SET region_id = ?, map_id = ?, x = ?, z = ?
 WHERE id = ?
 `
 
 type UpdateCharacterPositionParams struct {
-	MapID int64
-	X     int64
-	Z     int64
-	ID    int64
+	RegionID int64
+	MapID    int64
+	X        int64
+	Z        int64
+	ID       int64
 }
 
 func (q *Queries) UpdateCharacterPosition(ctx context.Context, arg UpdateCharacterPositionParams) error {
 	_, err := q.db.ExecContext(ctx, updateCharacterPosition,
+		arg.RegionID,
 		arg.MapID,
 		arg.X,
 		arg.Z,
