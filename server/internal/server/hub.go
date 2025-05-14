@@ -95,7 +95,7 @@ func (h *Hub) Start() {
 	log.Println("Starting hub...")
 
 	// Create a new region called Prototype with a grid of (X by Z) squares
-	h.CreateRegion("Prototype", "prototype", 20, 40)
+	h.CreateRegion("Prototype", "prototype", 20, 40, 1)
 
 	// TO IMPLEMENT -> Adding static obstacles to the current map
 	// add obstacles [20, 33] = "stone_column", rotate it by 30°
@@ -178,18 +178,18 @@ func (h *Hub) GetRegionById(id uint64) (*Region, bool) {
 }
 
 // Creates a new region and adds it to Hub
-func (h *Hub) CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint64) {
+func (h *Hub) CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint64, regionId uint64) {
 	region := CreateRegion(name, gameMap, gridWidth, gridHeight)
 
 	// Dereference the pointer to add a REAL region object to the Hub's list of regions
 	// If this is the first region, h.Regions.Add returns 1, and the initial value for the region was 0
-	region.SetId(h.Regions.Add(region))
+	region.SetId(h.Regions.Add(region, regionId))
 
 	// Start the region in a goroutine
 	go region.Start()
 }
 
-// Fetches the region from the database for this client and spawns him there if valid
+// Spawns a client in a region that matches the one from the database, if valid
 func (h *Hub) JoinRegion(clientId uint64) {
 	// Search for this client by id
 	client, clientExists := h.GetClient(clientId)
@@ -215,19 +215,57 @@ func (h *Hub) JoinRegion(clientId uint64) {
 		region, regionExists := h.GetRegionById(regionId)
 		// If the region is valid
 		if regionExists {
+			// Register the client to the new region
+			region.AddClientChannel <- client
+			// Save the new region pointer in the client
+			client.SetRegion(region)
+			// Save the region ID and map ID in the character
+			client.GetPlayerCharacter().SetRegionId(regionId)
+			client.GetPlayerCharacter().SetMapId(mapId)
 
-			// TO DO ->
-			// CHECK IF CLIENT CAN JOIN THIS REGION (REGION NOT FULL/I HAVE ACCESS TO ENTER IT)
+			// Send this client this region's metadata
+			client.SendPacket(packets.NewRegionData(region.GetId(), region.Grid.GetMaxWidth(), region.Grid.GetMaxHeight()))
+
+			// Update the position and destination for this player character
+			client.GetPlayerCharacter().SetGridPosition(playerSpawnCell)
+			client.GetPlayerCharacter().SetGridDestination(playerSpawnCell)
+
+			// Place the player in the grid for this region
+			region.Grid.SetObject(playerSpawnCell, client.GetPlayerCharacter())
+
+		} else { // If the region does not exist
+			log.Printf("Region %d not available", regionId)
+		}
+	}
+}
+
+// Move this client to another region if valid
+func (h *Hub) SwitchRegion(clientId uint64, regionId uint64, mapId uint64) {
+	// Search for this client by id
+	client, clientExists := h.GetClient(clientId)
+	// If the client is online and exists
+	if clientExists {
+		playerSpawnCell := &pathfinding.Cell{
+			X:         0,
+			Z:         0,
+			Reachable: true,
+		}
+
+		// Search for this region by id in our Hub
+		region, regionExists := h.GetRegionById(regionId)
+		// If the region is valid
+		if regionExists {
 
 			// TO FIX
-			// This shouldn't be a problem if I was logged off
-			// If the client was already at another region
-			//if client.GetRegion() != nil {
-			// Broadcast to everyone that this client left this region!
-			//client.Broadcast(packets.NewClientLeft(client.GetId(), client.GetPlayerCharacter().Name))
-			// Unregister the client from that region
-			//client.GetRegion().RemoveClientChannel <- client
-			//}
+			// CHECK IF CLIENT CAN JOIN THIS REGION (REGION NOT FULL/I HAVE ACCESS TO ENTER IT)
+
+			// Check if the client's previous region was valid
+			if client.GetRegion() != nil {
+				// Broadcast to everyone that this client left this region!
+				client.Broadcast(packets.NewClientLeft(client.GetId(), client.GetPlayerCharacter().Name))
+				// Unregister the client from that region
+				client.GetRegion().RemoveClientChannel <- client
+			}
 
 			// Register the client to the new region
 			region.AddClientChannel <- client
@@ -249,6 +287,11 @@ func (h *Hub) JoinRegion(clientId uint64) {
 
 		} else { // If the region does not exist
 			log.Printf("Region %d not available", regionId)
+
+			// TO FIX
+			// This should teleport the client to the spawn map from the DB instead
+			// Force this client to the first map
+			h.SwitchRegion(clientId, 1, 1)
 		}
 	}
 }
