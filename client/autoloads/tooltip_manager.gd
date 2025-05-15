@@ -15,9 +15,12 @@ func _ready() -> void:
 
 # Check on tick if the tooltip has to be displayed
 func _process(_delta: float) -> void:
-	# If we don't have a camera set, abort
+	# If we don't have a camera ready, abort
 	if not player_camera:
 		return
+	
+	if tooltip.visible:
+		tooltip.update_position()
 	
 	var mouse_position = get_viewport().get_mouse_position()
 	var from = player_camera.project_ray_origin(mouse_position)
@@ -32,16 +35,17 @@ func _process(_delta: float) -> void:
 		
 		# If our raycast hit something different
 		if new_hovered != current_hovered_object:
-			# Hide previous hover
+			# If we had another tooltip, hide it
 			if current_hovered_object:
 				tooltip.hide_tooltip()
 		
 		# Start new hover if the object is interactable
 		if interactables.has(new_hovered):
-			var tooltip_position = new_hovered.get_node("TooltipPosition").global_position
-			tooltip.show_tooltip(new_hovered.TOOLTIP_TEXT, tooltip_position)
-			# Make this our new hovered object
-			current_hovered_object = new_hovered
+			# If the object has a tooltip text set
+			if not new_hovered.tooltip.is_empty():
+				tooltip.show_tooltip(new_hovered.tooltip)
+				# Make this our new hovered object
+				current_hovered_object = new_hovered
 		
 	# If we stop hovering over any object
 	elif current_hovered_object:

@@ -6,7 +6,7 @@ const Player := preload("res://objects/character/player/player.gd")
 const Pathfinding = preload("res://classes/pathfinding/pathfinding.gd")
 
 # EXPORTED VARIABLES
-@export var TOOLTIP_TEXT: String = "Character"
+@export var tooltip: String = ""
 @export var ROTATION_SPEED: float = 6.0
 @export var RAYCAST_DISTANCE: float = 20 # 20 meters
 
@@ -96,6 +96,7 @@ static func instantiate(
 	# Load the data from the function parameters into a new player character
 	player.player_id = id
 	player.player_name = nickname
+	player.tooltip = nickname
 	player.model_rotation_y = spawn_model_rotation_y
 	player.my_player_character = is_my_player_character
 	

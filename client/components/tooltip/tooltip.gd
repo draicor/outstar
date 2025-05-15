@@ -5,15 +5,25 @@ extends CanvasLayer
 
 
 func _ready() -> void:
-	hide_tooltip()
+	hide()
 
 
-func show_tooltip(text: String, world_position: Vector3):
-	var screen_position = get_viewport().get_camera_3d().unproject_position(world_position)
+func show_tooltip(text: String):
 	label.text = text
-	tooltip_panel.position = screen_position - Vector2(tooltip_panel.size.x * 0.5, tooltip_panel.size.y * 0.5)
-	tooltip_panel.show()
+	update_position()
+	show()
 
 
 func hide_tooltip():
-	tooltip_panel.hide()
+	hide()
+
+
+func update_position(mouse_offset: Vector2 = Vector2(12, 12)):
+	# Position slightly offset from the mouse
+	var mouse_position = get_viewport().get_mouse_position()
+	label.position = mouse_position + mouse_offset
+	
+	# Clamp to screen edges
+	var viewport_size = get_viewport().get_window().size
+	label.position.x = clamp(label.position.x, 0, viewport_size.x - label.size.x)
+	label.position.y = clamp(label.position.y, 0, viewport_size.y - label.size.y)
