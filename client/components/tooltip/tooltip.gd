@@ -1,8 +1,6 @@
 extends CanvasLayer
 
-@onready var tooltip_panel: TextureRect = $TooltipPanel
-@onready var label: Label = $TooltipPanel/Label
-
+@onready var label: Label = $MarginContainer/Label
 
 func _ready() -> void:
 	hide()
@@ -11,6 +9,7 @@ func _ready() -> void:
 func show_tooltip(text: String):
 	label.text = text
 	update_position()
+	await get_tree().process_frame # Give it a frame to update
 	show()
 
 
@@ -18,7 +17,7 @@ func hide_tooltip():
 	hide()
 
 
-func update_position(mouse_offset: Vector2 = Vector2(12, 12)):
+func update_position(mouse_offset: Vector2 = Vector2(6, 6)):
 	# Position slightly offset from the mouse
 	var mouse_position = get_viewport().get_mouse_position()
 	label.position = mouse_position + mouse_offset

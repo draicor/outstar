@@ -1,9 +1,10 @@
+NinePatchRect
+MarginContainer
 Marker3D
 Label
 TextureRect
 CanvasLayer
 Node3D
-MarginContainer
 Button
 Control
 RayCast3D
@@ -12,4 +13,3 @@ PanelContainer
 SubViewportContainer
 SubViewport
 Sprite3D
-Label3D
