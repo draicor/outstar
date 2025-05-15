@@ -9,7 +9,6 @@ import (
 	"server/internal/server/adt"
 	"server/internal/server/db"
 	"server/internal/server/objects"
-	"server/internal/server/pathfinding"
 	"server/pkg/packets"
 	"time"
 )
@@ -41,9 +40,11 @@ type Hub struct {
 	queries  *db.Queries
 }
 
-// Any state from any client can access and modify these objects
+// We keep in SharedObjects a list of all the objects in the server
+// For example, to send a private message no matter in what region the player is
+// Or to check if a ship is not docked, etc.
 type SharedObjects struct {
-	// The ID of the player is the ID of the client
+	// The ID of the player is the ID of the ephemeral client connection
 	Players *adt.MapMutex[*objects.Player]
 }
 
@@ -201,12 +202,7 @@ func (h *Hub) JoinRegion(clientId uint64) {
 		if err != nil {
 			log.Println("Error loading character position from DB: ", err)
 		}
-		// Convert our spawn position as a cell in our grid
-		playerSpawnCell := &pathfinding.Cell{
-			X:         uint64(spawnPosition.X),
-			Z:         uint64(spawnPosition.Z),
-			Reachable: true,
-		}
+
 		// Store the regionId and mapId from the database
 		regionId := uint64(spawnPosition.RegionID)
 		mapId := uint64(spawnPosition.MapID)
@@ -223,18 +219,35 @@ func (h *Hub) JoinRegion(clientId uint64) {
 			client.GetPlayerCharacter().SetRegionId(regionId)
 			client.GetPlayerCharacter().SetMapId(mapId)
 
-			// Send this client this region's metadata
-			client.SendPacket(packets.NewRegionData(region.GetId(), region.Grid.GetMaxWidth(), region.Grid.GetMaxHeight()))
+			// Only spawn in this cell if its not occupied, if it is, find a cell nearby that is free
+			grid := region.GetGrid()
+			playerSpawnCell := grid.GetSpawnCell(uint64(spawnPosition.X), uint64(spawnPosition.Z))
+
+			// If we looped through the whole map and no cell was available
+			if playerSpawnCell == nil {
+				log.Printf("No more space available in region %d", regionId)
+				// TO FIX
+				// This should teleport the client to the spawn map from the DB instead
+				h.SwitchRegion(clientId, 1, 1)
+				return
+			}
+
+			// Send the client this region's metadata
+			client.SendPacket(packets.NewRegionData(region.GetId(), grid.GetMaxWidth(), grid.GetMaxHeight()))
 
 			// Update the position and destination for this player character
 			client.GetPlayerCharacter().SetGridPosition(playerSpawnCell)
 			client.GetPlayerCharacter().SetGridDestination(playerSpawnCell)
 
 			// Place the player in the grid for this region
-			region.Grid.SetObject(playerSpawnCell, client.GetPlayerCharacter())
+			grid.SetObject(playerSpawnCell, client.GetPlayerCharacter())
 
 		} else { // If the region does not exist
 			log.Printf("Region %d not available", regionId)
+
+			// TO FIX
+			// This should teleport the client to the spawn map from the DB instead
+			h.SwitchRegion(clientId, 1, 1)
 		}
 	}
 }
@@ -245,12 +258,6 @@ func (h *Hub) SwitchRegion(clientId uint64, regionId uint64, mapId uint64) {
 	client, clientExists := h.GetClient(clientId)
 	// If the client is online and exists
 	if clientExists {
-		playerSpawnCell := &pathfinding.Cell{
-			X:         0,
-			Z:         0,
-			Reachable: true,
-		}
-
 		// Search for this region by id in our Hub
 		region, regionExists := h.GetRegionById(regionId)
 		// If the region is valid
@@ -275,15 +282,28 @@ func (h *Hub) SwitchRegion(clientId uint64, regionId uint64, mapId uint64) {
 			client.GetPlayerCharacter().SetRegionId(regionId)
 			client.GetPlayerCharacter().SetMapId(mapId)
 
+			grid := region.grid
+			// Only spawn in this cell if its not occupied, if it is, find a cell nearby that is free
+			playerSpawnCell := grid.GetSpawnCell(0, 0) // TO FIX <- Each region should have its own spawn zone
+
+			// If we looped through the whole map and no cell was available
+			if playerSpawnCell == nil {
+				log.Printf("No more space available in region %d", regionId)
+				// TO FIX
+				// This should teleport the client to the spawn map from the DB instead
+				h.SwitchRegion(clientId, 1, 1)
+				return
+			}
+
 			// Send this client this region's metadata
-			client.SendPacket(packets.NewRegionData(region.GetId(), region.Grid.GetMaxWidth(), region.Grid.GetMaxHeight()))
+			client.SendPacket(packets.NewRegionData(region.GetId(), grid.GetMaxWidth(), grid.GetMaxHeight()))
 
 			// Update the position and destination for this player character
 			client.GetPlayerCharacter().SetGridPosition(playerSpawnCell)
 			client.GetPlayerCharacter().SetGridDestination(playerSpawnCell)
 
 			// Place the player in the grid for this region
-			region.Grid.SetObject(playerSpawnCell, client.GetPlayerCharacter())
+			grid.SetObject(playerSpawnCell, client.GetPlayerCharacter())
 
 		} else { // If the region does not exist
 			log.Printf("Region %d not available", regionId)
@@ -295,8 +315,6 @@ func (h *Hub) SwitchRegion(clientId uint64, regionId uint64, mapId uint64) {
 		}
 	}
 }
-
-// I NEED TO MAKE ANOTHER FUNCTION CALLED SWITCH_REGION for players that are already online and change maps!
 
 // Returns the total number of clients connected to the Hub
 func (h *Hub) GetClientsOnline() uint64 {

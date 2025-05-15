@@ -29,7 +29,7 @@ type Region struct {
 	RemoveClientChannel chan Client
 
 	// 2D Grid map for this region
-	Grid pathfinding.Grid
+	grid pathfinding.Grid
 
 	logger *log.Logger
 }
@@ -47,6 +47,14 @@ func (r *Region) SetId(id uint64) {
 	r.logger.SetPrefix(prefix)
 }
 
+// Region get/set
+func (r *Region) GetGrid() pathfinding.Grid {
+	return r.grid
+}
+func (r *Region) SetGrid(grid pathfinding.Grid) {
+	r.grid = grid
+}
+
 // Static function that creates a new region
 func CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint64) *Region {
 	return &Region{
@@ -55,7 +63,7 @@ func CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint
 		BroadcastChannel:    make(chan *packets.Packet),
 		AddClientChannel:    make(chan Client),
 		RemoveClientChannel: make(chan Client),
-		Grid:                *pathfinding.CreateGrid(gridWidth, gridHeight),
+		grid:                *pathfinding.CreateGrid(gridWidth, gridHeight),
 		logger:              log.New(log.Writer(), "", log.LstdFlags),
 	}
 }
@@ -63,7 +71,8 @@ func CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint
 // Listens for packets on each channel
 func (r *Region) Start() {
 	// Log into the console which region this is and whats its grid size
-	r.logger.Printf("%s region [%d] created (%dx%d)...", r.Name, r.GetId(), r.Grid.GetMaxWidth(), r.Grid.GetMaxHeight())
+	grid := r.GetGrid()
+	r.logger.Printf("%s region [%d] created (%dx%d)...", r.Name, r.GetId(), grid.GetMaxWidth(), grid.GetMaxHeight())
 
 	// Infinite for loop
 	for {
@@ -82,7 +91,8 @@ func (r *Region) Start() {
 			cell := client.GetPlayerCharacter().GetGridPosition()
 			if cell != nil {
 				// Remove the player from the grid
-				r.Grid.SetObject(cell, nil)
+				grid := r.GetGrid()
+				grid.SetObject(cell, nil)
 			}
 
 			// Remove him from this region

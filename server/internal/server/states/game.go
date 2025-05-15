@@ -79,7 +79,7 @@ func (state *Game) updateCharacter() {
 	}
 
 	// Get the grid from this region
-	grid := state.client.GetRegion().Grid
+	grid := state.client.GetRegion().GetGrid()
 
 	// Calculate the shortest path from our position to our new destination cell
 	path := grid.AStar(state.player.GetGridPosition(), state.player.GetGridDestination(), state.player)
@@ -94,7 +94,7 @@ func (state *Game) updateCharacter() {
 		stepsRemaining := math.MinimumUint64(totalSteps, state.player.Speed)
 
 		// Get the grid from this region
-		grid := state.client.GetRegion().Grid
+		grid := state.client.GetRegion().GetGrid()
 
 		// Based on our player's speed and the remaining cells to traverse
 		// We determine how many cells we can move
@@ -234,7 +234,7 @@ func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
 	// time.Sleep(500 * time.Millisecond) // Simulate 500ms delay
 
 	// Get the grid from this region
-	grid := state.client.GetRegion().Grid
+	grid := state.client.GetRegion().GetGrid()
 	// Get the cell the player wants to access
 	destination := grid.LocalToMap(payload.X, payload.Z)
 	// Only update the player's destination if the cell is valid and unoccupied
