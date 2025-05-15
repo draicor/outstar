@@ -1,9 +1,11 @@
-Node3D
+Marker3D
+Label
 TextureRect
+CanvasLayer
+Node3D
 MarginContainer
 Button
 Control
-Label
 RayCast3D
 Timer
 PanelContainer
@@ -11,4 +13,3 @@ SubViewportContainer
 SubViewport
 Sprite3D
 Label3D
-Camera3D

@@ -1,0 +1,64 @@
+extends Node
+
+@export var RAYCAST_DISTANCE: float = 20 # 20 meters
+
+var tooltip: CanvasLayer = null
+var player_camera: PlayerCamera = null
+var current_hovered_object = null
+var interactables = []
+
+# Instantiate the tooltip scene at start up
+func _ready() -> void:
+	tooltip = preload("res://components/tooltip/tooltip.tscn").instantiate()
+	add_child(tooltip)
+
+
+# Check on tick if the tooltip has to be displayed
+func _process(_delta: float) -> void:
+	# If we don't have a camera set, abort
+	if not player_camera:
+		return
+	
+	var mouse_position = get_viewport().get_mouse_position()
+	var from = player_camera.project_ray_origin(mouse_position)
+	var to = from + player_camera.project_ray_normal(mouse_position) * RAYCAST_DISTANCE
+	
+	var query = PhysicsRayQueryParameters3D.create(from, to)
+	var result = player_camera.get_world_3d().direct_space_state.intersect_ray(query)
+	
+	# If our raycast hit something
+	if result:
+		var new_hovered = result.collider
+		
+		# If our raycast hit something different
+		if new_hovered != current_hovered_object:
+			# Hide previous hover
+			if current_hovered_object:
+				tooltip.hide_tooltip()
+		
+		# Start new hover if the object is interactable
+		if interactables.has(new_hovered):
+			var tooltip_position = new_hovered.get_node("TooltipPosition").global_position
+			tooltip.show_tooltip(new_hovered.TOOLTIP_TEXT, tooltip_position)
+			# Make this our new hovered object
+			current_hovered_object = new_hovered
+		
+	# If we stop hovering over any object
+	elif current_hovered_object:
+		tooltip.hide_tooltip()
+		current_hovered_object = null
+
+
+# Called from player.gd after the camera has been initialized
+func set_player_camera(camera: PlayerCamera) -> void:
+	player_camera = camera
+
+
+# Adds a new interactable object to our array of objects
+func register_interactable(object) -> void:
+	interactables.append(object)
+
+
+# Removes an interactable object from our array of objects
+func unregister_interactable(object) -> void:
+	interactables.erase(object)

@@ -24,6 +24,7 @@ GameManager="*res://autoloads/game_manager.gd"
 Signals="*res://autoloads/signals.gd"
 Utils="*res://autoloads/utils.gd"
 RegionManager="*res://autoloads/region_manager.gd"
+TooltipManager="*res://autoloads/tooltip_manager.gd"
 
 [debug]
 

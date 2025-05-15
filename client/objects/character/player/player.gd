@@ -6,6 +6,7 @@ const Player := preload("res://objects/character/player/player.gd")
 const Pathfinding = preload("res://classes/pathfinding/pathfinding.gd")
 
 # EXPORTED VARIABLES
+@export var TOOLTIP_TEXT: String = "Character"
 @export var ROTATION_SPEED: float = 6.0
 @export var RAYCAST_DISTANCE: float = 20 # 20 meters
 
@@ -133,6 +134,9 @@ func _ready() -> void:
 	# Make our character spawn idling
 	_change_animation("idle", 1.0)
 	
+	# Register this character as an interactable object
+	TooltipManager.register_interactable(self)
+	
 	# Do this only for our player's character
 	if my_player_character:
 		# Connect the signals ONLY for our player character!
@@ -140,7 +144,7 @@ func _ready() -> void:
 		Signals.ui_change_move_speed_button.connect(_handle_signal_ui_update_speed_button)
 	
 		# Add our player camera to our camera rig
-		camera = PlayerCamera.new()		
+		camera = PlayerCamera.new()
 		camera_rig.add_child(camera)
 		# Add a raycast 3d node to our camera
 		raycast = RayCast3D.new()
@@ -151,6 +155,13 @@ func _ready() -> void:
 		
 		# Stores our player character as a global variable
 		GameManager.set_player_character(self)
+		# Stores our player camera as a global variable too
+		TooltipManager.set_player_camera(camera)
+
+
+# Called when this object gets destroyed
+func _exit_tree() -> void:
+	TooltipManager.unregister_interactable(self)
 
 
 # Toggles the bool that keeps track of the chat

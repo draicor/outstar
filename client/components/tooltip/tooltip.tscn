@@ -1,0 +1,26 @@
+[gd_scene load_steps=3 format=3 uid="uid://cb3iyx36pjow"]
+
+[ext_resource type="Script" uid="uid://bt00m1dmeqsmr" path="res://components/tooltip/tooltip.gd" id="1_gnj44"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_lgcio"]
+
+[node name="Tooltip" type="CanvasLayer"]
+layer = 128
+follow_viewport_enabled = true
+script = ExtResource("1_gnj44")
+
+[node name="TooltipPanel" type="TextureRect" parent="."]
+self_modulate = Color(0.196078, 0.196078, 0.196078, 1)
+offset_right = 40.0
+offset_bottom = 40.0
+texture = SubResource("CanvasTexture_lgcio")
+expand_mode = 1
+
+[node name="Label" type="Label" parent="TooltipPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 22.3333
+theme_override_colors/font_color = Color(0.758288, 0.57677, 7.70092e-07, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
