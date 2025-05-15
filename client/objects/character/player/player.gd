@@ -6,7 +6,6 @@ const Player := preload("res://objects/character/player/player.gd")
 const Pathfinding = preload("res://classes/pathfinding/pathfinding.gd")
 
 # EXPORTED VARIABLES
-@export var tooltip: String = ""
 @export var ROTATION_SPEED: float = 6.0
 @export var RAYCAST_DISTANCE: float = 20 # 20 meters
 
@@ -20,6 +19,7 @@ var movement_tick: float = SERVER_TICK # Defaults to server_tick
 # Spawn data
 var player_id: int
 var player_name: String
+var tooltip: String = "" # Set on spawn from server packet
 var model_rotation_y: float
 var server_grid_position: Vector2i # Used to spawn the character and also to correct the player's position
 var my_player_character: bool # Used to differentiate my character from remote players

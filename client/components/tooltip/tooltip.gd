@@ -2,10 +2,12 @@ extends CanvasLayer
 
 @onready var label: Label = $MarginContainer/Label
 
+# We hide the tooltip by default
 func _ready() -> void:
 	hide()
 
 
+# Called to update the tooltip text and show it
 func show_tooltip(text: String):
 	label.text = text
 	update_position()
@@ -13,11 +15,13 @@ func show_tooltip(text: String):
 	show()
 
 
+# Used to hide the tooltip when no longer hovering over something
 func hide_tooltip():
 	hide()
 
 
-func update_position(mouse_offset: Vector2 = Vector2(6, 6)):
+# This is called to update the position of the tooltip, to follow the mouse
+func update_position(mouse_offset: Vector2 = Vector2(2, 6)):
 	# Position slightly offset from the mouse
 	var mouse_position = get_viewport().get_mouse_position()
 	label.position = mouse_position + mouse_offset

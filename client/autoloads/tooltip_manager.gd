@@ -14,6 +14,8 @@ func _ready() -> void:
 
 
 # Check on tick if the tooltip has to be displayed
+# It checks if our interactables array contains the object the raycast collided with
+# NOTE interactable objects should have a tooltip string variable thats not empty
 func _process(_delta: float) -> void:
 	# If we don't have a camera ready, abort
 	if not player_camera:

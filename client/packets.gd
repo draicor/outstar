@@ -796,7 +796,7 @@ class Handshake:
 	
 class Heartbeat:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -868,7 +868,7 @@ class ServerMetrics:
 	
 class RequestGranted:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
