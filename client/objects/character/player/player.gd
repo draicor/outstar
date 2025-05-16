@@ -1,9 +1,17 @@
 extends CharacterBody3D
 
+# Preloading scripts
 const packets := preload("res://packets.gd")
-const player_scene := preload("res://objects/character/player/player.tscn")
 const Player := preload("res://objects/character/player/player.gd")
 const Pathfinding = preload("res://classes/pathfinding/pathfinding.gd")
+
+# Preloading scenes
+const player_scene := preload("res://objects/character/player/player.tscn")
+# Character model selector
+var character_scenes: Dictionary = {
+	"female": preload("res://objects/characters/female_bot.tscn"),
+	"male": preload("res://objects/characters/male_bot.tscn"),
+}
 
 # EXPORTED VARIABLES
 @export var ROTATION_SPEED: float = 6.0
@@ -19,6 +27,7 @@ var movement_tick: float = SERVER_TICK # Defaults to server_tick
 # Spawn data
 var player_id: int
 var player_name: String
+var gender: String = "female" # CAUTION gender should be set from the server
 var tooltip: String = "" # Set on spawn from server packet
 var model_rotation_y: float
 var server_grid_position: Vector2i # Used to spawn the character and also to correct the player's position
@@ -59,29 +68,41 @@ var autopilot_active: bool = false # If the server is forcing the player to move
 var is_typing: bool = false # To display a bubble when typing
 
 # Animation state machine
-var current_animation : ASM = ASM.IDLE
+var animation_library: String = "%s/%s_" % [gender, gender]
+var current_animation: ASM = ASM.IDLE
 enum ASM {
 	IDLE,
 	WALK,
 	JOG,
 	RUN,
 }
-# Locomotion
-var locomotion := {
-	0: {state = ASM.IDLE, animation = "idle", play_rate = 1.0},
-	1: {state = ASM.WALK, animation = "walk", play_rate = 0.9},
-	2: {state = ASM.JOG, animation = "run", play_rate = 0.65},
-	3: {state = ASM.RUN, animation = "run", play_rate = 0.8}
+# Character locomotion
+var locomotion: Dictionary # This is set depending on the gender of this character
+var female_locomotion: Dictionary = {
+	0: {state = ASM.IDLE, animation = "female/female_idle", play_rate = 1.0},
+	1: {state = ASM.WALK, animation = "female/female_walk", play_rate = 0.95},
+	2: {state = ASM.JOG, animation = "female/female_run", play_rate = 0.70},
+	3: {state = ASM.RUN, animation = "female/female_run", play_rate = 0.8}
+}
+var male_locomotion := {
+	0: {state = ASM.IDLE, animation = "male/male_idle", play_rate = 1.0},
+	1: {state = ASM.WALK, animation = "male/male_walk", play_rate = 1.1},
+	2: {state = ASM.JOG, animation = "male/male_run", play_rate = 0.75},
+	3: {state = ASM.RUN, animation = "male/male_run", play_rate = 0.9}
 }
 
 # Camera variables
 var camera : PlayerCamera
 var raycast : RayCast3D
 
-@onready var animation_player: AnimationPlayer = $Model/Body/AnimationPlayer
-@onready var model: Node3D = $Model
-@onready var camera_rig: Node3D = $CameraPivot/CameraRig
-@onready var chat_bubble: Node3D = $ChatBubbleOrigin/ChatBubble
+# Character variables
+var current_character: Node = null
+
+# Scene tree nodes
+@onready var animation_player: AnimationPlayer # Assigned by code later
+@onready var model: Node3D = $Model # Used to attach the model and rotate it
+@onready var camera_rig: Node3D = $CameraPivot/CameraRig # Used to attach the camera
+@onready var chat_bubble: Node3D = $ChatBubbleOrigin/ChatBubble # Where chat bubbles spawn
 
 
 static func instantiate(
@@ -113,13 +134,15 @@ static func instantiate(
 
 
 func _ready() -> void:
-	# Blend animations
-	animation_player.set_blend_time("idle", "walk", 0.2)
-	animation_player.set_blend_time("idle", "run", 0.1)
-	animation_player.set_blend_time("walk", "idle", 0.15)
-	animation_player.set_blend_time("walk", "run", 0.15)
-	animation_player.set_blend_time("run", "idle", 0.15)
-	animation_player.set_blend_time("run", "walk", 0.15)
+	load_character(gender) # CAUTION this shouldn't be gender
+	if gender == "male":
+		locomotion = male_locomotion
+	else:
+		locomotion = female_locomotion
+	
+	# Fetch our animation player AFTER we loaded our character
+	animation_player = find_child("AnimationPlayer", true, false)
+	_setup_animation_blend_time()
 	
 	position = interpolated_position # Has to be set here after the scene has been created
 	
@@ -133,7 +156,7 @@ func _ready() -> void:
 	update_player_speed(player_speed)
 	
 	# Make our character spawn idling
-	_change_animation("idle", 1.0)
+	_change_animation(animation_library+"idle", 1.0)
 	
 	# Register this character as an interactable object
 	TooltipManager.register_interactable(self)
@@ -158,6 +181,32 @@ func _ready() -> void:
 		GameManager.set_player_character(self)
 		# Stores our player camera as a global variable too
 		TooltipManager.set_player_camera(camera)
+
+
+# Helper function to properly setup animation blend times
+func _setup_animation_blend_time() -> void:
+	if not animation_player:
+		push_error("AnimationPlayer not set")
+		return
+	
+	match animation_library:
+		# Blend female locomotion animations
+		"female/female_":
+			animation_player.set_blend_time("female/female_idle", "female/female_walk", 0.2)
+			animation_player.set_blend_time("female/female_idle", "female/female_run", 0.1)
+			animation_player.set_blend_time("female/female_walk", "female/female_idle", 0.15)
+			animation_player.set_blend_time("female/female_walk", "female/female_run", 0.15)
+			animation_player.set_blend_time("female/female_run", "female/female_idle", 0.15)
+			animation_player.set_blend_time("female/female_run", "female/female_walk", 0.15)
+		
+		# Blend male locomotion animations
+		"male/male_":
+			animation_player.set_blend_time("male/male_idle", "male/male_walk", 0.2)
+			animation_player.set_blend_time("male/male_idle", "male/male_run", 0.1)
+			animation_player.set_blend_time("male/male_walk", "male/male_idle", 0.15)
+			animation_player.set_blend_time("male/male_walk", "male/male_run", 0.15)
+			animation_player.set_blend_time("male/male_run", "male/male_idle", 0.15)
+			animation_player.set_blend_time("male/male_run", "male/male_walk", 0.15)
 
 
 # Called when this object gets destroyed
@@ -639,3 +688,18 @@ func _draw_circle(center: Vector3, radius: float, color: Color, resolution: int 
 	# Draw lines between each point
 	for i in range(points.size() - 1):
 		DebugDraw3D.draw_line(points[i], points[i + 1], color)
+
+
+# Used to load a character model and append it as a child of our model node
+func load_character(character_type: String) -> void:
+	# Remove existing character if any
+	if current_character:
+		current_character.queue_free()
+	
+	# Load and instantiate the new character
+	if character_scenes.has(character_type):
+		var character_scene = character_scenes[character_type]
+		current_character = character_scene.instantiate()
+		model.add_child(current_character)
+	else:
+		print("Character type %s not found" % [character_type])
