@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://d0cnml7abwrk2"]
+[gd_scene load_steps=3 format=3 uid="uid://d0cnml7abwrk2"]
 
 [ext_resource type="Script" uid="uid://k2gup60pylmn" path="res://states/authentication/authentication.gd" id="1_k6pie"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_nw6km"]
 
 [node name="Authentication" type="Node"]
 script = ExtResource("1_k6pie")
@@ -17,19 +19,27 @@ offset_right = 180.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/MarginContainer"]
+[node name="AuthenticationContainer" type="VBoxContainer" parent="UI/MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 theme_override_constants/separation = 3
 
-[node name="ClientsOnline" type="Label" parent="UI/MarginContainer/VBoxContainer"]
+[node name="TopContainer" type="VBoxContainer" parent="UI/MarginContainer/AuthenticationContainer"]
+layout_mode = 2
+
+[node name="ClientsOnline" type="Label" parent="UI/MarginContainer/AuthenticationContainer/TopContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.87451, 0.87451, 0.87451, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 horizontal_alignment = 1
 
-[node name="Username" type="LineEdit" parent="UI/MarginContainer/VBoxContainer"]
+[node name="Status" type="Label" parent="UI/MarginContainer/AuthenticationContainer/TopContainer"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="UsernameInput" type="LineEdit" parent="UI/MarginContainer/AuthenticationContainer/TopContainer"]
 custom_minimum_size = Vector2(240, 0)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -37,7 +47,7 @@ placeholder_text = "Username"
 alignment = 1
 max_length = 32
 
-[node name="Password" type="LineEdit" parent="UI/MarginContainer/VBoxContainer"]
+[node name="PasswordInput" type="LineEdit" parent="UI/MarginContainer/AuthenticationContainer/TopContainer"]
 custom_minimum_size = Vector2(240, 0)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -45,7 +55,7 @@ placeholder_text = "Password"
 alignment = 1
 max_length = 64
 
-[node name="Nickname" type="LineEdit" parent="UI/MarginContainer/VBoxContainer"]
+[node name="NicknameInput" type="LineEdit" parent="UI/MarginContainer/AuthenticationContainer/TopContainer"]
 custom_minimum_size = Vector2(240, 0)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -53,25 +63,39 @@ placeholder_text = "Nickname"
 alignment = 1
 max_length = 20
 
-[node name="Status" type="Label" parent="UI/MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(360, 0)
+[node name="BottomContainer" type="VBoxContainer" parent="UI/MarginContainer/AuthenticationContainer"]
 layout_mode = 2
-horizontal_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="UI/MarginContainer/VBoxContainer"]
+[node name="GenderContainer" type="HBoxContainer" parent="UI/MarginContainer/AuthenticationContainer/BottomContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="MaleRadioButton" type="CheckBox" parent="UI/MarginContainer/AuthenticationContainer/BottomContainer/GenderContainer"]
+layout_mode = 2
+button_group = SubResource("ButtonGroup_nw6km")
+text = "Male"
+
+[node name="FemaleRadioButton" type="CheckBox" parent="UI/MarginContainer/AuthenticationContainer/BottomContainer/GenderContainer"]
+layout_mode = 2
+button_group = SubResource("ButtonGroup_nw6km")
+text = "Female"
+
+[node name="ButtonContainer" type="HBoxContainer" parent="UI/MarginContainer/AuthenticationContainer/BottomContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/separation = 10
 
-[node name="LoginButton" type="Button" parent="UI/MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="LoginButton" type="Button" parent="UI/MarginContainer/AuthenticationContainer/BottomContainer/ButtonContainer"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 text = "Login"
 
-[node name="RegisterButton" type="Button" parent="UI/MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="RegisterButton" type="Button" parent="UI/MarginContainer/AuthenticationContainer/BottomContainer/ButtonContainer"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 text = "Register"
 
-[connection signal="pressed" from="UI/MarginContainer/VBoxContainer/HBoxContainer/LoginButton" to="." method="_on_login_button_pressed"]
-[connection signal="pressed" from="UI/MarginContainer/VBoxContainer/HBoxContainer/RegisterButton" to="." method="_on_register_button_pressed"]
+[connection signal="toggled" from="UI/MarginContainer/AuthenticationContainer/BottomContainer/GenderContainer/MaleRadioButton" to="." method="_on_male_radio_button_toggled"]
+[connection signal="toggled" from="UI/MarginContainer/AuthenticationContainer/BottomContainer/GenderContainer/FemaleRadioButton" to="." method="_on_female_radio_button_toggled"]
+[connection signal="pressed" from="UI/MarginContainer/AuthenticationContainer/BottomContainer/ButtonContainer/LoginButton" to="." method="_on_login_button_pressed"]
+[connection signal="pressed" from="UI/MarginContainer/AuthenticationContainer/BottomContainer/ButtonContainer/RegisterButton" to="." method="_on_register_button_pressed"]
