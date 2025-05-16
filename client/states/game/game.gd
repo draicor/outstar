@@ -203,6 +203,7 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		var player := Player.instantiate(
 			player_id,
 			update_player_packet.get_name(),
+			update_player_packet.get_gender(),
 			spawn_position,
 			update_player_packet.get_rotation_y(),
 			is_my_player_character

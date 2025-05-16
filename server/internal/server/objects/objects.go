@@ -9,6 +9,8 @@ type Player struct {
 	// Model string // Determines which model should godot load
 	regionId uint64 // Which server region this player is at
 	mapId    uint64 // Which map file should this client load
+	// Character
+	gender string
 	// Position
 	Position  *pathfinding.Cell // Where this player is
 	RotationY float64           // Model look at rotation
@@ -70,9 +72,18 @@ func (player *Player) SetSpeed(newSpeed uint64) {
 	player.Speed = min(newSpeed, MAX_SPEED)
 }
 
+// Gender get/set
+func (player *Player) GetGender() string {
+	return player.gender
+}
+func (player *Player) SetGender(newGender string) {
+	player.gender = newGender
+}
+
 // Static function to create a new player
 func CreatePlayer(
 	name string,
+	gender string,
 	rotationY float64,
 	// Stats
 	level uint64,
@@ -80,7 +91,8 @@ func CreatePlayer(
 	// Atributes
 ) *Player {
 	return &Player{
-		Name: name,
+		Name:   name,
+		gender: gender,
 		// Position
 		Position:  nil,
 		RotationY: rotationY, // Look at direction

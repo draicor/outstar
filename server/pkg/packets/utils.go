@@ -118,6 +118,7 @@ func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
 				Z: position.Z,
 			},
 			RotationY: player.RotationY,
+			Gender:    player.GetGender(),
 		},
 	}
 }

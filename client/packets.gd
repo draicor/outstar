@@ -1467,6 +1467,11 @@ class UpdatePlayer:
 		service.field = __rotation_y
 		data[__rotation_y.tag] = service
 		
+		__gender = PBField.new("gender", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = __gender
+		data[__gender.tag] = service
+		
 	var data = {}
 	
 	var __id: PBField
@@ -1521,6 +1526,19 @@ class UpdatePlayer:
 		__rotation_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_rotation_y(value : float) -> void:
 		__rotation_y.value = value
+	
+	var __gender: PBField
+	func has_gender() -> bool:
+		if __gender.value != null:
+			return true
+		return false
+	func get_gender() -> String:
+		return __gender.value
+	func clear_gender() -> void:
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		__gender.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_gender(value : String) -> void:
+		__gender.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

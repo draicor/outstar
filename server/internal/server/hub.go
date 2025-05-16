@@ -421,3 +421,15 @@ func (h *Hub) LoadCharacterPosition(client Client) (*db.GetCharacterPositionRow,
 
 	return &position, nil
 }
+
+func (h *Hub) GetFullCharacterData(characterId int64) (*db.GetFullCharacterDataRow, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	character, err := h.queries.GetFullCharacterData(ctx, characterId)
+	if err != nil {
+		return nil, fmt.Errorf("load full character data: %w", err)
+	}
+
+	return &character, nil
+}

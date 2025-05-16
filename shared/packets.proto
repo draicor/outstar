@@ -36,11 +36,12 @@ message RegionData { // Sent by the server as metadata (grid data, static obstac
   uint64 grid_height = 3;
 }
 message Position { uint64 x = 1; uint64 z = 2; } // Used to broadcast positions in a region
-message UpdatePlayer { // Sent by the server to update a a player character (Used to spawn as well)
+message UpdatePlayer { // Sent by the server to update a player character (Used to spawn as well)
   uint64 id = 1;
   string name = 2;
   Position position = 3;
   double rotation_y = 4;
+  string gender = 5;
 }
 // Target Destination sent by the client (Ignores Y axis (vertical))
 message PlayerDestination { uint64 x = 1; uint64 z = 2; }

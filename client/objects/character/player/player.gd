@@ -27,8 +27,8 @@ var movement_tick: float = SERVER_TICK # Defaults to server_tick
 # Spawn data
 var player_id: int
 var player_name: String
-var gender: String = "female" # CAUTION gender should be set from the server
-var tooltip: String = "" # Set on spawn from server packet
+var gender: String
+var tooltip: String
 var model_rotation_y: float
 var server_grid_position: Vector2i # Used to spawn the character and also to correct the player's position
 var my_player_character: bool # Used to differentiate my character from remote players
@@ -68,7 +68,7 @@ var autopilot_active: bool = false # If the server is forcing the player to move
 var is_typing: bool = false # To display a bubble when typing
 
 # Animation state machine
-var animation_library: String = "%s/%s_" % [gender, gender]
+var animation_library: String
 var current_animation: ASM = ASM.IDLE
 enum ASM {
 	IDLE,
@@ -108,6 +108,7 @@ var current_character: Node = null
 static func instantiate(
 	id: int,
 	nickname: String,
+	character_gender: String,
 	spawn_position: Vector2i,
 	spawn_model_rotation_y: float, # Used to update our model.rotation.y
 	is_my_player_character: bool
@@ -117,6 +118,8 @@ static func instantiate(
 	# Load the data from the function parameters into a new player character
 	player.player_id = id
 	player.player_name = nickname
+	player.gender = character_gender
+	player.animation_library = "%s/%s_" % [character_gender, character_gender]
 	player.tooltip = nickname
 	player.model_rotation_y = spawn_model_rotation_y
 	player.my_player_character = is_my_player_character
@@ -155,9 +158,6 @@ func _ready() -> void:
 	# Update our player's movement tick at spawn
 	update_player_speed(player_speed)
 	
-	# Make our character spawn idling
-	_change_animation(animation_library+"idle", 1.0)
-	
 	# Register this character as an interactable object
 	TooltipManager.register_interactable(self)
 	
@@ -181,6 +181,9 @@ func _ready() -> void:
 		GameManager.set_player_character(self)
 		# Stores our player camera as a global variable too
 		TooltipManager.set_player_camera(camera)
+	
+	# Make characters spawn idling
+	_switch_locomotion(ASM.IDLE)
 
 
 # Helper function to properly setup animation blend times

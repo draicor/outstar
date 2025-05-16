@@ -157,15 +157,24 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	state.client.SetAccountUsername(username)
 	state.client.SetCharacterId(user.CharacterID.Int64)
 
-	// TO FIX -> Load all of this from the database
+	character, err := state.client.GetHub().GetFullCharacterData(user.CharacterID.Int64)
+
+	// If we got an error trying to load this character from database
+	if err != nil {
+		deniedMessage = packets.NewRequestDenied("Error loading character from database")
+		state.client.SendPacket(deniedMessage)
+		return
+	}
+
+	// TO FIX -> Load all of this from the database [eventually!]
 	var rotationY float64 = math.DegreesToRadians(180) // Start looking south
 	var level uint64 = 1
 	var experience uint64 = 1
 
-	// Create this client's player/character data from the database!
+	// Recreate this client's player/character data from the database!
 	state.client.SetPlayerCharacter(objects.CreatePlayer(
 		user.Nickname,
-		// Position
+		character.Gender,
 		rotationY,
 		// Stats
 		level, experience,
