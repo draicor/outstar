@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ctlavrbrgkjgm"
-path="res://.godot/imported/icon.svg-7c8e6dfe2213e2029f33175ecfc9166b.ctex"
+uid="uid://bjqb64snmtum0"
+path="res://.godot/imported/outstar_online.svg-e4d39f4ad31e628029d7376047409045.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/icon.svg"
-dest_files=["res://.godot/imported/icon.svg-7c8e6dfe2213e2029f33175ecfc9166b.ctex"]
+source_file="res://assets/icons/outstar_online.svg"
+dest_files=["res://.godot/imported/outstar_online.svg-e4d39f4ad31e628029d7376047409045.ctex"]
 
 [params]
 
