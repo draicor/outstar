@@ -8,7 +8,7 @@ func _ready() -> void:
 	GameManager.set_state(GameManager.State.CONNECTED)
 
 
-# We use the main _process to check for input
+# We use the _process to check for input faster, its better than using _input
 func _process(_delta):
 	if Input.is_action_just_pressed("ui_enter"):
 		Signals.ui_chat_input_toggle.emit()

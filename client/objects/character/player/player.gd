@@ -67,6 +67,9 @@ var in_motion: bool = false # If the character is moving
 var autopilot_active: bool = false # If the server is forcing the player to move
 var is_typing: bool = false # To display a bubble when typing
 
+# Interaction system
+var pending_interaction: Interactable = null # The object we are trying to interact with
+
 # Animation state machine
 var animation_library: String
 var current_animation: ASM = ASM.IDLE
@@ -229,13 +232,22 @@ func _handle_signal_ui_update_speed_button(new_move_speed: int) -> void:
 	WebSocket.send(packet)
 
 
-# CAUTION
-# Move this to main.gd, all input should be there
-# It should also check what we clicked to see if we attacked/moved/interacted, etc
+# It checks what we clicked to see if we will attack/move/interact, etc
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("left_click"):
+		# If we are in autopilot, ignore mouse input
+		if autopilot_active:
+			return
+		
+		# Get the mouse position and check what kind of target we have
 		var mouse_position : Vector2 = get_viewport().get_mouse_position()
-		_click_to_move(mouse_position)
+		var target := _get_mouse_click_target(mouse_position)
+		
+		if target:
+			if target is Interactable:
+				print("Interacted!!")
+		else:
+			_handle_movement_click(mouse_position)
 
 
 # Used to cast a ray from the camera view to the mouse position
@@ -258,31 +270,30 @@ func _mouse_raycast(mouse_position: Vector2) -> Vector3:
 	
 	return vector
 
-
-# Casts a raycast from the mouse position to get our destination cell,
-# and then attempts to predict a path towards that cell to move our character
-func _click_to_move(mouse_position: Vector2) -> void:
-	# If we are in autopilot, prevent mouse input
-	if autopilot_active:
-		return
-	
+# Casts a raycast from the mouse position to get our destination cell
+func _handle_movement_click(mouse_position: Vector2) -> void:
 	# Grab the collision point from our mouse click
 	var local_point : Vector3 = _mouse_raycast(mouse_position)
 	# If the point was invalid, exit
-	if local_point == Vector3.ZERO:
-		return
+	if local_point == Vector3.ZERO: return
 		
 	# Transform the local space position to our grid coordinate
 	var new_destination: Vector2i = Utils.local_to_map(local_point)
 	
+	_click_to_move(new_destination)
+
+
+# Attempts to predict a path towards that cell to move our character
+# if the cell is reachable and available
+func _click_to_move(new_destination: Vector2i) -> void:
 	# If the new destination is not walkable, abort
-	if not RegionManager.is_cell_reachable(new_destination):
-		return
+	if not RegionManager.is_cell_reachable(new_destination): return
 	
-	# CAUTION extend this code to interact differently with objects and players, etc
 	# If the new destination is already occupied, abort
-	if not RegionManager.is_cell_available(new_destination):
-		return
+	if not RegionManager.is_cell_available(new_destination): return
+	
+	# Clear any pending interaction
+	pending_interaction = null
 	
 	# If we are not moving
 	if not in_motion:
@@ -335,6 +346,34 @@ func _click_to_move(mouse_position: Vector2) -> void:
 func _predict_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	return Pathfinding.find_path(from, to, RegionManager.grid_width, RegionManager.grid_height, self)
 
+
+# Detects and returns target after mouse click, if valid
+func _get_mouse_click_target(mouse_position: Vector2) -> Object:
+	# Check if our click collided with something
+	var local_point: Vector3 = _mouse_raycast(mouse_position)
+	if local_point == Vector3.ZERO: return null
+	
+	# Query for collisions
+	var space_state := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(
+		camera.global_position,
+		local_point,
+		0b10 # Collision layer 2 for interactables
+	)
+	var result := space_state.intersect_ray(query)
+	if result:
+		# Walk up the node tree to find the parent
+		var node = result.collider
+		while node:
+			# NOTE Add more base classes here to detect them too
+			if node is Interactable:
+				return node
+			
+			# Keep walking up the node tree until we find a class
+			node = node.get_parent()
+	
+	# If we didn't collide with anything, return null
+	return null
 
 # Creates and returns a player_destination_packet
 func _create_player_destination_packet(grid_pos: Vector2i) -> packets.Packet:

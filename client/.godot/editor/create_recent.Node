@@ -1,3 +1,6 @@
+Node3D
+Node
+Interactable
 CheckBox
 VBoxContainer
 HBoxContainer
@@ -7,9 +10,5 @@ Marker3D
 Label
 TextureRect
 CanvasLayer
-Node3D
 Button
 Control
-RayCast3D
-Timer
-PanelContainer

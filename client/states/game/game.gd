@@ -98,9 +98,8 @@ func _on_websocket_heartbeat_attempt() -> void:
 
 # When a new client connects, we print the message into our chat window
 func _handle_client_entered_packet(_nickname: String) -> void:
+	# When a client connects, the server sends our data to him automatically
 	pass
-	# When a client enters, we need to send our own data to him so he can
-	# store it locally!
 
 
 # When a client leaves, print the message into our chat window
