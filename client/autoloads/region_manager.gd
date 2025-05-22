@@ -54,6 +54,18 @@ func is_cell_available(cell: Vector2i) -> bool:
 	return _grid[index].object == null
 
 
+# Returns the first valid cell position
+func get_available_positions_around_target(target_position: Vector2i, desired_positions: Array[Vector2i]) -> Vector2i:
+	# Convert relative positions around target to absolute grid positions
+	for relative_position in desired_positions:
+		var absolute_position = target_position + relative_position
+		if is_cell_reachable(absolute_position) and is_cell_available(absolute_position):
+			return absolute_position
+	
+	# If none available, return zero
+	return Vector2i.ZERO
+
+
 # If the cell is valid, returns the object at that position, else return null
 func get_object(cell: Vector2i) -> Object:
 	if is_in_grid(cell):

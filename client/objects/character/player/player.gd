@@ -384,10 +384,17 @@ func _start_interaction(target: Interactable) -> void:
 	if interaction_target == target: return
 	
 	interaction_target = target
-	# Get the target cell position before activating this interactable
-	var interaction_position: Vector3 = target.get_interaction_position()
-	var interaction_grid_position: Vector2i = Utils.local_to_map(interaction_position)
-	# CAUTION update the above to use grid_positions and not vector3
+	var target_position = Utils.local_to_map(target.global_position)
+	var relative_positions: Array[Vector2i] = target.get_interaction_positions()
+	
+	# Find the nearest available position to interact with this target
+	var interaction_grid_position = RegionManager.get_available_positions_around_target(
+		target_position,
+		relative_positions
+	)
+	# If no valid interaction position found
+	if interaction_grid_position == Vector2i.ZERO:
+		return
 	
 	# Calculate from current immediate destination if moving, else use our current grid position
 	var start_position := immediate_grid_destination if in_motion else grid_position
@@ -396,7 +403,7 @@ func _start_interaction(target: Interactable) -> void:
 	
 	# If path wasn't valid, check if we are already at the target position
 	if interaction_path.is_empty():
-		if _is_in_interaction_range(interaction_position):
+		if _is_in_interaction_range(interaction_grid_position):
 			_execute_interaction()
 		return
 	
@@ -415,7 +422,7 @@ func _start_interaction(target: Interactable) -> void:
 		# instead of moving towards it, we check if we are in range to activate,
 		# if we are we activate it, if we are not, we abort to prevent an error
 		if predicted_path.size() < 2:
-			if _is_in_interaction_range(interaction_position):
+			if _is_in_interaction_range(interaction_grid_position):
 				_execute_interaction()
 			return
 		
@@ -443,9 +450,19 @@ func _start_interaction(target: Interactable) -> void:
 		WebSocket.send(packet)
 
 
-# Helper function to check interaction range
-func _is_in_interaction_range(interactable_position: Vector3) -> bool:
-	return global_position.distance_to(interactable_position) < 1.5 # CAUTION replace this
+# Helper function to check if player is in interaction range
+func _is_in_interaction_range(target: Interactable) -> bool:
+	# Convert space position to grid coordinates
+	var target_position = Utils.local_to_map(target.global_position)
+	
+	# Check all possible interaction positions
+	for relative_position in target.get_interaction_positions():
+		var absolute_position = target_position + relative_position
+		if grid_position.distance_to(absolute_position) <= target.interaction_range:
+			return true
+	
+	# Not in range, return false
+	return false
 
 
 # Handles the interaction itself when in range
@@ -572,8 +589,8 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 func _complete_movement() -> void:
 	# Check for interaction first
 	if interaction_target:
-		var target_position = interaction_target.get_interaction_position()
-		if _is_in_interaction_range(target_position):
+		if _is_in_interaction_range(interaction_target):
+			print("execute")
 			_execute_interaction()
 			return # Stop here to prevent movement reset
 	
