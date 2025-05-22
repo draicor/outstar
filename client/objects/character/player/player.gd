@@ -68,9 +68,7 @@ var autopilot_active: bool = false # If the server is forcing the player to move
 var is_typing: bool = false # To display a bubble when typing
 
 # Interaction system
-var pending_interaction: Interactable = null # The object we are trying to interact with
-var interaction_path: Array[Vector2i] = [] # Path to interaction
-var interaction_complete_callback: Callable # For future expansion
+var interaction_target: Interactable = null # The object we are trying to interact with
 
 # Animation state machine
 var animation_library: String
@@ -246,6 +244,7 @@ func _input(event: InputEvent) -> void:
 		var mouse_position : Vector2 = get_viewport().get_mouse_position()
 		var target := _get_mouse_click_target(mouse_position)
 		
+		# If we have a valid target, we try to determine what kind of class it is
 		if target:
 			if target is Interactable:
 				_start_interaction(target)
@@ -296,7 +295,7 @@ func _click_to_move(new_destination: Vector2i) -> void:
 	if not RegionManager.is_cell_available(new_destination): return
 	
 	# Clear any pending interaction
-	pending_interaction = null
+	interaction_target = null
 	
 	# If we are not moving
 	if not in_motion:
@@ -382,16 +381,20 @@ func _get_mouse_click_target(mouse_position: Vector2) -> Object:
 # Traces a path to the interactable if not in range, and then calls the execute interaction
 func _start_interaction(target: Interactable) -> void:
 	# If clicked on our already clicked interaction, ignore
-	if pending_interaction == target: return
+	if interaction_target == target: return
 	
-	pending_interaction = target
+	interaction_target = target
+	# Get the target cell position before activating this interactable
 	var interaction_position: Vector3 = target.get_interaction_position()
 	var interaction_grid_position: Vector2i = Utils.local_to_map(interaction_position)
+	# CAUTION update the above to use grid_positions and not vector3
 	
-	# Calculate from current immediate destination if moving
+	# Calculate from current immediate destination if moving, else use our current grid position
 	var start_position := immediate_grid_destination if in_motion else grid_position
-	interaction_path = _predict_path(start_position, interaction_grid_position)
+	# Predict a path towards our target
+	var interaction_path = _predict_path(start_position, interaction_grid_position)
 	
+	# If path wasn't valid, check if we are already at the target position
 	if interaction_path.is_empty():
 		if _is_in_interaction_range(interaction_position):
 			_execute_interaction()
@@ -399,11 +402,45 @@ func _start_interaction(target: Interactable) -> void:
 	
 	# Handle path continuation if already moving
 	if in_motion:
-		next_tick_predicted_path = interaction_path
+		# Overwrite the next tick predicted path, removing the first cell since its repeated 
+		next_tick_predicted_path = interaction_path.slice(1)
+		# Overwrite our new grid destination to be our interaction_grid_position
+		grid_destination = interaction_grid_position
 	else:
+		# If not moving, then start predicting locally
+		# Because we were idling, we need to get 1 more cell for this tick
 		predicted_path = Utils.pop_multiple_front(interaction_path, player_speed + 1)
+		
+		# If we are in the same cell as the target cell, our predicted_path will have 1 or 0 cells,
+		# instead of moving towards it, we check if we are in range to activate,
+		# if we are we activate it, if we are not, we abort to prevent an error
+		if predicted_path.size() < 2:
+			if _is_in_interaction_range(interaction_position):
+				_execute_interaction()
+			return
+		
+		# Get our immediate grid destination (this tick)
 		immediate_grid_destination = predicted_path.back()
-		_setup_next_movement_step(predicted_path, true) # CAUTION HERE
+		# Remove the first cell from the predicted_path because we are already there
+		predicted_path = predicted_path.slice(1)
+		# We add to our local unconfirmed path the next steps we'll take
+		unconfirmed_path.append(immediate_grid_destination)
+		# Store the remaining prediction (if any) for next tick
+		next_tick_predicted_path = interaction_path
+		
+		# Prepare everything to move correctly this tick
+		cells_to_move_this_tick = predicted_path.size()
+		_setup_next_movement_step(predicted_path, true)
+		_switch_locomotion(cells_to_move_this_tick)
+		
+		is_predicting = true
+		# Overwrite our new grid destination to be our interaction_grid_position
+		grid_destination = interaction_grid_position
+		
+		# NOTE: We need to send the packet here ONCE, when movement starts only!
+		# Create a new packet to hold our input and send it to the server
+		var packet := _create_player_destination_packet(immediate_grid_destination)
+		WebSocket.send(packet)
 
 
 # Helper function to check interaction range
@@ -413,20 +450,20 @@ func _is_in_interaction_range(interactable_position: Vector3) -> bool:
 
 # Handles the interaction itself when in range
 func _execute_interaction() -> void:
-	if not pending_interaction: return
+	if not interaction_target: return
 	
 	# Stop moving and clear the paths first
 	in_motion = false
 	predicted_path = []
 	next_tick_predicted_path = []
-	interaction_path = []
 	
 	# Face the interaction target
-	var look_direction := (pending_interaction.global_position - global_position).normalized()
+	var look_direction := (interaction_target.global_position - global_position).normalized()
+	# CAUTION rotation is backwards here
 	_rotate_towards_direction(look_direction)
 	
 	# Attempt to play the interaction animation
-	var animation_name: String = pending_interaction.get_interaction_animation()
+	var animation_name: String = interaction_target.get_interaction_animation()
 	if animation_player.has_animation(animation_name):
 		_switch_locomotion(ASM.INTERACTING)
 		animation_player.play(animation_name)
@@ -434,10 +471,10 @@ func _execute_interaction() -> void:
 		await animation_player.animation_finished
 	
 	# Perform the interaction itself
-	pending_interaction.interact(self)
+	interaction_target.interact(self)
 	
 	# Cleanup
-	pending_interaction = null
+	interaction_target = null
 	_switch_locomotion(ASM.IDLE)
 
 
@@ -533,19 +570,12 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 # so its always exactly at the center of the cell in the grid,
 # stops movement and switches the character back to idle animation
 func _complete_movement() -> void:
-	# Handle interaction code
-	if pending_interaction:
-		var target_position = pending_interaction.get_interaction_position()
+	# Check for interaction first
+	if interaction_target:
+		var target_position = interaction_target.get_interaction_position()
 		if _is_in_interaction_range(target_position):
 			_execute_interaction()
-		elif not interaction_path.is_empty():
-			# Continue moving towards interaction
-			predicted_path = Utils.pop_multiple_front(interaction_path, player_speed + 1)
-			immediate_grid_destination = predicted_path.back()
-			_setup_next_movement_step(predicted_path, true) # CAUTION here
-		
-		# Stop here to prevent movement reset
-		return
+			return # Stop here to prevent movement reset
 	
 	# Handle normal movement logic
 	interpolated_position = next_cell
