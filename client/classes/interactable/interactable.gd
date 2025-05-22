@@ -24,21 +24,6 @@ func get_interaction_positions() -> Array[Vector2i]:
 	return interaction_positions
 
 
-# Returns the interaction position closer to our player
-func get_nearest_interaction_position(player_grid_position: Vector2i) -> Vector2i:
-	var positions = get_interaction_positions()
-	var nearest_position = positions[0]
-	var min_distance = player_grid_position.distance_squared_to(nearest_position)
-	
-	for pos in positions.slice(1): # Skip first cell since we already have it
-		var distance = player_grid_position.distance_squared_to(pos)
-		if distance < min_distance and RegionManager.is_cell_available(pos):
-			min_distance = distance
-			nearest_position = pos
-	
-	return nearest_position
-
-
 # Returns the animation name the character will play when interacting
 func get_interaction_animation() -> String:
 	return interaction_animation

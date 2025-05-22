@@ -55,15 +55,37 @@ func is_cell_available(cell: Vector2i) -> bool:
 
 
 # Returns the first valid cell position
-func get_available_positions_around_target(target_position: Vector2i, desired_positions: Array[Vector2i]) -> Vector2i:
+func get_available_positions_around_target(start_position: Vector2i, target_position: Vector2i, relative_positions: Array[Vector2i]) -> Vector2i:
+	var valid_positions: Array[Vector2i] = []
+	
+	# First pass: collect all valid positions
 	# Convert relative positions around target to absolute grid positions
-	for relative_position in desired_positions:
-		var absolute_position = target_position + relative_position
-		if is_cell_reachable(absolute_position) and is_cell_available(absolute_position):
+	for relative_position in relative_positions:
+		var absolute_position: Vector2i = target_position + relative_position
+		# Special case: current start_position is always considered valid
+		if start_position == absolute_position:
+			# Immediately return if we are already at a valid position
 			return absolute_position
+			
+		if is_cell_reachable(absolute_position) and is_cell_available(absolute_position):
+			valid_positions.append(absolute_position)
 	
 	# If none available, return zero
-	return Vector2i.ZERO
+	if valid_positions.is_empty():
+		return Vector2i.ZERO
+	
+	# Second pass: find nearest valid position to start_position
+	var nearest_position: Vector2i = valid_positions[0]
+	var min_distance: int = start_position.distance_squared_to(nearest_position)
+	
+	# Go over each valid position and check which one is closer to our start_position
+	for pos in valid_positions.slice(1): # Skip first cell since we already have it
+		var distance: int = start_position.distance_squared_to(pos)
+		if distance < min_distance and RegionManager.is_cell_available(pos):
+			min_distance = distance
+			nearest_position = pos
+	
+	return nearest_position
 
 
 # If the cell is valid, returns the object at that position, else return null

@@ -66,6 +66,7 @@ var unconfirmed_path: Array[Vector2i] = [] # Holds every vector2i coordinate the
 var in_motion: bool = false # If the character is moving
 var autopilot_active: bool = false # If the server is forcing the player to move
 var is_typing: bool = false # To display a bubble when typing
+var is_busy: bool = false # Blocks input during interactions
 
 # Interaction system
 var interaction_target: Interactable = null # The object we are trying to interact with
@@ -236,6 +237,10 @@ func _handle_signal_ui_update_speed_button(new_move_speed: int) -> void:
 # It checks what we clicked to see if we will attack/move/interact, etc
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("left_click"):
+		# If we are busy doing something, ignore input
+		if is_busy:
+			return
+			
 		# If we are in autopilot, ignore mouse input
 		if autopilot_active:
 			return
@@ -384,20 +389,28 @@ func _start_interaction(target: Interactable) -> void:
 	if interaction_target == target: return
 	
 	interaction_target = target
+	
+	# First check if we are already in position
+	if _is_in_interaction_range(target):
+		_execute_interaction()
+		return
+	
+	# We are not in interaction range, so we'll have to trace a path to it
+	# Calculate from current immediate destination if moving, else use our current grid position
+	var start_position := immediate_grid_destination if in_motion else grid_position
 	var target_position = Utils.local_to_map(target.global_position)
-	var relative_positions: Array[Vector2i] = target.get_interaction_positions()
 	
 	# Find the nearest available position to interact with this target
+	# Returns current position if already valid
 	var interaction_grid_position = RegionManager.get_available_positions_around_target(
+		start_position,
 		target_position,
-		relative_positions
+		target.get_interaction_positions()
 	)
 	# If no valid interaction position found
 	if interaction_grid_position == Vector2i.ZERO:
 		return
 	
-	# Calculate from current immediate destination if moving, else use our current grid position
-	var start_position := immediate_grid_destination if in_motion else grid_position
 	# Predict a path towards our target
 	var interaction_path = _predict_path(start_position, interaction_grid_position)
 	
@@ -422,7 +435,7 @@ func _start_interaction(target: Interactable) -> void:
 		# instead of moving towards it, we check if we are in range to activate,
 		# if we are we activate it, if we are not, we abort to prevent an error
 		if predicted_path.size() < 2:
-			if _is_in_interaction_range(interaction_grid_position):
+			if _is_in_interaction_range(target):
 				_execute_interaction()
 			return
 		
@@ -452,22 +465,23 @@ func _start_interaction(target: Interactable) -> void:
 
 # Helper function to check if player is in interaction range
 func _is_in_interaction_range(target: Interactable) -> bool:
-	# Convert space position to grid coordinates
-	var target_position = Utils.local_to_map(target.global_position)
-	
-	# Check all possible interaction positions
+	#Check if we are at any valid position
+	var target_position: Vector2i = Utils.local_to_map(target.global_position) 
 	for relative_position in target.get_interaction_positions():
-		var absolute_position = target_position + relative_position
-		if grid_position.distance_to(absolute_position) <= target.interaction_range:
+		if grid_position == target_position + relative_position:
 			return true
 	
-	# Not in range, return false
+	# Not in range to any of the valid interaction positions for this target
 	return false
 
 
 # Handles the interaction itself when in range
 func _execute_interaction() -> void:
-	if not interaction_target: return
+	if not interaction_target:
+		is_busy = false
+		return
+	
+	is_busy = true # Prevent input while busy
 	
 	# Stop moving and clear the paths first
 	in_motion = false
@@ -476,7 +490,6 @@ func _execute_interaction() -> void:
 	
 	# Face the interaction target
 	var look_direction := (interaction_target.global_position - global_position).normalized()
-	# CAUTION rotation is backwards here
 	_rotate_towards_direction(look_direction)
 	
 	# Attempt to play the interaction animation
@@ -493,6 +506,7 @@ func _execute_interaction() -> void:
 	# Cleanup
 	interaction_target = null
 	_switch_locomotion(ASM.IDLE)
+	is_busy = false # Always release busy state at the end
 
 
 # Creates and returns a player_destination_packet
@@ -590,7 +604,6 @@ func _complete_movement() -> void:
 	# Check for interaction first
 	if interaction_target:
 		if _is_in_interaction_range(interaction_target):
-			print("execute")
 			_execute_interaction()
 			return # Stop here to prevent movement reset
 	
@@ -620,7 +633,7 @@ func _complete_movement() -> void:
 				
 				# Update only once per path segment
 				cells_to_move_this_tick = predicted_path.size()-1
-				_setup_next_movement_step(predicted_path, false)
+				_setup_next_movement_step(predicted_path, true)
 			else:
 				# To prevent an input lock, we turn off autopilot if we get here
 				autopilot_active = false
@@ -807,7 +820,9 @@ func _rotate_character(delta: float) -> void:
 
 # Rotates our character towards a direction to interact
 func _rotate_towards_direction(direction: Vector3) -> void:
-	var new_yaw := atan2(direction.x, direction.z)
+	# Flip the direction components to account for Godot's coordinate system
+	var corrected_direction = Vector3(-direction.x, direction.y, -direction.z)
+	var new_yaw := atan2(corrected_direction.x, corrected_direction.z)
 	if abs(model.rotation.y - new_yaw) > DIRECTION_THRESHOLD:
 		start_yaw = model.rotation.y
 		target_yaw = new_yaw
