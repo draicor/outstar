@@ -69,6 +69,8 @@ var is_typing: bool = false # To display a bubble when typing
 
 # Interaction system
 var pending_interaction: Interactable = null # The object we are trying to interact with
+var interaction_path: Array[Vector2i] = [] # Path to interaction
+var interaction_complete_callback: Callable # For future expansion
 
 # Animation state machine
 var animation_library: String
@@ -78,6 +80,7 @@ enum ASM {
 	WALK,
 	JOG,
 	RUN,
+	INTERACTING,
 }
 # Character locomotion
 var locomotion: Dictionary # This is set depending on the gender of this character
@@ -245,7 +248,7 @@ func _input(event: InputEvent) -> void:
 		
 		if target:
 			if target is Interactable:
-				print("Interacted!!")
+				_start_interaction(target)
 		else:
 			_handle_movement_click(mouse_position)
 
@@ -375,6 +378,69 @@ func _get_mouse_click_target(mouse_position: Vector2) -> Object:
 	# If we didn't collide with anything, return null
 	return null
 
+
+# Traces a path to the interactable if not in range, and then calls the execute interaction
+func _start_interaction(target: Interactable) -> void:
+	# If clicked on our already clicked interaction, ignore
+	if pending_interaction == target: return
+	
+	pending_interaction = target
+	var interaction_position: Vector3 = target.get_interaction_position()
+	var interaction_grid_position: Vector2i = Utils.local_to_map(interaction_position)
+	
+	# Calculate from current immediate destination if moving
+	var start_position := immediate_grid_destination if in_motion else grid_position
+	interaction_path = _predict_path(start_position, interaction_grid_position)
+	
+	if interaction_path.is_empty():
+		if _is_in_interaction_range(interaction_position):
+			_execute_interaction()
+		return
+	
+	# Handle path continuation if already moving
+	if in_motion:
+		next_tick_predicted_path = interaction_path
+	else:
+		predicted_path = Utils.pop_multiple_front(interaction_path, player_speed + 1)
+		immediate_grid_destination = predicted_path.back()
+		_setup_next_movement_step(predicted_path, true) # CAUTION HERE
+
+
+# Helper function to check interaction range
+func _is_in_interaction_range(interactable_position: Vector3) -> bool:
+	return global_position.distance_to(interactable_position) < 1.5 # CAUTION replace this
+
+
+# Handles the interaction itself when in range
+func _execute_interaction() -> void:
+	if not pending_interaction: return
+	
+	# Stop moving and clear the paths first
+	in_motion = false
+	predicted_path = []
+	next_tick_predicted_path = []
+	interaction_path = []
+	
+	# Face the interaction target
+	var look_direction := (pending_interaction.global_position - global_position).normalized()
+	_rotate_towards_direction(look_direction)
+	
+	# Attempt to play the interaction animation
+	var animation_name: String = pending_interaction.get_interaction_animation()
+	if animation_player.has_animation(animation_name):
+		_switch_locomotion(ASM.INTERACTING)
+		animation_player.play(animation_name)
+		# Wait until it finishes playing
+		await animation_player.animation_finished
+	
+	# Perform the interaction itself
+	pending_interaction.interact(self)
+	
+	# Cleanup
+	pending_interaction = null
+	_switch_locomotion(ASM.IDLE)
+
+
 # Creates and returns a player_destination_packet
 func _create_player_destination_packet(grid_pos: Vector2i) -> packets.Packet:
 	var packet := packets.Packet.new()
@@ -467,6 +533,21 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 # so its always exactly at the center of the cell in the grid,
 # stops movement and switches the character back to idle animation
 func _complete_movement() -> void:
+	# Handle interaction code
+	if pending_interaction:
+		var target_position = pending_interaction.get_interaction_position()
+		if _is_in_interaction_range(target_position):
+			_execute_interaction()
+		elif not interaction_path.is_empty():
+			# Continue moving towards interaction
+			predicted_path = Utils.pop_multiple_front(interaction_path, player_speed + 1)
+			immediate_grid_destination = predicted_path.back()
+			_setup_next_movement_step(predicted_path, true) # CAUTION here
+		
+		# Stop here to prevent movement reset
+		return
+	
+	# Handle normal movement logic
 	interpolated_position = next_cell
 	position = next_cell
 	in_motion = false
@@ -675,6 +756,16 @@ func _rotate_character(delta: float) -> void:
 		# Check if rotation is complete after rotating
 		if rotation_elapsed >= 1.0:
 			is_rotating = false
+
+
+# Rotates our character towards a direction to interact
+func _rotate_towards_direction(direction: Vector3) -> void:
+	var new_yaw := atan2(direction.x, direction.z)
+	if abs(model.rotation.y - new_yaw) > DIRECTION_THRESHOLD:
+		start_yaw = model.rotation.y
+		target_yaw = new_yaw
+		is_rotating = true
+		rotation_elapsed = 0.0
 
 
 # Changes the current animation and its play_rate as well
