@@ -8,6 +8,7 @@ data = PackedVector3Array(-0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.
 
 [node name="Crate" type="StaticBody3D"]
 script = ExtResource("1_p2aos")
+tooltip = "Open Crate"
 metadata/_custom_type_script = "uid://dxfuexqqs2a5t"
 
 [node name="Model" type="CSGBox3D" parent="."]

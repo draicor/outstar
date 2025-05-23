@@ -1,10 +1,19 @@
 class_name Interactable
 extends StaticBody3D
 
-@export var interaction_name := "Interact" # What will display on the tooltip
-@export var interaction_range: int = 1 # Grid minimum distance to activate
+@export var tooltip: String = ""
 @export var interaction_animation: String = "" # Animation that will play when interacting
 @export var interaction_positions: Array[Vector2i] = [] # Grid positions where this object can be activated
+
+
+func _ready() -> void:
+	# Register this character as an interactable object
+	TooltipManager.register_interactable(self)
+
+
+# Called when this object gets destroyed
+func _exit_tree() -> void:
+	TooltipManager.unregister_interactable(self)
 
 
 # Returns the off-set positions this object can be activated from
