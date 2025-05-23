@@ -505,6 +505,7 @@ func _execute_interaction() -> void:
 	
 	# Cleanup
 	interaction_target = null
+	previous_forward_direction = forward_direction # Sync directions after interaction
 	_switch_locomotion(ASM.IDLE)
 	is_busy = false # Always release busy state at the end
 
@@ -776,31 +777,13 @@ func _calculate_rotation(target: Vector3) -> void:
 	if position == target:
 		is_rotating = false
 		return
-	
+
 	# Calculate the direction to target
-	forward_direction = (target - position)
-	# Remove the vertical component for ground-based characters
-	forward_direction.y = 0
+	var move_direction = (target-position).normalized()
 	
-	# Normalize our forward direction for comparison with the previous forward direction
-	var normalized_forward_direction: Vector3 = Vector3.ZERO
-	if forward_direction.length() > 0:
-		normalized_forward_direction = forward_direction.normalized()
-	
-	# Check if direction has changed significantly AND we have a valid forward direction
-	if (normalized_forward_direction.distance_to(previous_forward_direction) > DIRECTION_THRESHOLD) and forward_direction.length() > 0.001:
-		forward_direction = normalized_forward_direction
-		# Calculate yaw
-		start_yaw = model.rotation.y
-		# Calculate target rotation quaternion
-		# NOTE: Direction has to be negative so the model faces forward
-		target_yaw = atan2(-forward_direction.x, -forward_direction.z)
-		# Reset rotation state
-		rotation_elapsed = 0.0
-		is_rotating = true
-		
-		# Store the new forward direction
-		previous_forward_direction = forward_direction
+	# Compare with previous direction using a threshold
+	if move_direction.distance_to(previous_forward_direction) > DIRECTION_THRESHOLD:
+		_rotate_towards_direction(move_direction)
 	
 	# No rotation needed
 	else:
@@ -820,9 +803,16 @@ func _rotate_character(delta: float) -> void:
 
 # Rotates our character towards a direction to interact
 func _rotate_towards_direction(direction: Vector3) -> void:
-	# Flip the direction components to account for Godot's coordinate system
-	var corrected_direction = Vector3(-direction.x, direction.y, -direction.z)
-	var new_yaw := atan2(corrected_direction.x, corrected_direction.z)
+	# Remove vertical component and normalize
+	var horizontal_direction = Vector3(direction.x, 0, direction.z).normalized()
+	# Calculate target yaw directly from world direction (flip the sign to match Godot's system)
+	var new_yaw := atan2(-horizontal_direction.x, -horizontal_direction.z)
+	
+	# Update both direction trackers
+	forward_direction = Vector3(-sin(new_yaw), 0, -cos(new_yaw)).normalized()
+	previous_forward_direction = forward_direction
+	
+	# Only rotate if significant change in angle
 	if abs(model.rotation.y - new_yaw) > DIRECTION_THRESHOLD:
 		start_yaw = model.rotation.y
 		target_yaw = new_yaw
