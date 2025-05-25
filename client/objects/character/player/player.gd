@@ -371,15 +371,9 @@ func _get_mouse_click_target(mouse_position: Vector2) -> Object:
 	)
 	var result := space_state.intersect_ray(query)
 	if result:
-		# Walk up the node tree to find the parent
-		var node = result.collider
-		while node:
-			# NOTE Add more base classes here to detect them too
-			if node is Interactable:
-				return node
-			
-			# Keep walking up the node tree until we find a class
-			node = node.get_parent()
+		# NOTE Add more base classes here to detect them too
+		if result.collider is Interactable:
+			return result.collider
 	
 	# If we didn't collide with anything, return null
 	return null
