@@ -430,92 +430,28 @@ func _start_interaction(target: Interactable) -> void:
 	# If clicked on our already clicked interaction, ignore
 	if interaction_target == target or pending_interaction == target: return
 	
-	var target_position = Utils.local_to_map(target.global_position)
-	
-	# If already moving, queue interaction to be executed after movement if valid
 	if in_motion:
-		# Find the nearest available position to interact with this target
-		# Returns current position if already valid
-		var interaction_grid_position = RegionManager.get_available_positions_around_target(
-			immediate_grid_destination,
-			target_position,
-			target.get_interaction_positions()
-		)
-		
-		# If found a valid interaction position
-		if interaction_grid_position != Vector2i.ZERO:
-			var new_path = _predict_path(immediate_grid_destination, interaction_grid_position)
-			if not new_path.is_empty():
-				# Replace next tick path
-				next_tick_predicted_path = new_path.slice(1)
-				grid_destination = interaction_grid_position
-				pending_interaction = target
-		
+		# If we were moving, see if we can reach our target, if we can,
+		# _setup_interaction_movement updates our next_tick path towards it
+		if _setup_interaction_movement(immediate_grid_destination, target):
+			pending_interaction = target
 		return
 	
-	# IDLING
-	# Store our target interaction
+	# If our character was idle
 	interaction_target = target
-	
-	# First check if we are already in position
+	# Check if we are already in range to activate
 	if _is_in_interaction_range(target):
 		_execute_interaction()
 		return
 	
-	# Find the nearest available position to interact with this target
-	# Returns current position if already valid
-	var interaction_grid_position = RegionManager.get_available_positions_around_target(
-		grid_position,
-		target_position,
-		target.get_interaction_positions()
-	)
-	# If no valid interaction position found
-	if interaction_grid_position == Vector2i.ZERO:
-		# NOTE Maybe add some UI warning to let the player know this
+	# If we are far away, check if we can reach it, if we can,
+	# we will start to move towards it right away
+	if _setup_interaction_movement(grid_position, target):
+		interaction_target = target
+	
+	# If we can't reach it, then forget about it
+	else:
 		interaction_target = null
-		return
-	
-	# Predict a path towards our target
-	var interaction_path = _predict_path(grid_position, interaction_grid_position)
-	if interaction_path.is_empty():
-		# NOTE Maybe add some UI warning to let the player know this
-		interaction_target = null
-		return
-	
-	# Start predicting locally
-	# Because we were idling, we need to get 1 more cell for this tick
-	predicted_path = Utils.pop_multiple_front(interaction_path, player_speed + 1)
-	
-	# If we are in the same cell as the target cell, our predicted_path will have 1 or 0 cells,
-	# instead of moving towards it, we check if we are in range to activate,
-	# if we are we activate it, if we are not, we abort to prevent an error
-	if predicted_path.size() < 2:
-		if _is_in_interaction_range(target):
-			_execute_interaction()
-		return
-	
-	# Get our immediate grid destination (this tick)
-	immediate_grid_destination = predicted_path.back()
-	# Remove the first cell from the predicted_path because we are already there
-	predicted_path = predicted_path.slice(1)
-	# We add to our local unconfirmed path the next steps we'll take
-	unconfirmed_path.append(immediate_grid_destination)
-	# Store the remaining prediction (if any) for next tick
-	next_tick_predicted_path = interaction_path
-	
-	# Prepare everything to move correctly this tick
-	cells_to_move_this_tick = predicted_path.size()
-	_setup_movement_step(predicted_path)
-	_switch_locomotion(cells_to_move_this_tick)
-	
-	is_predicting = true
-	# Overwrite our new grid destination to be our interaction_grid_position
-	grid_destination = interaction_grid_position
-	
-	# NOTE: We need to send the packet here ONCE, when movement starts only!
-	# Create a new packet to hold our input and send it to the server
-	var packet := _create_player_destination_packet(immediate_grid_destination)
-	WebSocket.send(packet)
 
 
 # Helper function to check if player is in interaction range
@@ -1011,3 +947,68 @@ func load_character(character_type: String) -> void:
 		model.add_child(current_character)
 	else:
 		print("Character type %s not found" % [character_type])
+
+
+# Helper function to handle common movement initiation logic
+func _start_movement_towards(start_position: Vector2i, target_position: Vector2i, interaction_target: Interactable = null) -> void:
+	var prediction: Array[Vector2i] = _predict_path(start_position, target_position)
+	if prediction.is_empty():
+		return
+	
+	# Different handling based on current movement state
+	if in_motion:
+		# When already moving, append to existing path
+		next_tick_predicted_path = prediction.slice(1)
+		grid_destination = target_position
+	else:
+		# When starting from idle
+		predicted_path = Utils.pop_multiple_front(prediction, player_speed + 1) # Accounts for current cell
+		
+		# If we are already in range to interact
+		if predicted_path.size() < 2:
+			# Check if we can
+			if interaction_target and _is_in_interaction_range(interaction_target):
+				_execute_interaction()
+			return
+		
+		# Update all of our state to start moving
+		immediate_grid_destination = predicted_path.back() # Update this tick's movement
+		unconfirmed_path.append(immediate_grid_destination) # Track our movement for server sync
+		predicted_path = predicted_path.slice(1) # Account for current cell
+		next_tick_predicted_path = prediction # Store the rest of the predicted_path for next tick
+		
+		cells_to_move_this_tick = predicted_path.size()
+		_setup_movement_step(predicted_path)
+		_switch_locomotion(cells_to_move_this_tick)
+		is_predicting = true
+		grid_destination = target_position
+		
+		# Report our movement to the server to keep in sync
+		var packet := _create_player_destination_packet(immediate_grid_destination)
+		WebSocket.send(packet)
+
+
+# Helper function to validate and get interaction position
+func _get_valid_interaction_position(start_position: Vector2i, target: Interactable) -> Vector2i:
+	var target_position: Vector2i = Utils.local_to_map(target.global_position)
+	return RegionManager.get_available_positions_around_target(
+		start_position,
+		target_position,
+		target.get_interaction_positions()
+	)
+
+
+# Helper function to handle common interaction path setup
+func _setup_interaction_movement(start_position: Vector2i, target: Interactable) -> bool:
+	# Check if our target has available interact positions (not occupied by another character)
+	var interaction_position: Vector2i = _get_valid_interaction_position(start_position, target)
+	if interaction_position == Vector2i.ZERO:
+		return false
+	
+	# Check if we can reach the target
+	var interaction_path: Array[Vector2i] = _predict_path(start_position, interaction_position) 
+	if interaction_path.is_empty():
+		return false
+	
+	_start_movement_towards(start_position, interaction_position, target)
+	return true
