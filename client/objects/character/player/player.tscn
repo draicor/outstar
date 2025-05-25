@@ -5,7 +5,7 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_634de"]
 radius = 0.3
-height = 1.75
+height = 1.8
 
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2

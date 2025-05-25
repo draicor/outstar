@@ -50,7 +50,6 @@ var next_cell: Vector3 # Used in _process, its the next cell our player should m
 
 # Rotation state
 var forward_direction: Vector3 # Used to keep track of our current forward direction
-var previous_forward_direction: Vector3 # We compare against this to check if we need to rotate
 var is_rotating: bool = false # To prevent movement before rotation ends 
 var rotation_elapsed: float = 0.0 # Used in _process to rotate the character
 var start_yaw: float = 0.0
@@ -161,16 +160,9 @@ func _ready() -> void:
 # _physics_process runs at a fixed timestep
 # Movement should be handled here because this runs before _process
 func _physics_process(delta: float) -> void:
-	_handle_gravity(delta)
 	_handle_rotation(delta)
 	_handle_movement(delta)
 	_show_debug_tools()
-
-
-# Applies gravity to our character on tick
-func _handle_gravity(delta: float) -> void:
-	if not is_on_floor():
-		velocity += get_gravity() * delta
 
 
 # Rotates our character on tick
@@ -180,6 +172,7 @@ func _handle_rotation(delta: float) -> void:
 		model.rotation.y = lerp_angle(start_yaw, target_yaw, rotation_elapsed)
 		
 		# Check if rotation is complete after rotating
+		# CAUTION this is not recalculating our current rotation, should fix this!
 		if rotation_elapsed >= 1.0:
 			is_rotating = false
 
@@ -236,7 +229,6 @@ func _setup_data_at_spawn() -> void:
 	model.rotation.y = model_rotation_y
 	# Convert our model's y-rotation (radians) to a forward direction vector
 	forward_direction = Vector3(-sin(model_rotation_y), 0, -cos(model_rotation_y))
-	previous_forward_direction = forward_direction # At spawn, we make them equal
 	# Update our player's movement tick at spawn
 	update_player_speed(player_speed)
 
@@ -378,7 +370,7 @@ func _click_to_move(new_destination: Vector2i) -> void:
 			next_tick_predicted_path = prediction
 			# Prepare everything to move correctly this tick
 			cells_to_move_this_tick = predicted_path.size()
-			_setup_next_movement_step(predicted_path, true)
+			_setup_movement_step(predicted_path)
 			_switch_locomotion(cells_to_move_this_tick)
 			
 			is_predicting = true
@@ -513,7 +505,7 @@ func _start_interaction(target: Interactable) -> void:
 	
 	# Prepare everything to move correctly this tick
 	cells_to_move_this_tick = predicted_path.size()
-	_setup_next_movement_step(predicted_path, true)
+	_setup_movement_step(predicted_path)
 	_switch_locomotion(cells_to_move_this_tick)
 	
 	is_predicting = true
@@ -572,7 +564,6 @@ func _execute_interaction() -> void:
 	
 	# Cleanup
 	interaction_target = null
-	previous_forward_direction = forward_direction # Sync directions after interaction
 	_switch_locomotion(ASM.IDLE)
 	is_busy = false # Always release busy state at the end
 
@@ -595,13 +586,13 @@ func _create_update_speed_packet(new_speed: int) -> packets.Packet:
 
 
 func _show_debug_tools() -> void:
-	if my_player_character:
-		if OS.is_debug_build() and my_player_character:  # Only draw in editor/debug builds
-			DebugDraw3D.draw_line(position, position + forward_direction * 1, Color.RED) # 1 meter forward line
-			_draw_circle(Utils.map_to_local(grid_destination), 0.5, Color.RED, 16) # Grid destination
-			_draw_circle(Utils.map_to_local(immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
-			_draw_circle(Utils.map_to_local(grid_position), 0.3, Color.GREEN, 16) # Grid position
-			_draw_circle(Utils.map_to_local(server_grid_position), 0.6, Color.REBECCA_PURPLE, 16) # Server position for my character
+	 # Only draw in editor/debug builds for my character
+	if my_player_character and OS.is_debug_build():
+		DebugDraw3D.draw_line(position, position + forward_direction * 1, Color.RED) # 1 meter forward line
+		_draw_circle(Utils.map_to_local(grid_destination), 0.5, Color.RED, 16) # Grid destination
+		_draw_circle(Utils.map_to_local(immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
+		_draw_circle(Utils.map_to_local(grid_position), 0.3, Color.GREEN, 16) # Grid position
+		_draw_circle(Utils.map_to_local(server_grid_position), 0.6, Color.REBECCA_PURPLE, 16) # Server position for my character
 
 
 # Called on tick from the _process function
@@ -620,7 +611,6 @@ func _process_movement_step(delta: float) -> void:
 
 
 # Called on tick by _process_movement_step to interpolate the position of the player
-# Calls move_and_slide internally
 func _interpolate_position(delta: float) -> void:
 	# We use delta time to advance our player's movement
 	movement_elapsed_time += delta
@@ -628,7 +618,6 @@ func _interpolate_position(delta: float) -> void:
 	var t: float = movement_elapsed_time / movement_tick
 	# Interpolate our position based on the previous values
 	position = interpolated_position.lerp(next_cell, t)
-	move_and_slide()
 
 
 # Update this player's local position after each completed step
@@ -637,16 +626,11 @@ func _update_grid_position() -> void:
 	grid_position = Utils.local_to_map(interpolated_position)
 
 
-# If we don't have any more cells to traverse
-func _movement_complete() -> bool:
-	return predicted_path.is_empty() and next_tick_predicted_path.is_empty() and server_path.is_empty() and next_tick_server_path.is_empty()
-
-
 # Helper function to process the movement logic for both local and remote players
 func _process_path_segment(delta: float, current_path: Array[Vector2i], next_path: Array[Vector2i]) -> void:
 	# If our current path still has cells remaining
 	if current_path.size() > 0:
-		_setup_next_movement_step(current_path, true)
+		_setup_movement_step(current_path)
 		_interpolate_position(delta)
 		_switch_locomotion(cells_to_move_this_tick)
 	# If our current path has no more cells but our next path does
@@ -658,7 +642,7 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		
 		# Update speed only once per path segment
 		cells_to_move_this_tick = current_path.size()
-		_setup_next_movement_step(current_path, true)
+		_setup_movement_step(current_path)
 		_interpolate_position(delta)
 		_switch_locomotion(cells_to_move_this_tick)
 		
@@ -725,7 +709,7 @@ func _handle_autopilot() -> void:
 			
 			# Update only once per path segment
 			cells_to_move_this_tick = predicted_path.size()-1
-			_setup_next_movement_step(predicted_path, true)
+			_setup_movement_step(predicted_path)
 		else:
 			# To prevent an input lock, we turn off autopilot if we get here
 			autopilot_active = false
@@ -802,7 +786,7 @@ func _handle_pending_interaction() -> void:
 			
 			# Prepare everything to move correctly this tick
 			cells_to_move_this_tick = predicted_path.size()
-			_setup_next_movement_step(predicted_path, true)
+			_setup_movement_step(predicted_path)
 			_switch_locomotion(cells_to_move_this_tick)
 			
 			is_predicting = true
@@ -854,7 +838,7 @@ func _handle_remote_player_movement(new_server_position: Vector2i) -> void:
 			server_path = next_path
 			# Update our new path (remove overlap)
 			cells_to_move_this_tick = server_path.size()-1
-			_setup_next_movement_step(server_path, true) # This starts movement
+			_setup_movement_step(server_path) # This starts movement
 
 
 # Called when we receive a new position packet from the server to make sure we are synced locally
@@ -885,7 +869,7 @@ func _apply_path_correction(new_path: Array[Vector2i]) -> void:
 			next_tick_predicted_path = new_path
 			# Prepare everything to move correctly next tick
 			cells_to_move_this_tick = next_tick_predicted_path.size()-1
-			_setup_next_movement_step(next_tick_predicted_path, false)
+			_setup_movement_step(next_tick_predicted_path)
 		else:
 			# If we were already moving just append the correction path
 			# while removing the overlapping cell
@@ -904,21 +888,28 @@ func _prediction_was_valid(client_path: Array[Vector2i], last_valid_position: Ve
 		return true
 
 
-# Prepare the variables before starting a new move
-func _setup_next_movement_step(path: Array[Vector2i], should_rotate: bool) -> void:
+# Initializes movement parameters for a new path segment
+func _setup_movement_step(path: Array[Vector2i]) -> void:
+	if path.is_empty():
+		return
+	
 	# Get the next cell from this path to make it our next move target
-	next_cell = Utils.map_to_local(path.pop_front())
+	var next_grid_position = path.pop_front()
+	next_cell = Utils.map_to_local(next_grid_position)
 	
-	# CAUTION rotation should happen AFTER updating next_cell
-	if should_rotate:
-		# Rotate our character towards the next cell
-		_calculate_rotation(next_cell)
+	# Calculate the direction to target
+	var move_direction = (next_cell - position).normalized()
 	
-	_calculate_step_duration(grid_position, Utils.local_to_map(next_cell))
-		
-	# Reset our move variable in _process
-	movement_elapsed_time = 0
-	# Specify our character is moving
+	# Compare with previous direction using a threshold
+	if move_direction.distance_to(forward_direction) > DIRECTION_THRESHOLD:
+		# Handle rotation if direction changed
+		_rotate_towards_direction(move_direction)
+	
+	# Update our step duration based on the distance we have to traverse
+	_calculate_step_duration(grid_position, next_grid_position)
+	
+	# Reset movement counters for
+	movement_elapsed_time = 0.0
 	in_motion = true
 
 
@@ -931,42 +922,25 @@ func _calculate_path_overlap(current_path: Array[Vector2i], new_path: Array[Vect
 	return overlap
 
 
-# Calculates the rotation
-func _calculate_rotation(target: Vector3) -> void:
-	# Skip if we clicked our current cell
-	if position == target:
-		is_rotating = false
-		return
-
-	# Calculate the direction to target
-	var move_direction = (target-position).normalized()
-	
-	# Compare with previous direction using a threshold
-	if move_direction.distance_to(previous_forward_direction) > DIRECTION_THRESHOLD:
-		_rotate_towards_direction(move_direction)
-	
-	# No rotation needed
-	else:
-		is_rotating = false
-
-
 # Rotates our character towards a direction to interact
 func _rotate_towards_direction(direction: Vector3) -> void:
 	# Remove vertical component and normalize
-	var horizontal_direction = Vector3(direction.x, 0, direction.z).normalized()
+	var horizontal_direction = direction.normalized()
 	# Calculate target yaw directly from world direction (flip the sign to match Godot's system)
 	var new_yaw := atan2(-horizontal_direction.x, -horizontal_direction.z)
 	
-	# Update both direction trackers
-	forward_direction = Vector3(-sin(new_yaw), 0, -cos(new_yaw)).normalized()
-	previous_forward_direction = forward_direction
+	# Update forward direction immediately to target rotation
+	forward_direction = Vector3(-sin(new_yaw), 0, -cos(new_yaw))
 	
 	# Only rotate if significant change in angle
 	if abs(model.rotation.y - new_yaw) > DIRECTION_THRESHOLD:
+		# Set rotation targets
 		start_yaw = model.rotation.y
 		target_yaw = new_yaw
 		is_rotating = true
 		rotation_elapsed = 0.0
+		
+
 
 
 # Changes the current animation and its play_rate as well
