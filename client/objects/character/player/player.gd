@@ -142,54 +142,66 @@ static func instantiate(
 	return player
 
 
+# Called once this character has been created and instantiated
 func _ready() -> void:
-	load_character(gender) # CAUTION this shouldn't be gender
-	if gender == "male":
-		locomotion = male_locomotion
-	else:
-		locomotion = female_locomotion
+	_initialize_character()
+	_setup_animations() # After _initialize_character()
+	_setup_data_at_spawn()
 	
-	# Fetch our animation player AFTER we loaded our character
-	animation_player = find_child("AnimationPlayer", true, false)
-	_setup_animation_blend_time()
-	
-	position = interpolated_position # Has to be set here after the scene has been created
-	
-	# Update any other spawn data here
-	model.rotation.y = model_rotation_y
-	# Convert our model's y-rotation (radians) to a forward direction vector
-	forward_direction = Vector3(-sin(model_rotation_y), 0, -cos(model_rotation_y))
-	previous_forward_direction = forward_direction # At spawn, we make them equal
-	
-	# Update our player's movement tick at spawn
-	update_player_speed(player_speed)
-	
-	# Register this character as an interactable object
-	TooltipManager.register_interactable(self)
-	
-	# Do this only for our player's character
+	# Do this only for my local character
 	if my_player_character:
-		# Connect the signals ONLY for our player character!
-		Signals.ui_chat_input_toggle.connect(_handle_signal_ui_chat_input_toggle)
-		Signals.ui_change_move_speed_button.connect(_handle_signal_ui_update_speed_button)
-	
-		# Add our player camera to our camera rig
-		camera = PlayerCamera.new()
-		camera_rig.add_child(camera)
-		# Add a raycast 3d node to our camera
-		raycast = RayCast3D.new()
-		raycast.collision_mask = 3 # Mask 1+2
-		raycast.add_exception(self) # Ignore my own Player
-		
-		camera.add_child(raycast)
-		
-		# Stores our player character as a global variable
-		GameManager.set_player_character(self)
-		# Stores our player camera as a global variable too
-		TooltipManager.set_player_camera(camera)
+		_connect_signals()
+		_setup_local_player_components()
+		_register_global_references() # After _setup_local_player_components()
 	
 	# Make characters spawn idling
 	_switch_locomotion(ASM.IDLE)
+
+
+# _physics_process runs at a fixed timestep
+# Movement should be handled here because this runs before _process
+func _physics_process(delta: float) -> void:
+	_handle_gravity(delta)
+	_handle_rotation(delta)
+	_handle_movement(delta)
+	_show_debug_tools()
+
+
+# Applies gravity to our character on tick
+func _handle_gravity(delta: float) -> void:
+	if not is_on_floor():
+		velocity += get_gravity() * delta
+
+
+# Rotates our character on tick
+func _handle_rotation(delta: float) -> void:
+	if is_rotating:
+		rotation_elapsed = min(rotation_elapsed + ROTATION_SPEED * delta, 1.0)
+		model.rotation.y = lerp_angle(start_yaw, target_yaw, rotation_elapsed)
+		
+		# Check if rotation is complete after rotating
+		if rotation_elapsed >= 1.0:
+			is_rotating = false
+
+
+# Moves our character on tick
+func _handle_movement(delta: float) -> void:
+	if in_motion:
+		_process_movement_step(delta)
+
+
+# Helper function for _ready()
+func _initialize_character() -> void:
+	load_character(gender) # CAUTION this shouldn't be gender but model_name
+	locomotion = male_locomotion if gender == "male" else female_locomotion
+	# Register this character as an interactable object
+	TooltipManager.register_interactable(self)
+
+
+# Helper function for _ready()
+func _setup_animations() -> void:
+	animation_player = find_child("AnimationPlayer", true, false)
+	_setup_animation_blend_time()
 
 
 # Helper function to properly setup animation blend times
@@ -217,6 +229,48 @@ func _setup_animation_blend_time() -> void:
 			animation_player.set_blend_time("male/male_run", "male/male_idle", 0.15)
 			animation_player.set_blend_time("male/male_run", "male/male_walk", 0.15)
 
+
+# Helper function for _ready()
+func _setup_data_at_spawn() -> void:
+	position = interpolated_position # Has to be set here after the scene has been created
+	model.rotation.y = model_rotation_y
+	# Convert our model's y-rotation (radians) to a forward direction vector
+	forward_direction = Vector3(-sin(model_rotation_y), 0, -cos(model_rotation_y))
+	previous_forward_direction = forward_direction # At spawn, we make them equal
+	# Update our player's movement tick at spawn
+	update_player_speed(player_speed)
+
+
+# Helper function for _ready()
+# Only for our local player character!
+func _connect_signals() -> void:
+	Signals.ui_chat_input_toggle.connect(_handle_signal_ui_chat_input_toggle)
+	Signals.ui_change_move_speed_button.connect(_handle_signal_ui_update_speed_button)
+
+
+# Helper function for _ready()
+func _setup_local_player_components() -> void:
+	# Add our player camera to our camera rig
+	camera = PlayerCamera.new()
+	camera_rig.add_child(camera)
+	
+	# Setup Camera Raycast
+	# Add a raycast 3d node to our camera
+	raycast = RayCast3D.new()
+	raycast.collision_mask = 3 # Mask 1+2
+	raycast.add_exception(self) # Ignore my own Player character in my own Raycast
+	camera.add_child(raycast)
+
+
+# Helper function for _ready()
+func _register_global_references() -> void:
+	# Stores our player character as a global variable
+	GameManager.set_player_character(self)
+	# Stores our player camera as a global variable too
+	TooltipManager.set_player_camera(camera)
+
+
+# Helper function for _ready()
 
 # Called when this object gets destroyed
 func _exit_tree() -> void:
@@ -538,22 +592,11 @@ func _create_update_speed_packet(new_speed: int) -> packets.Packet:
 	var update_speed_packet := packet.new_update_speed()
 	update_speed_packet.set_speed(new_speed)
 	return packet
-	
 
-# _physics_process runs at a fixed timestep
-# Movement should be handled here because this runs before _process
-func _physics_process(delta: float) -> void:
-	# Apply gravity.
-	if not is_on_floor():
-		velocity += get_gravity() * delta
-	
-	_rotate_character(delta) # Handle rotation first
-	
-	if in_motion:
-		_update_player_movement(delta)
-	
+
+func _show_debug_tools() -> void:
 	if my_player_character:
-		if OS.is_debug_build():  # Only draw in editor/debug builds
+		if OS.is_debug_build() and my_player_character:  # Only draw in editor/debug builds
 			DebugDraw3D.draw_line(position, position + forward_direction * 1, Color.RED) # 1 meter forward line
 			_draw_circle(Utils.map_to_local(grid_destination), 0.5, Color.RED, 16) # Grid destination
 			_draw_circle(Utils.map_to_local(immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
@@ -562,15 +605,13 @@ func _physics_process(delta: float) -> void:
 
 
 # Called on tick from the _process function
-func _update_player_movement(delta: float) -> void:
+func _process_movement_step(delta: float) -> void:
 	# If we haven't completed the step, keep sliding until we do
 	if movement_elapsed_time < movement_tick:
-		move_and_slide_player(delta)
+		_interpolate_position(delta)
 		return
 	
-	# Update this player's local position after each completed step
-	interpolated_position = next_cell
-	grid_position = Utils.local_to_map(interpolated_position)
+	_update_grid_position()
 	
 	if my_player_character and is_predicting:
 		_process_path_segment(delta, predicted_path, next_tick_predicted_path)
@@ -578,12 +619,35 @@ func _update_player_movement(delta: float) -> void:
 		_process_path_segment(delta, server_path, next_tick_server_path)
 
 
+# Called on tick by _process_movement_step to interpolate the position of the player
+# Calls move_and_slide internally
+func _interpolate_position(delta: float) -> void:
+	# We use delta time to advance our player's movement
+	movement_elapsed_time += delta
+	# How far we've moved towards our target based on server_tick / player_speed
+	var t: float = movement_elapsed_time / movement_tick
+	# Interpolate our position based on the previous values
+	position = interpolated_position.lerp(next_cell, t)
+	move_and_slide()
+
+
+# Update this player's local position after each completed step
+func _update_grid_position() -> void:
+	interpolated_position = next_cell
+	grid_position = Utils.local_to_map(interpolated_position)
+
+
+# If we don't have any more cells to traverse
+func _movement_complete() -> bool:
+	return predicted_path.is_empty() and next_tick_predicted_path.is_empty() and server_path.is_empty() and next_tick_server_path.is_empty()
+
+
 # Helper function to process the movement logic for both local and remote players
 func _process_path_segment(delta: float, current_path: Array[Vector2i], next_path: Array[Vector2i]) -> void:
 	# If our current path still has cells remaining
 	if current_path.size() > 0:
 		_setup_next_movement_step(current_path, true)
-		move_and_slide_player(delta)
+		_interpolate_position(delta)
 		_switch_locomotion(cells_to_move_this_tick)
 	# If our current path has no more cells but our next path does
 	elif next_path.size() > 0:
@@ -595,7 +659,7 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		# Update speed only once per path segment
 		cells_to_move_this_tick = current_path.size()
 		_setup_next_movement_step(current_path, true)
-		move_and_slide_player(delta)
+		_interpolate_position(delta)
 		_switch_locomotion(cells_to_move_this_tick)
 		
 		if my_player_character:
@@ -621,43 +685,53 @@ func _complete_movement() -> void:
 			_execute_interaction()
 			return # Stop here to prevent movement reset
 	
-	# Handle normal movement logic
-	interpolated_position = next_cell
+	_finalize_movement()
+
+
+# Movement cleanup and executes the post movement logic
+func _finalize_movement() -> void:
 	position = next_cell
 	in_motion = false
 	_switch_locomotion(ASM.IDLE)
-	
-	if autopilot_active:
-		# If we are at the same position as in the server
-		if grid_position == server_grid_position and immediate_grid_destination == server_grid_position or grid_position == grid_destination:
-			autopilot_active = false
-			grid_destination = grid_position
-		else:
-			# If our position is not synced, predict a path from our current grid position to the server position,
-			# and store it to be used next tick
-			next_tick_predicted_path = _predict_path(grid_position, server_grid_position)
-			# If our prediction is valid
-			if next_tick_predicted_path.size() > 0:
-				# Get the first cells from our next tick path (based on our speed)
-				predicted_path.append_array(Utils.pop_multiple_front(next_tick_predicted_path, player_speed+1))
-				# Update our immediate grid destination
-				immediate_grid_destination = predicted_path.back()
-				
-				unconfirmed_path.append(immediate_grid_destination)
-				
-				# Update only once per path segment
-				cells_to_move_this_tick = predicted_path.size()-1
-				_setup_next_movement_step(predicted_path, true)
-			else:
-				# To prevent an input lock, we turn off autopilot if we get here
-				autopilot_active = false
-				# Reset our destinations
-				grid_destination = grid_position
-				immediate_grid_destination = grid_position
-	
+	_handle_post_movement_logic()
+
+
+# Called after movement is complete
+func _handle_post_movement_logic() -> void:
+	# If we have to sync with the server
+	if autopilot_active: _handle_autopilot()
 	# After movement, check if we have a pending interaction and deal with it
-	if pending_interaction:
-		_handle_pending_interaction()
+	elif pending_interaction: _handle_pending_interaction()
+
+
+# Called when we have to sync with the server position
+func _handle_autopilot() -> void:
+	# If we are at the same position as in the server
+	if grid_position == server_grid_position and immediate_grid_destination == server_grid_position or grid_position == grid_destination:
+		autopilot_active = false
+		grid_destination = grid_position
+	else:
+		# If our position is not synced, predict a path from our current grid position to the server position,
+		# and store it to be used next tick
+		next_tick_predicted_path = _predict_path(grid_position, server_grid_position)
+		# If our prediction is valid
+		if next_tick_predicted_path.size() > 0:
+			# Get the first cells from our next tick path (based on our speed)
+			predicted_path.append_array(Utils.pop_multiple_front(next_tick_predicted_path, player_speed+1))
+			# Update our immediate grid destination
+			immediate_grid_destination = predicted_path.back()
+			
+			unconfirmed_path.append(immediate_grid_destination)
+			
+			# Update only once per path segment
+			cells_to_move_this_tick = predicted_path.size()-1
+			_setup_next_movement_step(predicted_path, true)
+		else:
+			# To prevent an input lock, we turn off autopilot if we get here
+			autopilot_active = false
+			# Reset our destinations
+			grid_destination = grid_position
+			immediate_grid_destination = grid_position
 
 
 # Called after movement completes, only when we have a pending interaction
@@ -750,15 +824,6 @@ func _switch_locomotion(steps: int) -> void:
 	# Only emit this signal for my own character
 	if my_player_character:
 		Signals.player_locomotion_changed.emit()
-
-# Called on tick by _update_player_movement to interpolate the position of the player
-func move_and_slide_player(delta: float) -> void:
-	# We use delta time to advance our player's movement
-	movement_elapsed_time += delta
-	# How far we've moved towards our target based on server_tick / player_speed
-	var t: float = movement_elapsed_time / movement_tick
-	# Interpolate our position based on the previous values
-	position = interpolated_position.lerp(next_cell, t)
 
 
 # Updates the player's position
@@ -866,13 +931,6 @@ func _calculate_path_overlap(current_path: Array[Vector2i], new_path: Array[Vect
 	return overlap
 
 
-# NOTE: this will be implemented later
-# Overwrite our client's grid position locally with the one from the server
-#func _sync_player() -> void:
-	#pass
-	# grid_position = server_grid_position
-
-
 # Calculates the rotation
 func _calculate_rotation(target: Vector3) -> void:
 	# Skip if we clicked our current cell
@@ -890,17 +948,6 @@ func _calculate_rotation(target: Vector3) -> void:
 	# No rotation needed
 	else:
 		is_rotating = false
-
-
-# Rotates our character on tick
-func _rotate_character(delta: float) -> void:
-	if is_rotating:
-		rotation_elapsed = min(rotation_elapsed + ROTATION_SPEED * delta, 1.0)
-		model.rotation.y = lerp_angle(start_yaw, target_yaw, rotation_elapsed)
-		
-		# Check if rotation is complete after rotating
-		if rotation_elapsed >= 1.0:
-			is_rotating = false
 
 
 # Rotates our character towards a direction to interact
