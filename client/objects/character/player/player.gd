@@ -340,61 +340,17 @@ func _handle_movement_click(mouse_position: Vector2) -> void:
 # Attempts to predict a path towards that cell to move our character
 # if the cell is reachable and available
 func _click_to_move(new_destination: Vector2i) -> void:
-	# If the new destination is not walkable, abort
-	if not RegionManager.is_cell_reachable(new_destination): return
-	
-	# If the new destination is already occupied, abort
-	if not RegionManager.is_cell_available(new_destination): return
+	if not _validate_move_position(new_destination):
+		return
 	
 	# Clear any pending interactions
 	interaction_target = null
 	pending_interaction = null
 	
-	# If we are not moving
-	if not in_motion:
-		# Generate and store a path prediction towards the destination we want to reach
-		var prediction = _predict_path(grid_position, new_destination)
-		# If the prediction is valid
-		# Make this prediction our current path and start moving right away
-		if prediction.size() > 1:
-			# Because we were idling, we need to get 1 more cell for this tick
-			predicted_path = Utils.pop_multiple_front(prediction, player_speed+1)
-			# Get our immediate grid destination (this tick)
-			immediate_grid_destination = predicted_path.back()
-			# Remove the first cell from the predicted_path because we are already there
-			predicted_path = predicted_path.slice(1)
-			# We add to our local unconfirmed path the next steps we'll take
-			unconfirmed_path.append(immediate_grid_destination)
-			
-			# Store the remaining prediction (if any) for next tick
-			next_tick_predicted_path = prediction
-			# Prepare everything to move correctly this tick
-			cells_to_move_this_tick = predicted_path.size()
-			_setup_movement_step(predicted_path)
-			_switch_locomotion(cells_to_move_this_tick)
-			
-			is_predicting = true
-			# Overwrite our new grid destination
-			grid_destination = new_destination
-			
-			# NOTE: We need to send the packet here ONCE, when movement starts only!
-			# Create a new packet to hold our input and send it to the server
-			var packet := _create_player_destination_packet(immediate_grid_destination)
-			WebSocket.send(packet)
-			
-	# If we were already moving
+	if in_motion:
+		_update_existing_movement(new_destination)
 	else:
-		# Generate and store another path prediction towards the destination we want to reach,
-		# using our immediate grid destination as our starting point
-		var prediction = _predict_path(immediate_grid_destination, new_destination)
-		
-		# If the predicted path is valid
-		if prediction.size() > 0:
-			# Overwrite the next tick predicted path, removing the first cell since its repeated 
-			next_tick_predicted_path = prediction.slice(1)
-			
-			# Overwrite our new grid destination
-			grid_destination = new_destination
+		_start_new_movement(new_destination)
 
 
 # Predicts a path from a grid position to another grid position using A*
@@ -661,78 +617,14 @@ func _handle_pending_interaction() -> void:
 		interaction_target = pending_interaction
 		pending_interaction = null
 		_execute_interaction()
+		return
 	
 	# We are not in interaction range, so we'll have to trace a path to it
-	else:
-		# Calculate from current immediate destination if moving, else use our current grid position
-		var start_position := immediate_grid_destination if in_motion else grid_position
-		var target_position = Utils.local_to_map(pending_interaction.global_position)
-		
-		# Find the nearest available position to interact with this target
-		# Returns current position if already valid
-		var interaction_grid_position = RegionManager.get_available_positions_around_target(
-			start_position,
-			target_position,
-			pending_interaction.get_interaction_positions()
-		)
-		# If no valid interaction position found
-		if interaction_grid_position == Vector2i.ZERO:
-			# Clear the pending interaction
-			pending_interaction = null
-			return
-		
-		# Predict a path towards our target
-		var interaction_path = _predict_path(start_position, interaction_grid_position)
-		
-		# If path wasn't valid
-		if interaction_path.is_empty():
-			# Clear the pending interaction
-			pending_interaction = null
-			return
-		
-		# Handle path continuation if already moving
-		if in_motion:
-			# Overwrite the next tick predicted path, removing the first cell since its repeated 
-			next_tick_predicted_path = interaction_path.slice(1)
-			# Overwrite our new grid destination to be our interaction_grid_position
-			grid_destination = interaction_grid_position
-		else:
-			# If not moving, then start predicting locally
-			# Because we were idling, we need to get 1 more cell for this tick
-			predicted_path = Utils.pop_multiple_front(interaction_path, player_speed + 1)
-			
-			# If we are in the same cell as the target cell, our predicted_path will have 1 or 0 cells,
-			# instead of moving towards it, we check if we are in range to activate,
-			# if we are we activate it, if we are not, we abort to prevent an error
-			if predicted_path.size() < 2:
-				if _is_in_interaction_range(pending_interaction):
-					interaction_target = pending_interaction
-					pending_interaction = null
-					_execute_interaction()
-				return
-			
-			# Get our immediate grid destination (this tick)
-			immediate_grid_destination = predicted_path.back()
-			# Remove the first cell from the predicted_path because we are already there
-			predicted_path = predicted_path.slice(1)
-			# We add to our local unconfirmed path the next steps we'll take
-			unconfirmed_path.append(immediate_grid_destination)
-			# Store the remaining prediction (if any) for next tick
-			next_tick_predicted_path = interaction_path
-			
-			# Prepare everything to move correctly this tick
-			cells_to_move_this_tick = predicted_path.size()
-			_setup_movement_step(predicted_path)
-			_switch_locomotion(cells_to_move_this_tick)
-			
-			is_predicting = true
-			# Overwrite our new grid destination to be our interaction_grid_position
-			grid_destination = interaction_grid_position
-			
-			# NOTE: We need to send the packet here ONCE, when movement starts only!
-			# Create a new packet to hold our input and send it to the server
-			var packet := _create_player_destination_packet(immediate_grid_destination)
-			WebSocket.send(packet)
+	# Calculate from current immediate destination if moving, else use our current grid position
+	var start_position := immediate_grid_destination if in_motion else grid_position
+	if not _setup_interaction_movement(start_position, pending_interaction):
+		pending_interaction = null
+		return
 
 
 # Used to switch the current animation state
@@ -960,30 +852,37 @@ func _start_movement_towards(start_position: Vector2i, target_position: Vector2i
 		# When already moving, append to existing path
 		next_tick_predicted_path = prediction.slice(1)
 		grid_destination = target_position
+	
+	# When starting from idle
 	else:
-		# When starting from idle
-		predicted_path = Utils.pop_multiple_front(prediction, player_speed + 1) # Accounts for current cell
+		 # player_speed + 1 accounts for current cell
+		predicted_path = Utils.pop_multiple_front(prediction, player_speed + 1)
 		
-		# If we are already in range to interact
+		# If we are in the same cell as the target cell, our predicted_path will have 1 or 0 cells,
+		# instead of moving towards it, we check if we are in range to activate
 		if predicted_path.size() < 2:
-			# Check if we can
+			# If we are in range, we activate it, either way we return early
 			if interaction_target and _is_in_interaction_range(interaction_target):
 				_execute_interaction()
 			return
 		
-		# Update all of our state to start moving
-		immediate_grid_destination = predicted_path.back() # Update this tick's movement
-		unconfirmed_path.append(immediate_grid_destination) # Track our movement for server sync
-		predicted_path = predicted_path.slice(1) # Account for current cell
-		next_tick_predicted_path = prediction # Store the rest of the predicted_path for next tick
+		# Get our immediate grid destination (this tick)
+		immediate_grid_destination = predicted_path.back()
+		# We add to our local unconfirmed path the next steps we'll take
+		unconfirmed_path.append(immediate_grid_destination)
+		# Remove the first cell from the predicted_path because we are already there
+		predicted_path = predicted_path.slice(1)
+		# Store the remaining prediction (if any) for next tick
+		next_tick_predicted_path = prediction
 		
+		# Prepare everything to move correctly this tick
 		cells_to_move_this_tick = predicted_path.size()
 		_setup_movement_step(predicted_path)
 		_switch_locomotion(cells_to_move_this_tick)
 		is_predicting = true
 		grid_destination = target_position
 		
-		# Report our movement to the server to keep in sync
+		# We need to send the packet here ONCE, when movement starts only
 		var packet := _create_player_destination_packet(immediate_grid_destination)
 		WebSocket.send(packet)
 
@@ -1012,3 +911,23 @@ func _setup_interaction_movement(start_position: Vector2i, target: Interactable)
 	
 	_start_movement_towards(start_position, interaction_position, target)
 	return true
+
+
+# Helper function for click movement validation
+func _validate_move_position(pos: Vector2i) -> bool:
+	return RegionManager.is_cell_reachable(pos) and RegionManager.is_cell_available(pos)
+
+
+# Helper function for new movement initiation
+func _start_new_movement(target_position: Vector2i) -> void:
+	var prediction: Array[Vector2i] = _predict_path(grid_position, target_position)
+	if prediction.size() > 1: # Accounts for current cell (Need 2 cells minimum to move)
+		_start_movement_towards(grid_position, target_position)
+
+
+# Helper function for updating existing movement
+func _update_existing_movement(target_position: Vector2i) -> void:
+	var prediction: Array[Vector2i] = _predict_path(immediate_grid_destination, target_position)
+	if prediction.size() > 0:
+		next_tick_predicted_path = prediction.slice(1) # Remove starting cell
+		grid_destination = target_position
