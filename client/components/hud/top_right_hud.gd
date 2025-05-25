@@ -30,6 +30,9 @@ func _handle_signal_player_locomotion_changed() -> void:
 
 # Request the server to change the movement speed
 func _on_change_move_speed_button_down() -> void:
+	# Stop click event from propagating through this button
+	get_viewport().set_input_as_handled()
+	
 	if not button_enabled:
 		return
 	

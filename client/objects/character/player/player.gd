@@ -281,8 +281,9 @@ func _handle_signal_ui_update_speed_button(new_move_speed: int) -> void:
 	WebSocket.send(packet)
 
 
-# It checks what we clicked to see if we will attack/move/interact, etc
-func _input(event: InputEvent) -> void:
+# Use _unhandled_input(), not _input(),
+# _unhandled_input() only receives events that weren't processed by the UI
+func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("left_click"):
 		# If we are busy doing something, ignore input
 		if is_busy:
@@ -300,6 +301,8 @@ func _input(event: InputEvent) -> void:
 		if target:
 			if target is Interactable:
 				_start_interaction(target)
+		
+		# If we didn't click on anything interactable, then attempt to move to that cell
 		else:
 			_handle_movement_click(mouse_position)
 
@@ -842,7 +845,7 @@ func load_character(character_type: String) -> void:
 
 
 # Helper function to handle common movement initiation logic
-func _start_movement_towards(start_position: Vector2i, target_position: Vector2i, interaction_target: Interactable = null) -> void:
+func _start_movement_towards(start_position: Vector2i, target_position: Vector2i, target: Interactable = null) -> void:
 	var prediction: Array[Vector2i] = _predict_path(start_position, target_position)
 	if prediction.is_empty():
 		return
@@ -862,7 +865,7 @@ func _start_movement_towards(start_position: Vector2i, target_position: Vector2i
 		# instead of moving towards it, we check if we are in range to activate
 		if predicted_path.size() < 2:
 			# If we are in range, we activate it, either way we return early
-			if interaction_target and _is_in_interaction_range(interaction_target):
+			if target and _is_in_interaction_range(interaction_target):
 				_execute_interaction()
 			return
 		
