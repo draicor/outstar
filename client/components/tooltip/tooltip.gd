@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 @onready var label: Label = $MarginContainer/Label
+var tooltip_offset: Vector2 = Vector2(0, 20)
 
 # We hide the tooltip by default
 func _ready() -> void:
@@ -21,10 +22,10 @@ func hide_tooltip():
 
 
 # This is called to update the position of the tooltip, to follow the mouse
-func update_position(mouse_offset: Vector2 = Vector2(2, 6)):
-	# Position slightly offset from the mouse
+func update_position():
 	var mouse_position = get_viewport().get_mouse_position()
-	label.position = mouse_position + mouse_offset
+	# Position slightly offset from the mouse
+	label.position = mouse_position + tooltip_offset
 	
 	# Clamp to screen edges
 	var viewport_size = get_viewport().get_window().size

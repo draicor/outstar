@@ -10,9 +10,9 @@ script = ExtResource("1_gnj44")
 [node name="MarginContainer" type="MarginContainer" parent="."]
 offset_right = 100.0
 offset_bottom = 22.3333
-theme_override_constants/margin_left = 6
+theme_override_constants/margin_left = 0
 theme_override_constants/margin_top = 0
-theme_override_constants/margin_right = 6
+theme_override_constants/margin_right = 0
 theme_override_constants/margin_bottom = 0
 
 [node name="Label" type="Label" parent="MarginContainer"]
@@ -26,5 +26,4 @@ theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
 theme_override_constants/outline_size = 2
 text = "Draicor"
-horizontal_alignment = 1
 vertical_alignment = 1
