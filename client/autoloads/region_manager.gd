@@ -4,9 +4,11 @@ extends Node
 enum Maps {
 	NONE = 0,
 	PROTOTYPE,
+	MAZE,
 }
 var maps_scenes: Dictionary[Maps, String] = {
-	Maps.PROTOTYPE: "res://maps/prototype/prototype.tscn"
+	Maps.PROTOTYPE: "res://maps/prototype/prototype.tscn",
+	Maps.MAZE: "res://maps/prototype/maze.tscn",
 }
 
 # Expose the current region's data globally
@@ -22,6 +24,10 @@ func update_region_data(new_region_id: int, max_width: int, max_height: int) -> 
 
 
 func initialize_grid(max_width: int, max_height: int) -> void:
+	# Clear existing objects
+	for cell in _grid:
+		cell.object = null
+	
 	grid_width = max_width
 	grid_height = max_height
 	_grid = [] # Reset the grid

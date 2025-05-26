@@ -199,6 +199,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_UpdateSpeed:
 			state.HandleUpdateSpeed(casted_payload.UpdateSpeed)
 
+		// JOIN REGION REQUEST
+		case *packets.Packet_JoinRegionRequest:
+			state.HandleJoinRegionRequest(casted_payload.JoinRegionRequest)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -263,6 +267,35 @@ func (state *Game) HandleUpdateSpeed(payload *packets.UpdateSpeed) {
 	} // If the client sent the same speed, ignore
 }
 
+// Sent by the client to request joining another region
+func (state *Game) HandleJoinRegionRequest(payload *packets.JoinRegionRequest) {
+	hub := state.client.GetHub()
+	// TO FIX
+	// MAP_ID SHOULDNT be the same as REGION_ID if I want to use instances
+	hub.SwitchRegion(state.client.GetId(), payload.GetRegionId(), payload.GetRegionId())
+
+	state.logger.Printf("%s added to region %d", state.player.Name, state.player.GetRegionId())
+
+	// Wait a brief moment to ensure client receives packets
+	time.Sleep(250 * time.Millisecond)
+
+	// Create an update packet to be sent to everyone in this region
+	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
+
+	// Spawn our own character in our client first
+	state.client.SendPacket(updatePlayerPacket)
+	// Tell everyone else to spawn our character too
+	state.client.Broadcast(updatePlayerPacket)
+
+	// Loop over all of the clients in this region
+	state.client.GetRegion().Clients.ForEach(func(id uint64, client server.Client) {
+		// Create an update packet to be sent to our new client
+		updatePlayerPacket := packets.NewUpdatePlayer(id, client.GetPlayerCharacter())
+		state.client.SendPacket(updatePlayerPacket)
+	})
+}
+
+// Executed automatically when a client leaves the game state
 func (state *Game) OnExit() {
 	// We don't broadcast the client leaving here because
 	// we are doing it from the websocket.go

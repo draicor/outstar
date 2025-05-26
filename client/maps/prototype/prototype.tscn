@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=3 uid="uid://jhkvchq2mafw"]
+[gd_scene load_steps=9 format=3 uid="uid://jhkvchq2mafw"]
 
 [ext_resource type="Material" uid="uid://b3onmphfaukv7" path="res://materials/floor_material.tres" id="1_yug3s"]
 [ext_resource type="Texture2D" uid="uid://b7ybyv5g56u4b" path="res://assets/textures/prototype/orange/texture_03.png" id="2_mbxpg"]
-[ext_resource type="PackedScene" uid="uid://c02g6pvx6whn1" path="res://objects/interactables/crate.tscn" id="3_mbxpg"]
+[ext_resource type="PackedScene" uid="uid://c02g6pvx6whn1" path="res://objects/interactables/containers/crate.tscn" id="3_mbxpg"]
+[ext_resource type="PackedScene" uid="uid://bppqkbicuvcd5" path="res://objects/interactables/portals/portal.tscn" id="4_cf12v"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf12v"]
 albedo_texture = ExtResource("2_mbxpg")
@@ -19,40 +20,47 @@ background_mode = 2
 sky = SubResource("Sky_0jb17")
 tonemap_mode = 2
 
-[node name="World" type="Node3D"]
+[node name="Prototype" type="Node3D"]
 
-[node name="Map" type="Node3D" parent="."]
+[node name="World" type="Node3D" parent="."]
 
-[node name="Static" type="Node3D" parent="Map"]
+[node name="Static" type="Node3D" parent="World"]
 
-[node name="Floor" type="CSGBox3D" parent="Map/Static"]
+[node name="Floor" type="CSGBox3D" parent="World/Static"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -0.5, 10)
 material_override = ExtResource("1_yug3s")
 use_collision = true
+collision_mask = 0
 size = Vector3(20, 1, 20)
 
-[node name="Floor2" type="CSGBox3D" parent="Map/Static"]
+[node name="Floor2" type="CSGBox3D" parent="World/Static"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -0.5, 30)
 material_override = ExtResource("1_yug3s")
 use_collision = true
+collision_mask = 0
 size = Vector3(20, 1, 20)
 
-[node name="Wall" type="CSGBox3D" parent="Map/Static"]
+[node name="Wall" type="CSGBox3D" parent="World/Static"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.9, 1, 10)
 material_override = SubResource("StandardMaterial3D_cf12v")
 use_collision = true
+collision_mask = 0
 size = Vector3(0.2, 2, 20)
 
-[node name="Lights" type="Node3D" parent="Map"]
+[node name="Lights" type="Node3D" parent="World"]
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Map/Lights"]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="World/Lights"]
 transform = Transform3D(0.707107, -0.612372, 0.353553, 0, 0.5, 0.866025, -0.707107, -0.612372, 0.353553, 0, 6, 0)
 shadow_enabled = true
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="Map/Lights"]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="World/Lights"]
 environment = SubResource("Environment_pjqxs")
 
-[node name="Interactables" type="Node3D" parent="Map"]
+[node name="Interactables" type="Node3D" parent="World"]
 
-[node name="Crate" parent="Map/Interactables" instance=ExtResource("3_mbxpg")]
+[node name="Crate" parent="World/Interactables" instance=ExtResource("3_mbxpg")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.5, 5.5)
+
+[node name="Portal" parent="World/Interactables" instance=ExtResource("4_cf12v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 1, 19.5)
+region_id = 2

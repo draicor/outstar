@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://c02g6pvx6whn1"]
 
-[ext_resource type="Script" uid="uid://d1omyd4itgr26" path="res://objects/interactables/crate.gd" id="1_p2aos"]
+[ext_resource type="Script" uid="uid://d1omyd4itgr26" path="res://objects/interactables/containers/crate.gd" id="1_p2aos"]
 [ext_resource type="Material" uid="uid://bg2ulr6qsdnds" path="res://materials/interactable_material.tres" id="2_p2aos"]
 
 [sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_p2aos"]

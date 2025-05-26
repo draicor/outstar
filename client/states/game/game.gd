@@ -115,6 +115,8 @@ func _handle_client_left_packet(client_left_packet: packets.ClientLeft) -> void:
 		if player:
 			# Remove this player from our grid
 			RegionManager.remove_object(player.server_grid_position, player)
+			# Remove this player from our array of players
+			_players.erase(player_id)
 			# Destroy it
 			player.queue_free()
 	
@@ -245,11 +247,22 @@ func _handle_region_data_packet(region_data_packet: packets.RegionData) -> void:
 	var region_id: int = region_data_packet.get_region_id()
 	
 	if region_id in RegionManager.Maps.values():
-		RegionManager.update_region_data(region_id, region_data_packet.get_grid_width(), region_data_packet.get_grid_height())
+		# Initialize region first
+		RegionManager.update_region_data(
+			region_id,
+			region_data_packet.get_grid_width(),
+			region_data_packet.get_grid_height()
+		)
 		
-		_load_map(region_id as RegionManager.Maps)
-		# Send a packet to the server to let everyone know we joined
+		# Wait for map load before sending notifications
+		await _load_map(region_id as RegionManager.Maps)
+		
+		# Send a packet to the server to let everyone know we joined,
+		# after full initialization
 		_send_client_entered_packet()
+		
+		# Debug
+		print("Region changed to ", region_id, " awaiting player data...")
 	else:
 		# If the region id is invalid, load the prototype map
 		_load_map(RegionManager.Maps.PROTOTYPE)
@@ -259,9 +272,39 @@ func _handle_region_data_packet(region_data_packet: packets.RegionData) -> void:
 
 # Used to switch regions/maps
 func _load_map(map: RegionManager.Maps) -> void:
-	# Load the next scene
+	# Clear previous map and players
+	if _current_map_scene:
+		_current_map_scene.queue_free()
+		# Wait a frame to ensure cleanup
+		await get_tree().process_frame
+		
+		# Keep a reference to my player_character
+		var my_player = _players.get(GameManager.client_id, null)
+		# If our local _players list if not empty
+		if not _players.is_empty():
+			# Attempt to delete each player instance
+			for player_id in _players:
+				var player = _players[player_id]
+				if player:
+					player.queue_free()
+			# Clear our _players list
+			_players.clear()
+		
+		# Add our player back after clearing the whole list
+		if my_player:
+			_players[GameManager.client_id] = my_player
+			my_player.queue_free() # Clean up
+		
+		# Reset RegionManager state
+		RegionManager.initialize_grid(0, 0) # Clear grid
+	
+	# Load new map
 	var map_scene: PackedScene = load(RegionManager.maps_scenes[map])
-	# Create the map scene
-	_current_map_scene = map_scene.instantiate()
-	# Add it to the game root
-	add_child(_current_map_scene)
+	if map_scene:
+		# Create the map scene
+		_current_map_scene = map_scene.instantiate()
+		# Add it to the game root
+		add_child(_current_map_scene)
+		
+		# Debug
+		print("Map loaded: ", map, " instance: ", _current_map_scene)

@@ -454,7 +454,6 @@ func (x *LoginSuccess) GetNickname() string {
 }
 
 // Notifies
-// TO FIX add uint64 id in client entered so we can send our player data directly!
 type ClientEntered struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

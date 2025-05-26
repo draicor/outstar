@@ -480,6 +480,14 @@ func _create_update_speed_packet(new_speed: int) -> packets.Packet:
 	return packet
 
 
+# Creates and returns a join_region_request packet
+func _create_join_region_request_packet(region_id: int) -> packets.Packet:
+	var packet := packets.Packet.new()
+	var join_region_request_packet := packet.new_join_region_request()
+	join_region_request_packet.set_region_id(region_id)
+	return packet
+
+
 func _show_debug_tools() -> void:
 	 # Only draw in editor/debug builds for my character
 	if my_player_character and OS.is_debug_build():
@@ -934,3 +942,9 @@ func _update_existing_movement(target_position: Vector2i) -> void:
 	if prediction.size() > 0:
 		next_tick_predicted_path = prediction.slice(1) # Remove starting cell
 		grid_destination = target_position
+
+
+# Creates and sends a packet to the server requesting to switch regions/maps
+func request_switch_region(new_region: int) -> void:
+	var packet := _create_join_region_request_packet(new_region)
+	WebSocket.send(packet)

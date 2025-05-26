@@ -25,7 +25,6 @@ message RegisterRequest { // Sent by client to register
 }
 message LoginSuccess { string nickname = 1; } // Sent by the server after successful login
 // Notifies
-// TO FIX add uint64 id in client entered so we can send our player data directly!
 message ClientEntered { string nickname = 1; } // Sent by the client once his client is ready, broadcasted to everyone
 message ClientLeft { uint64 id = 1; string nickname = 2; } // Broadcast by the server if a client leaves
 // Region

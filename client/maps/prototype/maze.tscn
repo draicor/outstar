@@ -1,0 +1,61 @@
+[gd_scene load_steps=8 format=3 uid="uid://bgdnoec83tblt"]
+
+[ext_resource type="Material" uid="uid://b3onmphfaukv7" path="res://materials/floor_material.tres" id="1_kc1w1"]
+[ext_resource type="Texture2D" uid="uid://b7ybyv5g56u4b" path="res://assets/textures/prototype/orange/texture_03.png" id="2_jbvjh"]
+[ext_resource type="PackedScene" uid="uid://bppqkbicuvcd5" path="res://objects/interactables/portals/portal.tscn" id="3_kc1w1"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf12v"]
+albedo_texture = ExtResource("2_jbvjh")
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_vmii6"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_0jb17"]
+sky_material = SubResource("ProceduralSkyMaterial_vmii6")
+
+[sub_resource type="Environment" id="Environment_pjqxs"]
+background_mode = 2
+sky = SubResource("Sky_0jb17")
+tonemap_mode = 2
+
+[node name="Maze" type="Node3D"]
+
+[node name="World" type="Node3D" parent="."]
+
+[node name="Static" type="Node3D" parent="World"]
+
+[node name="Floor" type="CSGBox3D" parent="World/Static"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, -0.5, 5)
+material_override = ExtResource("1_kc1w1")
+use_collision = true
+collision_mask = 0
+size = Vector3(10, 1, 10)
+
+[node name="Wall" type="CSGBox3D" parent="World/Static"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, 5)
+material_override = SubResource("StandardMaterial3D_cf12v")
+use_collision = true
+collision_mask = 0
+size = Vector3(0.2, 2, 10)
+
+[node name="Wall2" type="CSGBox3D" parent="World/Static"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 5)
+material_override = SubResource("StandardMaterial3D_cf12v")
+use_collision = true
+collision_mask = 0
+size = Vector3(0.2, 2, 10)
+
+[node name="Lights" type="Node3D" parent="World"]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="World/Lights"]
+transform = Transform3D(0.707107, -0.612372, 0.353553, 0, 0.5, 0.866025, -0.707107, -0.612372, 0.353553, 0, 6, 0)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="World/Lights"]
+environment = SubResource("Environment_pjqxs")
+
+[node name="Interactables" type="Node3D" parent="World"]
+
+[node name="Portal" parent="World/Interactables" instance=ExtResource("3_kc1w1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 1, 9.5)

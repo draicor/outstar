@@ -95,8 +95,10 @@ func (h *Hub) Serve(getNewClient func(*Hub, http.ResponseWriter, *http.Request) 
 func (h *Hub) Start() {
 	log.Println("Starting hub...")
 
+	// CREATE AND INITIALIZE REGIONS
 	// Create a new region called Prototype with a grid of (X by Z) squares
 	h.CreateRegion("Prototype", "prototype", 20, 40, 1)
+	h.CreateRegion("Maze", "maze", 10, 10, 2)
 
 	// TO IMPLEMENT -> Adding static obstacles to the current map
 	// add obstacles [20, 33] = "stone_column", rotate it by 30°
@@ -263,26 +265,37 @@ func (h *Hub) SwitchRegion(clientId uint64, regionId uint64, mapId uint64) {
 		// If the region is valid
 		if regionExists {
 
-			// TO FIX
-			// CHECK IF CLIENT CAN JOIN THIS REGION (REGION NOT FULL/I HAVE ACCESS TO ENTER IT)
+			// TO FIX (Each region should have a max_capacity variable)
+			// Capacity Check
+			if region.Clients.Len() >= 50 {
+				client.SendPacket(packets.NewRequestDenied("Region is full"))
+				return
+			}
+
+			// Get our player character
+			player := client.GetPlayerCharacter()
 
 			// Check if the client's previous region was valid
 			if client.GetRegion() != nil {
 				// Broadcast to everyone that this client left this region!
-				client.Broadcast(packets.NewClientLeft(client.GetId(), client.GetPlayerCharacter().Name))
+				client.Broadcast(packets.NewClientLeft(client.GetId(), player.Name))
 				// Unregister the client from that region
 				client.GetRegion().RemoveClientChannel <- client
+				time.Sleep(50 * time.Millisecond) // Brieft pause
 			}
 
 			// Register the client to the new region
 			region.AddClientChannel <- client
 			// Save the new region pointer in the client
 			client.SetRegion(region)
-			// Save the region ID and map ID in the character
-			client.GetPlayerCharacter().SetRegionId(regionId)
-			client.GetPlayerCharacter().SetMapId(mapId)
 
+			// Save the region ID and map ID in the character
+			player.SetRegionId(regionId)
+			player.SetMapId(mapId)
+
+			// Get this region's grid
 			grid := region.grid
+
 			// Only spawn in this cell if its not occupied, if it is, find a cell nearby that is free
 			playerSpawnCell := grid.GetSpawnCell(0, 0) // TO FIX <- Each region should have its own spawn zone
 
@@ -295,15 +308,15 @@ func (h *Hub) SwitchRegion(clientId uint64, regionId uint64, mapId uint64) {
 				return
 			}
 
+			// Place the player in the server grid for this region
+			grid.SetObject(playerSpawnCell, player)
+
 			// Send this client this region's metadata
 			client.SendPacket(packets.NewRegionData(region.GetId(), grid.GetMaxWidth(), grid.GetMaxHeight()))
 
 			// Update the position and destination for this player character
-			client.GetPlayerCharacter().SetGridPosition(playerSpawnCell)
-			client.GetPlayerCharacter().SetGridDestination(playerSpawnCell)
-
-			// Place the player in the grid for this region
-			grid.SetObject(playerSpawnCell, client.GetPlayerCharacter())
+			player.SetGridPosition(playerSpawnCell)
+			player.SetGridDestination(playerSpawnCell)
 
 		} else { // If the region does not exist
 			log.Printf("Region %d not available", regionId)
