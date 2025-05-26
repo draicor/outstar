@@ -261,13 +261,10 @@ func _handle_region_data_packet(region_data_packet: packets.RegionData) -> void:
 		# after full initialization
 		_send_client_entered_packet()
 		
-		# Debug
-		print("Region changed to ", region_id, " awaiting player data...")
 	else:
 		# If the region id is invalid, load the prototype map
 		_load_map(RegionManager.Maps.PROTOTYPE)
-		# CAUTION
-		# Replace this with a request to the server to switch us to another map
+		# CAUTION Replace this with a request to the server to switch us to another map
 
 
 # Used to switch regions/maps
@@ -278,8 +275,6 @@ func _load_map(map: RegionManager.Maps) -> void:
 		# Wait a frame to ensure cleanup
 		await get_tree().process_frame
 		
-		# Keep a reference to my player_character
-		var my_player = _players.get(GameManager.client_id, null)
 		# If our local _players list if not empty
 		if not _players.is_empty():
 			# Attempt to delete each player instance
@@ -289,14 +284,6 @@ func _load_map(map: RegionManager.Maps) -> void:
 					player.queue_free()
 			# Clear our _players list
 			_players.clear()
-		
-		# Add our player back after clearing the whole list
-		if my_player:
-			_players[GameManager.client_id] = my_player
-			my_player.queue_free() # Clean up
-		
-		# Reset RegionManager state
-		RegionManager.initialize_grid(0, 0) # Clear grid
 	
 	# Load new map
 	var map_scene: PackedScene = load(RegionManager.maps_scenes[map])
@@ -305,6 +292,3 @@ func _load_map(map: RegionManager.Maps) -> void:
 		_current_map_scene = map_scene.instantiate()
 		# Add it to the game root
 		add_child(_current_map_scene)
-		
-		# Debug
-		print("Map loaded: ", map, " instance: ", _current_map_scene)

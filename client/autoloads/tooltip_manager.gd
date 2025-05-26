@@ -19,6 +19,8 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	# If we don't have a camera ready, abort
 	if not player_camera:
+		# When switching maps, the camera gets destroyed, so hide the tooltip
+		tooltip.hide()
 		return
 	
 	if tooltip.visible:
