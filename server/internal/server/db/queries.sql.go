@@ -11,9 +11,9 @@ import (
 )
 
 const createCharacter = `-- name: CreateCharacter :one
-INSERT INTO characters (user_id, gender, region_id, map_id, x, z, hp, max_hp)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING id, user_id, gender, region_id, map_id, x, z, hp, max_hp
+INSERT INTO characters (user_id, gender, region_id, map_id, x, z, hp, max_hp, speed)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, user_id, gender, region_id, map_id, x, z, hp, max_hp, speed
 `
 
 type CreateCharacterParams struct {
@@ -25,6 +25,7 @@ type CreateCharacterParams struct {
 	Z        int64
 	Hp       int64
 	MaxHp    int64
+	Speed    int64
 }
 
 // Character Operations
@@ -38,6 +39,7 @@ func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams
 		arg.Z,
 		arg.Hp,
 		arg.MaxHp,
+		arg.Speed,
 	)
 	var i Character
 	err := row.Scan(
@@ -50,6 +52,7 @@ func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams
 		&i.Z,
 		&i.Hp,
 		&i.MaxHp,
+		&i.Speed,
 	)
 	return i, err
 }
@@ -87,7 +90,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 }
 
 const getCharacterByID = `-- name: GetCharacterByID :one
-SELECT id, user_id, gender, region_id, map_id, x, z, hp, max_hp FROM characters WHERE id = ?
+SELECT id, user_id, gender, region_id, map_id, x, z, hp, max_hp, speed FROM characters WHERE id = ?
 `
 
 func (q *Queries) GetCharacterByID(ctx context.Context, id int64) (Character, error) {
@@ -103,12 +106,13 @@ func (q *Queries) GetCharacterByID(ctx context.Context, id int64) (Character, er
 		&i.Z,
 		&i.Hp,
 		&i.MaxHp,
+		&i.Speed,
 	)
 	return i, err
 }
 
 const getCharacterByUserID = `-- name: GetCharacterByUserID :one
-SELECT id, user_id, gender, region_id, map_id, x, z, hp, max_hp FROM characters WHERE user_id = ?
+SELECT id, user_id, gender, region_id, map_id, x, z, hp, max_hp, speed FROM characters WHERE user_id = ?
 `
 
 func (q *Queries) GetCharacterByUserID(ctx context.Context, userID int64) (Character, error) {
@@ -124,6 +128,7 @@ func (q *Queries) GetCharacterByUserID(ctx context.Context, userID int64) (Chara
 		&i.Z,
 		&i.Hp,
 		&i.MaxHp,
+		&i.Speed,
 	)
 	return i, err
 }
@@ -153,7 +158,7 @@ func (q *Queries) GetCharacterPosition(ctx context.Context, id int64) (GetCharac
 
 const getFullCharacterData = `-- name: GetFullCharacterData :one
 SELECT
-  c.id, c.gender, c.region_id, c.map_id, c.x, c.z, c.hp, c.max_hp,
+  c.id, c.gender, c.region_id, c.map_id, c.x, c.z, c.hp, c.max_hp, c.speed,
   u.username, u.nickname
 FROM characters c
 JOIN users u ON c.user_id = u.id
@@ -169,6 +174,7 @@ type GetFullCharacterDataRow struct {
 	Z        int64
 	Hp       int64
 	MaxHp    int64
+	Speed    int64
 	Username string
 	Nickname string
 }
@@ -185,6 +191,7 @@ func (q *Queries) GetFullCharacterData(ctx context.Context, id int64) (GetFullCh
 		&i.Z,
 		&i.Hp,
 		&i.MaxHp,
+		&i.Speed,
 		&i.Username,
 		&i.Nickname,
 	)
@@ -262,31 +269,6 @@ func (q *Queries) SetUserCharacterID(ctx context.Context, arg SetUserCharacterID
 	return err
 }
 
-const updateCharacterPosition = `-- name: UpdateCharacterPosition :exec
-UPDATE characters
-SET region_id = ?, map_id = ?, x = ?, z = ?
-WHERE id = ?
-`
-
-type UpdateCharacterPositionParams struct {
-	RegionID int64
-	MapID    int64
-	X        int64
-	Z        int64
-	ID       int64
-}
-
-func (q *Queries) UpdateCharacterPosition(ctx context.Context, arg UpdateCharacterPositionParams) error {
-	_, err := q.db.ExecContext(ctx, updateCharacterPosition,
-		arg.RegionID,
-		arg.MapID,
-		arg.X,
-		arg.Z,
-		arg.ID,
-	)
-	return err
-}
-
 const updateCharacterStats = `-- name: UpdateCharacterStats :exec
 UPDATE characters
 set hp = ?, max_hp = ?
@@ -301,5 +283,36 @@ type UpdateCharacterStatsParams struct {
 
 func (q *Queries) UpdateCharacterStats(ctx context.Context, arg UpdateCharacterStatsParams) error {
 	_, err := q.db.ExecContext(ctx, updateCharacterStats, arg.Hp, arg.MaxHp, arg.ID)
+	return err
+}
+
+const updateFullCharacterData = `-- name: UpdateFullCharacterData :exec
+UPDATE characters
+SET region_id = ?, map_id = ?, x = ?, z = ?, hp = ?, max_hp = ?, speed = ?
+WHERE id = ?
+`
+
+type UpdateFullCharacterDataParams struct {
+	RegionID int64
+	MapID    int64
+	X        int64
+	Z        int64
+	Hp       int64
+	MaxHp    int64
+	Speed    int64
+	ID       int64
+}
+
+func (q *Queries) UpdateFullCharacterData(ctx context.Context, arg UpdateFullCharacterDataParams) error {
+	_, err := q.db.ExecContext(ctx, updateFullCharacterData,
+		arg.RegionID,
+		arg.MapID,
+		arg.X,
+		arg.Z,
+		arg.Hp,
+		arg.MaxHp,
+		arg.Speed,
+		arg.ID,
+	)
 	return err
 }

@@ -91,7 +91,7 @@ func (state *Game) updateCharacter() {
 		totalSteps := uint64(len(path) - 1) // We subtract one because the first doesn't count
 
 		// We account for our max distance per tick here using Speed
-		stepsRemaining := math.MinimumUint64(totalSteps, state.player.Speed)
+		stepsRemaining := math.MinimumUint64(totalSteps, state.player.GetSpeed())
 
 		// Get the grid from this region
 		grid := state.client.GetRegion().GetGrid()

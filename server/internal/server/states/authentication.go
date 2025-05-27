@@ -173,8 +173,10 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 
 	// Recreate this client's player/character data from the database!
 	state.client.SetPlayerCharacter(objects.CreatePlayer(
+		// Basic data
 		user.Nickname,
 		character.Gender,
+		uint64(character.Speed),
 		rotationY,
 		// Stats
 		level, experience,

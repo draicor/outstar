@@ -20,7 +20,7 @@ type Player struct {
 	Level      uint64
 	Experience uint64
 	// Attributes
-	Speed uint64 // Cells per tick
+	speed uint64 // Cells per tick
 }
 
 // RegionId get/set
@@ -65,11 +65,11 @@ func (player *Player) SetGridDestination(cell *pathfinding.Cell) {
 
 // Move speed get/set
 func (player *Player) GetSpeed() uint64 {
-	return player.Speed
+	return player.speed
 }
 func (player *Player) SetSpeed(newSpeed uint64) {
 	// If trying to move faster than allowed
-	player.Speed = min(newSpeed, MAX_SPEED)
+	player.speed = min(newSpeed, MAX_SPEED)
 }
 
 // Gender get/set
@@ -84,6 +84,7 @@ func (player *Player) SetGender(newGender string) {
 func CreatePlayer(
 	name string,
 	gender string,
+	speed uint64,
 	rotationY float64,
 	// Stats
 	level uint64,
@@ -100,6 +101,6 @@ func CreatePlayer(
 		Level:      level,
 		Experience: experience,
 		// Attributes
-		Speed: 2, // At spawn start with jog enabled by default
+		speed: speed,
 	}
 }

@@ -11,10 +11,24 @@ var button_enabled: bool = true # Enabled by default
 
 
 func _ready() -> void:
+	Signals.player_character_spawned.connect(_handle_signal_player_character_spawned)
 	Signals.player_locomotion_changed.connect(_handle_signal_player_locomotion_changed)
-	# Defaults to JOG at spawn
-	texture_rect.texture = jog_texture
+	hide()
 
+
+func _handle_signal_player_character_spawned() -> void:
+	if not GameManager.player_character:
+		return
+	
+	# Get our player_speed from the GameManager after spawm
+	if GameManager.player_character.player_speed == 1:
+		texture_rect.texture = walk_texture
+	elif GameManager.player_character.player_speed == 2:
+		texture_rect.texture = jog_texture
+	elif GameManager.player_character.player_speed == 3:
+		texture_rect.texture = run_texture
+	
+	show()
 
 # Toggles this button based on the current locomotion state of the player
 func _handle_signal_player_locomotion_changed() -> void:
@@ -25,7 +39,6 @@ func _handle_signal_player_locomotion_changed() -> void:
 	else:
 		button_enabled = false
 		texture_rect.self_modulate = Color(1.0, 1.0, 1.0, 0.33)
-		
 
 
 # Request the server to change the movement speed

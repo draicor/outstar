@@ -796,7 +796,7 @@ class Handshake:
 	
 class Heartbeat:
 	func _init():
-		var _service
+		var service
 		
 	var data = {}
 	
@@ -868,7 +868,7 @@ class ServerMetrics:
 	
 class RequestGranted:
 	func _init():
-		var _service
+		var service
 		
 	var data = {}
 	
@@ -1472,6 +1472,11 @@ class UpdatePlayer:
 		service.field = __gender
 		data[__gender.tag] = service
 		
+		__speed = PBField.new("speed", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __speed
+		data[__speed.tag] = service
+		
 	var data = {}
 	
 	var __id: PBField
@@ -1539,6 +1544,19 @@ class UpdatePlayer:
 		__gender.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_gender(value : String) -> void:
 		__gender.value = value
+	
+	var __speed: PBField
+	func has_speed() -> bool:
+		if __speed.value != null:
+			return true
+		return false
+	func get_speed() -> int:
+		return __speed.value
+	func clear_speed() -> void:
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		__speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_speed(value : int) -> void:
+		__speed.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

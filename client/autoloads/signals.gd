@@ -29,4 +29,5 @@ signal ui_rotate_camera_right
 signal ui_change_move_speed_button(new_move_speed: int)
 
 # Player state signals
+signal player_character_spawned
 signal player_locomotion_changed

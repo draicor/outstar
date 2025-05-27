@@ -18,6 +18,7 @@ type Character struct {
 	Z        int64
 	Hp       int64
 	MaxHp    int64
+	Speed    int64
 }
 
 type User struct {

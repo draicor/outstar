@@ -28,6 +28,7 @@ var movement_tick: float = SERVER_TICK # Defaults to server_tick
 var player_id: int
 var player_name: String
 var gender: String
+var player_speed: int
 var tooltip: String
 var model_rotation_y: float
 var server_grid_position: Vector2i # Used to spawn the character and also to correct the player's position
@@ -41,7 +42,6 @@ var immediate_grid_destination: Vector2i # Used in case we want to change route 
 var server_path: Array[Vector2i] # Set at spawn and after server movement
 var next_tick_server_path: Array[Vector2i] # Used to store the next server path
 
-var player_speed: int = 2 # Defaults to JOG at spawn
 var cells_to_move_this_tick: int
 
 var interpolated_position: Vector3 # Used to smoothly slide our character in our game client
@@ -114,6 +114,7 @@ static func instantiate(
 	id: int,
 	nickname: String,
 	character_gender: String,
+	character_speed: int,
 	spawn_position: Vector2i,
 	spawn_model_rotation_y: float, # Used to update our model.rotation.y
 	is_my_player_character: bool
@@ -124,6 +125,7 @@ static func instantiate(
 	player.player_id = id
 	player.player_name = nickname
 	player.gender = character_gender
+	player.player_speed = character_speed
 	player.animation_library = "%s/%s_" % [character_gender, character_gender]
 	player.tooltip = nickname
 	player.model_rotation_y = spawn_model_rotation_y
@@ -260,9 +262,9 @@ func _register_global_references() -> void:
 	GameManager.set_player_character(self)
 	# Stores our player camera as a global variable too
 	TooltipManager.set_player_camera(camera)
+	# Report to the rest of the code we successfully spawned
+	Signals.player_character_spawned.emit()
 
-
-# Helper function for _ready()
 
 # Called when this object gets destroyed
 func _exit_tree() -> void:

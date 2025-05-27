@@ -367,6 +367,7 @@ func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.Us
 		Z:        0, // Update this depending on the spawn location?
 		Hp:       100,
 		MaxHp:    100,
+		Speed:    1, // Create character with speed set to walk
 	})
 	if err != nil {
 		return db.User{}, fmt.Errorf("create character: %w", err)
@@ -408,17 +409,20 @@ func (h *Hub) GetUserByNickname(nickname string) (db.User, error) {
 }
 
 // DATABASE CHARACTER OPERATIONS HANDLERS
-func (h *Hub) SaveCharacterPosition(client Client) error {
+func (h *Hub) SaveCharacter(client Client) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	character := client.GetPlayerCharacter()
 
-	return h.queries.UpdateCharacterPosition(ctx, db.UpdateCharacterPositionParams{
+	return h.queries.UpdateFullCharacterData(ctx, db.UpdateFullCharacterDataParams{
 		RegionID: int64(character.GetRegionId()),
 		MapID:    int64(character.GetMapId()),
 		X:        int64(character.GetGridPosition().X),
 		Z:        int64(character.GetGridPosition().Z),
+		Hp:       int64(100), // TO FIX Create character.GetHealth()
+		MaxHp:    int64(100), // TO FIX Create character.GetMaxHealth()
+		Speed:    int64(character.GetSpeed()),
 		ID:       client.GetCharacterId(), // Character ID to find it in the DB
 	})
 }
