@@ -178,6 +178,18 @@ func (h *Hub) GetClient(id uint64) (Client, bool) {
 	return h.Clients.Get(id)
 }
 
+// Retrieves the client (if found) in the Clients collection using a more efficient lookup
+func (h *Hub) GetClientByUsername(username string) (Client, bool) {
+	h.usernameToClientRWMutex.RLock()
+	clientId, exists := h.usernameToClient[username]
+	h.usernameToClientRWMutex.RUnlock()
+
+	if !exists {
+		return nil, false
+	}
+	return h.Clients.Get(clientId)
+}
+
 // Returns true if the account is already logged in (registered in our Hub)
 func (h *Hub) IsAlreadyConnected(username string) bool {
 	h.usernameToClientRWMutex.RLock()
@@ -208,9 +220,9 @@ func (h *Hub) CreateRegion(name string, gameMap string, gridWidth uint64, gridHe
 }
 
 // Spawns a client in a region that matches the one from the database, if valid
-func (h *Hub) JoinRegion(clientId uint64) {
+func (h *Hub) JoinRegion(username string) {
 	// Search for this client by id
-	client, clientExists := h.GetClient(clientId)
+	client, clientExists := h.GetClientByUsername(username)
 	// If the client is online and exists
 	if clientExists {
 
@@ -245,7 +257,7 @@ func (h *Hub) JoinRegion(clientId uint64) {
 				log.Printf("No more space available in region %d", regionId)
 				// TO FIX
 				// This should teleport the client to the spawn map from the DB instead
-				h.SwitchRegion(clientId, 1, 1)
+				h.SwitchRegion(username, 1, 1)
 				return
 			}
 
@@ -264,15 +276,15 @@ func (h *Hub) JoinRegion(clientId uint64) {
 
 			// TO FIX
 			// This should teleport the client to the spawn map from the DB instead
-			h.SwitchRegion(clientId, 1, 1)
+			h.SwitchRegion(username, 1, 1)
 		}
 	}
 }
 
 // Move this client to another region if valid
-func (h *Hub) SwitchRegion(clientId uint64, regionId uint64, mapId uint64) {
+func (h *Hub) SwitchRegion(username string, regionId uint64, mapId uint64) {
 	// Search for this client by id
-	client, clientExists := h.GetClient(clientId)
+	client, clientExists := h.GetClientByUsername(username)
 	// If the client is online and exists
 	if clientExists {
 		// Search for this region by id in our Hub
@@ -319,7 +331,7 @@ func (h *Hub) SwitchRegion(clientId uint64, regionId uint64, mapId uint64) {
 				log.Printf("No more space available in region %d", regionId)
 				// TO FIX
 				// This should teleport the client to the spawn map from the DB instead
-				h.SwitchRegion(clientId, 1, 1)
+				h.SwitchRegion(username, 1, 1)
 				return
 			}
 
@@ -339,14 +351,19 @@ func (h *Hub) SwitchRegion(clientId uint64, regionId uint64, mapId uint64) {
 			// TO FIX
 			// This should teleport the client to the spawn map from the DB instead
 			// Force this client to the first map
-			h.SwitchRegion(clientId, 1, 1)
+			h.SwitchRegion(username, 1, 1)
 		}
 	}
 }
 
 // Returns the total number of clients connected to the Hub
-func (h *Hub) GetClientsOnline() uint64 {
+func (h *Hub) GetConnectedClients() uint64 {
 	return uint64(h.Clients.Len())
+}
+
+// Returns the total number of logged in accounts connected to the Hub
+func (h *Hub) GetConnectedAccounts() uint64 {
+	return uint64(len(h.usernameToClient))
 }
 
 // DATABASE USER OPERATIONS HANDLERS

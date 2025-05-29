@@ -44,7 +44,7 @@ func (state *Game) OnEnter() {
 	go state.client.GetHub().SharedObjects.Players.Add(state.player, state.client.GetId())
 
 	// Move the client to the region his character is at in the database
-	state.client.GetHub().JoinRegion(state.client.GetId())
+	state.client.GetHub().JoinRegion(state.client.GetAccountUsername())
 
 	state.logger.Printf("%s added to region %d", state.player.Name, state.player.GetRegionId())
 
@@ -276,7 +276,7 @@ func (state *Game) HandleJoinRegionRequest(payload *packets.JoinRegionRequest) {
 	hub := state.client.GetHub()
 	// TO FIX
 	// MAP_ID SHOULDNT be the same as REGION_ID if I want to use instances
-	hub.SwitchRegion(state.client.GetId(), payload.GetRegionId(), payload.GetRegionId())
+	hub.SwitchRegion(state.client.GetAccountUsername(), payload.GetRegionId(), payload.GetRegionId())
 
 	state.logger.Printf("%s added to region %d", state.player.Name, state.player.GetRegionId())
 
