@@ -289,6 +289,11 @@ func (c *WebSocketClient) Close(reason string) {
 		c.region.RemoveClientChannel <- c
 	}
 
+	// Unregister this username from our Hub's usernameToClient map
+	if username := c.GetAccountUsername(); username != "" {
+		c.GetHub().UnregisterUsername(username)
+	}
+
 	// Remove the client from the Hub
 	c.hub.RemoveClientChannel <- c
 

@@ -323,7 +323,12 @@ func (state *Game) HandleLogoutRequest() {
 		state.client.SetRegion(nil)
 	}
 
-	// Clear the previous account data from this connection
+	// Unregister this username from our Hub's usernameToClient map
+	if username := state.client.GetAccountUsername(); username != "" {
+		state.client.GetHub().UnregisterUsername(username)
+	}
+
+	// Clear the previous account data from this client connection
 	state.client.SetAccountUsername("")
 	state.client.SetCharacterId(0)
 	state.client.SetPlayerCharacter(nil)

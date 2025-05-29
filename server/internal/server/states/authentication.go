@@ -157,6 +157,8 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	// have to set the username when the client leaves
 	state.client.SetAccountUsername(username)
 	state.client.SetCharacterId(user.CharacterID.Int64)
+	// Register this username in our Hub's usernameToClient map for 0(1) lookups
+	state.client.GetHub().RegisterUsername(username, state.client.GetId())
 
 	character, err := state.client.GetHub().GetFullCharacterData(user.CharacterID.Int64)
 

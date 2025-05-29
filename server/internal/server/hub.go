@@ -10,6 +10,7 @@ import (
 	"server/internal/server/db"
 	"server/internal/server/objects"
 	"server/pkg/packets"
+	"sync"
 	"time"
 )
 
@@ -35,6 +36,10 @@ type Hub struct {
 	// Map of every region
 	Regions *adt.MapMutex[*Region]
 
+	// Maps username to client ID
+	usernameToClient        map[string]uint64
+	usernameToClientRWMutex sync.RWMutex // Protects the usernameToClient map
+
 	// Only the hub writes to the DB
 	Database *sql.DB
 	queries  *db.Queries
@@ -58,6 +63,8 @@ func CreateHub(database *sql.DB) *Hub {
 		BroadcastChannel:    make(chan *packets.Packet),
 		// Collection of every available region in the server
 		Regions: adt.NewMapMutex[*Region](),
+		// Username-to-client map for O(1) lookups
+		usernameToClient: make(map[string]uint64),
 		// Database connection
 		Database: database,
 		queries:  db.New(database),
@@ -152,26 +159,31 @@ func (h *Hub) Start() {
 	}
 }
 
+// Called when a client logins successfully
+func (h *Hub) RegisterUsername(username string, clientId uint64) {
+	h.usernameToClientRWMutex.Lock()
+	defer h.usernameToClientRWMutex.Unlock()
+	h.usernameToClient[username] = clientId
+}
+
+// Called when a client logs out
+func (h *Hub) UnregisterUsername(username string) {
+	h.usernameToClientRWMutex.Lock()
+	defer h.usernameToClientRWMutex.Unlock()
+	delete(h.usernameToClient, username)
+}
+
 // Retrieves the client (if found) in the Clients collection
 func (h *Hub) GetClient(id uint64) (Client, bool) {
 	return h.Clients.Get(id)
 }
 
-// Returns true if the account is already logged in
+// Returns true if the account is already logged in (registered in our Hub)
 func (h *Hub) IsAlreadyConnected(username string) bool {
-	var found bool = false
-
-	// Goes over the whole list of clients
-	h.Clients.ForEachWithBreak(func(id uint64, client Client) bool {
-		// Check if this username is in our Hub
-		if client.GetAccountUsername() == username {
-			found = true
-			return true
-		}
-		return false
-	})
-
-	return found
+	h.usernameToClientRWMutex.RLock()
+	_, exists := h.usernameToClient[username]
+	h.usernameToClientRWMutex.RUnlock()
+	return exists
 }
 
 // Retrieves the region (if found) in the Regions collection
