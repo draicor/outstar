@@ -274,7 +274,7 @@ func (c *WebSocketClient) Close(reason string) {
 		// Store this player's character data on logout
 		err := c.GetHub().SaveCharacter(c)
 		if err != nil {
-			c.logger.Printf("Failed to save character %v to database", err)
+			c.logger.Printf("Failed to save character to database: %v", err)
 		}
 
 		// Broadcast to everyone that this client left before we remove it from the hub/region

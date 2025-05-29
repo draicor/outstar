@@ -159,15 +159,18 @@ func (h *Hub) GetClient(id uint64) (Client, bool) {
 
 // Returns true if the account is already logged in
 func (h *Hub) IsAlreadyConnected(username string) bool {
-	found := false
+	var found bool = false
+
 	// Goes over the whole list of clients
 	h.Clients.ForEachWithBreak(func(id uint64, client Client) bool {
-		// If this account is already connected
+		// Check if this username is in our Hub
 		if client.GetAccountUsername() == username {
 			found = true
+			return true
 		}
-		return found
+		return false
 	})
+
 	return found
 }
 

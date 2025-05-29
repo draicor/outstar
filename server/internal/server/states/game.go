@@ -203,6 +203,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_JoinRegionRequest:
 			state.HandleJoinRegionRequest(casted_payload.JoinRegionRequest)
 
+		// LOGOUT REQUEST
+		case *packets.Packet_LogoutRequest:
+			state.HandleLogoutRequest()
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -295,19 +299,49 @@ func (state *Game) HandleJoinRegionRequest(payload *packets.JoinRegionRequest) {
 	})
 }
 
+// Sent by the client to go back to the login state
+func (state *Game) HandleLogoutRequest() {
+	character := state.client.GetPlayerCharacter()
+	if character != nil {
+		// Server logging
+		state.logger.Printf("%s has logged out", character.Name)
+
+		// Store this player's character data on logout
+		err := state.client.GetHub().SaveCharacter(state.client)
+		if err != nil {
+			state.logger.Printf("Failed to save character to database: %v", err)
+		}
+
+		// Broadcast to everyone that this client left before we remove it from the hub/region
+		state.client.Broadcast(packets.NewClientLeft(state.client.GetId(), character.Name))
+	}
+
+	// If we are connected to a region, remove the client from this region
+	if state.client.GetRegion() != nil {
+		state.client.GetRegion().RemoveClientChannel <- state.client
+		time.Sleep(50 * time.Millisecond) // Brieft pause
+		state.client.SetRegion(nil)
+	}
+
+	// Clear the previous account data from this connection
+	state.client.SetAccountUsername("")
+	state.client.SetCharacterId(0)
+	state.client.SetPlayerCharacter(nil)
+
+	// Switch the client to the Authentication state
+	state.client.SetState(&Authentication{})
+}
+
 // Executed automatically when a client leaves the game state
 func (state *Game) OnExit() {
-	// We don't broadcast the client leaving here because
-	// we are doing it from the websocket.go
+	// We broadcast the client leaving in websocket.go close()
+	// We save the client's data in the database in websocket.go close()
+	// We remove the player from the grid in region.go
 
-	// Store this client's data to the database before leaving this state
-
-	// We stop the player update loop if we leave the Game state
+	// We stop the player update loop
 	if state.cancelPlayerUpdateLoop != nil {
 		state.cancelPlayerUpdateLoop()
 	}
-
-	// We are removing the player from the grid in the region code
 
 	// Remove this player from the list of players from the Hub
 	state.client.GetHub().SharedObjects.Players.Remove(state.client.GetId())

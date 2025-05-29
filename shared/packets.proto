@@ -24,6 +24,7 @@ message RegisterRequest { // Sent by client to register
   string gender = 4;
 }
 message LoginSuccess { string nickname = 1; } // Sent by the server after successful login
+message LogoutRequest {} // Sent by client
 // Notifies
 message ClientEntered { string nickname = 1; } // Sent by the client once his client is ready, broadcasted to everyone
 message ClientLeft { uint64 id = 1; string nickname = 2; } // Broadcast by the server if a client leaves
@@ -34,6 +35,7 @@ message RegionData { // Sent by the server as metadata (grid data, static obstac
   uint64 grid_width = 2;
   uint64 grid_height = 3;
 }
+// Player
 message Position { uint64 x = 1; uint64 z = 2; } // Used to broadcast positions in a region
 message UpdatePlayer { // Sent by the server to update a player character (Used to spawn as well)
   uint64 id = 1;
@@ -63,16 +65,17 @@ message Packet {
     LoginRequest login_request = 8; // Client
     RegisterRequest register_request = 9; // Client
     LoginSuccess login_success = 10; // Server
+    LogoutRequest logout_request = 11; // Client
     // Notifies
-    ClientEntered client_entered = 11; // Both [Change this to be Server only!]
-    ClientLeft client_left = 12; // Server
+    ClientEntered client_entered = 12; // Both [Change this to be Server only!]
+    ClientLeft client_left = 13; // Server
     // Region
-    JoinRegionRequest join_region_request = 13; // Client
-    RegionData region_data = 14; // Server
+    JoinRegionRequest join_region_request = 14; // Client
+    RegionData region_data = 15; // Server
     // Player
-    Position position = 15;
-    UpdatePlayer update_player = 16; // Server
-    PlayerDestination player_destination = 17; // Both
-    UpdateSpeed update_speed = 18; // Both
+    Position position = 16;
+    UpdatePlayer update_player = 17; // Server
+    PlayerDestination player_destination = 18; // Both
+    UpdateSpeed update_speed = 19; // Both
   }
 }

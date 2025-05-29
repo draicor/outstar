@@ -149,6 +149,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 		deniedMessage = packets.NewRequestDenied("Account already connected")
 		state.client.SendPacket(deniedMessage)
 		return
+
 	}
 
 	// We save the username in our server's memory to prevent others from connecting

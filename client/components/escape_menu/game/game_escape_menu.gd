@@ -29,9 +29,8 @@ func _on_heartbeat_received() -> void:
 func _on_resume_pressed() -> void:
 	toggle()
 
-# If we have a valid multiplayer peer, emit the disconnect signal to server.gd
-func _on_disconnect_pressed() -> void:
-	toggle()
+func _on_logout_pressed() -> void:
+	Signals.ui_logout.emit()
 
 func _on_quit_pressed() -> void:
 	# Replace this with a better safer way to quit

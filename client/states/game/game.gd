@@ -33,6 +33,7 @@ func _initialize() -> void:
 	Signals.heartbeat_attempt.connect(_on_websocket_heartbeat_attempt)
 	# User Interface signals
 	Signals.ui_escape_menu_toggle.connect(_on_ui_escape_menu_toggle)
+	Signals.ui_logout.connect(_handle_signal_ui_logout)
 	# Chat signals, ui_chat_input_toggle is called from Main.gd
 	Signals.ui_chat_input_toggle.connect(_on_ui_chat_input_toggle)
 	chat_input.text_submitted.connect(_on_chat_input_text_submitted)
@@ -154,6 +155,21 @@ func _on_chat_input_text_submitted(text: String) -> void:
 # If the ui_escape key is pressed, toggle the escape menu
 func _on_ui_escape_menu_toggle() -> void:
 	game_escape_menu.toggle()
+
+
+# Used to request the server to switch us to the authentication state
+func _handle_signal_ui_logout() -> void:
+	# We create a new packet of type logout request
+	var packet := packets.Packet.new()
+	packet.new_logout_request()
+	
+	# This serializes and sends our message
+	var err := WebSocket.send(packet)
+	# If we sent the packet, emit it
+	if !err:
+		Signals.heartbeat_sent.emit()
+		# Switch our local state to the authentication too
+		GameManager.set_state(GameManager.State.AUTHENTICATION)
 
 
 # If the ui_enter key is pressed, toggle the chat input

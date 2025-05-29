@@ -20,7 +20,7 @@ signal heartbeat_received
 
 # User Interface signals
 signal ui_escape_menu_toggle
-#signal ui_disconnect
+signal ui_logout
 signal ui_chat_input_toggle
 signal ui_zoom_in
 signal ui_zoom_out
