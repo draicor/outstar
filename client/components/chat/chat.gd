@@ -48,3 +48,12 @@ func _scroll_to_bottom() -> void:
 	# Await here to give the engine time to catch up
 	await scroll_container.get_v_scroll_bar().changed
 	scroll_container.scroll_vertical =  int(scroll_container.get_v_scroll_bar().max_value)
+
+
+# Signal connected on the editor
+func _on_scroll_container_gui_input(event: InputEvent) -> void:
+	if event.is_action("zoom_in") or event.is_action("zoom_out"):
+		# Blocks the zoom actions from propagating and
+		# prevents scrolling the chat history, it has to be done manually
+		# using the grabber
+		accept_event()
