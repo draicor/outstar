@@ -1,7 +1,10 @@
 extends Control
 
+@export var MESSAGE_MARGIN_LEFT: int = 5
+
 @onready var scroll_container: ScrollContainer = $ScrollContainer
 @onready var v_box_container: VBoxContainer = $ScrollContainer/VBoxContainer
+
 
 func info(message: String) -> void:
 	_instantiate_message().info(message)
@@ -20,8 +23,13 @@ func public(sender_name: String, message: String, color: Color) -> void:
 
 func _instantiate_message() -> Message:
 	var m = Message.new()
+	# We add a margin container and append it to every message object
+	var margin = MarginContainer.new()
+	margin.add_child(m, false)
+	margin.add_theme_constant_override("margin_left", MESSAGE_MARGIN_LEFT)
+	
 	# We add it to the VBoxContainer with force readable name set to false
-	v_box_container.add_child(m, false)
+	v_box_container.add_child(margin, false)
 	
 	# If we are at the bottom of the chat window, we auto scroll down
 	if _should_auto_scroll():

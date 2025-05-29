@@ -1,3 +1,4 @@
+MarginContainer
 Marker3D
 Node3D
 Node
@@ -6,7 +7,6 @@ CheckBox
 VBoxContainer
 HBoxContainer
 NinePatchRect
-MarginContainer
 Label
 TextureRect
 CanvasLayer

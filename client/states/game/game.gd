@@ -73,7 +73,7 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 # Print the message into our chat window and update that player's chat bubble
 func _handle_public_message_packet(sender_id: int, packet_public_message: packets.PublicMessage) -> void:
 	# We print the nickname and then the message contents
-	# chat.public("%s" % packet_public_message.get_nickname(), packet_public_message.get_text(), Color.LIGHT_SEA_GREEN)
+	chat.public("%s" % packet_public_message.get_nickname(), packet_public_message.get_text(), Color.LIGHT_SEA_GREEN)
 	# If the id is on our players dictionary
 	if sender_id in _players:
 		# Attempt to retrieve the player character object
@@ -122,7 +122,7 @@ func _handle_client_left_packet(client_left_packet: packets.ClientLeft) -> void:
 			player.queue_free()
 	
 	# Displays a message in the chat window
-	# chat.info("%s left" % client_left_packet.get_nickname())
+	chat.info("%s left" % client_left_packet.get_nickname())
 
 
 # if our client presses the enter key in the chat
@@ -144,7 +144,7 @@ func _on_chat_input_text_submitted(text: String) -> void:
 	else:
 		# Grab our client's nickname from the GameManager autoload
 		# and display our own message in our client
-		# chat.public(GameManager.client_nickname, text, Color.CYAN)
+		chat.public(GameManager.client_nickname, text, Color.CYAN)
 		# Update my character's chat bubble!
 		GameManager.player_character.new_chat_bubble(text)
 	

@@ -4,6 +4,10 @@ extends RichTextLabel
 func _init() -> void:
 	# This makes this label visible inside a container
 	set_fit_content(true)
+	# Set mouse filter to ignore (pass through) mouse events,
+	# to allow the player to click through the chat window
+	mouse_filter = MOUSE_FILTER_IGNORE
+
 
 # Internal function to add a text to the log with a color
 func _add_text(message: String, color: Color = Color.WHITE) -> void:
