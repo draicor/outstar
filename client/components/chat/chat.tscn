@@ -14,35 +14,48 @@ grow_vertical = 2
 mouse_filter = 1
 script = ExtResource("1_6nsy3")
 
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
-layout_direction = 3
+[node name="ChatContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
-anchors_preset = -1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_bottom = -33.0
 grow_horizontal = 2
 grow_vertical = 2
+alignment = 2
+
+[node name="ChatButtonRow" type="VBoxContainer" parent="ChatContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_constants/separation = 0
+
+[node name="HistoryCheckButton" type="CheckButton" parent="ChatContainer/ChatButtonRow"]
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="ChatHistory" type="PanelContainer" parent="ChatContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="ChatContainer/ChatHistory"]
+layout_direction = 3
+layout_mode = 2
 follow_focus = true
 horizontal_scroll_mode = 0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
+[node name="MessagesContainer" type="VBoxContainer" parent="ChatContainer/ChatHistory/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 10
 
-[node name="Input" type="LineEdit" parent="."]
-visible = false
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -31.0
-grow_horizontal = 2
-grow_vertical = 0
+[node name="ChatInput" type="LineEdit" parent="ChatContainer"]
+layout_mode = 2
+size_flags_vertical = 0
 max_length = 50
 caret_blink = true
 caret_blink_interval = 0.5
+caret_force_displayed = true
 
-[connection signal="gui_input" from="ScrollContainer" to="." method="_on_scroll_container_gui_input"]
+[connection signal="toggled" from="ChatContainer/ChatButtonRow/HistoryCheckButton" to="." method="_on_history_check_button_toggled"]
+[connection signal="gui_input" from="ChatContainer/ChatHistory/ScrollContainer" to="." method="_on_scroll_container_gui_input"]

@@ -112,13 +112,11 @@ func _snap_rotation_to_step(angle: float, step: float) -> float:
 
 
 func _handle_signal_ui_zoom_in() -> void:
-	if not is_typing:
-		zoom_direction = -1 # Negative for zooming in (closer)
+	zoom_direction = -1 # Negative for zooming in (closer)
 
 
 func _handle_signal_ui_zoom_out() -> void:
-	if not is_typing:
-		zoom_direction = 1 # Positive for zooming out (farther)
+	zoom_direction = 1 # Positive for zooming out (farther)
 
 
 func _handle_signal_ui_rotate_camera_left() -> void:

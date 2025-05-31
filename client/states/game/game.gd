@@ -15,6 +15,7 @@ var _players: Dictionary[int, Player]
 @onready var ui_canvas: CanvasLayer = $UI
 @onready var chat: Control = $UI/VBoxContainer/Chat
 
+var chat_container: VBoxContainer
 var chat_input: LineEdit
 var game_escape_menu
 
@@ -25,7 +26,8 @@ func _ready() -> void:
 
 func _initialize() -> void:
 	# Get access to the child nodes of the chat UI
-	chat_input = chat.find_child("Input")
+	chat_container = chat.find_child("ChatContainer")
+	chat_input = chat.find_child("ChatInput")
 	
 	# Websocket signals
 	Signals.connection_closed.connect(_on_websocket_connection_closed)
@@ -34,9 +36,8 @@ func _initialize() -> void:
 	# User Interface signals
 	Signals.ui_escape_menu_toggle.connect(_on_ui_escape_menu_toggle)
 	Signals.ui_logout.connect(_handle_signal_ui_logout)
-	# Chat signals, ui_chat_input_toggle is called from Main.gd
-	Signals.ui_chat_input_toggle.connect(_on_ui_chat_input_toggle)
-	chat_input.text_submitted.connect(_on_chat_input_text_submitted)
+	# Chat signals
+	Signals.chat_public_message_sent.connect(_handle_signal_chat_public_message_sent)
 	
 	# Create and add the escape menu to the UI canvas layer, hidden
 	game_escape_menu = game_escape_menu_scene.instantiate()
@@ -126,10 +127,9 @@ func _handle_client_left_packet(client_left_packet: packets.ClientLeft) -> void:
 
 
 # if our client presses the enter key in the chat
-func _on_chat_input_text_submitted(text: String) -> void:
-	# Ignore this if the message was empty and release focus!
-	if chat_input.text.is_empty():
-		chat_input.release_focus()
+func _handle_signal_chat_public_message_sent(text: String) -> void:
+	# Ignore this if the message was empty
+	if text.is_empty():
 		return
 	
 	# Create the public_message packet
@@ -147,9 +147,6 @@ func _on_chat_input_text_submitted(text: String) -> void:
 		chat.public(GameManager.client_nickname, text, Color.CYAN)
 		# Update my character's chat bubble!
 		GameManager.player_character.new_chat_bubble(text)
-	
-	# We clear the line edit
-	chat_input.text = ""
 
 
 # If the ui_escape key is pressed, toggle the escape menu
@@ -170,13 +167,6 @@ func _handle_signal_ui_logout() -> void:
 		Signals.heartbeat_sent.emit()
 		# Switch our local state to the authentication too
 		GameManager.set_state(GameManager.State.AUTHENTICATION)
-
-
-# If the ui_enter key is pressed, toggle the chat input
-func _on_ui_chat_input_toggle() -> void:
-	chat_input.visible = !chat_input.visible
-	if chat_input.visible:
-		chat_input.grab_focus()
 
 
 func _send_client_entered_packet() -> bool:
