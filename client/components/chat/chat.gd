@@ -20,7 +20,10 @@ func _ready() -> void:
 	
 	# Disable focus for the toggle button
 	history_check_button.focus_mode = Control.FOCUS_NONE
-	
+	# Disable shortcut keys
+	chat_input.shortcut_keys_enabled = false
+	# Disable right click menu
+	chat_input.context_menu_enabled = false
 	# Semi-transparent scrollbar
 	scroll_container.get_v_scroll_bar().modulate.a = 0.7
 	
