@@ -31,7 +31,7 @@ func _init() -> void:
 	# Hide this on _init() so we don't have to hide it in the editor
 	hide()
 
-func _ready() -> void:	
+func _ready() -> void:
 	# Make the panel transparent on _ready() because we can't do it on _init()
 	panel_container.modulate = Color.TRANSPARENT
 	_clear_text()
@@ -104,8 +104,13 @@ func _on_timer_timeout() -> void:
 
 # Emits a signal when fading out
 func fade_out(fade_duration: float) -> void:
-	if fade_tween: fade_tween.kill()
-	fade_tween = get_tree().create_tween()
+	# Remove any tweens if valid
+	if fade_tween:
+		fade_tween.kill()
+		fade_tween = null
+	
+	# Create a new tween to fade this bubble out
+	fade_tween = create_tween()
 	fade_tween.tween_property(panel_container, "modulate", Color.TRANSPARENT, fade_duration)
 	# Create an anonymous funtion to report the bubble is NOT active
 	fade_tween.finished.connect(func():
@@ -123,11 +128,10 @@ func _fade_in(fade_duration: float) -> void:
 	fade_tween.finished.connect(func(): is_bubble_active = true)
 
 
-# Calculate height in 3D space
-func get_bubble_height() -> float:
-	# Return the actual height of the bubble content
-	return margin_container.size.y * 0.01 # Convert pixels to 3D units
-
+# Used in chat_bubble_manager.gd
+# Returns the number of visible text lines
+func get_line_count() -> int:
+	return label.get_line_count()
 
 #func _input(event):
 #	if event.is_action_pressed("space"):

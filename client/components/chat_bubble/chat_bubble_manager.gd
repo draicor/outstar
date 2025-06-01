@@ -2,18 +2,20 @@ extends Node3D
 
 const MAX_BUBBLES: int = 2
 const MAX_TOTAL_HEIGHT: float = 3.0 # Max Height in meters
-const BUBBLE_SPACING: float = 0.15 # Space between bubbles in meters
-const MESSAGE_MAX_LENGTH: int = 35
-const FADE_OUT_DURATION = 0.25
+const BUBBLE_SPACING: float = 0.2 # Space between bubbles in meters
+const BASE_OFFSET = 0.15
+const MIN_BUBBLE_HEIGHT: float = 0.15 # Min height for single bubbles in meters
+const LINE_HEIGHT = 0.25 # Additional height per extra line
+const FADE_OUT_DURATION = 0.25 # Same as chat_bubble.gd fade-out
+# Character threshold, more than 50 and it won't display with other bubbles
+const MESSAGE_MAX_LENGTH: int = 50
 
 @onready var chat_bubble_scene: PackedScene = preload("res://components/chat_bubble/chat_bubble.tscn")
 
 var active_bubbles = []
-var bubble_queue = [] # Messages waiting to be shown
-
 
 func show_bubble(message: String) -> void:
-	# Check if we have any long messages currently active
+	# Check for existing long messages
 	var has_long_message: bool = false
 	for bubble in active_bubbles:
 		if bubble.is_long_message:
@@ -29,7 +31,7 @@ func show_bubble(message: String) -> void:
 			new_bubble.is_long_message = true
 		return
 	
-	# If we are at max bubbles, remove the oldest bubble immediately
+	# Remove oldest bubble if we're at max capacity
 	if active_bubbles.size() >= MAX_BUBBLES:
 		var oldest_bubble = active_bubbles[0]
 		oldest_bubble.fade_out(FADE_OUT_DURATION)
@@ -37,19 +39,6 @@ func show_bubble(message: String) -> void:
 	
 	# Now create the new bubble
 	_create_bubble(message)
-	_position_bubbles()
-
-
-func _process_queue() -> void:
-	# Remove expired bubbles first
-	_cleanup_expired_bubbles()
-	
-	# Show as many bubbles as possible
-	while bubble_queue.size() > 0 and active_bubbles.size() < MAX_BUBBLES:
-		var message: String = bubble_queue.pop_front()
-		_create_bubble(message)
-	
-	# Update bubble positions
 	_position_bubbles()
 
 
@@ -63,7 +52,6 @@ func _create_bubble(message: String) -> Node:
 		new_bubble.bubble_finished.connect(_on_bubble_finished.bind(new_bubble))
 	
 	active_bubbles.append(new_bubble)
-	
 	return new_bubble
 
 
@@ -73,53 +61,56 @@ func _on_bubble_finished(bubble: Node) -> void:
 	if index != -1:
 		active_bubbles.remove_at(index)
 	
-	# Process queue again
-	_process_queue()
+	# After clearing a bubble re-position all bubbles
+	_position_bubbles()
 
 
 func _position_bubbles() -> void:
-	var current_height = 0.0
+	# Don't create tween if no bubbles need moving
+	if active_bubbles.size() == 0:
+		return
+	
+	var tween = create_tween()
+	tween.set_parallel(true)
+	
+	var current_height = BASE_OFFSET
 	
 	# Position bubbles from bottom to top in reverse order,
 	# so newest bubbles are closer to the character
 	for i in range(active_bubbles.size() -1, -1, -1):
 		var bubble = active_bubbles[i]
 		# Get the bubble height in 3D space 
-		var bubble_height = bubble.get_bubble_height()
+		var bubble_height = _calculate_bubble_height(bubble)
 		
-		# Position bubble
-		bubble.position = Vector3(0, current_height, 0)
+		var target_pos = Vector3(0, current_height, 0)
+		tween.tween_property(bubble, "position", target_pos, 0.2)
 		
 		# Update current height
 		current_height += bubble_height + BUBBLE_SPACING
 		
 		# Stop if we've reached max height
 		if current_height > MAX_TOTAL_HEIGHT:
-			# Remove extra bubbles (oldest ones)
+			# Remove oldest bubbles that don't fit
 			for j in range(0, i):
-				active_bubbles[j].queue_free()
+				active_bubbles[j].fade_out(FADE_OUT_DURATION)
 			
 			active_bubbles = active_bubbles.slice(i, active_bubbles.size())
 			break
 
 
-# Remove any bubbles that have finished
-func _cleanup_expired_bubbles() -> void:
-	for i in range(active_bubbles.size() -1, -1, -1):
-		if not is_instance_valid(active_bubbles[i]) or active_bubbles[i].is_queued_for_deletion():
-			active_bubbles.remove_at(i)
-
-
-# Clears both bubble arrays and destroys every active bubble
+# Clears array and destroys every active bubble
 func clear_all_bubbles() -> void:
 	for bubble in active_bubbles:
-		bubble.queue_free()
+		bubble.fade_out(FADE_OUT_DURATION)
 	active_bubbles.clear()
-	bubble_queue.clear()
 
 
-func get_bubble_height(bubble: Node) -> float:
-	# Get the actual height from the bubble
-	var pixel_height = bubble.get_bubble_height()
-	# Convert to 3D space
-	return pixel_height * 0.01 # Example scale factor
+func _calculate_bubble_height(bubble: Node) -> float:
+	# Get line count from the bubble
+	var line_count = bubble.get_line_count()
+	
+	# Calculate height based on line count
+	var height = MIN_BUBBLE_HEIGHT + (LINE_HEIGHT * (line_count - 1))
+	
+	# Ensure we never return less than minimun height
+	return max(height, MIN_BUBBLE_HEIGHT)
