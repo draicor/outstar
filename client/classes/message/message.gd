@@ -10,6 +10,11 @@ func _init() -> void:
 	# Set mouse filter to ignore (pass through) mouse events,
 	# to allow the player to click through the chat window
 	mouse_filter = MOUSE_FILTER_IGNORE
+	# Enable text wrapping
+	autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll_active = false
 
 
 # Internal function to add a text to the log with a color

@@ -42,7 +42,7 @@ mouse_filter = 1
 layout_direction = 3
 layout_mode = 2
 follow_focus = true
-horizontal_scroll_mode = 0
+horizontal_scroll_mode = 3
 
 [node name="MessagesContainer" type="VBoxContainer" parent="ChatContainer/ChatHistory/ScrollContainer"]
 layout_mode = 2
@@ -50,9 +50,10 @@ size_flags_horizontal = 3
 size_flags_vertical = 10
 
 [node name="ChatInput" type="LineEdit" parent="ChatContainer"]
+clip_contents = true
 layout_mode = 2
 size_flags_vertical = 0
-max_length = 50
+max_length = 100
 caret_blink = true
 caret_blink_interval = 0.5
 caret_force_displayed = true
