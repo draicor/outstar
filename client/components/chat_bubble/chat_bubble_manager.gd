@@ -1,11 +1,11 @@
 extends Node3D
 
+@export var BUBBLE_HEIGHT_OFFSET = 0.0 # Y-axis offset
+
 const MAX_BUBBLES: int = 2
 const MAX_TOTAL_HEIGHT: float = 3.0 # Max Height in meters
-const BUBBLE_SPACING: float = 0.2 # Space between bubbles in meters
-const BASE_OFFSET = 0.15
-const MIN_BUBBLE_HEIGHT: float = 0.15 # Min height for single bubbles in meters
-const LINE_HEIGHT = 0.25 # Additional height per extra line
+const BUBBLE_SPACING: float = 0.1 # Space between bubbles in meters
+const LINE_HEIGHT = 0.15 # Additional height per extra line
 const FADE_OUT_DURATION = 0.25 # Same as chat_bubble.gd fade-out
 # Character threshold, more than 50 and it won't display with other bubbles
 const MESSAGE_MAX_LENGTH: int = 50
@@ -72,20 +72,28 @@ func _position_bubbles() -> void:
 	
 	var tween = create_tween()
 	tween.set_parallel(true)
+	var has_tweeners = false
 	
-	var current_height = BASE_OFFSET
+	# Spawn the bubble here first
+	var current_height = BUBBLE_HEIGHT_OFFSET
 	
 	# Position bubbles from bottom to top in reverse order,
 	# so newest bubbles are closer to the character
 	for i in range(active_bubbles.size() -1, -1, -1):
 		var bubble = active_bubbles[i]
-		# Get the bubble height in 3D space 
-		var bubble_height = _calculate_bubble_height(bubble)
+		var bubble_height = _get_bubble_height(bubble)
 		
-		var target_pos = Vector3(0, current_height, 0)
-		tween.tween_property(bubble, "position", target_pos, 0.2)
+		# Get the visual center position for this bubble
+		var bubble_center = current_height + (bubble_height / 2.0)
 		
-		# Update current height
+		var target_pos = Vector3(0, bubble_center, 0)
+		
+		# Only tween if position changed
+		if abs(bubble.position.y - target_pos.y) > 0.01:
+			tween.tween_property(bubble, "position", target_pos, 0.2)
+			has_tweeners = true
+		
+		# Move up for next bubble
 		current_height += bubble_height + BUBBLE_SPACING
 		
 		# Stop if we've reached max height
@@ -96,6 +104,10 @@ func _position_bubbles() -> void:
 			
 			active_bubbles = active_bubbles.slice(i, active_bubbles.size())
 			break
+	
+	# If we are not moving our bubble, clear the tween
+	if not has_tweeners and tween:
+		tween.kill()
 
 
 # Clears array and destroys every active bubble
@@ -105,12 +117,6 @@ func clear_all_bubbles() -> void:
 	active_bubbles.clear()
 
 
-func _calculate_bubble_height(bubble: Node) -> float:
-	# Get line count from the bubble
-	var line_count = bubble.get_line_count()
-	
-	# Calculate height based on line count
-	var height = MIN_BUBBLE_HEIGHT + (LINE_HEIGHT * (line_count - 1))
-	
-	# Ensure we never return less than minimun height
-	return max(height, MIN_BUBBLE_HEIGHT)
+# Returns the accurate height of the bubble's content
+func _get_bubble_height(bubble: Node) -> float:
+	return bubble.get_content_height()

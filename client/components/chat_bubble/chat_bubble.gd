@@ -102,6 +102,7 @@ func _on_timer_timeout() -> void:
 	fade_out(FADE_OUT_DURATION)
 
 
+# Used to fade out this bubble into the scene
 # Emits a signal when fading out
 func fade_out(fade_duration: float) -> void:
 	# Remove any tweens if valid
@@ -120,6 +121,7 @@ func fade_out(fade_duration: float) -> void:
 	)
 
 
+# Used to fade in this bubble into the scene
 func _fade_in(fade_duration: float) -> void:
 	if fade_tween: fade_tween.kill()
 	fade_tween = get_tree().create_tween()
@@ -128,11 +130,7 @@ func _fade_in(fade_duration: float) -> void:
 	fade_tween.finished.connect(func(): is_bubble_active = true)
 
 
-# Used in chat_bubble_manager.gd
-# Returns the number of visible text lines
-func get_line_count() -> int:
-	return label.get_line_count()
-
-#func _input(event):
-#	if event.is_action_pressed("space"):
-#		set_text("okay this is a test and it sucks!,okay this is a test and it sucks!")
+# Returns the actual pixel height of the content
+# Used in chat_bubble_manager to properly spawn the bubble
+func get_content_height() -> float:
+	return margin_container.size.y * 0.01 # Convert to 3D units
