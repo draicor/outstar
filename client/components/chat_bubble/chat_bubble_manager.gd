@@ -5,7 +5,7 @@ extends Node3D
 const MAX_BUBBLES: int = 2
 const MAX_TOTAL_HEIGHT: float = 3.0 # Max Height in meters
 const BUBBLE_SPACING: float = 0.1 # Space between bubbles in meters
-const LINE_HEIGHT = 0.15 # Additional height per extra line
+const LINE_HEIGHT = 0.18 # Additional height per extra line
 const FADE_OUT_DURATION = 0.25 # Same as chat_bubble.gd fade-out
 # Character threshold, more than 50 and it won't display with other bubbles
 const MESSAGE_MAX_LENGTH: int = 50
@@ -13,6 +13,7 @@ const MESSAGE_MAX_LENGTH: int = 50
 @onready var chat_bubble_scene: PackedScene = preload("res://components/chat_bubble/chat_bubble.tscn")
 
 var active_bubbles = []
+
 
 func show_bubble(message: String) -> void:
 	# Check for existing long messages
@@ -86,6 +87,7 @@ func _position_bubbles() -> void:
 		# Get the visual center position for this bubble
 		var bubble_center = current_height + (bubble_height / 2.0)
 		
+		# Bubble target position
 		var target_pos = Vector3(0, bubble_center, 0)
 		
 		# Only tween if position changed
@@ -110,6 +112,11 @@ func _position_bubbles() -> void:
 		tween.kill()
 
 
+# Returns the accurate height of the bubble's content
+func _get_bubble_height(bubble: Node) -> float:
+	return bubble.get_content_height()
+
+
 # Clears array and destroys every active bubble
 func clear_all_bubbles() -> void:
 	for bubble in active_bubbles:
@@ -117,6 +124,6 @@ func clear_all_bubbles() -> void:
 	active_bubbles.clear()
 
 
-# Returns the accurate height of the bubble's content
-func _get_bubble_height(bubble: Node) -> float:
-	return bubble.get_content_height()
+# Release the bubbles if this gets destroyed
+func _exit_tree() -> void:
+	clear_all_bubbles()
