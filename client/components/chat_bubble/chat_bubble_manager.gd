@@ -3,7 +3,7 @@ extends Node3D
 const MAX_BUBBLES: int = 2
 const MAX_TOTAL_HEIGHT: float = 3.0 # Max Height in meters
 const BUBBLE_SPACING: float = 0.15 # Space between bubbles in meters
-const MESSAGE_MAX_LENGTH: int = 50
+const MESSAGE_MAX_LENGTH: int = 35
 const FADE_OUT_DURATION = 0.25
 
 @onready var chat_bubble_scene: PackedScene = preload("res://components/chat_bubble/chat_bubble.tscn")
@@ -13,11 +13,20 @@ var bubble_queue = [] # Messages waiting to be shown
 
 
 func show_bubble(message: String) -> void:
-	# If message is too long
-	if message.length() > MESSAGE_MAX_LENGTH:
+	# Check if we have any long messages currently active
+	var has_long_message: bool = false
+	for bubble in active_bubbles:
+		if bubble.is_long_message:
+			has_long_message = true
+			break
+	
+	# Hand long messages (either new or existing)
+	if has_long_message or message.length() > MESSAGE_MAX_LENGTH:
 		# Clear all existing bubbles and spawn the new bubble
 		clear_all_bubbles()
-		_create_bubble(message)
+		var new_bubble = _create_bubble(message)
+		if message.length() > MESSAGE_MAX_LENGTH:
+			new_bubble.is_long_message = true
 		return
 	
 	# If we are at max bubbles, remove the oldest bubble immediately
@@ -44,7 +53,7 @@ func _process_queue() -> void:
 	_position_bubbles()
 
 
-func _create_bubble(message: String) -> void:
+func _create_bubble(message: String) -> Node:
 	var new_bubble = chat_bubble_scene.instantiate()
 	add_child(new_bubble)
 	new_bubble.set_text(message)
@@ -54,6 +63,8 @@ func _create_bubble(message: String) -> void:
 		new_bubble.bubble_finished.connect(_on_bubble_finished.bind(new_bubble))
 	
 	active_bubbles.append(new_bubble)
+	
+	return new_bubble
 
 
 # Removes bubble from active list

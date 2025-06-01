@@ -15,8 +15,10 @@ const CHAT_BUBBLE_ORIGIN_Y_OFFSET = 0.1 # Used to multiply against the number of
 const FADE_IN_DURATION = 0.25
 const FADE_OUT_DURATION = 0.25
 const CHAT_SPEECH_DISPLAY_TIME = 15.0 # Time before fading out the speech bubble
+const MESSAGE_MAX_LENGTH: int = 35
 
 var is_bubble_active = false # Used to reset the timer and update the text without fading
+var is_long_message = false
 var fade_tween: Tween
 
 # To get a character's width and height:
@@ -52,6 +54,9 @@ func set_text(new_text: String) -> void:
 	
 	# Update our label's contents
 	label.text = new_text
+	
+	if new_text.length() > MESSAGE_MAX_LENGTH:
+		is_long_message = true
 	
 	# Await a frame so the label size updates
 	await get_tree().process_frame
