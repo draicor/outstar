@@ -44,7 +44,7 @@ func set_text(new_text: String) -> void:
 	# If a bubble is already active, reset the timer without fading
 	if is_bubble_active:
 		timer.stop()
-		_fade_out(FADE_OUT_DURATION)
+		fade_out(FADE_OUT_DURATION)
 		await get_tree().create_timer(FADE_OUT_DURATION).timeout
 	
 	# We clear the previous message and resize our container
@@ -94,11 +94,11 @@ func _clear_text() -> void:
 
 # Used to start the fade out transition
 func _on_timer_timeout() -> void:
-	_fade_out(FADE_OUT_DURATION)
+	fade_out(FADE_OUT_DURATION)
 
 
 # Emits a signal when fading out
-func _fade_out(fade_duration: float) -> void:
+func fade_out(fade_duration: float) -> void:
 	if fade_tween: fade_tween.kill()
 	fade_tween = get_tree().create_tween()
 	fade_tween.tween_property(panel_container, "modulate", Color.TRANSPARENT, fade_duration)
@@ -120,8 +120,8 @@ func _fade_in(fade_duration: float) -> void:
 
 # Calculate height in 3D space
 func get_bubble_height() -> float:
-	var pixel_height = sub_viewport.size.y
-	return pixel_height / 100.0 # Adjust scale factor as needed
+	# Return the actual height of the bubble content
+	return margin_container.size.y * 0.01 # Convert pixels to 3D units
 
 
 #func _input(event):
