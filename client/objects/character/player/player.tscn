@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://xgut27qtlpbd"]
 
 [ext_resource type="Script" uid="uid://bflh4x8wu5ha6" path="res://objects/character/player/player.gd" id="1_jpa1g"]
-[ext_resource type="PackedScene" uid="uid://cv2i471rse4tl" path="res://components/chat_bubble/chat_bubble.tscn" id="2_gmfbp"]
+[ext_resource type="Script" uid="uid://bqhpdb68qhd57" path="res://components/chat_bubble/chat_bubble_manager.gd" id="2_634de"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_634de"]
 radius = 0.3
@@ -26,4 +26,5 @@ transform = Transform3D(1, 0, 0, 0, 0.707106, 0.707106, 0, -0.707106, 0.707106, 
 [node name="ChatBubbleOrigin" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 
-[node name="ChatBubble" parent="ChatBubbleOrigin" instance=ExtResource("2_gmfbp")]
+[node name="ChatBubbleManager" type="Node3D" parent="ChatBubbleOrigin"]
+script = ExtResource("2_634de")

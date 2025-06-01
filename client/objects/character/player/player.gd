@@ -107,7 +107,7 @@ var current_character: Node = null
 @onready var animation_player: AnimationPlayer # Assigned by code later
 @onready var model: Node3D = $Model # Used to attach the model and rotate it
 @onready var camera_rig: Node3D = $CameraPivot/CameraRig # Used to attach the camera
-@onready var chat_bubble: Node3D = $ChatBubbleOrigin/ChatBubble # Where chat bubbles spawn
+@onready var chat_bubble_manager: Node3D = $ChatBubbleOrigin/ChatBubbleManager # Where chat bubbles spawn
 
 
 static func instantiate(
@@ -792,7 +792,7 @@ func _change_animation(animation: String, play_rate: float) -> void:
 
 # Used to update the text inside our chat bubble
 func new_chat_bubble(message: String) -> void:
-	chat_bubble.set_text(message)
+	chat_bubble_manager.show_bubble(message)
 
 
 # Should be called once per path slice to recalculate the move speed

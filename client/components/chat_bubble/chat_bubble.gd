@@ -1,9 +1,12 @@
 extends Node3D
+
 @onready var sub_viewport: SubViewport = $Sprite3D/SubViewport
 @onready var label: Label = $Sprite3D/SubViewport/PanelContainer/MarginContainer/Label
 @onready var margin_container: MarginContainer = $Sprite3D/SubViewport/PanelContainer/MarginContainer
 @onready var panel_container: PanelContainer = $Sprite3D/SubViewport/PanelContainer
 @onready var timer: Timer = $Timer
+
+signal bubble_finished
 
 const MIN_WIDTH = 18 # 10p for the font + 8 for the left/right margins
 const MIN_HEIGHT = 31 # 23p for the font + 8 for top/bottom margins
@@ -88,16 +91,24 @@ func _clear_text() -> void:
 	# Copy the new size to be the size of our sub viewport
 	sub_viewport.size = margin_container.custom_minimum_size
 
+
 # Used to start the fade out transition
 func _on_timer_timeout() -> void:
 	_fade_out(FADE_OUT_DURATION)
 
+
+# Emits a signal when fading out
 func _fade_out(fade_duration: float) -> void:
 	if fade_tween: fade_tween.kill()
 	fade_tween = get_tree().create_tween()
 	fade_tween.tween_property(panel_container, "modulate", Color.TRANSPARENT, fade_duration)
 	# Create an anonymous funtion to report the bubble is NOT active
-	fade_tween.finished.connect(func(): is_bubble_active = false)
+	fade_tween.finished.connect(func():
+		is_bubble_active = false
+		bubble_finished.emit() # After fully fading, emit this signal
+		queue_free() # Remove bubble after fading
+	)
+
 
 func _fade_in(fade_duration: float) -> void:
 	if fade_tween: fade_tween.kill()
@@ -105,6 +116,13 @@ func _fade_in(fade_duration: float) -> void:
 	fade_tween.tween_property(panel_container, "modulate", Color.WHITE, fade_duration)
 	# Create an anonymous funtion to report the bubble is active
 	fade_tween.finished.connect(func(): is_bubble_active = true)
+
+
+# Calculate height in 3D space
+func get_bubble_height() -> float:
+	var pixel_height = sub_viewport.size.y
+	return pixel_height / 100.0 # Adjust scale factor as needed
+
 
 #func _input(event):
 #	if event.is_action_pressed("space"):
