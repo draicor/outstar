@@ -19,6 +19,10 @@ var _states_scenes: Dictionary[State, String] = {
 var client_id: int
 var client_nickname: String
 var player_character: Player
+# Prevents rotation and other actions while typing, also
+# holds state in between map changes for my player character
+var is_player_typing: bool = false
+
 # Internal variables
 var _current_scene_root: Node
 

@@ -64,7 +64,6 @@ var unconfirmed_path: Array[Vector2i] = [] # Holds every vector2i coordinate the
 # Logic variables
 var in_motion: bool = false # If the character is moving
 var autopilot_active: bool = false # If the server is forcing the player to move
-var is_typing: bool = false # To display a bubble when typing
 var is_busy: bool = false # Blocks input during interactions
 
 # Interaction system
@@ -271,9 +270,9 @@ func _exit_tree() -> void:
 	TooltipManager.unregister_interactable(self)
 
 
-# Toggles the bool that keeps track of the chat
+# Toggles the bool that keeps track of the chat in our autoload
 func _handle_signal_ui_chat_input_toggle() -> void:
-	is_typing = !is_typing
+	GameManager.is_player_typing = !GameManager.is_player_typing
 
 
 # Request the server to change the movement speed of my player

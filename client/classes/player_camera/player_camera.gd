@@ -21,8 +21,6 @@ var last_position: Vector3 # Keep track of last camera position to detect change
 var target_rotation: float = 0.0
 var current_rotation: float = 0.0
 var rotation_direction: int = 0 # Direction we want to zoom ()
-# Logic variables
-var is_typing: bool = false # To prevent keyboard camera input when typing
 
 @onready var camera_rig: Node3D = get_parent()
 @onready var camera_pivot: Node3D = camera_rig.get_parent()
@@ -35,7 +33,6 @@ func _ready() -> void:
 	Signals.ui_zoom_out.connect(_handle_signal_ui_zoom_out)
 	Signals.ui_rotate_camera_left.connect(_handle_signal_ui_rotate_camera_left)
 	Signals.ui_rotate_camera_right.connect(_handle_signal_ui_rotate_camera_right)
-	Signals.ui_chat_input_toggle.connect(_handle_signal_ui_chat_input_toggle)
 	
 	# Initialize zoom
 	target_zoom_distance = camera_rig.position.length()
@@ -120,14 +117,10 @@ func _handle_signal_ui_zoom_out() -> void:
 
 
 func _handle_signal_ui_rotate_camera_left() -> void:
-	if not is_typing:
+	if not GameManager.is_player_typing:
 		rotation_direction = 1 # Positive for left rotation
 
 
 func _handle_signal_ui_rotate_camera_right() -> void:
-	if not is_typing:
+	if not GameManager.is_player_typing:
 		rotation_direction = -1 # Negative for right rotation 
-
-
-func _handle_signal_ui_chat_input_toggle() -> void:
-	is_typing = !is_typing
