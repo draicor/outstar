@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://xgut27qtlpbd"]
+[gd_scene load_steps=5 format=3 uid="uid://xgut27qtlpbd"]
 
 [ext_resource type="Script" uid="uid://bflh4x8wu5ha6" path="res://objects/character/player/player.gd" id="1_jpa1g"]
 [ext_resource type="Script" uid="uid://bqhpdb68qhd57" path="res://components/chat_bubble/chat_bubble_manager.gd" id="2_634de"]
+[ext_resource type="Texture2D" uid="uid://bbelda1yb7dhf" path="res://assets/icons/chat_bubble.png" id="3_iula3"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_634de"]
 radius = 0.3
@@ -28,3 +29,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 
 [node name="ChatBubbleManager" type="Node3D" parent="ChatBubbleOrigin"]
 script = ExtResource("2_634de")
+
+[node name="ChatBubbleIcon" type="Sprite3D" parent="ChatBubbleOrigin"]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, -0.1, 0)
+gi_mode = 0
+billboard = 1
+double_sided = false
+texture = ExtResource("3_iula3")

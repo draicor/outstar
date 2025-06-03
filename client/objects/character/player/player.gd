@@ -107,6 +107,7 @@ var current_character: Node = null
 @onready var model: Node3D = $Model # Used to attach the model and rotate it
 @onready var camera_rig: Node3D = $CameraPivot/CameraRig # Used to attach the camera
 @onready var chat_bubble_manager: Node3D = $ChatBubbleOrigin/ChatBubbleManager # Where chat bubbles spawn
+@onready var chat_bubble_icon: Sprite3D = $ChatBubbleOrigin/ChatBubbleIcon
 
 
 static func instantiate(
@@ -232,6 +233,8 @@ func _setup_data_at_spawn() -> void:
 	forward_direction = Vector3(-sin(model_rotation_y), 0, -cos(model_rotation_y))
 	# Update our player's movement tick at spawn
 	update_player_speed(player_speed)
+	# Hide/reveal the chat bubble icon based on our is_player_typing value
+	_toggle_chat_bubble_icon(GameManager.is_player_typing)
 
 
 # Helper function for _ready()
@@ -272,7 +275,10 @@ func _exit_tree() -> void:
 
 # Toggles the bool that keeps track of the chat in our autoload
 func _handle_signal_ui_chat_input_toggle() -> void:
+	# Switch the state for this bool variable
 	GameManager.is_player_typing = !GameManager.is_player_typing
+	# Afterwards, hide/reveal the icon
+	_toggle_chat_bubble_icon(GameManager.is_player_typing)
 
 
 # Request the server to change the movement speed of my player
@@ -949,3 +955,13 @@ func _update_existing_movement(target_position: Vector2i) -> void:
 func request_switch_region(new_region: int) -> void:
 	var packet := _create_join_region_request_packet(new_region)
 	WebSocket.send(packet)
+
+
+# Toggles the chat bubble icon on screen
+func _toggle_chat_bubble_icon(is_typing: bool) -> void:
+	if is_typing:
+		chat_bubble_icon.show()
+		# Send packet to report we are typing
+	else:
+		chat_bubble_icon.hide()
+		# Send packet to report we are no longer typing?
