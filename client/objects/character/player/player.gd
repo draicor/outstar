@@ -16,6 +16,7 @@ var character_scenes: Dictionary = {
 # EXPORTED VARIABLES
 @export var ROTATION_SPEED: float = 6.0
 @export var RAYCAST_DISTANCE: float = 20 # 20 meters
+@export var CHAT_BUBBLE_OFFSET: Vector3 = Vector3(0, 0.4, 0)
 
 # CONSTANTS
 const SERVER_TICK: float = 0.5 # Controls local player move speed
@@ -101,13 +102,13 @@ var raycast : RayCast3D
 
 # Character variables
 var current_character: Node = null
+var chat_bubble_icon: Sprite3D
 
 # Scene tree nodes
 @onready var animation_player: AnimationPlayer # Assigned by code later
 @onready var model: Node3D = $Model # Used to attach the model and rotate it
 @onready var camera_rig: Node3D = $CameraPivot/CameraRig # Used to attach the camera
 @onready var chat_bubble_manager: Node3D = $ChatBubbleOrigin/ChatBubbleManager # Where chat bubbles spawn
-@onready var chat_bubble_icon: Sprite3D = $ChatBubbleOrigin/ChatBubbleIcon
 
 
 static func instantiate(
@@ -187,10 +188,48 @@ func _handle_movement(delta: float) -> void:
 
 # Helper function for _ready()
 func _initialize_character() -> void:
-	load_character(gender) # CAUTION this shouldn't be gender but model_name
+	var character = load_character(gender) # CAUTION this shouldn't be gender but model_name
+	if not character:
+		push_error("Failed to load character")
+		return
+		
 	locomotion = male_locomotion if gender == "male" else female_locomotion
 	# Register this character as an interactable object
 	TooltipManager.register_interactable(self)
+	
+	# Wait until next frame to ensure nodes are ready
+	call_deferred("_setup_bone_attachments")
+
+
+func _setup_bone_attachments() -> void:
+	# Find the skeleton
+	var skeleton = current_character.find_child("GeneralSkeleton") as Skeleton3D
+	if not skeleton:
+		push_error("skeleton3D node not found in character")
+		return
+	
+	# Add bone attachments
+	var head_attachment = BoneAttachment3D.new()
+	head_attachment.bone_name = "Head"
+	
+	# Add attachment to our skeleton3D
+	skeleton.add_child(head_attachment)
+	
+	_setup_chat_bubble()
+	# Attach the chat bubble to my Head bone
+	head_attachment.add_child(chat_bubble_icon)
+
+
+func _setup_chat_bubble() -> void:
+	chat_bubble_icon = Sprite3D.new()
+	chat_bubble_icon.texture = preload("res://assets/icons/chat_bubble.png")
+	chat_bubble_icon.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	chat_bubble_icon.double_sided = false
+	chat_bubble_icon.scale = Vector3(0.6, 0.6, 0.6)
+	chat_bubble_icon.position = CHAT_BUBBLE_OFFSET
+	
+	# Hide/reveal the chat bubble icon based on our is_player_typing value
+	_toggle_chat_bubble_icon(GameManager.is_player_typing)
 
 
 # Helper function for _ready()
@@ -233,8 +272,6 @@ func _setup_data_at_spawn() -> void:
 	forward_direction = Vector3(-sin(model_rotation_y), 0, -cos(model_rotation_y))
 	# Update our player's movement tick at spawn
 	update_player_speed(player_speed)
-	# Hide/reveal the chat bubble icon based on our is_player_typing value
-	_toggle_chat_bubble_icon(GameManager.is_player_typing)
 
 
 # Helper function for _ready()
@@ -845,7 +882,7 @@ func _draw_circle(center: Vector3, radius: float, color: Color, resolution: int 
 
 
 # Used to load a character model and append it as a child of our model node
-func load_character(character_type: String) -> void:
+func load_character(character_type: String) -> Node3D:
 	# Remove existing character if any
 	if current_character:
 		current_character.queue_free()
@@ -855,8 +892,10 @@ func load_character(character_type: String) -> void:
 		var character_scene = character_scenes[character_type]
 		current_character = character_scene.instantiate()
 		model.add_child(current_character)
+		return current_character
 	else:
 		print("Character type %s not found" % [character_type])
+		return null
 
 
 # Helper function to handle common movement initiation logic
@@ -959,6 +998,9 @@ func request_switch_region(new_region: int) -> void:
 
 # Toggles the chat bubble icon on screen
 func _toggle_chat_bubble_icon(is_typing: bool) -> void:
+	if not chat_bubble_icon:
+		return
+	
 	if is_typing:
 		chat_bubble_icon.show()
 		# Send packet to report we are typing
