@@ -1,5 +1,5 @@
-Sprite3D
 Node3D
+Sprite3D
 VBoxContainer
 CheckButton
 HBoxContainer
@@ -12,4 +12,3 @@ CheckBox
 NinePatchRect
 Label
 TextureRect
-CanvasLayer

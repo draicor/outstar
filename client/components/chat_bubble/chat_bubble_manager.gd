@@ -43,6 +43,7 @@ func show_bubble(message: String) -> void:
 	_position_bubbles()
 
 
+# Instantiates and adds a chat_bubble_scene as a child
 func _create_bubble(message: String) -> Node:
 	var new_bubble = chat_bubble_scene.instantiate()
 	add_child(new_bubble)

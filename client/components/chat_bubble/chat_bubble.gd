@@ -1,10 +1,12 @@
 extends Node3D
 
+@onready var sprite_3d: Sprite3D = $Sprite3D
 @onready var sub_viewport: SubViewport = $Sprite3D/SubViewport
-@onready var label: Label = $Sprite3D/SubViewport/PanelContainer/MarginContainer/Label
-@onready var margin_container: MarginContainer = $Sprite3D/SubViewport/PanelContainer/MarginContainer
 @onready var panel_container: PanelContainer = $Sprite3D/SubViewport/PanelContainer
+@onready var margin_container: MarginContainer = $Sprite3D/SubViewport/PanelContainer/MarginContainer
+@onready var label: Label = $Sprite3D/SubViewport/PanelContainer/MarginContainer/Label
 @onready var timer: Timer = $Timer
+
 
 signal bubble_finished
 
@@ -32,6 +34,10 @@ func _init() -> void:
 	hide()
 
 func _ready() -> void:
+	# Make sure the sprite centers properly
+	sprite_3d.centered = true
+	sprite_3d.offset = Vector2(0, 0)
+	
 	# Make the panel transparent on _ready() because we can't do it on _init()
 	panel_container.modulate = Color.TRANSPARENT
 	_clear_text()

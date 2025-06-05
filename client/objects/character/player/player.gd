@@ -216,13 +216,13 @@ func _setup_bone_attachments() -> void:
 	# Add attachment to our skeleton3D
 	skeleton.add_child(head_attachment)
 	
-	_setup_chat_bubble()
+	_setup_chat_bubble_sprite()
 	# Attach the chat bubble to my Head bone
 	head_attachment.add_child(chat_bubble_icon)
 
 
 # Setups our chat bubble variables and components on init
-func _setup_chat_bubble() -> void:
+func _setup_chat_bubble_sprite() -> void:
 	chat_bubble_icon = Sprite3D.new()
 	chat_bubble_icon.texture = preload("res://assets/icons/chat_bubble.png")
 	# Make sure billboarding maintains center
