@@ -225,10 +225,14 @@ func _setup_bone_attachments() -> void:
 func _setup_chat_bubble() -> void:
 	chat_bubble_icon = Sprite3D.new()
 	chat_bubble_icon.texture = preload("res://assets/icons/chat_bubble.png")
-	chat_bubble_icon.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	# Make sure billboarding maintains center
+	chat_bubble_icon.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	chat_bubble_icon.double_sided = false
 	chat_bubble_icon.scale = Vector3(0.6, 0.6, 0.6)
 	chat_bubble_icon.position = CHAT_BUBBLE_OFFSET
+	# Make sure the sprite centers properly
+	chat_bubble_icon.centered = true
+	chat_bubble_icon.offset = Vector2(0, 0)
 	
 	if my_player_character:
 		# Hide/reveal the chat bubble icon based on our is_player_typing value
@@ -777,13 +781,15 @@ func _setup_movement_step(path: Array[Vector2i]) -> void:
 	var next_grid_position = path.pop_front()
 	next_cell = Utils.map_to_local(next_grid_position)
 	
-	# Calculate the direction to target
-	var move_direction = (next_cell - position).normalized()
-	
-	# Compare with previous direction using a threshold
-	if move_direction.distance_to(forward_direction) > DIRECTION_THRESHOLD:
-		# Handle rotation if direction changed
-		_rotate_towards_direction(move_direction)
+	# Check that we are not already at the next position to rotate
+	if next_grid_position != grid_position:
+		# Calculate the direction to target
+		var move_direction = (next_cell - position).normalized()
+		
+		# Compare with previous direction using a threshold
+		if move_direction.distance_to(forward_direction) > DIRECTION_THRESHOLD:
+			# Handle rotation if direction changed
+			_rotate_towards_direction(move_direction)
 	
 	# Update our step duration based on the distance we have to traverse
 	_calculate_step_duration(grid_position, next_grid_position)
@@ -819,8 +825,6 @@ func _rotate_towards_direction(direction: Vector3) -> void:
 		target_yaw = new_yaw
 		is_rotating = true
 		rotation_elapsed = 0.0
-		
-
 
 
 # Changes the current animation and its play_rate as well

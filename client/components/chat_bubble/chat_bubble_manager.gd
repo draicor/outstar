@@ -1,14 +1,14 @@
 extends Node3D
 
-@export var BUBBLE_HEIGHT_OFFSET = 0.0 # Y-axis offset
+@export var BUBBLE_HEIGHT_OFFSET = 0.1 # Y-axis offset
 
-const MAX_BUBBLES: int = 3
+const MAX_BUBBLES: int = 2
 const MAX_TOTAL_HEIGHT: float = 3 # Max Height in meters
 const BUBBLE_SPACING: float = 0.10 # Space between bubbles in meters
-const LINE_HEIGHT = 0.18 # Additional height per extra line
+const LINE_HEIGHT = 0.2 # Additional height per extra line
 const FADE_OUT_DURATION = 0.25 # Same as chat_bubble.gd fade-out
-# Character threshold, more than 50 and it won't display with other bubbles
-const MESSAGE_MAX_LENGTH: int = 50
+# Character threshold, more than 30 and it won't display with other bubbles
+const MESSAGE_MAX_LENGTH: int = 30
 
 @onready var chat_bubble_scene: PackedScene = preload("res://components/chat_bubble/chat_bubble.tscn")
 
