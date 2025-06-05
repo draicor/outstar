@@ -1,24 +1,44 @@
-[gd_scene load_steps=2 format=3 uid="uid://cb3iyx36pjow"]
+[gd_scene load_steps=3 format=3 uid="uid://cb3iyx36pjow"]
 
 [ext_resource type="Script" uid="uid://bt00m1dmeqsmr" path="res://components/tooltip/tooltip.gd" id="1_gnj44"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gnj44"]
+bg_color = Color(0.1, 0.1, 0.1, 0.6)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+expand_margin_left = 4.0
+expand_margin_right = 4.0
+shadow_offset = Vector2(2, 2)
 
 [node name="Tooltip" type="CanvasLayer"]
 layer = 128
 follow_viewport_enabled = true
 script = ExtResource("1_gnj44")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
-offset_right = 100.0
+[node name="PanelContainer" type="PanelContainer" parent="."]
+offset_right = 65.0
 offset_bottom = 22.3333
-theme_override_constants/margin_left = 0
+size_flags_horizontal = 6
+size_flags_vertical = 6
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_gnj44")
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+theme_override_constants/margin_left = 4
 theme_override_constants/margin_top = 0
-theme_override_constants/margin_right = 0
+theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 0
 
-[node name="Label" type="Label" parent="MarginContainer"]
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer"]
 self_modulate = Color(1, 1, 1, 0.9)
 layout_mode = 2
-size_flags_vertical = 1
+size_flags_horizontal = 0
+size_flags_vertical = 0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.7)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)

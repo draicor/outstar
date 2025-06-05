@@ -7,7 +7,6 @@ extends Node3D
 @onready var label: Label = $Sprite3D/SubViewport/PanelContainer/MarginContainer/Label
 @onready var timer: Timer = $Timer
 
-
 signal bubble_finished
 
 const MIN_WIDTH = 18 # 10p for the font + 8 for the left/right margins
