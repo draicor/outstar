@@ -48,6 +48,7 @@ message UpdatePlayer { // Sent by the server to update a player character (Used 
 // Target Destination sent by the client (Ignores Y axis (vertical))
 message PlayerDestination { uint64 x = 1; uint64 z = 2; }
 message UpdateSpeed { uint64 speed = 1; }
+message ChatBubble { bool is_active = 1; }
 
 // Main Packet container
 message Packet {
@@ -77,5 +78,6 @@ message Packet {
     UpdatePlayer update_player = 17; // Server
     PlayerDestination player_destination = 18; // Both
     UpdateSpeed update_speed = 19; // Both
+    ChatBubble chat_bubble = 20; // Both
   }
 }

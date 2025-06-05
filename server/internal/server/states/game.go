@@ -207,6 +207,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_LogoutRequest:
 			state.HandleLogoutRequest()
 
+		// CHAT BUBBLE
+		case *packets.Packet_ChatBubble:
+			state.HandleChatBubble(casted_payload.ChatBubble)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -234,6 +238,7 @@ func (state *Game) HandleClientEntered(nickname string) {
 
 // We send this message to everybody
 func (state *Game) HandleClientLeft(id uint64, nickname string) {
+	// Tell everybody we disconnected
 	state.client.Broadcast(packets.NewClientLeft(id, nickname))
 }
 
@@ -319,7 +324,7 @@ func (state *Game) HandleLogoutRequest() {
 	// If we are connected to a region, remove the client from this region
 	if state.client.GetRegion() != nil {
 		state.client.GetRegion().RemoveClientChannel <- state.client
-		time.Sleep(50 * time.Millisecond) // Brieft pause
+		time.Sleep(50 * time.Millisecond) // Brief pause
 		state.client.SetRegion(nil)
 	}
 
@@ -335,6 +340,11 @@ func (state *Game) HandleLogoutRequest() {
 
 	// Switch the client to the Authentication state
 	state.client.SetState(&Authentication{})
+}
+
+// Broadcast to everybody we either opened/closed our chat input
+func (state *Game) HandleChatBubble(payload *packets.ChatBubble) {
+	state.client.Broadcast(packets.NewChatBubble(payload.GetIsActive()))
 }
 
 // Executed automatically when a client leaves the game state

@@ -1,5 +1,8 @@
 extends Control
 
+# Preloading scripts
+const packets := preload("res://packets.gd")
+
 @export var MESSAGE_MARGIN_LEFT: int = 5
 @export var SCROLLING_SPEED: float = 0.5
 
@@ -10,6 +13,8 @@ extends Control
 @onready var scroll_container: ScrollContainer = $ChatContainer/ChatHistory/ScrollContainer
 @onready var messages_container: VBoxContainer = $ChatContainer/ChatHistory/ScrollContainer/MessagesContainer
 @onready var chat_input: LineEdit = $ChatContainer/ChatInput
+
+var chat_visible: bool = false
 
 
 func _ready() -> void:
@@ -28,7 +33,7 @@ func _ready() -> void:
 	scroll_container.get_v_scroll_bar().modulate.a = 0.7
 	
 	# Connect the UI and Chat signals
-	Signals.ui_chat_input_toggle.connect(_on_ui_chat_input_toggle)
+	Signals.ui_chat_input_toggle.connect(_on_ui_chat_input_toggle) # main.gd triggers this
 	chat_input.text_submitted.connect(_on_chat_input_text_submitted)
 
 
@@ -123,30 +128,59 @@ func _on_history_check_button_toggled(toggled_on: bool) -> void:
 
 
 # If the ui_enter key is pressed, toggle the chat window and grab chat input focus
+# It only handles reporting opening the chat, not closing it
 func _on_ui_chat_input_toggle() -> void:
-	# Toggle the chat window
-	chat_container.visible = !chat_container.visible
-	# If the chat input line is visible, grab type focus
-	if chat_input.visible:
-		chat_input.grab_focus()
+	# Toggle the chat UI visibility
+	chat_visible = !chat_visible
+	chat_container.visible = chat_visible
+	GameManager.is_player_typing = chat_visible # Prevents camera rotation
 	
-	# If our chat container is visible
-	if chat_container.visible:
-		# If we have our view history check active, scroll down automatically
-		if history_check_button.button_pressed:
-			_scroll_to_bottom()
+	# If our chat is visible now after updating
+	if chat_visible:
+		chat_input.grab_focus()
+		
+		# Update local player bubble immediately
+		if GameManager.player_character:
+				GameManager.player_character.toggle_chat_bubble_icon(true)
+		
+		# Broadcast to reveal our chat bubble to remote players
+		var packet := _create_chat_bubble_packet(true)
+		WebSocket.send(packet)
+	
+	if chat_visible and history_check_button.button_pressed:
+		_scroll_to_bottom()
 
 
-# if our client presses the enter key in the chat
+# If we submit a message in our chat_input
 func _on_chat_input_text_submitted(text: String) -> void:
 	# Remove leading/trailing whitespace
 	var clean_text: String = text.strip_edges()
-	# Ignore this if the message was empty and release focus!
+	
+	# We need to clear the line edit before broadcast
+	chat_input.text = ""
+	
+	# If my message had no content, close chat locally and remotelly
 	if clean_text.is_empty():
-		chat_input.release_focus()
+		# Update local player bubble immediately
+		if GameManager.player_character:
+				GameManager.player_character.toggle_chat_bubble_icon(false)
+		
+		# Broadcast to reveal our chat bubble to remote players
+		var packet := _create_chat_bubble_packet(false)
+		WebSocket.send(packet)
 		return
 	
+	# Broadcast our message to everyone else.
+	# This will automatically hide our bubble remotely via public message packet
 	Signals.chat_public_message_sent.emit(clean_text)
 	
-	# We clear the line edit
-	chat_input.text = ""
+	# Update local player bubble immediately
+	if GameManager.player_character:
+		GameManager.player_character.toggle_chat_bubble_icon(false)
+
+
+func _create_chat_bubble_packet(is_active: bool) -> packets.Packet:
+	var packet := packets.Packet.new()
+	var chat_bubble_packet := packet.new_chat_bubble()
+	chat_bubble_packet.set_is_active(is_active)
+	return packet

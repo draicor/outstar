@@ -132,3 +132,12 @@ func NewUpdateSpeed(newSpeed uint64) Payload {
 		},
 	}
 }
+
+// Sent by both client and server to toggle the chat bubble of a character
+func NewChatBubble(isActive bool) Payload {
+	return &Packet_ChatBubble{
+		ChatBubble: &ChatBubble{
+			IsActive: isActive,
+		},
+	}
+}

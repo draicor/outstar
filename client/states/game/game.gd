@@ -70,11 +70,14 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_update_speed_packet(sender_id, packet.get_update_speed())
 	elif packet.has_region_data():
 		_handle_region_data_packet(packet.get_region_data())
+	elif packet.has_chat_bubble():
+		_handle_chat_bubble_packet(sender_id, packet.get_chat_bubble())
 
 # Print the message into our chat window and update that player's chat bubble
 func _handle_public_message_packet(sender_id: int, packet_public_message: packets.PublicMessage) -> void:
-	# We print the nickname and then the message contents
+	# We print the nickname and then the message contents in local chat
 	chat.public("%s" % packet_public_message.get_nickname(), packet_public_message.get_text(), Color.LIGHT_SEA_GREEN)
+	
 	# If the id is on our players dictionary
 	if sender_id in _players:
 		# Attempt to retrieve the player character object
@@ -83,6 +86,7 @@ func _handle_public_message_packet(sender_id: int, packet_public_message: packet
 		if player:
 			# Update their chat bubble to reflect the text
 			player.new_chat_bubble(packet_public_message.get_text())
+			player.toggle_chat_bubble_icon(false) # Hide typing bubble
 
 
 # We send a heartbeat packet to the server every time the timer timeouts
@@ -299,3 +303,15 @@ func _load_map(map: RegionManager.Maps) -> void:
 		_current_map_scene = map_scene.instantiate()
 		# Add it to the game root
 		add_child(_current_map_scene)
+
+
+# Used to toggle the chat bubble of this character
+func _handle_chat_bubble_packet(sender_id: int, chat_bubble_packet: packets.ChatBubble) -> void:
+	# If the id is on our players dictionary
+	if sender_id in _players:
+		# Attempt to retrieve the player character object
+		var player: Player = _players[sender_id]
+		# If its valid
+		if player:
+			# Toggle the chat bubble for this player
+			player.toggle_chat_bubble_icon(chat_bubble_packet.get_is_active())

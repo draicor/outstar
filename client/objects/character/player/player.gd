@@ -201,6 +201,7 @@ func _initialize_character() -> void:
 	call_deferred("_setup_bone_attachments")
 
 
+# Used to create the attachments in our character's skeleton
 func _setup_bone_attachments() -> void:
 	# Find the skeleton
 	var skeleton = current_character.find_child("GeneralSkeleton") as Skeleton3D
@@ -220,6 +221,7 @@ func _setup_bone_attachments() -> void:
 	head_attachment.add_child(chat_bubble_icon)
 
 
+# Setups our chat bubble variables and components on init
 func _setup_chat_bubble() -> void:
 	chat_bubble_icon = Sprite3D.new()
 	chat_bubble_icon.texture = preload("res://assets/icons/chat_bubble.png")
@@ -228,8 +230,12 @@ func _setup_chat_bubble() -> void:
 	chat_bubble_icon.scale = Vector3(0.6, 0.6, 0.6)
 	chat_bubble_icon.position = CHAT_BUBBLE_OFFSET
 	
-	# Hide/reveal the chat bubble icon based on our is_player_typing value
-	_toggle_chat_bubble_icon(GameManager.is_player_typing)
+	if my_player_character:
+		# Hide/reveal the chat bubble icon based on our is_player_typing value
+		toggle_chat_bubble_icon(GameManager.is_player_typing)
+	else:
+		# Start with the bubble hidden for everyone else
+		chat_bubble_icon.visible = false
 
 
 # Helper function for _ready()
@@ -277,7 +283,6 @@ func _setup_data_at_spawn() -> void:
 # Helper function for _ready()
 # Only for our local player character!
 func _connect_signals() -> void:
-	Signals.ui_chat_input_toggle.connect(_handle_signal_ui_chat_input_toggle)
 	Signals.ui_change_move_speed_button.connect(_handle_signal_ui_update_speed_button)
 
 
@@ -308,14 +313,6 @@ func _register_global_references() -> void:
 # Called when this object gets destroyed
 func _exit_tree() -> void:
 	TooltipManager.unregister_interactable(self)
-
-
-# Toggles the bool that keeps track of the chat in our autoload
-func _handle_signal_ui_chat_input_toggle() -> void:
-	# Switch the state for this bool variable
-	GameManager.is_player_typing = !GameManager.is_player_typing
-	# Afterwards, hide/reveal the icon
-	_toggle_chat_bubble_icon(GameManager.is_player_typing)
 
 
 # Request the server to change the movement speed of my player
@@ -832,11 +829,6 @@ func _change_animation(animation: String, play_rate: float) -> void:
 	animation_player.speed_scale = play_rate
 
 
-# Used to update the text inside our chat bubble
-func new_chat_bubble(message: String) -> void:
-	chat_bubble_manager.show_bubble(message)
-
-
 # Should be called once per path slice to recalculate the move speed
 func update_player_speed(new_speed: int) -> void:
 	# Clamp speed to 1-3 range
@@ -996,14 +988,12 @@ func request_switch_region(new_region: int) -> void:
 	WebSocket.send(packet)
 
 
+# Used to update the text inside our chat bubble
+func new_chat_bubble(message: String) -> void:
+	chat_bubble_manager.show_bubble(message)
+
+
 # Toggles the chat bubble icon on screen
-func _toggle_chat_bubble_icon(is_typing: bool) -> void:
-	if not chat_bubble_icon:
-		return
-	
-	if is_typing:
-		chat_bubble_icon.show()
-		# Send packet to report we are typing
-	else:
-		chat_bubble_icon.hide()
-		# Send packet to report we are no longer typing?
+func toggle_chat_bubble_icon(is_typing: bool) -> void:
+	if chat_bubble_icon:
+		chat_bubble_icon.visible = is_typing

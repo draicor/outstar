@@ -1714,6 +1714,51 @@ class UpdateSpeed:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
+class ChatBubble:
+	func _init():
+		var service
+		
+		__is_active = PBField.new("is_active", PB_DATA_TYPE.BOOL, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL])
+		service = PBServiceField.new()
+		service.field = __is_active
+		data[__is_active.tag] = service
+		
+	var data = {}
+	
+	var __is_active: PBField
+	func has_is_active() -> bool:
+		if __is_active.value != null:
+			return true
+		return false
+	func get_is_active() -> bool:
+		return __is_active.value
+	func clear_is_active() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__is_active.value = DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL]
+	func set_is_active(value : bool) -> void:
+		__is_active.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
 class Packet:
 	func _init():
 		var service
@@ -1831,6 +1876,12 @@ class Packet:
 		service.func_ref = Callable(self, "new_update_speed")
 		data[__update_speed.tag] = service
 		
+		__chat_bubble = PBField.new("chat_bubble", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 20, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = __chat_bubble
+		service.func_ref = Callable(self, "new_chat_bubble")
+		data[__chat_bubble.tag] = service
+		
 	var data = {}
 	
 	var __sender_id: PBField
@@ -1892,6 +1943,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__public_message.value = PublicMessage.new()
 		return __public_message.value
 	
@@ -1941,6 +1994,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__handshake.value = Handshake.new()
 		return __handshake.value
 	
@@ -1990,6 +2045,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__heartbeat.value = Heartbeat.new()
 		return __heartbeat.value
 	
@@ -2039,6 +2096,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__server_metrics.value = ServerMetrics.new()
 		return __server_metrics.value
 	
@@ -2088,6 +2147,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__request_granted.value = RequestGranted.new()
 		return __request_granted.value
 	
@@ -2137,6 +2198,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__request_denied.value = RequestDenied.new()
 		return __request_denied.value
 	
@@ -2186,6 +2249,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__login_request.value = LoginRequest.new()
 		return __login_request.value
 	
@@ -2235,6 +2300,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__register_request.value = RegisterRequest.new()
 		return __register_request.value
 	
@@ -2284,6 +2351,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__login_success.value = LoginSuccess.new()
 		return __login_success.value
 	
@@ -2333,6 +2402,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__logout_request.value = LogoutRequest.new()
 		return __logout_request.value
 	
@@ -2382,6 +2453,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__client_entered.value = ClientEntered.new()
 		return __client_entered.value
 	
@@ -2431,6 +2504,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__client_left.value = ClientLeft.new()
 		return __client_left.value
 	
@@ -2480,6 +2555,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = JoinRegionRequest.new()
 		return __join_region_request.value
 	
@@ -2529,6 +2606,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__region_data.value = RegionData.new()
 		return __region_data.value
 	
@@ -2578,6 +2657,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = Position.new()
 		return __position.value
 	
@@ -2627,6 +2708,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__update_player.value = UpdatePlayer.new()
 		return __update_player.value
 	
@@ -2676,6 +2759,8 @@ class Packet:
 		data[18].state = PB_SERVICE_STATE.FILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__player_destination.value = PlayerDestination.new()
 		return __player_destination.value
 	
@@ -2725,8 +2810,61 @@ class Packet:
 		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		data[19].state = PB_SERVICE_STATE.FILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = UpdateSpeed.new()
 		return __update_speed.value
+	
+	var __chat_bubble: PBField
+	func has_chat_bubble() -> bool:
+		if __chat_bubble.value != null:
+			return true
+		return false
+	func get_chat_bubble() -> ChatBubble:
+		return __chat_bubble.value
+	func clear_chat_bubble() -> void:
+		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_chat_bubble() -> ChatBubble:
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		__server_metrics.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		__logout_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
+		data[20].state = PB_SERVICE_STATE.FILLED
+		__chat_bubble.value = ChatBubble.new()
+		return __chat_bubble.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
