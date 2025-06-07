@@ -7,7 +7,6 @@ func _init() -> void:
 
 
 func enter() -> void:
-	print("interact state")
 	player._execute_interaction()
 
 

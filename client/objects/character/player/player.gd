@@ -239,24 +239,21 @@ func _setup_animation_blend_time() -> void:
 		push_error("AnimationPlayer not set")
 		return
 	
-	match animation_library:
-		# Blend female locomotion animations
-		"female/female_":
-			animation_player.set_blend_time("female/female_idle", "female/female_walk", 0.2)
-			animation_player.set_blend_time("female/female_idle", "female/female_run", 0.1)
-			animation_player.set_blend_time("female/female_walk", "female/female_idle", 0.15)
-			animation_player.set_blend_time("female/female_walk", "female/female_run", 0.15)
-			animation_player.set_blend_time("female/female_run", "female/female_idle", 0.15)
-			animation_player.set_blend_time("female/female_run", "female/female_walk", 0.15)
-		
-		# Blend male locomotion animations
-		"male/male_":
-			animation_player.set_blend_time("male/male_idle", "male/male_walk", 0.2)
-			animation_player.set_blend_time("male/male_idle", "male/male_run", 0.1)
-			animation_player.set_blend_time("male/male_walk", "male/male_idle", 0.15)
-			animation_player.set_blend_time("male/male_walk", "male/male_run", 0.15)
-			animation_player.set_blend_time("male/male_run", "male/male_idle", 0.15)
-			animation_player.set_blend_time("male/male_run", "male/male_walk", 0.15)
+	# Blend female locomotion animations
+	animation_player.set_blend_time("female/female_idle", "female/female_walk", 0.2)
+	animation_player.set_blend_time("female/female_idle", "female/female_run", 0.1)
+	animation_player.set_blend_time("female/female_walk", "female/female_idle", 0.15)
+	animation_player.set_blend_time("female/female_walk", "female/female_run", 0.15)
+	animation_player.set_blend_time("female/female_run", "female/female_idle", 0.15)
+	animation_player.set_blend_time("female/female_run", "female/female_walk", 0.15)
+	
+	# Blend male locomotion animations
+	animation_player.set_blend_time("male/male_idle", "male/male_walk", 0.2)
+	animation_player.set_blend_time("male/male_idle", "male/male_run", 0.1)
+	animation_player.set_blend_time("male/male_walk", "male/male_idle", 0.15)
+	animation_player.set_blend_time("male/male_walk", "male/male_run", 0.15)
+	animation_player.set_blend_time("male/male_run", "male/male_idle", 0.15)
+	animation_player.set_blend_time("male/male_run", "male/male_walk", 0.15)
 
 
 # Helper function for _ready()

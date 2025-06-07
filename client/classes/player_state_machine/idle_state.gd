@@ -7,7 +7,6 @@ func _init() -> void:
 
 
 func enter() -> void:
-	print("idle state")
 	player.switch_animation("idle")
 
 
