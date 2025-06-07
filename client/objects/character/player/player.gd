@@ -154,8 +154,7 @@ func _ready() -> void:
 		_register_global_references() # After _setup_local_player_components()	
 
 
-# _physics_process runs at a fixed timestep
-# Movement should be handled here because this runs before _process
+# Called each tick to draw debugging tools on screen
 func _physics_process(_delta: float) -> void:
 	_show_debug_tools()
 
@@ -554,7 +553,7 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		_setup_movement_step(current_path)
 		_interpolate_position(delta)
 		
-		# Trigger this to update our animation
+		# Trigger this after each segment to update our animation
 		Signals.player_update_locomotion_animation.emit(cells_to_move_this_tick)
 		
 		if my_player_character:
@@ -621,6 +620,9 @@ func _handle_autopilot() -> void:
 			# Update only once per path segment
 			cells_to_move_this_tick = predicted_path.size()-1
 			_setup_movement_step(predicted_path)
+			
+			# Trigger this to update our animations
+			Signals.player_update_locomotion_animation.emit(cells_to_move_this_tick)
 		else:
 			# To prevent an input lock, we turn off autopilot if we get here
 			autopilot_active = false
@@ -689,6 +691,8 @@ func _handle_remote_player_movement(new_server_position: Vector2i) -> void:
 			# Update our new path (remove overlap)
 			cells_to_move_this_tick = server_path.size()-1
 			_setup_movement_step(server_path) # This starts movement
+			# Trigger this to update our animations
+			Signals.player_update_locomotion_animation.emit(cells_to_move_this_tick)
 
 
 # Called when we receive a new position packet from the server to make sure we are synced locally
@@ -720,6 +724,8 @@ func _apply_path_correction(new_path: Array[Vector2i]) -> void:
 			# Prepare everything to move correctly next tick
 			cells_to_move_this_tick = next_tick_predicted_path.size()-1
 			_setup_movement_step(next_tick_predicted_path)
+			# Trigger this to update our animations
+			Signals.player_update_locomotion_animation.emit(cells_to_move_this_tick)
 		else:
 			# If we were already moving just append the correction path
 			# while removing the overlapping cell
@@ -891,7 +897,10 @@ func _start_movement_towards(start_position: Vector2i, target_position: Vector2i
 		# Prepare everything to move correctly this tick
 		cells_to_move_this_tick = predicted_path.size()
 		_setup_movement_step(predicted_path)
-		#switch_animation(cells_to_move_this_tick)
+		
+		# Trigger this to update our animations
+		Signals.player_update_locomotion_animation.emit(cells_to_move_this_tick)
+		
 		is_predicting = true
 		grid_destination = target_position
 		

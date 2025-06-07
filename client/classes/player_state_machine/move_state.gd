@@ -1,15 +1,18 @@
 extends BaseState
 class_name MoveState
 
+
 func _init() -> void:
 	state_name = "move"
 	Signals.player_update_locomotion_animation.connect(_update_locomotion_animation)
 
+
 func enter() -> void:
 	print("move state")
-	_update_locomotion_animation(player.player_speed)
 
 
+# _physics_process runs at a fixed timestep
+# Movement should be handled here because this runs before _process
 func physics_update(delta: float) -> void:
 	player._handle_rotation(delta)
 	player._process_movement_step(delta)
@@ -23,6 +26,7 @@ func _update_locomotion_animation(cells_to_move: int) -> void:
 		3: anim_state = "run"
 	
 	player.switch_animation(anim_state)
+
 
 func handle_input(event: InputEvent) -> void:
 	if event.is_action_pressed("left_click"):

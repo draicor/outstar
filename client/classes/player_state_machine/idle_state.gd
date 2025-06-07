@@ -1,12 +1,20 @@
 extends BaseState
 class_name IdleState
 
+
 func _init() -> void:
 	state_name = "idle"
+
 
 func enter() -> void:
 	print("idle state")
 	player.switch_animation("idle")
+
+
+# We have to update rotations here so we can rotate towards our targets
+func physics_update(delta: float) -> void:
+	player._handle_rotation(delta)
+
 
 func handle_input(event: InputEvent) -> void:
 	if event.is_action_pressed("left_click"):
