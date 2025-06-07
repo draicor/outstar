@@ -33,4 +33,4 @@ signal chat_public_message_sent(text: String)
 
 # Player state signals
 signal player_character_spawned
-signal player_locomotion_changed
+signal player_locomotion_changed(anim_state: String)

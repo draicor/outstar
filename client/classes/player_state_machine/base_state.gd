@@ -8,7 +8,7 @@ signal finished(next_state_name)
 
 var player_state_machine: PlayerStateMachine = null
 var player: Player = null
-var state_name: String = "unnamed"
+var state_name: String = "unnamed_state"
 
 func enter() -> void:
 	pass

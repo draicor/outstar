@@ -7,26 +7,31 @@ var states_map: Dictionary = {}
 var current_state: BaseState = null
 var previous_state: BaseState = null
 var is_active: bool = true : set = set_active
+var initial_state: String = "idle"
 
 
 func _ready() -> void:
-	for child in BaseState:
+	# Collect all child states
+	for child in get_children():
 		if child is BaseState:
 			states_map[child.state_name] = child
-			child.state_machine = self
+			child.player_state_machine = self
 			child.player = get_parent()
 	
-	await owner.ready
-	if states_map.size() > 0:
-		var initial_state = states_map.values()[0].state_name
+	# Wait for parent to be ready
+	await get_parent().ready
+	
+	if states_map.has(initial_state):
 		change_state(initial_state)
+	else:
+		push_error("Initial state '%s' not found in state machine" % initial_state)
 
 
 func change_state(new_state_name: String) -> void:
 	if not is_active:
 		return
 	if not states_map.has(new_state_name):
-		push_error("State %s doesn't exist" % new_state_name)
+		push_error("State %s doesn't exist in state machine" % new_state_name)
 		return
 	
 	var new_state = states_map[new_state_name]
@@ -40,7 +45,9 @@ func change_state(new_state_name: String) -> void:
 	current_state = new_state
 	current_state.enter()
 	
-	emit_signal("state_changed", previous_state.state_name if previous_state else new_state_name)
+	emit_signal("player_state_changed",
+		previous_state.state_name if previous_state else "",
+		new_state_name)
 
 
 # When toggling this state, toggle the functions that run on tick too

@@ -31,12 +31,12 @@ func _handle_signal_player_character_spawned() -> void:
 	show()
 
 # Toggles this button based on the current locomotion state of the player
-func _handle_signal_player_locomotion_changed() -> void:
-	# If we are IDLE, enable the button
-	if GameManager.player_character.current_animation == GameManager.player_character.ASM.IDLE:
+func _handle_signal_player_locomotion_changed(anim_state: String) -> void:
+	# If we are in our idle state, enable the button
+	if anim_state == "idle":
 		button_enabled = true
 		texture_rect.self_modulate = Color(1.0, 1.0, 1.0, 1.0)
-	else:
+	else: # Disable the button
 		button_enabled = false
 		texture_rect.self_modulate = Color(1.0, 1.0, 1.0, 0.33)
 

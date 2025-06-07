@@ -1,3 +1,7 @@
+InteractState
+MoveState
+IdleState
+PlayerStateMachine
 PanelContainer
 Node3D
 Sprite3D
@@ -9,6 +13,3 @@ Marker3D
 Node
 Interactable
 CheckBox
-NinePatchRect
-Label
-TextureRect
