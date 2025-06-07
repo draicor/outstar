@@ -511,7 +511,7 @@ func _process_movement_step(delta: float) -> void:
 		_interpolate_position(delta)
 		return
 	
-	_update_grid_position()
+	_update_grid_position() # locally
 	
 	if my_player_character and is_predicting:
 		_process_path_segment(delta, predicted_path, next_tick_predicted_path)
@@ -722,8 +722,8 @@ func _handle_server_reconciliation(new_server_position: Vector2i) -> void:
 		# Clear interactions on server correction
 		pending_interaction = null
 		interaction_target = null
-		# Calculate correction from our grid_destination to the last valid server position!
-		var correction_path: Array[Vector2i] = _predict_path(grid_destination, new_server_position)
+		# Calculate correction from our immediate grid_destination to the last valid server position!
+		var correction_path: Array[Vector2i] = _predict_path(immediate_grid_destination, new_server_position)
 		if correction_path.size() > 0:
 			_apply_path_correction(correction_path)
 			player_state_machine.change_state("move")
@@ -741,9 +741,8 @@ func _apply_path_correction(new_path: Array[Vector2i]) -> void:
 			_setup_movement_step(next_tick_predicted_path)
 			update_locomotion_animation(cells_to_move_this_tick)
 		else:
-			# If we were already moving just append the correction path
-			# while removing the overlapping cell
-			next_tick_predicted_path.append_array(new_path.slice(1))
+			# If we were already moving just replace the path
+			next_tick_predicted_path = new_path.slice(1)
 		
 		# Turn on autopilot either way so the player can't keep sending packets
 		autopilot_active = true
@@ -988,9 +987,10 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 # Helper function to update our locomotion animation based on the cells to traverse
 func update_locomotion_animation(cells_to_move: int) -> void:
 	# Determine animation based on player_speed
-	var anim_state = "walk"
+	var anim_state: String
 	match cells_to_move:
+		1: anim_state = "walk"
 		2: anim_state = "jog"
-		3: anim_state = "run"
+		_: anim_state = "run"
 	
 	switch_animation(anim_state)

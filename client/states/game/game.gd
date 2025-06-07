@@ -249,9 +249,13 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 
 
 func _handle_update_speed_packet(sender_id: int, update_speed_packet: packets.UpdateSpeed) -> void:
-	# If this packet came from our own client
-	if sender_id == GameManager.client_id:
-		GameManager.player_character.update_player_speed(update_speed_packet.get_speed())
+	# If the id is on our players dictionary
+	if sender_id in _players:
+		# Attempt to retrieve the player character object
+		var player: Player = _players[sender_id]
+		# If its valid
+		if player:
+			player.update_player_speed(update_speed_packet.get_speed())
 
 
 func _handle_region_data_packet(region_data_packet: packets.RegionData) -> void:
