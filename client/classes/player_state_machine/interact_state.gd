@@ -6,13 +6,10 @@ func _init() -> void:
 
 func enter() -> void:
 	print("interact state")
-	player._switch_locomotion("interacting")
 	player._execute_interaction()
-	# Connect to interaction completion signal
-	player.interaction_finished.connect(_on_interaction_finished, CONNECT_ONE_SHOT)
 
-func _on_interaction_finished() -> void:
-	finished.emit("idle")
+func physics_update(delta: float) -> void:
+	player._handle_rotation(delta)
 
 func exit() -> void:
 	player.is_busy = false

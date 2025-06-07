@@ -75,14 +75,14 @@ var pending_interaction: Interactable = null
 var animation_library: String
 
 # Character locomotion
-var locomotion: Dictionary # This is set depending on the gender of this character
-var female_locomotion: Dictionary = {
+var locomotion: Dictionary[String, Dictionary] # Depends on the gender of this character
+var female_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "female/female_idle", play_rate = 1.0},
 	"walk": {animation = "female/female_walk", play_rate = 0.95},
 	"jog": {animation = "female/female_run", play_rate = 0.70},
 	"run": {animation = "female/female_run", play_rate = 0.8}
 }
-var male_locomotion := {
+var male_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "male/male_idle", play_rate = 1.0},
 	"walk": {animation = "male/male_walk", play_rate = 1.1},
 	"jog": {animation = "male/male_run", play_rate = 0.75},
@@ -156,10 +156,8 @@ func _ready() -> void:
 
 # _physics_process runs at a fixed timestep
 # Movement should be handled here because this runs before _process
-#func _physics_process(delta: float) -> void:
-#	_handle_rotation(delta)
-#	_handle_movement(delta)
-#	_show_debug_tools()
+func _physics_process(_delta: float) -> void:
+	_show_debug_tools()
 
 
 # Rotates our character on tick
@@ -172,12 +170,6 @@ func _handle_rotation(delta: float) -> void:
 		# CAUTION this is not recalculating our current rotation, should fix this!
 		if rotation_elapsed >= 1.0:
 			is_rotating = false
-
-
-# Moves our character on tick
-func _handle_movement(delta: float) -> void:
-	if in_motion:
-		_process_movement_step(delta)
 
 
 # Helper function for _ready()
@@ -320,32 +312,6 @@ func _handle_signal_ui_update_speed_button(new_move_speed: int) -> void:
 	WebSocket.send(packet)
 
 
-# Use _unhandled_input(), not _input(),
-# _unhandled_input() only receives events that weren't processed by the UI
-#func _unhandled_input(event: InputEvent) -> void:
-	#if event.is_action_pressed("left_click"):
-		## If we are busy doing something, ignore input
-		#if is_busy:
-			#return
-			#
-		## If we are in autopilot, ignore mouse input
-		#if autopilot_active:
-			#return
-		#
-		## Get the mouse position and check what kind of target we have
-		#var mouse_position : Vector2 = get_viewport().get_mouse_position()
-		#var target := _get_mouse_click_target(mouse_position)
-		#
-		## If we have a valid target, we try to determine what kind of class it is
-		#if target:
-			#if target is Interactable:
-				#_start_interaction(target)
-		#
-		## If we didn't click on anything interactable, then attempt to move to that cell
-		#else:
-			#_handle_movement_click(mouse_position)
-
-
 # Used to cast a ray from the camera view to the mouse position
 func _mouse_raycast(mouse_position: Vector2) -> Vector3:
 	var vector: Vector3 = Vector3.ZERO
@@ -430,8 +396,6 @@ func _start_interaction(target: Interactable) -> void:
 	# If clicked on our already clicked interaction, ignore
 	if interaction_target == target or pending_interaction == target: return
 	
-	player_state_machine.change_state("interact")
-	
 	if in_motion:
 		# If we were moving, see if we can reach our target, if we can,
 		# _setup_interaction_movement updates our next_tick path towards it
@@ -439,21 +403,23 @@ func _start_interaction(target: Interactable) -> void:
 			pending_interaction = target
 		return
 	
-	# If our character was idle
+	# If our character was idle, save our target
 	interaction_target = target
+	
 	# Check if we are already in range to activate
 	if _is_in_interaction_range(target):
-		_execute_interaction()
+		player_state_machine.change_state("interact")
 		return
 	
-	# If we are far away, check if we can reach it, if we can,
-	# we will start to move towards it right away
+	# If we are far away, check if we can reach it
+	# if we can, start moving towards it
 	if _setup_interaction_movement(grid_position, target):
-		interaction_target = target
+		player_state_machine.change_state("move")
 	
 	# If we can't reach it, then forget about it
 	else:
 		interaction_target = null
+		
 
 
 # Helper function to check if player is in interaction range
@@ -492,19 +458,16 @@ func _execute_interaction() -> void:
 	# Attempt to play the interaction animation
 	var animation_name: String = interaction_target.get_interaction_animation()
 	if animation_player.has_animation(animation_name):
-		#_switch_locomotion(ASM.INTERACTING)
 		animation_player.play(animation_name)
-		# Wait until it finishes playing
-		await animation_player.animation_finished
+		await animation_player.animation_finished # Wait for it
 	
 	# Perform the interaction itself
 	interaction_target.interact(self)
 	
 	# Cleanup
 	interaction_target = null
-	_switch_locomotion("idle")
-	#interaction_finished.emit() # Emit signal
-	is_busy = false # Always release busy state at the end
+	is_busy = false
+	player_state_machine.change_state("idle")
 
 
 # Creates and returns a player_destination_packet
@@ -579,7 +542,6 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 	if current_path.size() > 0:
 		_setup_movement_step(current_path)
 		_interpolate_position(delta)
-		#_switch_locomotion(cells_to_move_this_tick)
 	# If our current path has no more cells but our next path does
 	elif next_path.size() > 0:
 		# Get the first cells from our next tick path (based on our speed)
@@ -591,7 +553,9 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		cells_to_move_this_tick = current_path.size()
 		_setup_movement_step(current_path)
 		_interpolate_position(delta)
-		#_switch_locomotion(cells_to_move_this_tick)
+		
+		# Trigger this to update our animation
+		Signals.player_update_locomotion_animation.emit(cells_to_move_this_tick)
 		
 		if my_player_character:
 			unconfirmed_path.append(immediate_grid_destination)
@@ -616,14 +580,14 @@ func _complete_movement() -> void:
 			player_state_machine.change_state("interact")
 			return # Stop here to prevent movement reset
 	
-	#_finalize_movement()
+	_finalize_movement()
 
 
 # Movement cleanup and executes the post movement logic
 func _finalize_movement() -> void:
 	position = next_cell
 	in_motion = false
-	_switch_locomotion("idle")
+	player_state_machine.change_state("idle")
 	_handle_post_movement_logic()
 
 
@@ -671,7 +635,7 @@ func _handle_pending_interaction() -> void:
 	if _is_in_interaction_range(pending_interaction):
 		interaction_target = pending_interaction
 		pending_interaction = null
-		_execute_interaction()
+		player_state_machine.change_state("interact")
 		return
 	
 	# We are not in interaction range, so we'll have to trace a path to it
@@ -683,13 +647,12 @@ func _handle_pending_interaction() -> void:
 
 
 # Used to switch the current animation state
-func _switch_locomotion(anim_state: String) -> void:
-	var gender_prefix = "male/male_" if gender == "male" else "female/female_"
-	var anim_name = gender_prefix + anim_state
+func switch_animation(anim_state: String) -> void:
+	var settings = locomotion[anim_state]
+	var anim_name = settings.animation
 	
 	if animation_player.has_animation(anim_name):
-		var settings = locomotion[anim_state]
-		animation_player.play(settings.animation)
+		animation_player.play(anim_name)
 		animation_player.speed_scale = settings.play_rate
 	
 		# Only emit this signal for my own character
@@ -905,7 +868,7 @@ func _start_movement_towards(start_position: Vector2i, target_position: Vector2i
 	
 	# When starting from idle
 	else:
-		 # player_speed + 1 accounts for current cell
+		# player_speed + 1 accounts for current cell
 		predicted_path = Utils.pop_multiple_front(prediction, player_speed + 1)
 		
 		# If we are in the same cell as the target cell, our predicted_path will have 1 or 0 cells,
@@ -913,7 +876,7 @@ func _start_movement_towards(start_position: Vector2i, target_position: Vector2i
 		if predicted_path.size() < 2:
 			# If we are in range, we activate it, either way we return early
 			if target and _is_in_interaction_range(interaction_target):
-				_execute_interaction()
+				player_state_machine.change_state("interact")
 			return
 		
 		# Get our immediate grid destination (this tick)
@@ -928,7 +891,7 @@ func _start_movement_towards(start_position: Vector2i, target_position: Vector2i
 		# Prepare everything to move correctly this tick
 		cells_to_move_this_tick = predicted_path.size()
 		_setup_movement_step(predicted_path)
-		#_switch_locomotion(cells_to_move_this_tick)
+		#switch_animation(cells_to_move_this_tick)
 		is_predicting = true
 		grid_destination = target_position
 		

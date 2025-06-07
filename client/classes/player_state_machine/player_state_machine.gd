@@ -28,16 +28,22 @@ func _ready() -> void:
 
 
 func change_state(new_state_name: String) -> void:
+	# If our state machine is not active, abort
 	if not is_active:
 		return
+	# If the state doesn't exists, abort
 	if not states_map.has(new_state_name):
 		push_error("State %s doesn't exist in state machine" % new_state_name)
 		return
 	
 	var new_state = states_map[new_state_name]
 	
-	# Exit current state
 	if current_state:
+		# If we are already in this state, ignore
+		if current_state == new_state:
+			return
+		
+		# Exit current state	
 		current_state.exit()
 		previous_state = current_state
 	
@@ -58,19 +64,21 @@ func set_active(value: bool) -> void:
 	set_process_unhandled_input(value)
 
 
-# We pass the buck to the state
+# Each state will handle its on tick
 func _physics_process(delta: float) -> void:
 	if current_state and is_active:
 		current_state.physics_update(delta)
 
 
-# We pass the buck to the state
+# Each state will handle its on tick
 func _process(delta: float) -> void:
 	if current_state and is_active:
 		current_state.update(delta)
 
 
-# We pass the buck to the state
+# Each state will handle its on tick
+# Using _unhandled_input(), not _input(), because
+# _unhandled_input() only receives events that weren't processed by the UI
 func _unhandled_input(event: InputEvent) -> void:
 	if current_state and is_active:
 		current_state.handle_input(event)

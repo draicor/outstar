@@ -6,21 +6,25 @@ func _init() -> void:
 
 func enter() -> void:
 	print("idle state")
-	player._switch_locomotion("idle")
+	player.switch_animation("idle")
 
 func handle_input(event: InputEvent) -> void:
 	if event.is_action_pressed("left_click"):
-		print("left click inside idle state")
+		# If we are busy, ignore input
 		if player.is_busy or player.autopilot_active:
 			return
 		
+		# Get the mouse position and check what kind of target we have
 		var mouse_position: Vector2 = player.get_viewport().get_mouse_position()
 		var target := player._get_mouse_click_target(mouse_position)
 		
+		# If we have a valid target, we try to determine what kind of class it is
 		if target:
 			if target is Interactable:
 				player._start_interaction(target)
 			# Add other types of target classes later
+		
+		# If we didn't click on anything interactable, then attempt to move to that cell
 		else:
 			player._handle_movement_click(mouse_position)
 	
