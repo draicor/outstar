@@ -586,16 +586,18 @@ func _complete_movement() -> void:
 func _finalize_movement() -> void:
 	position = next_cell
 	in_motion = false
-	player_state_machine.change_state("idle")
-	_handle_post_movement_logic()
-
-
-# Called after movement is complete
-func _handle_post_movement_logic() -> void:
+	
 	# If we have to sync with the server
-	if autopilot_active: _handle_autopilot()
+	if autopilot_active:
+		# We clear our interactions
+		interaction_target = null
+		pending_interaction = null
+		_handle_autopilot()
+		return
 	# After movement, check if we have a pending interaction and deal with it
 	elif pending_interaction: _handle_pending_interaction()
+	# If we don't have to server sync or interact with anything, then we are done moving
+	else: player_state_machine.change_state("idle")
 
 
 # Called when we have to sync with the server position
@@ -604,6 +606,7 @@ func _handle_autopilot() -> void:
 	if grid_position == server_grid_position and immediate_grid_destination == server_grid_position or grid_position == grid_destination:
 		autopilot_active = false
 		grid_destination = grid_position
+		player_state_machine.change_state("idle")
 	else:
 		# If our position is not synced, predict a path from our current grid position to the server position,
 		# and store it to be used next tick
@@ -629,6 +632,7 @@ func _handle_autopilot() -> void:
 			# Reset our destinations
 			grid_destination = grid_position
 			immediate_grid_destination = grid_position
+			player_state_machine.change_state("idle")
 
 
 # Called after movement completes, only when we have a pending interaction
@@ -698,20 +702,23 @@ func _handle_remote_player_movement(new_server_position: Vector2i) -> void:
 # Called when we receive a new position packet from the server to make sure we are synced locally
 func _handle_server_reconciliation(new_server_position: Vector2i) -> void:
 	if _prediction_was_valid(unconfirmed_path.duplicate(), new_server_position):
+		# If the server position is the same as our final destination, clear our path
 		if new_server_position == grid_destination:
 			unconfirmed_path = []
-			return
-		else:
-			return
+		
+		# If our prediction has been valid, then don't do anything
+		return
 	
-	# If our prediction was invalid
+	# If our prediction was invalid or our character did an invalid movement
 	else:
-		# Clear pending interactions on server correction
+		# Clear interactions on server correction
 		pending_interaction = null
+		interaction_target = null
 		# Calculate correction from our grid_destination to the last valid server position!
 		var correction_path: Array[Vector2i] = _predict_path(grid_destination, new_server_position)
 		if correction_path.size() > 0:
 			_apply_path_correction(correction_path)
+			player_state_machine.change_state("move")
 
 
 # Used to reconcile movement with the server
