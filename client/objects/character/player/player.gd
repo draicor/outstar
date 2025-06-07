@@ -516,7 +516,13 @@ func _process_movement_step(delta: float) -> void:
 	if my_player_character and is_predicting:
 		_process_path_segment(delta, predicted_path, next_tick_predicted_path)
 	else:
+		# We need to update the locomotion animation before _process_path_segment
+		if not my_player_character:
+			update_locomotion_animation(cells_to_move_this_tick)
+		# This has to be after update_locomotion_animation(),
+		# otherwise we don't transition into the idle animation correctly
 		_process_path_segment(delta, server_path, next_tick_server_path)
+		
 
 
 # Called on tick by _process_movement_step to interpolate the position of the player
@@ -554,7 +560,7 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		_interpolate_position(delta)
 		
 		# Trigger this after each segment to update our animation
-		Signals.player_update_locomotion_animation.emit(cells_to_move_this_tick)
+		update_locomotion_animation(cells_to_move_this_tick)
 		
 		if my_player_character:
 			unconfirmed_path.append(immediate_grid_destination)
@@ -564,6 +570,9 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 				# Create a new packet to report our new immediate destination to the server
 				var packet := _create_player_destination_packet(immediate_grid_destination)
 				WebSocket.send(packet)
+		else:
+			update_locomotion_animation(cells_to_move_this_tick)
+			
 		
 	else:
 		_complete_movement()
@@ -624,8 +633,7 @@ func _handle_autopilot() -> void:
 			cells_to_move_this_tick = predicted_path.size()-1
 			_setup_movement_step(predicted_path)
 			
-			# Trigger this to update our animations
-			Signals.player_update_locomotion_animation.emit(cells_to_move_this_tick)
+			update_locomotion_animation(cells_to_move_this_tick)
 		else:
 			# To prevent an input lock, we turn off autopilot if we get here
 			autopilot_active = false
@@ -671,7 +679,7 @@ func update_destination(new_server_position: Vector2i) -> void:
 	# Only do the reconciliation for my player, not the other players
 	if my_player_character and is_predicting:
 		_handle_server_reconciliation(new_server_position)
-	# Remote players are always in sync
+	# Remote players are always in sync with the server
 	else:
 		_handle_remote_player_movement(new_server_position)
 	
@@ -695,8 +703,8 @@ func _handle_remote_player_movement(new_server_position: Vector2i) -> void:
 			# Update our new path (remove overlap)
 			cells_to_move_this_tick = server_path.size()-1
 			_setup_movement_step(server_path) # This starts movement
-			# Trigger this to update our animations
-			Signals.player_update_locomotion_animation.emit(cells_to_move_this_tick)
+			
+			player_state_machine.change_state("move")
 
 
 # Called when we receive a new position packet from the server to make sure we are synced locally
@@ -731,8 +739,7 @@ func _apply_path_correction(new_path: Array[Vector2i]) -> void:
 			# Prepare everything to move correctly next tick
 			cells_to_move_this_tick = next_tick_predicted_path.size()-1
 			_setup_movement_step(next_tick_predicted_path)
-			# Trigger this to update our animations
-			Signals.player_update_locomotion_animation.emit(cells_to_move_this_tick)
+			update_locomotion_animation(cells_to_move_this_tick)
 		else:
 			# If we were already moving just append the correction path
 			# while removing the overlapping cell
@@ -905,8 +912,7 @@ func _start_movement_towards(start_position: Vector2i, target_position: Vector2i
 		cells_to_move_this_tick = predicted_path.size()
 		_setup_movement_step(predicted_path)
 		
-		# Trigger this to update our animations
-		Signals.player_update_locomotion_animation.emit(cells_to_move_this_tick)
+		update_locomotion_animation(cells_to_move_this_tick)
 		
 		is_predicting = true
 		grid_destination = target_position
@@ -977,3 +983,14 @@ func new_chat_bubble(message: String) -> void:
 func toggle_chat_bubble_icon(is_typing: bool) -> void:
 	if chat_bubble_icon:
 		chat_bubble_icon.visible = is_typing
+
+
+# Helper function to update our locomotion animation based on the cells to traverse
+func update_locomotion_animation(cells_to_move: int) -> void:
+	# Determine animation based on player_speed
+	var anim_state = "walk"
+	match cells_to_move:
+		2: anim_state = "jog"
+		3: anim_state = "run"
+	
+	switch_animation(anim_state)

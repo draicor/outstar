@@ -4,7 +4,6 @@ class_name MoveState
 
 func _init() -> void:
 	state_name = "move"
-	Signals.player_update_locomotion_animation.connect(_update_locomotion_animation)
 
 
 func enter() -> void:
@@ -16,16 +15,6 @@ func enter() -> void:
 func physics_update(delta: float) -> void:
 	player._handle_rotation(delta)
 	player._process_movement_step(delta)
-
-
-func _update_locomotion_animation(cells_to_move: int) -> void:
-	# Determine animation based on player_speed
-	var anim_state = "walk"
-	match cells_to_move:
-		2: anim_state = "jog"
-		3: anim_state = "run"
-	
-	player.switch_animation(anim_state)
 
 
 func handle_input(event: InputEvent) -> void:
