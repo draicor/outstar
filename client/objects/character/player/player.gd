@@ -492,12 +492,15 @@ func _create_join_region_request_packet(region_id: int) -> packets.Packet:
 
 
 func _show_debug_tools() -> void:
-	 # Only draw in editor/debug builds for my character
-	if my_player_character and OS.is_debug_build():
+	 # Only draw in editor/debug builds
+	if OS.is_debug_build():
+		if my_player_character:
+			_draw_circle(Utils.map_to_local(grid_destination), 0.5, Color.RED, 16) # Grid destination
+			_draw_circle(Utils.map_to_local(immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
+			_draw_circle(Utils.map_to_local(grid_position), 0.3, Color.GREEN, 16) # Grid position
+		
+		# Draw the forward direction and server position for all characters on screen
 		DebugDraw3D.draw_line(position, position + forward_direction * 1, Color.RED) # 1 meter forward line
-		_draw_circle(Utils.map_to_local(grid_destination), 0.5, Color.RED, 16) # Grid destination
-		_draw_circle(Utils.map_to_local(immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
-		_draw_circle(Utils.map_to_local(grid_position), 0.3, Color.GREEN, 16) # Grid position
 		_draw_circle(Utils.map_to_local(server_grid_position), 0.6, Color.REBECCA_PURPLE, 16) # Server position for my character
 
 
