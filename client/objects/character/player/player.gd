@@ -71,24 +71,6 @@ var is_busy: bool = false # Blocks input during interactions
 var interaction_target: Interactable = null # The object we are trying to interact with
 var pending_interaction: Interactable = null
 
-# Animation state machine
-var animation_library: String
-
-# Character locomotion
-var locomotion: Dictionary[String, Dictionary] # Depends on the gender of this character
-var female_locomotion: Dictionary[String, Dictionary] = {
-	"idle": {animation = "female/female_idle", play_rate = 1.0},
-	"walk": {animation = "female/female_walk", play_rate = 0.95},
-	"jog": {animation = "female/female_run", play_rate = 0.70},
-	"run": {animation = "female/female_run", play_rate = 0.8}
-}
-var male_locomotion: Dictionary[String, Dictionary] = {
-	"idle": {animation = "male/male_idle", play_rate = 1.0},
-	"walk": {animation = "male/male_walk", play_rate = 1.1},
-	"jog": {animation = "male/male_run", play_rate = 0.75},
-	"run": {animation = "male/male_run", play_rate = 0.9}
-}
-
 # Camera variables
 var camera : PlayerCamera
 var raycast : RayCast3D
@@ -98,11 +80,11 @@ var current_character: Node = null
 var chat_bubble_icon: Sprite3D
 
 # Scene tree nodes
-@onready var animation_player: AnimationPlayer # Assigned by code later
 @onready var model: Node3D = $Model # Used to attach the model and rotate it
 @onready var camera_rig: Node3D = $CameraPivot/CameraRig # Used to attach the camera
 @onready var chat_bubble_manager: Node3D = $ChatBubbleOrigin/ChatBubbleManager # Where chat bubbles spawn
 @onready var player_state_machine: PlayerStateMachine = $PlayerStateMachine
+@onready var player_animator: PlayerAnimator = $PlayerAnimator
 
 
 static func instantiate(
@@ -121,11 +103,9 @@ static func instantiate(
 	player.player_name = nickname
 	player.gender = character_gender
 	player.player_speed = character_speed
-	player.animation_library = "%s/%s_" % [character_gender, character_gender]
 	player.tooltip = nickname
 	player.model_rotation_y = spawn_model_rotation_y
 	player.my_player_character = is_my_player_character
-	
 	# Overwrite our local copy of the grid positions
 	player.server_grid_position = spawn_position
 	player.grid_position = player.server_grid_position
@@ -141,7 +121,6 @@ static func instantiate(
 # Called once this character has been created and instantiated
 func _ready() -> void:
 	_initialize_character()
-	_setup_animations() # After _initialize_character()
 	_setup_data_at_spawn()
 	
 	# Do this only for my local character
@@ -178,8 +157,7 @@ func _initialize_character() -> void:
 	if not character:
 		push_error("Failed to load character")
 		return
-		
-	locomotion = male_locomotion if gender == "male" else female_locomotion
+	
 	# Register this character as an interactable object
 	TooltipManager.register_interactable(self)
 	
@@ -228,33 +206,7 @@ func _setup_chat_bubble_sprite() -> void:
 		chat_bubble_icon.visible = false
 
 
-# Helper function for _ready()
-func _setup_animations() -> void:
-	animation_player = find_child("AnimationPlayer", true, false)
-	_setup_animation_blend_time()
 
-
-# Helper function to properly setup animation blend times
-func _setup_animation_blend_time() -> void:
-	if not animation_player:
-		push_error("AnimationPlayer not set")
-		return
-	
-	# Blend female locomotion animations
-	animation_player.set_blend_time("female/female_idle", "female/female_walk", 0.2)
-	animation_player.set_blend_time("female/female_idle", "female/female_run", 0.1)
-	animation_player.set_blend_time("female/female_walk", "female/female_idle", 0.15)
-	animation_player.set_blend_time("female/female_walk", "female/female_run", 0.15)
-	animation_player.set_blend_time("female/female_run", "female/female_idle", 0.15)
-	animation_player.set_blend_time("female/female_run", "female/female_walk", 0.15)
-	
-	# Blend male locomotion animations
-	animation_player.set_blend_time("male/male_idle", "male/male_walk", 0.2)
-	animation_player.set_blend_time("male/male_idle", "male/male_run", 0.1)
-	animation_player.set_blend_time("male/male_walk", "male/male_idle", 0.15)
-	animation_player.set_blend_time("male/male_walk", "male/male_run", 0.15)
-	animation_player.set_blend_time("male/male_run", "male/male_idle", 0.15)
-	animation_player.set_blend_time("male/male_run", "male/male_walk", 0.15)
 
 
 # Helper function for _ready()
@@ -454,9 +406,7 @@ func _execute_interaction() -> void:
 	
 	# Attempt to play the interaction animation
 	var animation_name: String = interaction_target.get_interaction_animation()
-	if animation_player.has_animation(animation_name):
-		animation_player.play(animation_name)
-		await animation_player.animation_finished # Wait for it
+	player_animator.play_animation_and_await(animation_name)
 	
 	# Perform the interaction itself
 	interaction_target.interact(self)
@@ -519,7 +469,7 @@ func _process_movement_step(delta: float) -> void:
 	else:
 		# We need to update the locomotion animation before _process_path_segment
 		if not my_player_character:
-			update_locomotion_animation(cells_to_move_this_tick)
+			player_animator.update_locomotion_animation(cells_to_move_this_tick)
 		# This has to be after update_locomotion_animation(),
 		# otherwise we don't transition into the idle animation correctly
 		_process_path_segment(delta, server_path, next_tick_server_path)
@@ -561,7 +511,7 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		_interpolate_position(delta)
 		
 		# Trigger this after each segment to update our animation
-		update_locomotion_animation(cells_to_move_this_tick)
+		player_animator.update_locomotion_animation(cells_to_move_this_tick)
 		
 		if my_player_character:
 			unconfirmed_path.append(immediate_grid_destination)
@@ -572,7 +522,7 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 				var packet := _create_player_destination_packet(immediate_grid_destination)
 				WebSocket.send(packet)
 		else:
-			update_locomotion_animation(cells_to_move_this_tick)
+			player_animator.update_locomotion_animation(cells_to_move_this_tick)
 			
 		
 	else:
@@ -639,7 +589,7 @@ func _handle_autopilot() -> void:
 				# Update only once per path segment
 				cells_to_move_this_tick = predicted_path.size()-1 # We subtract one since this is counting grid cells
 				_setup_movement_step(predicted_path)
-				update_locomotion_animation(cells_to_move_this_tick)
+				player_animator.update_locomotion_animation(cells_to_move_this_tick)
 			else:
 				_teleport_to_position(server_grid_position)
 		
@@ -691,20 +641,6 @@ func _handle_pending_interaction() -> void:
 	if not _setup_interaction_movement(start_position, pending_interaction):
 		pending_interaction = null
 		return
-
-
-# Used to switch the current animation state
-func switch_animation(anim_state: String) -> void:
-	var settings = locomotion[anim_state]
-	var anim_name = settings.animation
-	
-	if animation_player.has_animation(anim_name):
-		animation_player.play(anim_name)
-		animation_player.speed_scale = settings.play_rate
-	
-		# Only emit this signal for my own character
-		if my_player_character:
-			Signals.player_locomotion_changed.emit(anim_state)
 
 
 # Updates the player's position
@@ -777,7 +713,7 @@ func _apply_path_correction(new_path: Array[Vector2i]) -> void:
 			# Prepare everything to move correctly next tick
 			cells_to_move_this_tick = next_tick_predicted_path.size()-1
 			_setup_movement_step(next_tick_predicted_path)
-			update_locomotion_animation(cells_to_move_this_tick)
+			player_animator.update_locomotion_animation(cells_to_move_this_tick)
 		else:
 			# If we were already moving just replace the path
 			next_tick_predicted_path = new_path.slice(1)
@@ -949,7 +885,7 @@ func _start_movement_towards(start_position: Vector2i, target_position: Vector2i
 		cells_to_move_this_tick = predicted_path.size()
 		_setup_movement_step(predicted_path)
 		
-		update_locomotion_animation(cells_to_move_this_tick)
+		player_animator.update_locomotion_animation(cells_to_move_this_tick)
 		
 		is_predicting = true
 		grid_destination = target_position
@@ -1020,15 +956,3 @@ func new_chat_bubble(message: String) -> void:
 func toggle_chat_bubble_icon(is_typing: bool) -> void:
 	if chat_bubble_icon:
 		chat_bubble_icon.visible = is_typing
-
-
-# Helper function to update our locomotion animation based on the cells to traverse
-func update_locomotion_animation(cells_to_move: int) -> void:
-	# Determine animation based on player_speed
-	var anim_state: String
-	match cells_to_move:
-		1: anim_state = "walk"
-		2: anim_state = "jog"
-		_: anim_state = "run"
-	
-	switch_animation(anim_state)

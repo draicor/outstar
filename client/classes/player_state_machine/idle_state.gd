@@ -7,7 +7,7 @@ func _init() -> void:
 
 
 func enter() -> void:
-	player.switch_animation("idle")
+	player.player_animator.switch_animation("idle")
 
 
 # We have to update rotations here so we can rotate towards our targets

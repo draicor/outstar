@@ -1,5 +1,5 @@
-class_name BaseState
 extends Node
+class_name BaseState
 
 # Preloading scripts
 const Player := preload("res://objects/character/player/player.gd")

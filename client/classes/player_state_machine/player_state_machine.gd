@@ -1,5 +1,5 @@
-class_name PlayerStateMachine
 extends Node
+class_name PlayerStateMachine
 
 signal player_state_changed(previous_state, new_state)
 
@@ -21,6 +21,8 @@ func _ready() -> void:
 	
 	# Wait for parent to be ready
 	await get_parent().ready
+	# Wait a single frame to allow time for the player_animator to initialize
+	await get_tree().process_frame
 	
 	if states_map.has(initial_state):
 		change_state(initial_state)

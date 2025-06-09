@@ -1,3 +1,4 @@
+PlayerAnimator
 InteractState
 MoveState
 IdleState
@@ -12,4 +13,3 @@ MarginContainer
 Marker3D
 Node
 Interactable
-CheckBox
