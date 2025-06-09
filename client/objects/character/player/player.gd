@@ -613,35 +613,67 @@ func _finalize_movement() -> void:
 # Called when we have to sync with the server position
 func _handle_autopilot() -> void:
 	# If we are at the same position as in the server
-	if grid_position == server_grid_position and immediate_grid_destination == server_grid_position or grid_position == grid_destination:
+	if grid_position == server_grid_position and immediate_grid_destination == server_grid_position:
 		autopilot_active = false
 		grid_destination = grid_position
 		player_state_machine.change_state("idle")
-	else:
-		# If our position is not synced, predict a path from our current grid position to the server position,
-		# and store it to be used next tick
+		
+	# If our position is not synced
+	else: 
+		# Predict a path from our current grid position to the server position
 		next_tick_predicted_path = _predict_path(grid_position, server_grid_position)
+
 		# If our prediction is valid
-		if next_tick_predicted_path.size() > 0:
+		if next_tick_predicted_path.size() > 1:
+			# Because we were already idle here, we need to remove the overlap
+			next_tick_predicted_path = next_tick_predicted_path.slice(1)
 			# Get the first cells from our next tick path (based on our speed)
 			predicted_path.append_array(Utils.pop_multiple_front(next_tick_predicted_path, player_speed+1))
-			# Update our immediate grid destination
-			immediate_grid_destination = predicted_path.back()
 			
-			unconfirmed_path.append(immediate_grid_destination)
-			
-			# Update only once per path segment
-			cells_to_move_this_tick = predicted_path.size()-1
-			_setup_movement_step(predicted_path)
-			
-			update_locomotion_animation(cells_to_move_this_tick)
+			# If we have a valid path for this tick
+			if predicted_path.size() > 1:
+				# Update our immediate grid destination
+				immediate_grid_destination = predicted_path.back()
+				unconfirmed_path.append(immediate_grid_destination)
+				
+				# Update only once per path segment
+				cells_to_move_this_tick = predicted_path.size()-1 # We subtract one since this is counting grid cells
+				_setup_movement_step(predicted_path)
+				update_locomotion_animation(cells_to_move_this_tick)
+			else:
+				_teleport_to_position(server_grid_position)
+		
+		# If we couldn't find a valid prediction towards our target, we teleport to it
 		else:
-			# To prevent an input lock, we turn off autopilot if we get here
-			autopilot_active = false
-			# Reset our destinations
-			grid_destination = grid_position
-			immediate_grid_destination = grid_position
-			player_state_machine.change_state("idle")
+			_teleport_to_position(server_grid_position)
+
+
+# Helper function to immediately move a character without traversing the grid
+# Used to reset our player position to sync with the server
+func _teleport_to_position(new_grid_position: Vector2i) -> void:
+	# Reset all position-related variables
+	grid_position = new_grid_position
+	interpolated_position = Utils.map_to_local(new_grid_position)
+	position = interpolated_position
+	next_cell = interpolated_position
+	grid_destination = new_grid_position
+	immediate_grid_destination = new_grid_position
+	
+	# Reset movement state
+	in_motion = false
+	is_rotating = false
+	movement_elapsed_time = 0
+	rotation_elapsed = 0
+	
+	# Clear any pending paths
+	predicted_path = []
+	next_tick_predicted_path = []
+	unconfirmed_path = []
+	
+	# Exit autopilot mode
+	autopilot_active = false
+	# Go into idle state
+	player_state_machine.change_state("idle")
 
 
 # Called after movement completes, only when we have a pending interaction
