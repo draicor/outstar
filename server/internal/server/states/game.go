@@ -268,10 +268,13 @@ func (state *Game) HandleUpdateSpeed(payload *packets.UpdateSpeed) {
 	if newSpeed != state.player.GetSpeed() {
 		state.player.SetSpeed(newSpeed)
 
-		// Create an update speed packet to be sent to our new client
+		// Create an update speed packet to be sent to the client
 		// NOTE: use GetSpeed() because SetSpeed() has some validation, don't use newSpeed directly
 		updateSpeedPacket := packets.NewUpdateSpeed(state.player.GetSpeed())
 		state.client.SendPacket(updateSpeedPacket)
+		// Broadcast this to everyone else too, so everyone moves their local version of this character,
+		// at the accurate speed
+		state.client.Broadcast(updateSpeedPacket)
 
 	} // If the client sent the same speed, ignore
 }

@@ -223,7 +223,7 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		# Add this player to our list of players
 		_players[player_id] = player
 		
-		# Fore remote players
+		# For remote players
 		if not is_my_player_character:
 			# Add the player to the new position in my local grid
 			RegionManager.set_object(spawn_position, player)

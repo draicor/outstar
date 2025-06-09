@@ -699,13 +699,18 @@ func _handle_remote_player_movement(new_server_position: Vector2i) -> void:
 		
 		# If we are idling
 		else:
-			# We make the new path our current path
-			server_path = next_path
-			# Update our new path (remove overlap)
+			# Take the first segment based on player's speed and remove overlap
+			server_path = Utils.pop_multiple_front(next_path, player_speed + 1)
 			cells_to_move_this_tick = server_path.size()-1
-			_setup_movement_step(server_path) # This starts movement
+			immediate_grid_destination = server_path.back() if server_path.size() > 0 else server_grid_position
 			
-			player_state_machine.change_state("move")
+			# Set the remaining path for next ticks
+			next_tick_server_path = next_path
+			
+			# If we have cells to move
+			if server_path.size() > 0:
+				_setup_movement_step(server_path) # This starts movement
+				player_state_machine.change_state("move")
 
 
 # Called when we receive a new position packet from the server to make sure we are synced locally
