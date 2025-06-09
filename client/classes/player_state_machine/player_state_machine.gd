@@ -6,8 +6,9 @@ signal player_state_changed(previous_state, new_state)
 var states_map: Dictionary = {}
 var current_state: BaseState = null
 var previous_state: BaseState = null
-var is_active: bool = true : set = set_active
 var initial_state: String = "idle"
+var is_active: bool = true : set = set_active
+var is_local_player: bool = false # set to true for local player
 
 
 func _ready() -> void:
@@ -61,7 +62,7 @@ func set_active(value: bool) -> void:
 	is_active = value
 	set_physics_process(value)
 	set_process(value)
-	set_process_unhandled_input(value)
+	set_process_unhandled_input(value and is_local_player)
 
 
 # Each state will handle its on tick

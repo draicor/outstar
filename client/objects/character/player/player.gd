@@ -144,14 +144,15 @@ func _ready() -> void:
 	_setup_animations() # After _initialize_character()
 	_setup_data_at_spawn()
 	
-	# Initialize state machine
-	player_state_machine.set_active(true)
-	
 	# Do this only for my local character
 	if my_player_character:
 		_connect_signals()
 		_setup_local_player_components()
-		_register_global_references() # After _setup_local_player_components()	
+		_register_global_references() # After _setup_local_player_components()
+		player_state_machine.is_local_player = true # To allow input
+	
+	# Initialize state machine
+	player_state_machine.set_active(true)
 
 
 # Called each tick to draw debugging tools on screen
