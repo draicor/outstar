@@ -36,17 +36,41 @@ Download the cover animations BEFORE adding rifle ones
 
 
 RIFLE
-rifle_relaxed_idle -> Rifle Idle (#1, 257 frames)
-rifle_relaxed_walk -> Rifle Walk (#5, 39 frames)
-rifle_ready_idle -> Idle (#13, 63 frames)
-rifle_ready_walk -> Walk Forward (#15, 30 frames)
-rifle_ready_reload -> Reloading (#5, 99 frames) Arm-Height 0
-rifle_aim_idle -> Rifle Idle (#6, 94 frames)
-rifle_aim_walk -> Walking (#45, 41 frames)
-rifle_aim_fire_single_slow -> Firing Rifle (#8, 35 frames)
-rifle_aim_fire_single_fast -> Firing Rifle (#3, 8 frames)
-rifle_aim_reload -> Reloading (#5, 99 frames) Arm-Height 100
-rifle_unequip -> Rifle Put Away (#12, 69 frames)
+rifle_down_idle -> Two Hand Rifle Idle
+257 frames
+rifle_down_walk -> Walking With Rifle Down
+39 frames
+rifle_down_jog -> Rifle Sprint Forward
+23 frames, Overdrive 15
+rifle_down_run -> Rifle Sprint Forward
+19 frames, Overdrive 30
+rifle_down_to_aim -> Rifle Down To Aiming
+26 frames
+rifle_aim_to_down -> Rifle Aiming To Down
+45 frames
+rifle_aim_idle -> Rifle Standing Aiming Idle
+93 frames
+rifle_aim_walk -> Walking While Aiming Rifle
+30 frames, Stance 100, Speed 100
+rifle_aim_jog -> Running With Rifle Aimed
+24 frames, Style 50, Stride 50
+rifle_aim_run -> Running With Rifle Aimed
+19 frames, Style 50, Stride 100
+rifle_aim_fire_single_slow -> Firing A Rifle While Standing
+31 frames, Stance 0, Recoil 50
+rifle_aim_fire_single_fast -> Firing A Rifle While Standing
+8 frames
+rifle_aim_reload_slow -> Reloading Rifle While Standing
+193 frames, Speed 50, Arm-Height 100
+rifle_aim_reload_fast -> Reloading Rifle While Standing
+99 frames, Speed 100, Arm-Height 100
+rifle_equip -> Pulling Out Rifle
+61 frames
+rifle_unequip -> Putting Rifle Away
+69 frames
+
+NEED TO DOWNLOAD RIFLE TURN for 45°, 90°, 135°, 180°
+FOR DOWN AND AIM STATES
 
 
 PISTOL
