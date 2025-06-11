@@ -30,6 +30,11 @@ func _ready() -> void:
 		push_error("Initial state '%s' not found in state machine" % initial_state)
 
 
+# Returns the current state name
+func get_current_state_name() -> String:
+	return current_state.name
+
+
 func change_state(new_state_name: String) -> void:
 	# If our state machine is not active, abort
 	if not is_active:

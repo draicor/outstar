@@ -13,14 +13,26 @@ var locomotion: Dictionary[String, Dictionary] # Depends on the gender of this c
 var female_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "female/female_idle", play_rate = 1.0},
 	"walk": {animation = "female/female_walk", play_rate = 0.95},
-	"jog": {animation = "female/female_run", play_rate = 0.70},
+	"jog": {animation = "female/female_run", play_rate = 0.7},
 	"run": {animation = "female/female_run", play_rate = 0.8}
 }
 var male_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "male/male_idle", play_rate = 1.0},
 	"walk": {animation = "male/male_walk", play_rate = 1.1},
-	"jog": {animation = "male/male_run", play_rate = 0.75},
+	"jog": {animation = "male/male_run", play_rate = 0.7},
 	"run": {animation = "male/male_run", play_rate = 0.9}
+}
+var rifle_down_locomotion: Dictionary[String, Dictionary] = {
+	"idle": {animation = "rifle/rifle_down_idle", play_rate = 1.0},
+	"walk": {animation = "rifle/rifle_down_walk", play_rate = 1.1},
+	"jog": {animation = "rifle/rifle_down_jog", play_rate = 0.8},
+	"run": {animation = "rifle/rifle_down_run", play_rate = 1.15},
+}
+var rifle_aim_locomotion: Dictionary[String, Dictionary] = {
+	"idle": {animation = "rifle/rifle_aim_idle", play_rate = 1.0},
+	"walk": {animation = "rifle/rifle_aim_walk", play_rate = 1.0},
+	"jog": {animation = "rifle/rifle_aim_jog", play_rate = 1.0},
+	"run": {animation = "rifle/rifle_aim_run", play_rate = 1.0},
 }
 
 
@@ -29,8 +41,9 @@ func _ready() -> void:
 	await get_parent().ready
 	player = get_parent()
 	
-	# Switch our locomotion string depending on our player's gender
-	locomotion = male_locomotion if player.gender == "male" else female_locomotion
+	# Switch our locomotion depending on our player's gender
+	# CAUTION Modify this to keep in mind the equipped weapon in our DB too!
+	switch_animation_library(player.gender)
 	animation_player = player.find_child("AnimationPlayer", true, false)
 	
 	_setup_animation_blend_time()
@@ -57,13 +70,52 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("male/male_walk", "male/male_run", 0.15)
 	animation_player.set_blend_time("male/male_run", "male/male_idle", 0.15)
 	animation_player.set_blend_time("male/male_run", "male/male_walk", 0.15)
+	
+	# Blend rifle down locomotion animations
+	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_walk", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_jog", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_run", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_walk", "rifle/rifle_down_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_walk", "rifle/rifle_down_jog", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_walk", "rifle/rifle_down_run", 0.3)
+	animation_player.set_blend_time("rifle/rifle_down_jog", "rifle/rifle_down_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_jog", "rifle/rifle_down_walk", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_jog", "rifle/rifle_down_run", 0.15)
+	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_down_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_down_walk", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_down_jog", 0.15)
+	
+	# Blend rifle aim locomotion animations
+	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_walk", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_jog", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_run", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_walk", "rifle/rifle_aim_idle", 0.15)
+	animation_player.set_blend_time("rifle/rifle_aim_walk", "rifle/rifle_aim_jog", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_walk", "rifle/rifle_aim_run", 0.3)
+	animation_player.set_blend_time("rifle/rifle_aim_jog", "rifle/rifle_aim_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_jog", "rifle/rifle_aim_walk", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_jog", "rifle/rifle_aim_run", 0.15)
+	animation_player.set_blend_time("rifle/rifle_aim_run", "rifle/rifle_aim_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_run", "rifle/rifle_aim_walk", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_run", "rifle/rifle_aim_jog", 0.15)
 
 
 # Plays and awaits until the animation ends, if found
-func play_animation_and_await(animation_name: String) -> void:
+func play_animation_and_await(animation_name: String, play_rate: float = 1.0) -> void:
 	if animation_player.has_animation(animation_name):
+		# Make our player busy so he can't do anything else while doing this
+		player.is_busy = true
+		
 		animation_player.play(animation_name)
-		await animation_player.animation_finished # Wait for it
+		animation_player.speed_scale = play_rate
+		# Wait for the animation to finish before proceding
+		# NOTE this requires checking against player.is_busy and
+		# awaiting play_animation_and_await() too for it to work
+		await animation_player.animation_finished
+		
+		player.is_busy = false
+	else:
+		push_error(animation_name, " not found.")
 
 
 # Used to switch the current animation state
@@ -93,3 +145,21 @@ func update_locomotion_animation(cells_to_move: int) -> void:
 		_: anim_state = "run"
 	
 	switch_animation(anim_state)
+
+
+# Returns the idle state name 
+func get_idle_state_name() -> String:
+	match locomotion:
+		rifle_down_locomotion: return "rifle_down_idle"
+		rifle_aim_locomotion: return "rifle_aim_idle"
+		_: return "idle"
+
+
+# Helper function to update our locomotion dictionary based on equipped items or gender
+func switch_animation_library(animation_library: String) -> void:
+	match animation_library:
+		"male": locomotion = male_locomotion
+		"female": locomotion = female_locomotion
+		"rifle_down": locomotion = rifle_down_locomotion
+		"rifle_aim": locomotion = rifle_aim_locomotion
+		_: push_error("Library name not valid")

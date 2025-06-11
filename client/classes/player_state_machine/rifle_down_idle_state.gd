@@ -1,21 +1,20 @@
 extends BaseState
-class_name MoveState
-
-
-# We only have a move_state, no matter what weapon we have equipped
-# because when moving, can't really do anything else, we only transition
-# to other states, we just update the animation library and use the same move state
+class_name RifleDownIdleState
 
 
 func _init() -> void:
-	state_name = "move"
+	state_name = "rifle_down_idle"
 
 
-# _physics_process runs at a fixed timestep
-# Movement should be handled here because this runs before _process
+func enter() -> void:
+	player.set_equipped_weapon_type("rifle")
+	player.player_animator.switch_animation_library("rifle_down")
+	player.player_animator.switch_animation("idle")
+
+
+# We have to update rotations here so we can rotate towards our targets
 func physics_update(delta: float) -> void:
 	player._handle_rotation(delta)
-	player._process_movement_step(delta)
 
 
 func handle_input(event: InputEvent) -> void:
@@ -37,3 +36,13 @@ func handle_input(event: InputEvent) -> void:
 		# If we didn't click on anything interactable, then attempt to move to that cell
 		else:
 			player._handle_movement_click(mouse_position)
+	
+	# Raise rifle
+	elif event.is_action_pressed("weapon_rifle"):
+		await player.player_animator.play_animation_and_await("rifle/rifle_down_to_aim")
+		player.player_state_machine.change_state("rifle_aim_idle")
+	
+	# Unequip rifle
+	elif event.is_action_pressed("weapon_unequip"):
+		await player.player_animator.play_animation_and_await("rifle/rifle_unequip")
+		player.player_state_machine.change_state("idle")

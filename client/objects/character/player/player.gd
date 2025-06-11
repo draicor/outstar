@@ -78,6 +78,7 @@ var raycast : RayCast3D
 # Character variables
 var current_character: Node = null
 var chat_bubble_icon: Sprite3D
+var equipped_weapon: String = "unarmed" # Used to switch states and animations too
 
 # Scene tree nodes
 @onready var model: Node3D = $Model # Used to attach the model and rotate it
@@ -414,7 +415,8 @@ func _execute_interaction() -> void:
 	# Cleanup
 	interaction_target = null
 	is_busy = false
-	player_state_machine.change_state("idle")
+	# Go into idle state
+	player_state_machine.change_state(player_animator.get_idle_state_name())
 
 
 # Creates and returns a player_destination_packet
@@ -556,8 +558,9 @@ func _finalize_movement() -> void:
 		return
 	# After movement, check if we have a pending interaction and deal with it
 	elif pending_interaction: _handle_pending_interaction()
-	# If we don't have to server sync or interact with anything, then we are done moving
-	else: player_state_machine.change_state("idle")
+	# If we don't have to server sync or interact with anything,
+	# then we are done moving, so we go into idle state
+	else: player_state_machine.change_state(player_animator.get_idle_state_name())
 
 
 # Called when we have to sync with the server position
@@ -566,7 +569,8 @@ func _handle_autopilot() -> void:
 	if grid_position == server_grid_position and immediate_grid_destination == server_grid_position:
 		autopilot_active = false
 		grid_destination = grid_position
-		player_state_machine.change_state("idle")
+		# Go into idle state
+		player_state_machine.change_state(player_animator.get_idle_state_name())
 		
 	# If our position is not synced
 	else: 
@@ -623,7 +627,7 @@ func _teleport_to_position(new_grid_position: Vector2i) -> void:
 	# Exit autopilot mode
 	autopilot_active = false
 	# Go into idle state
-	player_state_machine.change_state("idle")
+	player_state_machine.change_state(player_animator.get_idle_state_name())
 
 
 # Called after movement completes, only when we have a pending interaction
@@ -956,3 +960,15 @@ func new_chat_bubble(message: String) -> void:
 func toggle_chat_bubble_icon(is_typing: bool) -> void:
 	if chat_bubble_icon:
 		chat_bubble_icon.visible = is_typing
+
+
+# Updates the current equipped weapon type to change the animation library
+func set_equipped_weapon_type(new_weapon: String) -> void:
+	# If already equipped, ignore
+	if new_weapon == equipped_weapon:
+		return
+	
+	match new_weapon:
+		"unarmed": equipped_weapon = "unarmed"
+		"rifle": equipped_weapon = "rifle"
+		_: push_error("Weapon not valid")

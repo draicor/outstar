@@ -1,3 +1,5 @@
+RifleAimIdleState
+RifleDownIdleState
 PlayerAnimator
 InteractState
 MoveState
@@ -11,5 +13,3 @@ CheckButton
 HBoxContainer
 MarginContainer
 Marker3D
-Node
-Interactable
