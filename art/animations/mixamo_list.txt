@@ -1,6 +1,8 @@
 https://www.youtube.com/watch?v=xGHgA5oftxY
 How to export from Mixamo to Godot and use Animation Libraries
 
+https://www.youtube.com/watch?v=61WEupW4Eow
+How to remove root motion from Mixamo animations in blender
 
 FEMALE
 female_idle -> Standing Idle
@@ -40,8 +42,8 @@ rifle_down_idle -> Two Hand Rifle Idle
 257 frames
 rifle_down_walk -> Walking With Rifle Down
 39 frames
-rifle_down_jog -> Rifle Sprint Forward
-23 frames, Overdrive 15
+rifle_down_jog -> Running With Rifle Down
+20 frames
 rifle_down_run -> Rifle Sprint Forward
 19 frames, Overdrive 30
 rifle_down_to_aim -> Rifle Down To Aiming

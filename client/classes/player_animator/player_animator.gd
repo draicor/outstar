@@ -24,9 +24,9 @@ var male_locomotion: Dictionary[String, Dictionary] = {
 }
 var rifle_down_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "rifle/rifle_down_idle", play_rate = 1.0},
-	"walk": {animation = "rifle/rifle_down_walk", play_rate = 1.1},
-	"jog": {animation = "rifle/rifle_down_jog", play_rate = 0.8},
-	"run": {animation = "rifle/rifle_down_run", play_rate = 1.15},
+	"walk": {animation = "rifle/rifle_down_walk", play_rate = 1.25},
+	"jog": {animation = "rifle/rifle_down_jog", play_rate = 0.9},
+	"run": {animation = "rifle/rifle_down_run", play_rate = 1.1},
 }
 var rifle_aim_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "rifle/rifle_aim_idle", play_rate = 1.0},
@@ -71,6 +71,20 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("male/male_run", "male/male_idle", 0.15)
 	animation_player.set_blend_time("male/male_run", "male/male_walk", 0.15)
 	
+	# Blend Equip animations
+	animation_player.set_blend_time("female/female_idle", "rifle/rifle_equip", 0.2)
+	animation_player.set_blend_time("male/male_idle", "rifle/rifle_equip", 0.2)
+	animation_player.set_blend_time("rifle/rifle_equip", "rifle/rifle_down_idle", 0.2)
+	
+	# Blend Unequip animations
+	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_unequip", 0.2)
+	animation_player.set_blend_time("rifle/rifle_unequip", "female/female_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_unequip", "male/male_idle", 0.2)
+	
+	# Blend rifle down to rifle aim animations
+	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_aim_idle", 0.15)
+	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_down_idle", 0.15)
+	
 	# Blend rifle down locomotion animations
 	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_walk", 0.2)
 	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_jog", 0.2)
@@ -80,10 +94,10 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("rifle/rifle_down_walk", "rifle/rifle_down_run", 0.3)
 	animation_player.set_blend_time("rifle/rifle_down_jog", "rifle/rifle_down_idle", 0.2)
 	animation_player.set_blend_time("rifle/rifle_down_jog", "rifle/rifle_down_walk", 0.2)
-	animation_player.set_blend_time("rifle/rifle_down_jog", "rifle/rifle_down_run", 0.15)
+	animation_player.set_blend_time("rifle/rifle_down_jog", "rifle/rifle_down_run", 0.3)
 	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_down_idle", 0.2)
 	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_down_walk", 0.2)
-	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_down_jog", 0.15)
+	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_down_jog", 0.3)
 	
 	# Blend rifle aim locomotion animations
 	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_walk", 0.2)
