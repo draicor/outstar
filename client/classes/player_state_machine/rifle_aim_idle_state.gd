@@ -17,6 +17,18 @@ func physics_update(delta: float) -> void:
 	player._handle_rotation(delta)
 
 
+# Held inputs
+func update(_delta: float) -> void:
+	# If we are busy, ignore input
+	if player.is_busy or player.autopilot_active:
+		return
+	
+	# Fire rifle if mouse isn't over the UI
+	if Input.is_action_pressed("right_click") and not player.is_mouse_over_ui:
+		await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast")
+
+
+# One-time inputs
 func handle_input(event: InputEvent) -> void:
 	# If we are busy, ignore input
 	if player.is_busy or player.autopilot_active:
@@ -36,10 +48,6 @@ func handle_input(event: InputEvent) -> void:
 		# If we didn't click on anything interactable, then attempt to move to that cell
 		else:
 			player._handle_movement_click(mouse_position)
-	
-	# Fire rifle
-	elif event.is_action_pressed("right_click"):
-		await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast")
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):

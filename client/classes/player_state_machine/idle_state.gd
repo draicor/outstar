@@ -40,5 +40,5 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Equip rifle
 	elif event.is_action_pressed("weapon_rifle"):
-		await player.player_animator.play_animation_and_await("rifle/rifle_equip")
+		await player.player_animator.play_animation_and_await("rifle/rifle_equip", 1.2)
 		player.player_state_machine.change_state("rifle_down_idle")

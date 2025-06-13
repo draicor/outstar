@@ -66,6 +66,7 @@ var unconfirmed_path: Array[Vector2i] = [] # Holds every vector2i coordinate the
 var in_motion: bool = false # If the character is moving
 var autopilot_active: bool = false # If the server is forcing the player to move
 var is_busy: bool = false # Blocks input during interactions
+var is_mouse_over_ui = false # Used to prevent input of certain actions while on the UI
 
 # Interaction system
 var interaction_target: Interactable = null # The object we are trying to interact with

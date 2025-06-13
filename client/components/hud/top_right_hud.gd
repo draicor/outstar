@@ -78,3 +78,13 @@ func _on_change_move_speed_button_down() -> void:
 		elif GameManager.player_character.player_speed == 3:
 			texture_rect.texture = jog_texture
 			Signals.ui_change_move_speed_button.emit(2) # JOG
+
+
+# When mouse hovers over this UI, update our global player character
+func _on_change_move_speed_mouse_entered() -> void:
+	GameManager.player_character.is_mouse_over_ui = true
+
+
+# When mouse exits this UI, update our global player character
+func _on_change_move_speed_mouse_exited() -> void:
+	GameManager.player_character.is_mouse_over_ui = false

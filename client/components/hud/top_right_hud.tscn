@@ -9,6 +9,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 48.0
 offset_bottom = 48.0
+mouse_filter = 1
 script = ExtResource("1_e2m3u")
 
 [node name="TextureRect" type="TextureRect" parent="."]
@@ -31,3 +32,5 @@ button_mask = 3
 flat = true
 
 [connection signal="button_down" from="TextureRect/ChangeMoveSpeed" to="." method="_on_change_move_speed_button_down"]
+[connection signal="mouse_entered" from="TextureRect/ChangeMoveSpeed" to="." method="_on_change_move_speed_mouse_entered"]
+[connection signal="mouse_exited" from="TextureRect/ChangeMoveSpeed" to="." method="_on_change_move_speed_mouse_exited"]

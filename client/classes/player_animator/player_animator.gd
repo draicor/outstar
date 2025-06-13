@@ -89,6 +89,12 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_to_down", 0.2)
 	animation_player.set_blend_time("rifle/rifle_aim_to_down", "rifle/rifle_down_idle", 0.2)
 	
+	# Blend rifle fire single fast
+	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_fire_single_fast", 0.4)
+	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_walk", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_jog", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_run", 0.2)
+	
 	# Blend rifle down locomotion
 	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_walk", 0.2)
 	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_jog", 0.2)
@@ -107,7 +113,7 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_walk", 0.1)
 	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_jog", 0.2)
 	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_run", 0.2)
-	animation_player.set_blend_time("rifle/rifle_aim_walk", "rifle/rifle_aim_idle", 0.15)
+	animation_player.set_blend_time("rifle/rifle_aim_walk", "rifle/rifle_aim_idle", 0.2)
 	animation_player.set_blend_time("rifle/rifle_aim_walk", "rifle/rifle_aim_jog", 0.2)
 	animation_player.set_blend_time("rifle/rifle_aim_walk", "rifle/rifle_aim_run", 0.3)
 	animation_player.set_blend_time("rifle/rifle_aim_jog", "rifle/rifle_aim_idle", 0.2)
