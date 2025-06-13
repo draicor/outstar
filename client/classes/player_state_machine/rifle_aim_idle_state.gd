@@ -25,6 +25,8 @@ func update(_delta: float) -> void:
 	
 	# Fire rifle if mouse isn't over the UI
 	if Input.is_action_pressed("right_click") and not player.is_mouse_over_ui:
+		var mouse_position: Vector2 = player.get_viewport().get_mouse_position()
+		print(player._mouse_raycast(mouse_position))
 		await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast")
 
 

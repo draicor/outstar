@@ -21,6 +21,10 @@ var character_scenes: Dictionary = {
 # CONSTANTS
 const SERVER_TICK: float = 0.5 # Controls local player move speed
 const DIRECTION_THRESHOLD := 0.01 # Accounts for floating point imprecision
+const ANGLE_THRESHOLD := 0.05 # Radians threshold for considering rotation complete
+
+# Signals
+signal rotation_completed
 
 # Tick related data
 var movement_tick: float = SERVER_TICK # Defaults to server_tick
@@ -151,6 +155,13 @@ func _handle_rotation(delta: float) -> void:
 		# CAUTION this is not recalculating our current rotation, should fix this!
 		if rotation_elapsed >= 1.0:
 			is_rotating = false
+			rotation_completed.emit()
+
+
+# Public method to rotate and await rotation completes
+func await_rotation(direction: Vector3) -> void:
+	if _rotate_towards_direction(direction):
+		await rotation_completed
 
 
 # Helper function for _ready()
@@ -402,9 +413,9 @@ func _execute_interaction() -> void:
 	predicted_path = []
 	next_tick_predicted_path = []
 	
-	# Face the interaction target
+	# Rotate towards the interaction target and await until facing it
 	var look_direction := (interaction_target.global_position - global_position).normalized()
-	_rotate_towards_direction(look_direction)
+	await await_rotation(look_direction)
 	
 	# Attempt to play the interaction animation
 	var animation_name: String = interaction_target.get_interaction_animation()
@@ -772,23 +783,35 @@ func _calculate_path_overlap(current_path: Array[Vector2i], new_path: Array[Vect
 	return overlap
 
 
-# Rotates our character towards a direction to interact
-func _rotate_towards_direction(direction: Vector3) -> void:
+# Rotates our character towards a direction
+# Returns true if rotation was started, false if already facing target
+func _rotate_towards_direction(direction: Vector3) -> bool:
 	# Remove vertical component and normalize
-	var horizontal_direction = direction.normalized()
+	var horizontal_direction: Vector3 = direction.normalized()
 	# Calculate target yaw directly from world direction (flip the sign to match Godot's system)
-	var new_yaw := atan2(-horizontal_direction.x, -horizontal_direction.z)
+	var new_yaw: float = atan2(-horizontal_direction.x, -horizontal_direction.z)
 	
 	# Update forward direction immediately to target rotation
 	forward_direction = Vector3(-sin(new_yaw), 0, -cos(new_yaw))
 	
-	# Only rotate if significant change in angle
-	if abs(model.rotation.y - new_yaw) > DIRECTION_THRESHOLD:
-		# Set rotation targets
-		start_yaw = model.rotation.y
-		target_yaw = new_yaw
-		is_rotating = true
-		rotation_elapsed = 0.0
+	# Calculate shortest angle difference
+	var current_yaw: float = model.rotation.y
+	var angle_diff = wrapf(new_yaw - current_yaw, -PI, PI)
+	
+	# Check if we're already close enough to target
+	if abs(angle_diff) <= ANGLE_THRESHOLD:
+		return false
+	
+	# Cancel any existing rotation
+	if is_rotating:
+		rotation_completed.emit()
+	
+	# Set rotation targets
+	start_yaw = model.rotation.y
+	target_yaw = new_yaw
+	is_rotating = true
+	rotation_elapsed = 0.0
+	return true
 
 
 # Should be called once per path slice to recalculate the move speed
