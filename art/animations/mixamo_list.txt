@@ -12,6 +12,7 @@ female_walk -> Feminine Walk Forward
 female_jog -> Same female_run animation but slowed down
 female_run -> Medium Speed Running
 17 frames
+
 female_texting_idle -> Standing Texting On Phone
 556 frames, SPLIT INTO 3 animations (start, loop & end)
 female_texting_walk -> Female Walking And Texting On Phone
@@ -27,14 +28,11 @@ male_jog -> Male Weighted Run
 25->24 frames, Speed 75
 male_run -> Running With Intention
 21 frames
+
 male_texting_idle -> Texting On A Smart Phone While Standing
 707 frames, SPLIT INTO 3 animations (start, loop & end)
 male_texting_walk -> Male Walking While Texting On A Smartphone
 120 frames
-
-
-COVER
-Download the cover animations BEFORE adding rifle ones
 
 
 RIFLE
@@ -71,19 +69,25 @@ rifle_equip -> Pulling Out Rifle
 rifle_unequip -> Putting Rifle Away
 69 frames
 
-NEED TO DOWNLOAD RIFLE TURN for 45°, 90°, 135°, 180°
-FOR DOWN AND AIM STATES
-
 
 PISTOL
-pistol_idle -> Pistol Idle (#4, 40 frames), Arm-Space 56
-pistol_walk -> Pistol Walk (#3, 24 frames), Arm-Space 56
-pistol_jog -> Pistol Run (#1, 22 frames), Arm-Space 56
-pistol_run -> Pistol Run (#2, 15 frames), Arm-Space 56
+pistol_idle -> Idle With Aimed Pistol
+40 frames, Arm-Space 56
+pistol_walk -> Walking With An Aimed Pistol
+24 frames, Arm-Space 56
+pistol_jog -> Running With Aimed Pistol
+22 frames, Arm-Space 56
+pistol_run -> Running With A Pistol
+15 frames, Arm-Space 56
+pistol_unequip -> Pistol Aim To Holster Idle
+107 frames, Overdrive 100, Arm-Space 56
+
+
+pistol_equip -> REVERSE pistol_unequip
+pistol_fire -> CREATE FROM pistol_idle
+
+
 pistol_melee -> Pistol Whip (#13, 77 frames), Arm-Space 56
-pistol_holster -> Pistol Aim (#26, 213 frames), Arm-Space 56
 pistol_kneel_idle -> Pistol Kneeling Idle (#1, 114 frames), Arm-Space 56
 pistol_idle_to_pistol_kneel_idle -> Pistol Stand To Kneel (#4, 30 frames), Arm-Space 56
 pistol_kneel_idle_to_pistol_idle -> Pistol Kneel To Stand (#2, 41 frames), Arm-Space 56
-pistol_equip_unequip -> SPLIT & FIX Grab Rifle And Put Back (#4, 144 frames) Speed 100
-pistol_fire -> MISSING (Create from pistol_idle...)
