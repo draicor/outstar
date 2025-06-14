@@ -45,6 +45,8 @@ func _ready() -> void:
 	# Setup camera
 	self.near = CAMERA_NEAR_PLANE
 	self.far = CAMERA_FAR_PLANE
+	# Make this our current camera
+	self.current = true
 
 
 # We keep the camera logic in _process because its smoother than _physics_process

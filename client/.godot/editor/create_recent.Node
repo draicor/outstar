@@ -1,3 +1,4 @@
+PlayerAudio
 RifleAimIdleState
 RifleDownIdleState
 PlayerAnimator
@@ -11,5 +12,3 @@ Sprite3D
 VBoxContainer
 CheckButton
 HBoxContainer
-MarginContainer
-Marker3D

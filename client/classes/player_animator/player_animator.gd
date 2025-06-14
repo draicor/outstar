@@ -5,6 +5,7 @@ class_name PlayerAnimator
 # Preloading scripts
 const Player := preload("res://objects/character/player/player.gd")
 
+# Internal variables
 var player: Player = null # Our parent node
 var animation_player: AnimationPlayer
 

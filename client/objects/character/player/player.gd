@@ -89,6 +89,7 @@ var equipped_weapon: String = "unarmed" # Used to switch states and animations t
 @onready var chat_bubble_manager: Node3D = $ChatBubbleOrigin/ChatBubbleManager # Where chat bubbles spawn
 @onready var player_state_machine: PlayerStateMachine = $PlayerStateMachine
 @onready var player_animator: PlayerAnimator = $PlayerAnimator
+@onready var player_audio: PlayerAudio = $PlayerAudio
 
 
 static func instantiate(
@@ -808,10 +809,6 @@ func _rotate_towards_direction(direction: Vector3) -> bool:
 	# Check if we're already close enough to target
 	if abs(angle_diff) <= ANGLE_THRESHOLD:
 		return false
-	
-	# Cancel any existing rotation
-	if is_rotating:
-		rotation_completed.emit()
 	
 	# Set rotation targets
 	rotation_target = new_yaw
