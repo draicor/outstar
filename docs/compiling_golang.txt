@@ -58,10 +58,10 @@ go env -w GOOS=windows
 go env -w GOARCH=amd64
 
 # To compile the server in windows use the command inside the main.go folder:
-go build -o cmd/mmo-server-windows-amd64-v0.0.3.2 main.go # Uses the same OS and architecture as the current system
+go build -o cmd/mmo-server-windows-amd64-v0.0.3.3 main.go # Uses the same OS and architecture as the current system
 
 # To change the build target in windows for linux we use:
 go env -w GOOS=linux
 go env -w GOARCH=arm64
 
-go build -o cmd/mmo-server-linux-arm64-v0.0.3.2 main.go # Raspberry pi 64 bits
+go build -o cmd/mmo-server-linux-arm64-v0.0.3.3 main.go # Raspberry pi 64 bits

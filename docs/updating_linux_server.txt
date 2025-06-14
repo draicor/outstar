@@ -1,0 +1,49 @@
+# switch to root user (if not logged in as root)
+sudo su -
+
+# To upload the server files to linux using powershell:
+scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\mmo-server-linux-arm64-v0.0.3.3 draicor@64.223.161.129:/home/draicor/mmo/server/
+scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\db.sqlite draicor@64.223.161.129:/home/draicor/mmo/server/
+
+# We access our folder
+cd /home/draicor/mmo/server
+
+# Update the permissions of the new file
+chmod +x ./mmo-server-linux-arm64-v0.0.3.3
+
+# Stop the server
+sudo systemctl stop mmo-server
+
+# Remove the previous server version
+rm ./mmo-server-linux-arm64-v0.0.3.2
+
+# Navigate into the systemd folder
+cd /etc/systemd/system
+
+# Edit the config file
+nano mmo-server.service
+
+# Add the following lines to the config file
+[Unit]
+Description=MMO Server
+After=network.target
+
+[Service]
+ExecStart=/home/draicor/mmo-server-linux-arm64-v0.0.3.3
+RemainAfterExit=no
+Restart=always
+RestartSec=30s
+
+[Install]
+WantedBy=multi-user.target
+
+# Save the file by doing control+O and then enter, then close # nano by doing control+X
+
+# Since we updated a service config file, we need to reload it
+systemctl daemon-reload
+
+# We restart the service
+sudo systemctl restart mmo-server
+
+# We make sure its running without errors
+systemctl status mmo-server
