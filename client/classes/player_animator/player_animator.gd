@@ -91,6 +91,7 @@ func _setup_animation_blend_time() -> void:
 	
 	# Blend rifle fire single fast
 	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_fire_single_fast", 0.4)
+	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_fire_single_fast", 0.2)
 	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_walk", 0.2)
 	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_jog", 0.2)
 	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_run", 0.2)
@@ -139,7 +140,7 @@ func play_animation_and_await(animation_name: String, play_rate: float = 1.0) ->
 		
 		player.is_busy = false
 	else:
-		push_error(animation_name, " not found.")
+		print(animation_name, " not found.")
 
 
 # Used to switch the current animation state

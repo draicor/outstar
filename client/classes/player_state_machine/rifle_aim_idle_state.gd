@@ -25,9 +25,17 @@ func update(_delta: float) -> void:
 	
 	# Fire rifle if mouse isn't over the UI
 	if Input.is_action_pressed("right_click") and not player.is_mouse_over_ui:
+		# Get the space point the mouse clicked on
 		var mouse_position: Vector2 = player.get_viewport().get_mouse_position()
-		print(player._mouse_raycast(mouse_position))
-		await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast")
+		var target_point: Vector3 = player._mouse_raycast(mouse_position)
+		
+		# If we clicked somewhere valid (explicit check)
+		if target_point != Vector3.ZERO:
+			# Calculate direction from player to target point
+			var direction_to_target: Vector3 = (target_point - player.global_position).normalized()
+			# Rotate towards it and then fire
+			await player.await_rotation(direction_to_target)
+			await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast")
 
 
 # One-time inputs

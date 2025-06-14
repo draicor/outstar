@@ -14,13 +14,12 @@ var character_scenes: Dictionary = {
 }
 
 # EXPORTED VARIABLES
-@export var ROTATION_SPEED: float = 6.0
+@export var ROTATION_SPEED: float = 10.0 # Radians per second
 @export var RAYCAST_DISTANCE: float = 20 # 20 meters
 @export var CHAT_BUBBLE_OFFSET: Vector3 = Vector3(0, 0.4, 0)
 
 # CONSTANTS
 const SERVER_TICK: float = 0.5 # Controls local player move speed
-const DIRECTION_THRESHOLD := 0.01 # Accounts for floating point imprecision
 const ANGLE_THRESHOLD := 0.05 # Radians threshold for considering rotation complete
 
 # Signals
@@ -56,9 +55,8 @@ var next_cell: Vector3 # Used in _process, its the next cell our player should m
 # Rotation state
 var forward_direction: Vector3 # Used to keep track of our current forward direction
 var is_rotating: bool = false # To prevent movement before rotation ends 
-var rotation_elapsed: float = 0.0 # Used in _process to rotate the character
-var start_yaw: float = 0.0
-var target_yaw: float = 0.0
+var rotation_target: float = 0.0
+var tick_rotation_speed: float = 0.0 # How much to rotate this tick
 
 # Client prediction
 var is_predicting: bool = false
@@ -147,15 +145,25 @@ func _physics_process(_delta: float) -> void:
 
 # Rotates our character on tick
 func _handle_rotation(delta: float) -> void:
-	if is_rotating:
-		rotation_elapsed = min(rotation_elapsed + ROTATION_SPEED * delta, 1.0)
-		model.rotation.y = lerp_angle(start_yaw, target_yaw, rotation_elapsed)
-		
-		# Check if rotation is complete after rotating
-		# CAUTION this is not recalculating our current rotation, should fix this!
-		if rotation_elapsed >= 1.0:
-			is_rotating = false
-			rotation_completed.emit()
+	if not is_rotating:
+		return
+	
+	# Calculate how much we should rotate this frame
+	var rotation_step = tick_rotation_speed * delta
+	
+	# Apply rotation
+	model.rotation.y += rotation_step
+	
+	# Calculate new angle difference after rotation
+	var new_diff = wrapf(rotation_target - model.rotation.y, -PI, PI)
+	
+	# Check if we've passed the target or are close enough
+	# If we went past the rotation target OR we are within the angle threshold
+	if sign(new_diff) != sign(rotation_step) or abs(new_diff) <= ANGLE_THRESHOLD:
+		# Snap to exact target rotation
+		model.rotation.y = rotation_target
+		is_rotating = false
+		rotation_completed.emit()
 
 
 # Public method to rotate and await rotation completes
@@ -629,7 +637,6 @@ func _teleport_to_position(new_grid_position: Vector2i) -> void:
 	in_motion = false
 	is_rotating = false
 	movement_elapsed_time = 0
-	rotation_elapsed = 0
 	
 	# Clear any pending paths
 	predicted_path = []
@@ -762,7 +769,7 @@ func _setup_movement_step(path: Array[Vector2i]) -> void:
 		var move_direction = (next_cell - position).normalized()
 		
 		# Compare with previous direction using a threshold
-		if move_direction.distance_to(forward_direction) > DIRECTION_THRESHOLD:
+		if move_direction.distance_to(forward_direction) > ANGLE_THRESHOLD:
 			# Handle rotation if direction changed
 			_rotate_towards_direction(move_direction)
 	
@@ -807,10 +814,9 @@ func _rotate_towards_direction(direction: Vector3) -> bool:
 		rotation_completed.emit()
 	
 	# Set rotation targets
-	start_yaw = model.rotation.y
-	target_yaw = new_yaw
+	rotation_target = new_yaw
+	tick_rotation_speed = sign(angle_diff) * ROTATION_SPEED
 	is_rotating = true
-	rotation_elapsed = 0.0
 	return true
 
 
