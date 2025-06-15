@@ -35,7 +35,9 @@ func update(_delta: float) -> void:
 			var direction_to_target: Vector3 = (target_point - player.global_position).normalized()
 			# Rotate towards it and then fire
 			await player.await_rotation(direction_to_target)
-			await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast")
+			# If we are NOT moving, fire
+			if not player.in_motion:
+				await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast")
 
 
 # One-time inputs
@@ -65,5 +67,5 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Lower rifle
 	elif event.is_action_pressed("weapon_rifle") or event.is_action_pressed("weapon_unequip"):
-		await player.player_animator.play_animation_and_await("rifle/rifle_aim_to_down")
+		await player.player_animator.play_animation_and_await("rifle/rifle_aim_to_down", 2.0)
 		player.player_state_machine.change_state("rifle_down_idle")

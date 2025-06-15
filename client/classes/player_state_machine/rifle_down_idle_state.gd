@@ -39,10 +39,10 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Raise rifle
 	elif event.is_action_pressed("weapon_rifle") or event.is_action_pressed("right_click"):
-		await player.player_animator.play_animation_and_await("rifle/rifle_down_to_aim")
+		await player.player_animator.play_animation_and_await("rifle/rifle_down_to_aim", 2.0)
 		player.player_state_machine.change_state("rifle_aim_idle")
 	
 	# Unequip rifle
 	elif event.is_action_pressed("weapon_unequip"):
-		await player.player_animator.play_animation_and_await("rifle/rifle_unequip", 1.2)
+		await player.player_animator.play_animation_and_await("rifle/rifle_unequip", 1.5)
 		player.player_state_machine.change_state("idle")

@@ -36,7 +36,9 @@ func _on_websocket_connection_closed() -> void:
 
 func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	if packet.has_request_denied():
-		_update_status(packet.get_request_denied().get_reason())
+		# Get the reason from the packet and display it to the client
+		var reason: String = packet.get_request_denied().get_reason()
+		_update_status(reason)
 	elif packet.has_request_granted():
 		_handle_request_granted_packet()
 	elif packet.has_login_success():
@@ -55,8 +57,10 @@ func _on_login_button_pressed() -> void:
 	# We validate username and password fields
 	# before we even try to talk to the server
 	if not _name_is_valid(username_input):
+		username_input.grab_focus()
 		return
 	if not _password_is_valid(password_input):
+		password_input.grab_focus()
 		return
 	
 	# Create the login_request packet
@@ -90,10 +94,13 @@ func _handle_server_metrics(server_metrics_packet: packets.ServerMetrics) -> voi
 func _on_register_button_pressed() -> void:
 	# We validate all fields before we even try to talk to the server
 	if not _name_is_valid(username_input):
+		username_input.grab_focus()
 		return
 	if not _name_is_valid(nickname_input):
+		nickname_input.grab_focus()
 		return
 	if not _password_is_valid(password_input):
+		password_input.grab_focus()
 		return
 	if not _gender_is_valid():
 		return
@@ -120,12 +127,10 @@ func _handle_request_granted_packet() -> void:
 
 func _name_is_valid(input: LineEdit) -> bool:
 	if input.text.is_empty():
-		_update_status(input.name + " can't be empty")
-		input.grab_focus()
+		_update_status(input.placeholder_text + " can't be empty")
 		return false
 	if input.text.length() > input.max_length:
-		_update_status(input.name + " is too long")
-		input.grab_focus()
+		_update_status(input.placeholder_text + " is too long")
 		return false
 	
 	return true
@@ -133,16 +138,13 @@ func _name_is_valid(input: LineEdit) -> bool:
 
 func _password_is_valid(input: LineEdit) -> bool:
 	if input.text.is_empty():
-		_update_status(input.name + " can't be empty")
-		input.grab_focus()
+		_update_status(input.placeholder_text + " can't be empty")
 		return false
 	if input.text.length() < 8:
-		_update_status(input.name + " is too short")
-		input.grab_focus()
+		_update_status(input.placeholder_text + " is too short")
 		return false
 	if input.text.length() > input.max_length:
-		_update_status(input.name + " is too long")
-		input.grab_focus()
+		_update_status(input.placeholder_text + " is too long")
 		return false
 	
 	return true
