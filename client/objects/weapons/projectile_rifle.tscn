@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://3lydsaiuokl5"]
+
+[ext_resource type="PackedScene" uid="uid://806q2h53l6jd" path="res://assets/models/weapons/projectile_rifle.glb" id="1_4vbof"]
+
+[node name="ProjectileRifle" instance=ExtResource("1_4vbof")]
+transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, 0, -4.37114e-08, -1, -1, -4.37114e-08, 1.91069e-15, 0.029, 0.134, 0.028)

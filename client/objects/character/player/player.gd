@@ -7,6 +7,11 @@ const Pathfinding = preload("res://classes/pathfinding/pathfinding.gd")
 
 # Preloading scenes
 const player_scene := preload("res://objects/character/player/player.tscn")
+
+# CAUTION
+# Improve this in the future to use a dictionary like below!
+const PROJECTILE_RIFLE_SCENE = preload("res://objects/weapons/projectile_rifle.tscn")
+
 # Character model selector
 var character_scenes: Dictionary = {
 	"female": preload("res://objects/characters/female_bot.tscn"),
@@ -195,16 +200,26 @@ func _setup_bone_attachments() -> void:
 		push_error("skeleton3D node not found in character")
 		return
 	
-	# Add bone attachments
-	var head_attachment = BoneAttachment3D.new()
+	# Create head bone attachment for our chat bubble
+	var head_attachment: BoneAttachment3D = BoneAttachment3D.new()
+	# Assign a bone to this attachment
 	head_attachment.bone_name = "Head"
-	
 	# Add attachment to our skeleton3D
 	skeleton.add_child(head_attachment)
 	
 	_setup_chat_bubble_sprite()
 	# Attach the chat bubble to my Head bone
 	head_attachment.add_child(chat_bubble_icon)
+	
+	# Create right hand bone attachment for our weapon
+	var right_hand_attachment: BoneAttachment3D = BoneAttachment3D.new()
+	right_hand_attachment.bone_name = "RightHand"
+	skeleton.add_child(right_hand_attachment)
+	
+	# CAUTION
+	# Attach weapon to right hand
+	var projectile_rifle = PROJECTILE_RIFLE_SCENE.instantiate()
+	right_hand_attachment.add_child(projectile_rifle)
 
 
 # Setups our chat bubble variables and components on init
