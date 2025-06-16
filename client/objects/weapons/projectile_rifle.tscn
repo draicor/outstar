@@ -2,7 +2,10 @@
 
 [ext_resource type="PackedScene" uid="uid://dtdbmqqgbxadc" path="res://assets/models/weapons/projectile_rifle.glb" id="1_4vbof"]
 
-[node name="projectile_rifle" instance=ExtResource("1_4vbof")]
+[node name="ProjectileRifle" instance=ExtResource("1_4vbof")]
 
 [node name="Mesh" parent="." index="0"]
-transform = Transform3D(0.000431929, 0.00566737, -0.0468921, -0.00379097, -0.0497419, -0.00534268, -0.0623828, 0.00306203, -2.04972e-09, 0.031, 0.132, 0.025)
+transform = Transform3D(0.000428478, 0.0056496, -0.0466979, -0.00376068, -0.0495859, -0.00532055, -0.0618844, 0.00305243, -2.04123e-09, 0.031, 0.132, 0.025)
+
+[node name="LeftHandMarker3D" type="Marker3D" parent="." index="1"]
+transform = Transform3D(-0.00180914, 0.00846822, 0.0464979, -0.0568773, 0.0202272, -0.00452349, -0.0258434, -0.0451099, 0.00670046, -0.013, 0.333, 0.071)

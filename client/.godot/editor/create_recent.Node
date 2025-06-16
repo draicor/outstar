@@ -1,4 +1,6 @@
 BoneAttachment3D
+SkeletonIK3D
+Marker3D
 PlayerAudio
 RifleAimIdleState
 RifleDownIdleState
@@ -10,5 +12,3 @@ PlayerStateMachine
 PanelContainer
 Node3D
 Sprite3D
-VBoxContainer
-CheckButton

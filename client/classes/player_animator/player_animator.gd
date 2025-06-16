@@ -117,7 +117,7 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_down_run", 0.25)
 	animation_player.set_blend_time("rifle/rifle_aim_walk", "rifle/rifle_down_run", 0.3)
 	animation_player.set_blend_time("rifle/rifle_aim_jog", "rifle/rifle_down_run", 0.15)
-	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_aim_idle", 0.25)
+	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_aim_idle", 0.15)
 	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_aim_walk", 0.2)
 	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_aim_jog", 0.2)
 	

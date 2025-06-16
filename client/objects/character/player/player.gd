@@ -86,7 +86,12 @@ var raycast : RayCast3D
 # Character variables
 var current_character: Node = null
 var chat_bubble_icon: Sprite3D
-var equipped_weapon: String = "unarmed" # Used to switch states and animations too
+
+# Weapon system
+# NOTE add equipped_weapon_name in the future to swap between different models
+var equipped_weapon_type: String = "unarmed" # Used to switch states and animations too
+var left_hand_ik: SkeletonIK3D
+
 
 # Scene tree nodes
 @onready var model: Node3D = $Model # Used to attach the model and rotate it
@@ -220,6 +225,40 @@ func _setup_bone_attachments() -> void:
 	# Attach weapon to right hand
 	var projectile_rifle = PROJECTILE_RIFLE_SCENE.instantiate()
 	right_hand_attachment.add_child(projectile_rifle)
+	
+	# Create and add our IK nodes
+	_setup_left_hand_ik()
+	# CAUTION test stuff
+	set_left_hand_ik_target(projectile_rifle.get_node("LeftHandMarker3D"))
+	left_hand_ik.start()
+	
+
+
+# Creates and configurates a left hand IK 3D node, then adds it to our skeleton
+func _setup_left_hand_ik() -> void:
+	# Find the skeleton
+	var skeleton = current_character.find_child("GeneralSkeleton") as Skeleton3D
+	if not skeleton:
+		push_error("skeleton3D node not found in character")
+		return
+	
+	left_hand_ik = SkeletonIK3D.new()
+	left_hand_ik.name = "LeftHandIK"
+	left_hand_ik.root_bone = "LeftShoulder"
+	left_hand_ik.tip_bone = "LeftHand"
+	left_hand_ik.interpolation = 1.0
+	
+	# Add it to our skeleton
+	skeleton.add_child(left_hand_ik)
+
+
+# Stops IK and updates our left hand IK target, requires manual start() after
+func set_left_hand_ik_target(weapon: Node3D) -> void:
+	# Update our target
+	if left_hand_ik.active:
+		left_hand_ik.stop()
+	
+	left_hand_ik.target_node = weapon.get_path()
 
 
 # Setups our chat bubble variables and components on init
@@ -241,9 +280,6 @@ func _setup_chat_bubble_sprite() -> void:
 	else:
 		# Start with the bubble hidden for everyone else
 		chat_bubble_icon.visible = false
-
-
-
 
 
 # Helper function for _ready()
@@ -1007,10 +1043,10 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 # Updates the current equipped weapon type to change the animation library
 func set_equipped_weapon_type(new_weapon: String) -> void:
 	# If already equipped, ignore
-	if new_weapon == equipped_weapon:
+	if new_weapon == equipped_weapon_type:
 		return
 	
 	match new_weapon:
-		"unarmed": equipped_weapon = "unarmed"
-		"rifle": equipped_weapon = "rifle"
+		"unarmed": equipped_weapon_type = "unarmed"
+		"rifle": equipped_weapon_type = "rifle"
 		_: push_error("Weapon not valid")
