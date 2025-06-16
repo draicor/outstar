@@ -333,6 +333,11 @@ bones/61/rotation = Quaternion(0.0043298, 0.982362, -0.186834, 0.00633737)
 bones/62/rotation = Quaternion(-0.00874947, 0.724308, -0.689114, 0.0205636)
 bones/63/rotation = Quaternion(3.0787e-08, 1, 8.9407e-07, 3.50675e-08)
 
+[node name="BoneAttachment3D" type="BoneAttachment3D" parent="Armature/GeneralSkeleton" index="2"]
+transform = Transform3D(-0.113756, 0.0479662, 0.99235, 0.987586, 0.114367, 0.107682, -0.108327, 0.99228, -0.0603805, -0.116632, 1.34692, 0.228361)
+bone_name = "RightHand"
+bone_idx = 10
+
 [node name="AnimationPlayer" parent="." index="1"]
 libraries = {
 &"": SubResource("AnimationLibrary_4a7qu"),

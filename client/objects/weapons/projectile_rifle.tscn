@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://3lydsaiuokl5"]
+[gd_scene load_steps=2 format=3 uid="uid://eofatjvs87om"]
 
-[ext_resource type="PackedScene" uid="uid://806q2h53l6jd" path="res://assets/models/weapons/projectile_rifle.glb" id="1_4vbof"]
+[ext_resource type="PackedScene" uid="uid://dtdbmqqgbxadc" path="res://assets/models/weapons/projectile_rifle.glb" id="1_4vbof"]
 
-[node name="ProjectileRifle" instance=ExtResource("1_4vbof")]
-transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, 0, -4.37114e-08, -1, -1, -4.37114e-08, 1.91069e-15, 0.029, 0.134, 0.028)
+[node name="projectile_rifle" instance=ExtResource("1_4vbof")]
+
+[node name="Mesh" parent="." index="0"]
+transform = Transform3D(0.000431929, 0.00566737, -0.0468921, -0.00379097, -0.0497419, -0.00534268, -0.0623828, 0.00306203, -2.04972e-09, 0.031, 0.132, 0.025)
