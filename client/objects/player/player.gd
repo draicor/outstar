@@ -1,19 +1,15 @@
 extends CharacterBody3D
 
 # Preloading scripts
-const packets := preload("res://packets.gd")
-const Player := preload("res://objects/character/player/player.gd")
-const Pathfinding = preload("res://classes/pathfinding/pathfinding.gd")
+const packets: GDScript = preload("res://packets.gd")
+const Player: GDScript = preload("res://objects/player/player.gd")
+const Pathfinding: GDScript = preload("res://classes/pathfinding/pathfinding.gd")
 
 # Preloading scenes
-const player_scene := preload("res://objects/character/player/player.tscn")
-
-# CAUTION
-# Improve this in the future to use a dictionary like below!
-const PROJECTILE_RIFLE_SCENE = preload("res://objects/weapons/projectile_rifle.tscn")
+const player_scene := preload("res://objects/player/player.tscn")
 
 # Character model selector
-var character_scenes: Dictionary = {
+var character_scenes: Dictionary[String, PackedScene] = {
 	"female": preload("res://objects/characters/female_bot.tscn"),
 	"male": preload("res://objects/characters/male_bot.tscn"),
 }
@@ -84,13 +80,9 @@ var camera : PlayerCamera
 var raycast : RayCast3D
 
 # Character variables
-var current_character: Node = null
+var character: Node = null
 var chat_bubble_icon: Sprite3D
-
-# Weapon system
-# NOTE add equipped_weapon_name in the future to swap between different models
-var equipped_weapon_type: String = "unarmed" # Used to switch states and animations too
-var left_hand_ik: SkeletonIK3D
+var skeleton: Skeleton3D = null # Our character's skeleton
 
 
 # Scene tree nodes
@@ -100,6 +92,7 @@ var left_hand_ik: SkeletonIK3D
 @onready var player_state_machine: PlayerStateMachine = $PlayerStateMachine
 @onready var player_animator: PlayerAnimator = $PlayerAnimator
 @onready var player_audio: PlayerAudio = $PlayerAudio
+@onready var player_equipment: PlayerEquipment = $PlayerEquipment
 
 
 static func instantiate(
@@ -185,9 +178,15 @@ func await_rotation(direction: Vector3) -> void:
 
 # Helper function for _ready()
 func _initialize_character() -> void:
-	var character = load_character(gender) # CAUTION this shouldn't be gender but model_name
+	load_character(gender) # CAUTION this shouldn't be gender but model_name
 	if not character:
 		push_error("Failed to load character")
+		return
+	
+	# Find and store skeleton reference
+	skeleton = character.find_child("GeneralSkeleton") as Skeleton3D
+	if not skeleton:
+		push_error("skeleton3D node not found in character")
 		return
 	
 	# Register this character as an interactable object
@@ -198,13 +197,7 @@ func _initialize_character() -> void:
 
 
 # Used to create the attachments in our character's skeleton
-func _setup_bone_attachments() -> void:
-	# Find the skeleton
-	var skeleton = current_character.find_child("GeneralSkeleton") as Skeleton3D
-	if not skeleton:
-		push_error("skeleton3D node not found in character")
-		return
-	
+func _setup_bone_attachments() -> void:	
 	# Create head bone attachment for our chat bubble
 	var head_attachment: BoneAttachment3D = BoneAttachment3D.new()
 	# Assign a bone to this attachment
@@ -215,50 +208,6 @@ func _setup_bone_attachments() -> void:
 	_setup_chat_bubble_sprite()
 	# Attach the chat bubble to my Head bone
 	head_attachment.add_child(chat_bubble_icon)
-	
-	# Create right hand bone attachment for our weapon
-	var right_hand_attachment: BoneAttachment3D = BoneAttachment3D.new()
-	right_hand_attachment.bone_name = "RightHand"
-	skeleton.add_child(right_hand_attachment)
-	
-	# CAUTION
-	# Attach weapon to right hand
-	var projectile_rifle = PROJECTILE_RIFLE_SCENE.instantiate()
-	right_hand_attachment.add_child(projectile_rifle)
-	
-	# Create and add our IK nodes
-	_setup_left_hand_ik()
-	# CAUTION test stuff
-	set_left_hand_ik_target(projectile_rifle.get_node("LeftHandMarker3D"))
-	left_hand_ik.start()
-	
-
-
-# Creates and configurates a left hand IK 3D node, then adds it to our skeleton
-func _setup_left_hand_ik() -> void:
-	# Find the skeleton
-	var skeleton = current_character.find_child("GeneralSkeleton") as Skeleton3D
-	if not skeleton:
-		push_error("skeleton3D node not found in character")
-		return
-	
-	left_hand_ik = SkeletonIK3D.new()
-	left_hand_ik.name = "LeftHandIK"
-	left_hand_ik.root_bone = "LeftShoulder"
-	left_hand_ik.tip_bone = "LeftHand"
-	left_hand_ik.interpolation = 1.0
-	
-	# Add it to our skeleton
-	skeleton.add_child(left_hand_ik)
-
-
-# Stops IK and updates our left hand IK target, requires manual start() after
-func set_left_hand_ik_target(weapon: Node3D) -> void:
-	# Update our target
-	if left_hand_ik.active:
-		left_hand_ik.stop()
-	
-	left_hand_ik.target_node = weapon.get_path()
 
 
 # Setups our chat bubble variables and components on init
@@ -913,20 +862,18 @@ func _draw_circle(center: Vector3, radius: float, color: Color, resolution: int 
 
 
 # Used to load a character model and append it as a child of our model node
-func load_character(character_type: String) -> Node3D:
+func load_character(character_type: String) -> void:
 	# Remove existing character if any
-	if current_character:
-		current_character.queue_free()
+	if character:
+		character.queue_free()
 	
 	# Load and instantiate the new character
 	if character_scenes.has(character_type):
 		var character_scene = character_scenes[character_type]
-		current_character = character_scene.instantiate()
-		model.add_child(current_character)
-		return current_character
+		character = character_scene.instantiate()
+		model.add_child(character)
 	else:
 		print("Character type %s not found" % [character_type])
-		return null
 
 
 # Helper function to handle common movement initiation logic
@@ -1038,15 +985,3 @@ func new_chat_bubble(message: String) -> void:
 func toggle_chat_bubble_icon(is_typing: bool) -> void:
 	if chat_bubble_icon:
 		chat_bubble_icon.visible = is_typing
-
-
-# Updates the current equipped weapon type to change the animation library
-func set_equipped_weapon_type(new_weapon: String) -> void:
-	# If already equipped, ignore
-	if new_weapon == equipped_weapon_type:
-		return
-	
-	match new_weapon:
-		"unarmed": equipped_weapon_type = "unarmed"
-		"rifle": equipped_weapon_type = "rifle"
-		_: push_error("Weapon not valid")

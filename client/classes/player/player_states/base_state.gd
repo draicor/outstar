@@ -2,7 +2,7 @@ extends Node
 class_name BaseState
 
 # Preloading scripts
-const Player := preload("res://objects/character/player/player.gd")
+const Player: GDScript = preload("res://objects/player/player.gd")
 
 signal finished(next_state_name)
 

@@ -334,7 +334,7 @@ bones/62/rotation = Quaternion(-0.00952267, 0.71641, -0.697316, 0.0204102)
 bones/63/rotation = Quaternion(-0.000481945, 0.999672, 0.0255887, 0.000355144)
 
 [node name="RightHandTest" type="BoneAttachment3D" parent="Armature/GeneralSkeleton" index="2"]
-transform = Transform3D(-0.113735, 0.0477004, 0.992365, 0.987585, 0.114362, 0.107691, -0.108353, 0.992293, -0.0601154, -0.116491, 1.346, 0.228481)
+transform = Transform3D(-0.113736, 0.0477011, 0.992365, 0.987585, 0.114363, 0.10769, -0.108353, 0.992293, -0.0601161, -0.116491, 1.346, 0.22848)
 bone_name = "RightHand"
 bone_idx = 10
 

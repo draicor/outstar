@@ -1,15 +1,13 @@
 extends BaseState
-class_name IdleState
+class_name RifleDownIdleState
 
 
 func _init() -> void:
-	state_name = "idle"
+	state_name = "rifle_down_idle"
 
 
 func enter() -> void:
-	player.set_equipped_weapon_type("unarmed")
-	# Switch our locomotion depending on our player's gender
-	player.player_animator.switch_animation_library(player.gender)
+	player.player_animator.switch_animation_library("rifle_down")
 	player.player_animator.switch_animation("idle")
 
 
@@ -38,7 +36,14 @@ func handle_input(event: InputEvent) -> void:
 		else:
 			player._handle_movement_click(mouse_position)
 	
-	# Equip rifle
-	elif event.is_action_pressed("weapon_rifle"):
-		await player.player_animator.play_animation_and_await("rifle/rifle_equip", 1.2)
-		player.player_state_machine.change_state("rifle_down_idle")
+	# Raise rifle
+	elif event.is_action_pressed("weapon_rifle") or event.is_action_pressed("right_click"):
+		await player.player_animator.play_animation_and_await("rifle/rifle_down_to_aim", 2.0)
+		player.player_state_machine.change_state("rifle_aim_idle")
+	
+	# Unequip rifle
+	elif event.is_action_pressed("weapon_unequip"):
+		player.player_equipment.disable_left_hand_ik()
+		await player.player_animator.play_animation_and_await("rifle/rifle_unequip", 1.5)
+		player.player_equipment.unequip_weapon()
+		player.player_state_machine.change_state("idle")

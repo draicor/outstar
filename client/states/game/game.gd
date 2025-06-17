@@ -1,8 +1,8 @@
 extends Node
 
 # Preload resources
-const packets := preload("res://packets.gd")
-const Player := preload("res://objects/character/player/player.gd")
+const packets: GDScript = preload("res://packets.gd")
+const Player: GDScript = preload("res://objects/player/player.gd")
 const game_escape_menu_scene: PackedScene = preload("res://components/escape_menu/game/game_escape_menu.tscn")
 
 # Holds our current map node so we can spawn scenes into it
@@ -211,7 +211,7 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		var spawn_position: Vector2i = Vector2i(update_player_packet.get_position().get_x(), update_player_packet.get_position().get_z())
 		
 		# Grab all of the data from the server and use it to create this player character
-		var player := Player.instantiate(
+		var player: Player = Player.instantiate(
 			player_id,
 			update_player_packet.get_name(),
 			update_player_packet.get_gender(),

@@ -1,7 +1,7 @@
 extends Interactable
 
 # Preloading scripts
-const Player := preload("res://objects/character/player/player.gd")
+const Player: GDScript = preload("res://objects/player/player.gd")
 
 @export var region_id: int = 1
 

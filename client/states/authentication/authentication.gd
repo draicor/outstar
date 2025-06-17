@@ -1,6 +1,6 @@
 extends Node
 
-const packets := preload("res://packets.gd")
+const packets: GDScript = preload("res://packets.gd")
 
 # Top container
 @onready var clients_online: Label = $UI/MarginContainer/AuthenticationContainer/TopContainer/ClientsOnline

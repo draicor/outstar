@@ -1,6 +1,6 @@
 extends Node
 
-const Player := preload("res://objects/character/player/player.gd")
+const Player := preload("res://objects/player/player.gd")
 
 # Game States
 enum State {

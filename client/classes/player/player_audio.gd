@@ -5,7 +5,7 @@ class_name PlayerAudio
 const RIFLE_FIRE_SINGLE = preload("res://assets/sounds/sfx/rifle_fire_single.wav")
 
 # Preloading scripts
-const Player := preload("res://objects/character/player/player.gd")
+const Player: GDScript = preload("res://objects/player/player.gd")
 
 # Internal variables
 var player: Player = null # Our parent node

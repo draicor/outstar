@@ -3,7 +3,7 @@ class_name PlayerAnimator
 
 
 # Preloading scripts
-const Player := preload("res://objects/character/player/player.gd")
+const Player: GDScript = preload("res://objects/player/player.gd")
 
 # Internal variables
 var player: Player = null # Our parent node
@@ -120,7 +120,6 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_aim_idle", 0.15)
 	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_aim_walk", 0.2)
 	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_aim_jog", 0.2)
-	
 
 
 # Plays and awaits until the animation ends, if found

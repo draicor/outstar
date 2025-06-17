@@ -7,7 +7,6 @@ func _init() -> void:
 
 
 func enter() -> void:
-	player.set_equipped_weapon_type("rifle")
 	player.player_animator.switch_animation_library("rifle_aim")
 	player.player_animator.switch_animation("idle")
 
@@ -63,7 +62,9 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):
+		player.player_equipment.disable_left_hand_ik()
 		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast")
+		player.player_equipment.enable_left_hand_ik()
 	
 	# Lower rifle
 	elif event.is_action_pressed("weapon_rifle") or event.is_action_pressed("weapon_unequip"):
