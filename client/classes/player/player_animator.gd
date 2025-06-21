@@ -51,8 +51,8 @@ var triggered_events: Dictionary = {}
 # sound method for every different sound we want to call from player_audio.gd
 var animation_events: Dictionary[String, Array] = {
 	"rifle/rifle_aim_fire_single_fast": [
-		{"time": 0.05, "method": "_call_player_equipment_method", "args": ["weapon_fire_single"]},
-		{"time": 0.1, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_fire_single"]},
+		{"time": 0.05, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_fire_single"]}, # Has to fire BEFORE decrement ammo
+		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["weapon_fire_single"]},
 	],
 	"rifle/rifle_aim_reload_fast": [
 		{"time": 0.7, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_remove_magazine"]},
