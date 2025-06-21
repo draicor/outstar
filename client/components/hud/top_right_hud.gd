@@ -30,6 +30,7 @@ func _handle_signal_player_character_spawned() -> void:
 	
 	show()
 
+
 # Toggles this button based on the current locomotion state of the player
 func _handle_signal_player_locomotion_changed(anim_state: String) -> void:
 	# If we are in our idle state, enable the button

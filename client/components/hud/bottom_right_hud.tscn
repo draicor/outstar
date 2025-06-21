@@ -1,0 +1,50 @@
+[gd_scene load_steps=2 format=3 uid="uid://b0n3r4pk8tjt6"]
+
+[ext_resource type="Script" uid="uid://q5ub13n47f5r" path="res://components/hud/bottom_right_hud.gd" id="1_ql87q"]
+
+[node name="BottomRightHud" type="Control"]
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("1_ql87q")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -49.0
+offset_top = -22.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="AmmoLabel" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+text = "30"
+horizontal_alignment = 1
+
+[node name="SeparatorLabel" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+text = " | "
+horizontal_alignment = 1
+
+[node name="TotalAmmoLabel" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+text = "∞"
+horizontal_alignment = 1

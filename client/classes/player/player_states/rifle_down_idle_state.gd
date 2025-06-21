@@ -9,6 +9,9 @@ func _init() -> void:
 func enter() -> void:
 	player.player_animator.switch_animation_library("rifle_down")
 	player.player_animator.switch_animation("idle")
+	# We update our ammo counter and then we display it
+	Signals.ui_update_ammo.emit()
+	Signals.ui_show_bottom_right_hud.emit()
 
 
 # We have to update rotations here so we can rotate towards our targets

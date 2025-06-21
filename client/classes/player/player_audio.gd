@@ -92,7 +92,7 @@ func create_single_audio_player_3d(stream: AudioStream, volume_db: float, max_di
 
 func play_projectile_rifle_fire_single() -> void:
 	# Check if we have ammo to fire
-	if player.player_equipment.equipped_weapon_ammo > 0:
+	if player.player_equipment.get_equipped_weapon_ammo() > 0:
 		_play_projectile_rifle_fire_single()
 	else:
 		_play_projectile_rifle_dry_fire_single()

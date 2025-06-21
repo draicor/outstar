@@ -169,6 +169,7 @@ func reload_equipped_weapon() -> void:
 func decrement_ammo(amount: int = 1) -> bool:
 	if equipped_weapon_ammo >= amount:
 		equipped_weapon_ammo -= amount
+		Signals.ui_update_ammo.emit() # Update our ammo counter
 		return true
 	# If we don't have enough ammo, return false
 	return false

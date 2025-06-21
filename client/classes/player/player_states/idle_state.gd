@@ -10,6 +10,7 @@ func enter() -> void:
 	# Switch our locomotion depending on our player's gender
 	player.player_animator.switch_animation_library(player.gender)
 	player.player_animator.switch_animation("idle")
+	Signals.ui_hide_bottom_right_hud.emit()
 
 
 # We have to update rotations here so we can rotate towards our targets
