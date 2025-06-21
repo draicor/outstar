@@ -37,6 +37,10 @@ func update(_delta: float) -> void:
 			# If we are NOT moving, fire
 			if not player.in_motion:
 				await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast")
+				# If this player can shoot this weapon
+				if player.player_equipment.can_fire_weapon():
+					player.player_equipment.decrement_ammo()
+				
 
 
 # One-time inputs
@@ -64,6 +68,7 @@ func handle_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("weapon_reload"):
 		player.player_equipment.disable_left_hand_ik()
 		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast")
+		player.player_equipment.reload_equipped_weapon()
 		player.player_equipment.enable_left_hand_ik()
 	
 	# Lower rifle

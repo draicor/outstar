@@ -22,6 +22,8 @@ var left_hand_ik_tween: Tween # Smooths out the transition for ik enable/disable
 var equipped_weapon_name: String = "unarmed"
 var equipped_weapon_type: String = "unarmed" # Used to switch states and animations too
 var equipped_weapon = null # Instantiated scene of our weapon
+# Ammo system
+var equipped_weapon_ammo: int = 0
 
 
 func _ready() -> void:
@@ -148,3 +150,33 @@ func unequip_weapon() -> void:
 	# Set our equipped weapon and type to be unarmed
 	equipped_weapon_name = "unarmed"
 	equipped_weapon_type = "unarmed"
+
+
+# Returns the current ammo in our equipped weapon
+func get_equipped_weapon_ammo() -> int:
+	return equipped_weapon_ammo
+
+
+# Reloads our ammo based on our weapon type (for now)
+func reload_equipped_weapon() -> void:
+	match equipped_weapon_name:
+		"unarmed": return
+		"projectile_rifle": equipped_weapon_ammo = 30
+		_: return
+
+
+# Decreases the amount of ammo in our equipped weapon
+func decrement_ammo(amount: int = 1) -> bool:
+	if equipped_weapon_ammo >= amount:
+		equipped_weapon_ammo -= amount
+		return true
+	# If we don't have enough ammo, return false
+	return false
+
+
+# Checks if we have ammo to fire, if we do, return true, else return false
+func can_fire_weapon() -> bool:
+	if equipped_weapon_ammo > 0:
+		return true
+	else:
+		return false

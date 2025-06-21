@@ -7,7 +7,8 @@ const Player: GDScript = preload("res://objects/player/player.gd")
 
 # Internal variables
 var player: Player = null # Our parent node
-var animation_player: AnimationPlayer
+var animation_player: AnimationPlayer # Our player's AnimationPlayer
+var player_audio: PlayerAudio # Used to call functions directly from the audio class
 
 # Character locomotion
 var locomotion: Dictionary[String, Dictionary] # Depends on the gender of this character
@@ -36,18 +37,55 @@ var rifle_aim_locomotion: Dictionary[String, Dictionary] = {
 	"run": {animation = "rifle/rifle_down_run", play_rate = 1.1},
 }
 
+# Animation events (timing for each animation)
+var current_animation: String = ""
+var animation_start_time: float = 0.0
+var triggered_events: Dictionary = {}
+
+# method: the function name within player_animator.gd we are going to call
+# args: parameters we want to pass to the function we are calling above
+# NOTE for sounds, we are using method to call a function in player_animator.gd,
+# and the parameter of this function is the name of the method in player_audio.gd,
+# the downside of this is that we can't pass an argument, so we must create a unique,
+# sound method for every different sound we want to call from player_audio.gd
+var animation_events: Dictionary[String, Array] = {
+	"rifle/rifle_aim_fire_single_fast": [
+		{"time": 0.1, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_fire_single"]},
+	],
+	"rifle/rifle_aim_reload_fast": [
+		{"time": 0.7, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_remove_magazine"]},
+		{"time": 1.6, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_insert_magazine"]},
+		{"time": 2.1, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_charging_handle"]},
+	]
+}
+
 
 func _ready() -> void:
 	# Wait for parent to be ready, then store a reference to it
 	await get_parent().ready
 	player = get_parent()
 	
-	# Switch our locomotion depending on our player's gender
+	# Fetch the PlayerAudio from our parent
+	player_audio = player.find_child("PlayerAudio", true, false)
+	if not player_audio:
+		push_error("Player Audio not available")
+	
 	# CAUTION Modify this to keep in mind the equipped weapon in our DB too!
+	# Switch our locomotion depending on our player's gender
 	switch_animation_library(player.gender)
 	animation_player = player.find_child("AnimationPlayer", true, false)
 	
 	_setup_animation_blend_time()
+	
+	# Connect to animation player signals to check every frame to call anim events
+	animation_player.connect("animation_started", _on_animation_started)
+	animation_player.connect("animation_finished", _on_animation_finished)
+
+
+# Runs on tick to check for animation_events
+func _process(_delta: float) -> void:
+	if current_animation != "" and animation_events.has(current_animation):
+		check_animation_events()
 
 
 # Helper function to properly setup animation blend times
@@ -185,3 +223,39 @@ func switch_animation_library(animation_library: String) -> void:
 		"rifle_down": locomotion = rifle_down_locomotion
 		"rifle_aim": locomotion = rifle_aim_locomotion
 		_: push_error("Library name not valid")
+
+
+# Connects to the player audio class and uses it to call a function in it
+func _call_player_audio_method(method_name: String) -> void:
+	if player_audio and player_audio.has_method(method_name):
+		player_audio.call(method_name)
+
+
+# Connected to the animation player signal
+func _on_animation_started(anim_name: String) -> void:
+	current_animation = anim_name
+	animation_start_time = Time.get_ticks_msec()
+	triggered_events.clear()
+
+
+# Connected to the animation player signal
+func _on_animation_finished(_anim_name: String) -> void:
+	current_animation = ""
+
+
+# Used to trigger method calls at a specific time in our animations
+func check_animation_events() -> void:
+	if not animation_events.has(current_animation):
+		return
+	
+	var current_time: float = player.player_animator.animation_player.current_animation_position
+	
+	for event in animation_events[current_animation]:
+		var event_id: String = str(event["time"])
+		
+		# Only trigger if we're past the event time and haven't triggered it yet
+		if current_time >= event["time"] and not triggered_events.get(event_id, false):
+			# Check if we are still within a reasonable time window
+			if current_time < event["time"] + 0.1: # 100ms tolerance
+				callv(event["method"], event["args"])
+				triggered_events[event_id] = true
