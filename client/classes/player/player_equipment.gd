@@ -18,6 +18,7 @@ var player: Player = null # Our parent node
 # Weapon system
 var right_hand_attachment: BoneAttachment3D
 var left_hand_ik: SkeletonIK3D
+var left_hand_ik_tween: Tween # Smooths out the transition for ik enable/disable
 var equipped_weapon_name: String = "unarmed"
 var equipped_weapon_type: String = "unarmed" # Used to switch states and animations too
 var equipped_weapon = null # Instantiated scene of our weapon
@@ -43,7 +44,8 @@ func _setup_left_hand_ik() -> void:
 	left_hand_ik.name = "LeftHandIK"
 	left_hand_ik.root_bone = "LeftShoulder"
 	left_hand_ik.tip_bone = "LeftHand"
-	left_hand_ik.interpolation = 1.0
+	# Calculate the interpolation every frame but don't display it yet
+	left_hand_ik.interpolation = 0.0
 	left_hand_ik.active = true
 	
 	# Add it to our skeleton
@@ -75,18 +77,36 @@ func set_equipped_weapon_type(new_weapon: String) -> void:
 		_: push_error("Weapon not valid")
 
 
-# If left hand ik is active, disable it
+# Stops displaying the left hand IK
 func disable_left_hand_ik() -> void:
-	left_hand_ik.active = false
+	if left_hand_ik_tween:
+		left_hand_ik_tween.kill()
+	
+	left_hand_ik_tween = create_tween()
+	left_hand_ik_tween.tween_property(
+		left_hand_ik,
+		"interpolation",
+		0.0, # target interpolation
+		0.2 # duration in seconds
+	).set_ease(Tween.EASE_IN)
 
 
-# If left hand ik is not active, activate it
+# Starts displaying the left hand IK if a weapon is equipped
 func enable_left_hand_ik() -> void:
 		if equipped_weapon:
-			left_hand_ik.active = true
+			if left_hand_ik_tween:
+				left_hand_ik_tween.kill()
+			
+			left_hand_ik_tween = create_tween()
+			left_hand_ik_tween.tween_property(
+				left_hand_ik,
+				"interpolation",
+				1.0, # target interpolation
+				0.3 # duration in seconds
+			).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 
 
-# Used to load a weapon model and append it as a child of our player skeleton
+# Loads a weapon model and append it as a child of our player skeleton
 func equip_weapon(weapon_name: String) -> void:
 	# If we already have this equipped, ignore
 	if equipped_weapon_name == weapon_name:
@@ -114,6 +134,7 @@ func equip_weapon(weapon_name: String) -> void:
 		print("Weapon %s (%s) not found" % [weapon_name, weapon_types[weapon_name]])
 
 
+# Stops left hand IK and removes our equipped weapon
 func unequip_weapon() -> void:
 	# Stop IK processing completely
 	disable_left_hand_ik()
@@ -124,5 +145,6 @@ func unequip_weapon() -> void:
 	if equipped_weapon:
 		equipped_weapon.queue_free()
 	
+	# Set our equipped weapon and type to be unarmed
 	equipped_weapon_name = "unarmed"
 	equipped_weapon_type = "unarmed"
