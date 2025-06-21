@@ -9,6 +9,7 @@ const Player: GDScript = preload("res://objects/player/player.gd")
 var player: Player = null # Our parent node
 var animation_player: AnimationPlayer # Our player's AnimationPlayer
 var player_audio: PlayerAudio # Used to call functions directly from the audio class
+var player_equipment: PlayerEquipment # Used to call functions directly from equipment class
 
 # Character locomotion
 var locomotion: Dictionary[String, Dictionary] # Depends on the gender of this character
@@ -50,6 +51,7 @@ var triggered_events: Dictionary = {}
 # sound method for every different sound we want to call from player_audio.gd
 var animation_events: Dictionary[String, Array] = {
 	"rifle/rifle_aim_fire_single_fast": [
+		{"time": 0.05, "method": "_call_player_equipment_method", "args": ["weapon_fire_single"]},
 		{"time": 0.1, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_fire_single"]},
 	],
 	"rifle/rifle_aim_reload_fast": [
@@ -69,6 +71,11 @@ func _ready() -> void:
 	player_audio = player.find_child("PlayerAudio", true, false)
 	if not player_audio:
 		push_error("Player Audio not available")
+	
+	# Fetch the PlayerEquiment from our parent
+	player_equipment = player.find_child("PlayerEquipment", true, false)
+	if not player_equipment:
+		push_error("Player Equipment not available")
 	
 	# CAUTION Modify this to keep in mind the equipped weapon in our DB too!
 	# Switch our locomotion depending on our player's gender
@@ -229,6 +236,12 @@ func switch_animation_library(animation_library: String) -> void:
 func _call_player_audio_method(method_name: String) -> void:
 	if player_audio and player_audio.has_method(method_name):
 		player_audio.call(method_name)
+
+
+# Connects to the player equipment class and uses it to call a function in it
+func _call_player_equipment_method(method_name: String) -> void:
+	if player_equipment and player_equipment.has_method(method_name):
+		player_equipment.call(method_name)
 
 
 # Connected to the animation player signal

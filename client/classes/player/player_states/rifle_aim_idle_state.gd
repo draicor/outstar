@@ -37,9 +37,6 @@ func update(_delta: float) -> void:
 			# If we are NOT moving, fire
 			if not player.in_motion:
 				await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast")
-				# If this player can shoot this weapon
-				if player.player_equipment.can_fire_weapon():
-					player.player_equipment.decrement_ammo()
 
 
 # One-time inputs

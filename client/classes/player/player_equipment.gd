@@ -181,3 +181,9 @@ func can_fire_weapon() -> bool:
 		return true
 	else:
 		return false
+
+
+func weapon_fire_single() -> void:
+	if can_fire_weapon():
+		# CAUTION Add shooting function here
+		decrement_ammo()
