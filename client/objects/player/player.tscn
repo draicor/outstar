@@ -1,7 +1,8 @@
-[gd_scene load_steps=13 format=3 uid="uid://xgut27qtlpbd"]
+[gd_scene load_steps=14 format=3 uid="uid://xgut27qtlpbd"]
 
 [ext_resource type="Script" uid="uid://bflh4x8wu5ha6" path="res://objects/player/player.gd" id="1_jpa1g"]
 [ext_resource type="PackedScene" uid="uid://2gtaxxvwtitn" path="res://components/chat_bubble/chat_bubble_manager.tscn" id="2_634de"]
+[ext_resource type="Script" uid="uid://pj5y64im6vua" path="res://classes/player/player_movement.gd" id="3_45urx"]
 [ext_resource type="Script" uid="uid://ckjkgvmrct0fl" path="res://classes/player/player_state_machine.gd" id="3_iula3"]
 [ext_resource type="Script" uid="uid://dvxu1h32y12r4" path="res://classes/player/player_states/idle_state.gd" id="4_s60wy"]
 [ext_resource type="Script" uid="uid://ib2ghq7y4gdb" path="res://classes/player/player_states/move_state.gd" id="5_td0ib"]
@@ -36,6 +37,10 @@ transform = Transform3D(1, 0, 0, 0, 0.707106, 0.707106, 0, -0.707106, 0.707106, 
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
 
 [node name="ChatBubbleManager" parent="ChatBubbleOrigin" instance=ExtResource("2_634de")]
+
+[node name="PlayerMovement" type="Node" parent="."]
+script = ExtResource("3_45urx")
+metadata/_custom_type_script = "uid://pj5y64im6vua"
 
 [node name="PlayerStateMachine" type="Node" parent="."]
 script = ExtResource("3_iula3")

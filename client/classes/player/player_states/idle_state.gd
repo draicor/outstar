@@ -15,28 +15,28 @@ func enter() -> void:
 
 # We have to update rotations here so we can rotate towards our targets
 func physics_update(delta: float) -> void:
-	player._handle_rotation(delta)
+	player.player_movement.handle_rotation(delta)
 
 
 func handle_input(event: InputEvent) -> void:
 	# If we are busy, ignore input
-	if player.is_busy or player.autopilot_active:
+	if player.is_busy or player.player_movement.autopilot_active:
 		return
 	
 	if event.is_action_pressed("left_click"):
 		# Get the mouse position and check what kind of target we have
 		var mouse_position: Vector2 = player.get_viewport().get_mouse_position()
-		var target := player._get_mouse_click_target(mouse_position)
+		var target: Object = player.get_mouse_click_target(mouse_position)
 		
 		# If we have a valid target, we try to determine what kind of class it is
 		if target:
 			if target is Interactable:
-				player._start_interaction(target)
+				player.start_interaction(target)
 			# Add other types of target classes later
 		
 		# If we didn't click on anything interactable, then attempt to move to that cell
 		else:
-			player._handle_movement_click(mouse_position)
+			player.handle_movement_click(mouse_position)
 	
 	# Equip rifle
 	elif event.is_action_pressed("weapon_rifle"):

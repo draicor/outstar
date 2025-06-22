@@ -7,12 +7,12 @@ func _init() -> void:
 
 
 func enter() -> void:
-	player._execute_interaction()
+	player.execute_interaction()
 
 
 # We have to update rotations here so we can rotate towards our interaction
 func physics_update(delta: float) -> void:
-	player._handle_rotation(delta)
+	player.player_movement.handle_rotation(delta)
 
 
 func exit() -> void:

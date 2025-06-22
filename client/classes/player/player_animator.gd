@@ -182,7 +182,7 @@ func play_animation_and_await(animation_name: String, play_rate: float = 1.0) ->
 		
 		player.is_busy = false
 	else:
-		print(animation_name, " not found.")
+		print(animation_name, " animation not found.")
 
 
 # Used to switch the current animation state

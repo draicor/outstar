@@ -1,3 +1,4 @@
+PlayerMovement
 HBoxContainer
 Label
 MarginContainer
@@ -12,4 +13,3 @@ PlayerAnimator
 InteractState
 MoveState
 IdleState
-PlayerStateMachine
