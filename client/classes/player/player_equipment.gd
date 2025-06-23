@@ -55,10 +55,10 @@ func _setup_left_hand_ik() -> void:
 
 
 # Stops IK and updates our left hand IK target, requires manual start() after
-func set_left_hand_ik_target(weapon_target: Node3D) -> void:
+func set_left_hand_ik_target(left_hand_target: Node3D) -> void:
 	disable_left_hand_ik()
 	# Update our target
-	left_hand_ik.target_node = weapon_target.get_path()
+	left_hand_ik.target_node = left_hand_target.get_path()
 	# Start calculating IK
 	left_hand_ik.start()
 
@@ -184,6 +184,7 @@ func can_fire_weapon() -> bool:
 
 
 func weapon_fire_single() -> void:
-	if can_fire_weapon():
-		# CAUTION Add shooting function here
+	# If we can fire the weapon and we have a valid target location
+	if equipped_weapon and can_fire_weapon():
+		equipped_weapon.single_fire()
 		decrement_ammo()

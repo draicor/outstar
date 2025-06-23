@@ -65,7 +65,11 @@ func handle_input(event: InputEvent) -> void:
 		player.player_equipment.disable_left_hand_ik()
 		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast")
 		player.player_equipment.reload_equipped_weapon()
-		Signals.ui_update_ammo.emit() # Update our ammo counter
+		
+		# Do this only for my local character
+		if player.my_player_character:
+			Signals.ui_update_ammo.emit() # Update our ammo counter
+		
 		player.player_equipment.enable_left_hand_ik()
 	
 	# Lower rifle

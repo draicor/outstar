@@ -1,3 +1,4 @@
+Marker3D
 PlayerMovement
 HBoxContainer
 Label
@@ -5,11 +6,9 @@ MarginContainer
 PlayerEquipment
 BoneAttachment3D
 SkeletonIK3D
-Marker3D
 PlayerAudio
 RifleAimIdleState
 RifleDownIdleState
 PlayerAnimator
 InteractState
 MoveState
-IdleState

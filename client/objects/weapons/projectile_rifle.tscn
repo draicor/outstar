@@ -1,11 +1,16 @@
-[gd_scene load_steps=2 format=3 uid="uid://eofatjvs87om"]
+[gd_scene load_steps=3 format=3 uid="uid://eofatjvs87om"]
 
 [ext_resource type="PackedScene" uid="uid://dtdbmqqgbxadc" path="res://assets/models/weapons/projectile_rifle.glb" id="1_4vbof"]
+[ext_resource type="Script" uid="uid://bmhccrri2xibs" path="res://classes/weapons/projectile_rifle.gd" id="2_on7n8"]
 
 [node name="ProjectileRifle" instance=ExtResource("1_4vbof")]
+script = ExtResource("2_on7n8")
 
 [node name="Mesh" parent="." index="0"]
 transform = Transform3D(0.000428478, 0.0056496, -0.0466979, -0.00376068, -0.0495859, -0.00532055, -0.0618844, 0.00305243, -2.04123e-09, 0.031, 0.132, 0.025)
 
 [node name="LeftHandMarker3D" type="Marker3D" parent="." index="1"]
 transform = Transform3D(-0.00180914, 0.00846822, 0.0464979, -0.0568773, 0.0202272, -0.00452349, -0.0258434, -0.0451099, 0.00670046, -0.013, 0.333, 0.071)
+
+[node name="MuzzleMarker3D" type="Marker3D" parent="." index="2"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0.012, 0.678, -0.0109079)

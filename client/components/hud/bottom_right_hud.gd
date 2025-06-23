@@ -3,8 +3,11 @@ extends Control
 @onready var ammo_label: Label = $MarginContainer/HBoxContainer/AmmoLabel
 
 
-func _ready() -> void:
+func _init() -> void:
 	hide()
+
+
+func _ready() -> void:
 	Signals.ui_hide_bottom_right_hud.connect(_handle_signal_hide_buttom_right_hud)
 	Signals.ui_show_bottom_right_hud.connect(_handle_signal_show_buttom_right_hud)
 	Signals.ui_update_ammo.connect(_handle_signal_update_ammo)
@@ -19,7 +22,4 @@ func _handle_signal_show_buttom_right_hud() -> void:
 
 
 func _handle_signal_update_ammo() -> void:
-	if not GameManager.player_character:
-		return
-	
 	ammo_label.text = str(GameManager.player_character.player_equipment.get_equipped_weapon_ammo())

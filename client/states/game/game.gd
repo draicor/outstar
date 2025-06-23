@@ -1,7 +1,7 @@
 extends Node
 
 # Preload resources
-const packets: GDScript = preload("res://packets.gd")
+const Packets: GDScript = preload("res://packets.gd")
 const Player: GDScript = preload("res://objects/player/player.gd")
 const game_escape_menu_scene: PackedScene = preload("res://components/escape_menu/game/game_escape_menu.tscn")
 
@@ -47,11 +47,11 @@ func _initialize() -> void:
 # If our connection to the server closed
 func _on_websocket_connection_closed() -> void:
 	chat.error("You have been disconnected from the server")
-	# Display some kind of dialog box that the user can accept to go back to
-	# the main menu
+	# CAUTION
+	# Display a dialog box that the user can accept to go back to main menu
 
 
-func _on_websocket_packet_received(packet: packets.Packet) -> void:
+func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()
 	
 	if packet.has_public_message():
@@ -74,7 +74,7 @@ func _on_websocket_packet_received(packet: packets.Packet) -> void:
 		_handle_chat_bubble_packet(sender_id, packet.get_chat_bubble())
 
 # Print the message into our chat window and update that player's chat bubble
-func _handle_public_message_packet(sender_id: int, packet_public_message: packets.PublicMessage) -> void:
+func _handle_public_message_packet(sender_id: int, packet_public_message: Packets.PublicMessage) -> void:
 	# We print the nickname and then the message contents in local chat
 	chat.public("%s" % packet_public_message.get_nickname(), packet_public_message.get_text(), Color.LIGHT_SEA_GREEN)
 	
@@ -92,7 +92,7 @@ func _handle_public_message_packet(sender_id: int, packet_public_message: packet
 # We send a heartbeat packet to the server every time the timer timeouts
 func _on_websocket_heartbeat_attempt() -> void:
 	# We create a new packet of type heartbeat
-	var packet := packets.Packet.new()
+	var packet := Packets.Packet.new()
 	packet.new_heartbeat()
 	
 	# This serializes and sends our message
@@ -110,7 +110,7 @@ func _handle_client_entered_packet(_nickname: String) -> void:
 
 # When a client leaves, print the message into our chat window
 # If that client was on our player list, we destroy his character to free resources
-func _handle_client_left_packet(client_left_packet: packets.ClientLeft) -> void:
+func _handle_client_left_packet(client_left_packet: Packets.ClientLeft) -> void:
 	# Get the player id from the packet
 	var player_id := client_left_packet.get_id()
 	# If the id is on our players dictionary
@@ -137,7 +137,7 @@ func _handle_signal_chat_public_message_sent(text: String) -> void:
 		return
 	
 	# Create the public_message packet
-	var packet := packets.Packet.new()
+	var packet := Packets.Packet.new()
 	var public_message := packet.new_public_message()
 	public_message.set_text(text)
 	
@@ -161,7 +161,7 @@ func _on_ui_escape_menu_toggle() -> void:
 # Used to request the server to switch us to the authentication state
 func _handle_signal_ui_logout() -> void:
 	# We create a new packet of type logout request
-	var packet := packets.Packet.new()
+	var packet := Packets.Packet.new()
 	packet.new_logout_request()
 	
 	# This serializes and sends our message
@@ -175,7 +175,7 @@ func _handle_signal_ui_logout() -> void:
 
 func _send_client_entered_packet() -> bool:
 	# We create a new packet
-	var packet := packets.Packet.new()
+	var packet := Packets.Packet.new()
 	# We send the packet with no data because the server will fill it up
 	packet.new_client_entered()
 	
@@ -198,7 +198,7 @@ func _handle_request_denied_packet(reason: String) -> void:
 	# have a packet type for every type of request unless we have to!
 
 
-func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) -> void:
+func _handle_update_player_packet(update_player_packet: Packets.UpdatePlayer) -> void:
 	var player_id := update_player_packet.get_id()
 
 	# If this player is NOT in our list of players
@@ -249,7 +249,7 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		player.update_destination(server_position)
 
 
-func _handle_update_speed_packet(sender_id: int, update_speed_packet: packets.UpdateSpeed) -> void:
+func _handle_update_speed_packet(sender_id: int, update_speed_packet: Packets.UpdateSpeed) -> void:
 	# If the id is on our players dictionary
 	if sender_id in _players:
 		# Attempt to retrieve the player character object
@@ -259,7 +259,7 @@ func _handle_update_speed_packet(sender_id: int, update_speed_packet: packets.Up
 			player.update_player_speed(update_speed_packet.get_speed())
 
 
-func _handle_region_data_packet(region_data_packet: packets.RegionData) -> void:
+func _handle_region_data_packet(region_data_packet: Packets.RegionData) -> void:
 	var region_id: int = region_data_packet.get_region_id()
 	
 	if region_id in RegionManager.Maps.values():
@@ -311,7 +311,7 @@ func _load_map(map: RegionManager.Maps) -> void:
 
 
 # Used to toggle the chat bubble of this character
-func _handle_chat_bubble_packet(sender_id: int, chat_bubble_packet: packets.ChatBubble) -> void:
+func _handle_chat_bubble_packet(sender_id: int, chat_bubble_packet: Packets.ChatBubble) -> void:
 	# If the id is on our players dictionary
 	if sender_id in _players:
 		# Attempt to retrieve the player character object
