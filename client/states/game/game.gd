@@ -120,7 +120,7 @@ func _handle_client_left_packet(client_left_packet: packets.ClientLeft) -> void:
 		# If its valid
 		if player:
 			# Remove this player from our grid
-			RegionManager.remove_object(player.server_grid_position, player)
+			RegionManager.remove_object(player.player_movement.server_grid_position, player)
 			# Remove this player from our array of players
 			_players.erase(player_id)
 			# Destroy it
@@ -241,7 +241,7 @@ func _handle_update_player_packet(update_player_packet: packets.UpdatePlayer) ->
 		var server_position: Vector2i = Vector2i(update_player_packet.get_position().get_x(), update_player_packet.get_position().get_z())
 		
 		# Remove the player from the grid position it was
-		RegionManager.remove_object(player.server_grid_position, player)
+		RegionManager.remove_object(player.player_movement.server_grid_position, player)
 		# Add the player to the new position in my local grid
 		RegionManager.set_object(server_position, player)
 		

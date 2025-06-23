@@ -23,15 +23,10 @@ var player_id: int
 var player_name: String
 var gender: String
 var player_speed: int
+var spawn_position: Vector2i
+var spawn_rotation: float
 var tooltip: String
-var model_rotation_y: float
 var my_player_character: bool # Used to differentiate my character from remote players
-# Movement data set at spawn
-var server_grid_position: Vector2i # Used to spawn the character and also to correct the player's position
-var grid_position: Vector2i # Keeps track of our grid position locally
-var grid_destination: Vector2i # Used in _raycast(), to tell the server where we want to move
-var immediate_grid_destination: Vector2i # Used in case we want to change route in transit
-var interpolated_position: Vector3 # Used to smoothly slide our character in our game client
 
 # Logic variables
 var is_busy: bool = false # Blocks input during interactions
@@ -80,8 +75,8 @@ static func instantiate(
 	nickname: String,
 	character_gender: String,
 	character_speed: int,
-	spawn_position: Vector2i,
-	spawn_model_rotation_y: float, # Used to update our model.rotation.y
+	server_spawn_position: Vector2i,
+	server_spawn_rotation: float, # Used to update our model.rotation.y
 	is_my_player_character: bool
 ) -> Player:
 	# Instantiate a new empty player character
@@ -91,17 +86,10 @@ static func instantiate(
 	player.player_name = nickname
 	player.gender = character_gender
 	player.player_speed = character_speed
-	player.tooltip = nickname
-	player.model_rotation_y = spawn_model_rotation_y
+	player.spawn_position = server_spawn_position
+	player.spawn_rotation = server_spawn_rotation
 	player.my_player_character = is_my_player_character
-	# Overwrite our local copy of the grid positions
-	player.server_grid_position = spawn_position
-	player.grid_position = spawn_position
-	player.grid_destination = spawn_position
-	player.immediate_grid_destination = spawn_position
-	
-	# Overwrite our local copy of the space positions
-	player.interpolated_position = Utils.map_to_local(spawn_position)
+	player.tooltip = nickname
 	
 	return player
 
@@ -114,7 +102,17 @@ func _init() -> void:
 # Called once this character has been created and instantiated
 func _ready() -> void:
 	_initialize_character()
-	model.rotation.y = model_rotation_y # Rotate our character to match the server's rotation
+	
+	# Overwrite our local copy of the grid positions
+	player_movement.server_grid_position = spawn_position
+	player_movement.grid_position = spawn_position
+	player_movement.grid_destination = spawn_position
+	player_movement.immediate_grid_destination = spawn_position
+	
+	# Overwrite our local copy of the space positions
+	player_movement.interpolated_position = Utils.map_to_local(spawn_position)
+	# Rotate our character to match the server's rotation
+	model.rotation.y = spawn_rotation
 	
 	# Do this only for my local character
 	if my_player_character:
@@ -302,7 +300,7 @@ func start_interaction(target: Interactable) -> void:
 	if player_movement.in_motion:
 		# If we were moving, see if we can reach our target, if we can,
 		# _setup_interaction_movement updates our next_tick path towards it
-		if player_movement.setup_interaction_movement(immediate_grid_destination, target):
+		if player_movement.setup_interaction_movement(player_movement.immediate_grid_destination, target):
 			pending_interaction = target
 		return
 	
@@ -316,7 +314,7 @@ func start_interaction(target: Interactable) -> void:
 	
 	# If we are far away, check if we can reach it
 	# if we can, start moving towards it
-	if player_movement.setup_interaction_movement(grid_position, target):
+	if player_movement.setup_interaction_movement(player_movement.grid_position, target):
 		player_state_machine.change_state("move")
 	
 	# If we can't reach it, then forget about it
@@ -366,7 +364,7 @@ func handle_pending_interaction() -> void:
 	
 	# We are not in interaction range, so we'll have to trace a path to it
 	# Calculate from current immediate destination if moving, else use our current grid position
-	var start_position: Vector2i = immediate_grid_destination if player_movement.in_motion else grid_position
+	var start_position: Vector2i = player_movement.immediate_grid_destination if player_movement.in_motion else player_movement.grid_position
 	if not player_movement.setup_interaction_movement(start_position, pending_interaction):
 		pending_interaction = null
 		return
@@ -380,13 +378,13 @@ func _show_debug_tools() -> void:
 	 # Only draw in editor/debug builds
 	if OS.is_debug_build():
 		if my_player_character:
-			_draw_circle(Utils.map_to_local(grid_destination), 0.5, Color.RED, 16) # Grid destination
-			_draw_circle(Utils.map_to_local(immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
-			_draw_circle(Utils.map_to_local(grid_position), 0.3, Color.GREEN, 16) # Grid position
+			_draw_circle(Utils.map_to_local(player_movement.grid_destination), 0.5, Color.RED, 16) # Grid destination
+			_draw_circle(Utils.map_to_local(player_movement.immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
+			_draw_circle(Utils.map_to_local(player_movement.grid_position), 0.3, Color.GREEN, 16) # Grid position
 		
 		# Draw the forward direction and server position for all characters on screen
 		DebugDraw3D.draw_line(position, position + player_movement.forward_direction * 1, Color.RED) # 1 meter forward line
-		_draw_circle(Utils.map_to_local(server_grid_position), 0.6, Color.REBECCA_PURPLE, 16) # Server position for my character
+		_draw_circle(Utils.map_to_local(player_movement.server_grid_position), 0.6, Color.REBECCA_PURPLE, 16) # Server position for my character
 
 
 # Used to draw a circle for debugging purposes
@@ -469,7 +467,7 @@ func _handle_signal_ui_update_speed_button(new_move_speed: int) -> void:
 # PACKETS RECEIVED #
 ####################
 
-# Updates the player's position
+# Updates the player's server grid position
 func update_destination(new_server_position: Vector2i) -> void:
 	# Only do the reconciliation for my player, not the other players
 	if my_player_character and player_movement.is_predicting:
@@ -479,10 +477,12 @@ func update_destination(new_server_position: Vector2i) -> void:
 		player_movement.handle_remote_player_movement(new_server_position)
 	
 	# Update our server grid position locally
-	server_grid_position = new_server_position
+	player_movement.server_grid_position = new_server_position
 
 
-# Should be called once per path slice to recalculate the move speed
+# Updates the player's move speed to match the server's
 func update_player_speed(new_speed: int) -> void:
-	# Clamp speed to 1-3 range
-	player_speed = clamp(new_speed, 1, 3)
+	# Only allow speed changes when not moving
+	if not player_movement.in_motion:
+		# Clamp speed to 1-3 range
+		player_speed = clamp(new_speed, 1, 3)
