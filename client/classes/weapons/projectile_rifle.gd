@@ -2,6 +2,7 @@ extends Node3D
 class_name ProjectileRifle
 
 @export var weapon_max_distance: float = 50.0
+@export var weapon_trail_duration: float = 0.2
 @onready var muzzle_marker_3d: Marker3D = $MuzzleMarker3D
 
 
@@ -15,24 +16,44 @@ func single_fire() -> Vector3:
 	horizontal_direction = horizontal_direction.normalized()
 
 	# Perform raycast
-	var hit_position: Vector3 = weapon_raycast(muzzle_position, horizontal_direction)
+	var hit: Dictionary = weapon_raycast(muzzle_position, horizontal_direction)
+	var hit_position: Vector3 = hit.position if hit else muzzle_position + horizontal_direction * weapon_max_distance
 	
-	if hit_position != Vector3.ZERO:
-		# Draw debug line from weapon to hit point
-		DebugDraw3D.draw_line(
-			muzzle_position,
-			hit_position,
-			Color.YELLOW_GREEN, # Solid color
-			0.5 # Duration in seconds
-		)
-	return hit_position
+	# Draw debug line from weapon to hit point
+	if hit:
+		#DebugDraw3D.draw_line(
+			#muzzle_position,
+			#hit_position,
+			#Color(0.0, 1.0, 0.0, 0.3), # GREEN
+			#weapon_trail_duration
+		#)
+		# Check what kind of target we hit
+		_process_hit(hit)
+	
+	# If we missed, draw a different line here
+	#else:
+		#DebugDraw3D.draw_line(
+			#muzzle_position,
+			#hit_position,
+			#Color(1.0, 0.0, 0.0, 0.3), # RED
+			#weapon_trail_duration
+		#)
+	
+	return hit_position # <-- CAUTION not being used yet
 
-func weapon_raycast(origin: Vector3, direction: Vector3) -> Vector3:
+
+func weapon_raycast(origin: Vector3, direction: Vector3) -> Dictionary:
 	var ray_query := PhysicsRayQueryParameters3D.create(
 		origin,
 		origin + direction * weapon_max_distance
 	)
 	ray_query.collision_mask = 3 # Mask 1+2
 	
-	var hit = get_world_3d().direct_space_state.intersect_ray(ray_query)
-	return hit.position if hit else origin + direction * weapon_max_distance
+	return get_world_3d().direct_space_state.intersect_ray(ray_query)
+
+
+# Handle SFXs and maybe sounds?
+func _process_hit(hit: Dictionary) -> void:
+	var collider = hit.get("collider")
+	if collider and collider.is_in_group("player"):
+		SfxManager.spawn_blood_mist(hit.position, hit.normal)

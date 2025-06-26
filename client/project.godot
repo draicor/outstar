@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Outstar Online"
-config/version="0.0.3.4"
+config/version="0.0.3.5"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="uid://bjqb64snmtum0"
@@ -25,6 +25,7 @@ Signals="*res://autoloads/signals.gd"
 Utils="*res://autoloads/utils.gd"
 RegionManager="*res://autoloads/region_manager.gd"
 TooltipManager="*res://autoloads/tooltip_manager.gd"
+SfxManager="*res://autoloads/sfx_manager.gd"
 
 [debug]
 
@@ -38,6 +39,10 @@ window/size/viewport_height=324
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/protobuf/plugin.cfg")
+
+[global_group]
+
+player="Any player controller character (local or remote)"
 
 [gui]
 

@@ -1,3 +1,4 @@
+res://autoloads
 res://classes/weapons
 res://objects/weapons
 C:/Users/Draicor/Documents/Draicor/mmo/client/bin/linux
@@ -8,7 +9,6 @@ res://components/chat_bubble
 C:/Users/Draicor/Documents/Draicor/mmo/client/bin
 res://assets/icons
 res://objects/characters
-res://autoloads
 res://components/hud
 res://materials
 res://maps/prototype

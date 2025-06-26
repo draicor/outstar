@@ -14,10 +14,10 @@
 [ext_resource type="Script" uid="uid://cyqk3p6o7qlpf" path="res://classes/player/player_equipment.gd" id="11_psowp"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_634de"]
-radius = 0.3
+radius = 0.2
 height = 1.8
 
-[node name="Player" type="CharacterBody3D"]
+[node name="Player" type="CharacterBody3D" groups=["player"]]
 collision_layer = 2
 script = ExtResource("1_jpa1g")
 
