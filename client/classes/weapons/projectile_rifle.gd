@@ -56,4 +56,4 @@ func weapon_raycast(origin: Vector3, direction: Vector3) -> Dictionary:
 func _process_hit(hit: Dictionary) -> void:
 	var collider = hit.get("collider")
 	if collider and collider.is_in_group("player"):
-		SfxManager.spawn_blood_mist(hit.position, hit.normal)
+		SfxManager.spawn_projectile_blood_splatter(hit.position, hit.normal)

@@ -1,15 +1,17 @@
 extends Node
 
-const blood_mist_scene = preload("res://sfx/blood_mist.tscn")
+
+# Preloading scenes
+const projectile_blood_splatter_01_scene = preload("res://sfx/projectile_blood_splatter_01.tscn")
 
 
-func spawn_blood_mist(spawn_position: Vector3, spawn_normal: Vector3) -> void:
-	var blood_mist := blood_mist_scene.instantiate()
+func spawn_projectile_blood_splatter(spawn_position: Vector3, spawn_normal: Vector3) -> void:
+	var projectile_blood_splatter_01 := projectile_blood_splatter_01_scene.instantiate()
 	
 	# Add to scene
-	add_child(blood_mist)
+	add_child(projectile_blood_splatter_01)
 	
 	# Position and orient blood
-	blood_mist.global_position = spawn_position
+	projectile_blood_splatter_01.global_position = spawn_position
 	# Use the reverse of the normal for bullet impacts (position - normal)
-	blood_mist.look_at(spawn_position - spawn_normal, Vector3.UP)
+	projectile_blood_splatter_01.look_at(spawn_position - spawn_normal, Vector3.UP)

@@ -1,6 +1,5 @@
 extends GPUParticles3D
 
-
 # CAUTION use a pool instead of this shit
 func _ready() -> void:
 	emitting = true
