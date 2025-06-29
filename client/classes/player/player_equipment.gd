@@ -23,7 +23,7 @@ var equipped_weapon_name: String = "unarmed"
 var equipped_weapon_type: String = "unarmed" # Used to switch states and animations too
 var equipped_weapon = null # Instantiated scene of our weapon
 # Ammo system
-var equipped_weapon_ammo: int = 0
+var equipped_weapon_ammo: int = 30
 
 
 func _ready() -> void:

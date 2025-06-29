@@ -55,5 +55,7 @@ func weapon_raycast(origin: Vector3, direction: Vector3) -> Dictionary:
 # Handle SFXs and maybe sounds?
 func _process_hit(hit: Dictionary) -> void:
 	var collider = hit.get("collider")
-	if collider and collider.is_in_group("player"):
-		SfxManager.spawn_projectile_blood_splatter(hit.position, hit.normal)
+	if collider and collider.is_in_group("impact_flesh"):
+		SfxManager.spawn_projectile_impact_flesh(hit.position, hit.normal)
+	elif collider and collider.is_in_group("impact_concrete"):
+		SfxManager.spawn_projectile_impact_concrete(hit.position, hit.normal)

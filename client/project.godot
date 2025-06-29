@@ -42,7 +42,8 @@ enabled=PackedStringArray("res://addons/protobuf/plugin.cfg")
 
 [global_group]
 
-player="Any player controller character (local or remote)"
+impact_flesh="Any player controller character (local or remote)"
+impact_concrete=""
 
 [gui]
 

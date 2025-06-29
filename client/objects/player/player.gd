@@ -323,7 +323,7 @@ func start_interaction(target: Interactable) -> void:
 
 
 # Handles the interaction itself when in range
-func _execute_interaction() -> void:
+func execute_interaction() -> void:
 	if not interaction_target:
 		is_busy = false
 		return

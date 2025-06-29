@@ -17,7 +17,7 @@
 radius = 0.2
 height = 1.8
 
-[node name="Player" type="CharacterBody3D" groups=["player"]]
+[node name="Player" type="CharacterBody3D" groups=["impact_flesh"]]
 collision_layer = 2
 script = ExtResource("1_jpa1g")
 
@@ -31,7 +31,7 @@ debug_color = Color(0, 0.6, 0.701961, 1)
 [node name="CameraPivot" type="Node3D" parent="."]
 
 [node name="CameraRig" type="Node3D" parent="CameraPivot"]
-transform = Transform3D(1, 0, 0, 0, 0.707106, 0.707106, 0, -0.707106, 0.707106, 0, 4.5, 4.5)
+transform = Transform3D(1, 0, 0, 0, 0.766044, 0.642787, 0, -0.642787, 0.766044, 0, 4, 4)
 
 [node name="ChatBubbleOrigin" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)

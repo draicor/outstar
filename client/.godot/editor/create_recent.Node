@@ -1,5 +1,5 @@
-GPUParticlesAttractorSphere3D
 GPUParticles3D
+GPUParticlesAttractorSphere3D
 Marker3D
 PlayerMovement
 HBoxContainer
@@ -12,4 +12,3 @@ PlayerAudio
 RifleAimIdleState
 RifleDownIdleState
 PlayerAnimator
-InteractState
