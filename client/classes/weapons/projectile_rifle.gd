@@ -59,3 +59,4 @@ func _process_hit(hit: Dictionary) -> void:
 		SfxManager.spawn_projectile_impact_flesh(hit.position, hit.normal)
 	elif collider and collider.is_in_group("impact_concrete"):
 		SfxManager.spawn_projectile_impact_concrete(hit.position, hit.normal)
+		SfxManager.spawn_projectile_impact_concrete_decal(hit.position, hit.normal)
