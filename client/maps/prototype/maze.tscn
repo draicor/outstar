@@ -32,14 +32,14 @@ use_collision = true
 collision_mask = 0
 size = Vector3(10, 1, 10)
 
-[node name="Wall" type="CSGBox3D" parent="World/Static" groups=["impact_concrete"]]
+[node name="Wall" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, 5)
 material_override = SubResource("StandardMaterial3D_cf12v")
 use_collision = true
 collision_mask = 0
 size = Vector3(0.2, 2, 10)
 
-[node name="Wall2" type="CSGBox3D" parent="World/Static" groups=["impact_concrete"]]
+[node name="Wall2" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 5)
 material_override = SubResource("StandardMaterial3D_cf12v")
 use_collision = true

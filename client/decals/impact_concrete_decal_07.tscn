@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://npnge0awp7j1"]
+
+[ext_resource type="Texture2D" uid="uid://cc5ccl8a88t8l" path="res://assets/textures/sfx/concrete/impact_concrete_07.png" id="1_m8ocx"]
+[ext_resource type="Script" uid="uid://dbop3igkxu750" path="res://classes/sfx/generic_decal.gd" id="2_bdue5"]
+
+[node name="ImpactConcreteDecal07" type="Decal"]
+transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, 0, -4.37114e-08, -1, -1, -4.37114e-08, 1.91069e-15, 0, 0, 0)
+size = Vector3(0.15, 0.15, 0.15)
+texture_albedo = ExtResource("1_m8ocx")
+emission_energy = 0.0
+distance_fade_enabled = true
+cull_mask = 1
+script = ExtResource("2_bdue5")
