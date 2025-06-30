@@ -8,5 +8,6 @@ transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, 0, -4.37114e-08, -1, -1, 
 size = Vector3(0.1, 0.1, 0.1)
 texture_albedo = ExtResource("1_4f0yi")
 emission_energy = 0.0
+distance_fade_enabled = true
 cull_mask = 1
 script = ExtResource("2_5w3sc")

@@ -52,7 +52,7 @@ func weapon_raycast(origin: Vector3, direction: Vector3) -> Dictionary:
 	return get_world_3d().direct_space_state.intersect_ray(ray_query)
 
 
-# Handle SFXs and maybe sounds?
+# Handle SFXs and maybe sounds here too?
 func _process_hit(hit: Dictionary) -> void:
 	var collider = hit.get("collider")
 	if collider and collider.is_in_group("impact_flesh"):

@@ -14,6 +14,7 @@ config/name="Outstar Online"
 config/version="0.0.3.5"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
+run/max_fps=60
 config/icon="uid://bjqb64snmtum0"
 config/windows_native_icon="res://assets/icons/outstar_online.ico"
 
@@ -129,4 +130,5 @@ weapon_reload={
 
 [rendering]
 
+rendering_device/staging_buffer/max_size_mb=512
 renderer/rendering_method="mobile"

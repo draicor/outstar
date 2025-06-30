@@ -8,6 +8,7 @@ const projectile_impact_concrete_scene = preload("res://sfx/projectile_impact_co
 const impact_concrete_decal_scene = preload("res://decals/impact_concrete_decal.tscn")
 
 
+# Particle effect for flesh impacts
 func spawn_projectile_impact_flesh(spawn_position: Vector3, spawn_normal: Vector3) -> void:
 	var projectile_impact_flesh := projectile_impact_flesh_scene.instantiate()
 	
@@ -20,6 +21,7 @@ func spawn_projectile_impact_flesh(spawn_position: Vector3, spawn_normal: Vector
 	projectile_impact_flesh.look_at(spawn_position - spawn_normal, Vector3.UP)
 
 
+# Particle effect for concrete impacts
 func spawn_projectile_impact_concrete(spawn_position: Vector3, spawn_normal: Vector3) -> void:
 	var projectile_impact_concrete := projectile_impact_concrete_scene.instantiate()
 	
@@ -32,11 +34,11 @@ func spawn_projectile_impact_concrete(spawn_position: Vector3, spawn_normal: Vec
 	projectile_impact_concrete.look_at(spawn_position - spawn_normal, Vector3.UP)
 
 
+# Decal for concrete impacts
 func spawn_projectile_impact_concrete_decal(spawn_position: Vector3, spawn_normal: Vector3) -> void:
-	var decal := impact_concrete_decal_scene.instantiate()
-	
-	# Add to scene
+	var decal = impact_concrete_decal_scene.instantiate()
 	add_child(decal)
+	
 	# Position decal at an offset to prevent z-fighting
 	decal.global_position = spawn_position + (spawn_normal * 0.01)
 	
