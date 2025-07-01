@@ -4,6 +4,7 @@ class_name ProjectileRifle
 @export var weapon_max_distance: float = 50.0
 @export var weapon_trail_duration: float = 0.2
 @onready var muzzle_marker_3d: Marker3D = $MuzzleMarker3D
+@onready var projectile_muzzle_flash: GPUParticles3D = $MuzzleMarker3D/ProjectileMuzzleFlash
 
 
 func single_fire() -> Vector3:
@@ -18,6 +19,9 @@ func single_fire() -> Vector3:
 	# Perform raycast
 	var hit: Dictionary = weapon_raycast(muzzle_position, horizontal_direction)
 	var hit_position: Vector3 = hit.position if hit else muzzle_position + horizontal_direction * weapon_max_distance
+	
+	# CAUTION check if we fired first
+	projectile_muzzle_flash.restart()
 	
 	# Draw debug line from weapon to hit point
 	if hit:
