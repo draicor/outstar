@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://degj10b2sovw4"
-path.s3tc="res://.godot/imported/muzzle_03.png-f25d1fdee76af9c9187054dabeddf827.s3tc.ctex"
+uid="uid://bco607owioitx"
+path.s3tc="res://.godot/imported/muzzle_03_rotated.png-e90bee56254d45619a07a749b1289867.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/sfx/muzzle/muzzle_03.png"
-dest_files=["res://.godot/imported/muzzle_03.png-f25d1fdee76af9c9187054dabeddf827.s3tc.ctex"]
+source_file="res://assets/textures/sfx/muzzle/muzzle_03_rotated.png"
+dest_files=["res://.godot/imported/muzzle_03_rotated.png-e90bee56254d45619a07a749b1289867.s3tc.ctex"]
 
 [params]
 

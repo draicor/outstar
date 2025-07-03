@@ -4,7 +4,7 @@ class_name ProjectileRifle
 @export var weapon_max_distance: float = 50.0
 @export var weapon_trail_duration: float = 0.2
 @onready var muzzle_marker_3d: Marker3D = $MuzzleMarker3D
-@onready var projectile_muzzle_flash: GPUParticles3D = $MuzzleMarker3D/ProjectileMuzzleFlash
+@onready var projectile_muzzle_flash: Node3D = $MuzzleMarker3D/ProjectileMuzzleFlash
 
 
 func single_fire() -> Vector3:

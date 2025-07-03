@@ -1,4 +1,5 @@
 GPUParticles3D
+Node3D
 Decal
 GPUParticlesAttractorSphere3D
 Marker3D
@@ -11,4 +12,3 @@ BoneAttachment3D
 SkeletonIK3D
 PlayerAudio
 RifleAimIdleState
-RifleDownIdleState
