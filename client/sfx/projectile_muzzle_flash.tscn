@@ -1,8 +1,8 @@
 [gd_scene load_steps=32 format=4 uid="uid://cb5es8vr13ukq"]
 
-[ext_resource type="Texture2D" uid="uid://bco607owioitx" path="res://assets/textures/sfx/muzzle/muzzle_03_rotated.png" id="1_dmkd8"]
-[ext_resource type="Script" uid="uid://bjgo5k1ucw4n5" path="res://classes/sfx/generic_gpu_particles_3d.gd" id="1_krxvi"]
+[ext_resource type="Script" uid="uid://ews1d10clxi3" path="res://classes/sfx/projectile_muzzle_flash.gd" id="1_plcon"]
 [ext_resource type="Texture2D" uid="uid://cr458d4loif5y" path="res://assets/textures/sfx/flash/flash_01.png" id="2_gw5d1"]
+[ext_resource type="Texture2D" uid="uid://cnku63gfss23d" path="res://assets/textures/sfx/muzzle/muzzle_04_rotated.png" id="2_plcon"]
 [ext_resource type="Texture2D" uid="uid://b5gew0shg3e20" path="res://assets/textures/sfx/smoke/smoke_sprites.png" id="4_plcon"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kspet"]
@@ -10,10 +10,12 @@ transparency = 1
 blend_mode = 1
 cull_mode = 2
 shading_mode = 0
+specular_mode = 2
 vertex_color_use_as_albedo = true
 vertex_color_is_srgb = true
-albedo_texture = ExtResource("1_dmkd8")
+albedo_texture = ExtResource("2_plcon")
 disable_receive_shadows = true
+billboard_keep_scale = true
 
 [sub_resource type="Curve" id="Curve_dmkd8"]
 _data = [Vector2(0.5, 0.8), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
@@ -39,6 +41,8 @@ attractor_interaction_enabled = false
 scale_curve = SubResource("CurveTexture_krxvi")
 color = Color(2.5, 1.5, 1, 1)
 alpha_curve = SubResource("CurveTexture_gw5d1")
+hue_variation_min = -2.23517e-08
+hue_variation_max = -2.23517e-08
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_pwqfp"]
 _surfaces = [{
@@ -109,41 +113,6 @@ alpha_curve = SubResource("CurveTexture_huvch")
 size = Vector2(1.2, 1.2)
 center_offset = Vector3(0, 0, 0.3)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_plcon"]
-transparency = 1
-blend_mode = 1
-cull_mode = 2
-vertex_color_use_as_albedo = true
-vertex_color_is_srgb = true
-albedo_color = Color(1.3, 0.8, 0, 1)
-albedo_texture = ExtResource("2_gw5d1")
-
-[sub_resource type="Curve" id="Curve_krxvi"]
-_data = [Vector2(0, 1), 0.0, -2.74145, 0, 0, Vector2(1, 0), -0.017978, 0.0, 0, 0]
-point_count = 2
-
-[sub_resource type="CurveTexture" id="CurveTexture_plcon"]
-curve = SubResource("Curve_krxvi")
-
-[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_huvch"]
-lifetime_randomness = 1.0
-particle_flag_align_y = true
-emission_shape_offset = Vector3(0, 0, -0.05)
-direction = Vector3(0, 0, 1)
-spread = 10.0
-initial_velocity_min = 5.0
-initial_velocity_max = 5.0
-gravity = Vector3(0, 0, 0)
-damping_max = 10.0
-attractor_interaction_enabled = false
-scale_min = 0.05
-scale_max = 0.2
-color = Color(4.5, 2, 1, 1)
-alpha_curve = SubResource("CurveTexture_plcon")
-
-[sub_resource type="QuadMesh" id="QuadMesh_huvch"]
-size = Vector2(0.1, 0.5)
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_huvch"]
 transparency = 1
 blend_mode = 1
@@ -199,8 +168,45 @@ anim_offset_max = 1.0
 [sub_resource type="QuadMesh" id="QuadMesh_vcvrx"]
 size = Vector2(0.6, 0.6)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_plcon"]
+transparency = 1
+blend_mode = 1
+cull_mode = 2
+vertex_color_use_as_albedo = true
+vertex_color_is_srgb = true
+albedo_color = Color(1.3, 0.8, 0, 1)
+albedo_texture = ExtResource("2_gw5d1")
+
+[sub_resource type="Curve" id="Curve_krxvi"]
+_data = [Vector2(0, 1), 0.0, -2.74145, 0, 0, Vector2(1, 0), -0.017978, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_plcon"]
+curve = SubResource("Curve_krxvi")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_huvch"]
+lifetime_randomness = 1.0
+particle_flag_align_y = true
+emission_shape = 1
+emission_sphere_radius = 0.02
+direction = Vector3(0, 0, 1)
+spread = 10.0
+initial_velocity_min = 3.0
+initial_velocity_max = 8.0
+gravity = Vector3(0, 0, 0)
+damping_max = 10.0
+attractor_interaction_enabled = false
+scale_min = 0.05
+scale_max = 0.15
+color = Color(4.5, 2, 1, 1)
+alpha_curve = SubResource("CurveTexture_plcon")
+
+[sub_resource type="QuadMesh" id="QuadMesh_huvch"]
+size = Vector2(0.1, 0.5)
+
 [node name="ProjectileMuzzleFlash" type="Node3D"]
-script = ExtResource("1_krxvi")
+script = ExtResource("1_plcon")
+MUZZLE_FLASH_RATIO = 0.4
 
 [node name="Muzzle" type="GPUParticles3D" parent="."]
 material_override = SubResource("StandardMaterial3D_kspet")
@@ -224,17 +230,6 @@ fixed_fps = 60
 process_material = SubResource("ParticleProcessMaterial_uwn06")
 draw_pass_1 = SubResource("QuadMesh_3cbtf")
 
-[node name="Sparks" type="GPUParticles3D" parent="."]
-material_override = SubResource("StandardMaterial3D_plcon")
-emitting = false
-lifetime = 0.3
-one_shot = true
-explosiveness = 1.0
-randomness = 1.0
-fixed_fps = 60
-process_material = SubResource("ParticleProcessMaterial_huvch")
-draw_pass_1 = SubResource("QuadMesh_huvch")
-
 [node name="Smoke" type="GPUParticles3D" parent="."]
 material_override = SubResource("StandardMaterial3D_huvch")
 emitting = false
@@ -245,3 +240,14 @@ randomness = 1.0
 fixed_fps = 60
 process_material = SubResource("ParticleProcessMaterial_8iong")
 draw_pass_1 = SubResource("QuadMesh_vcvrx")
+
+[node name="Sparks" type="GPUParticles3D" parent="."]
+material_override = SubResource("StandardMaterial3D_plcon")
+emitting = false
+lifetime = 0.3
+one_shot = true
+explosiveness = 0.6
+randomness = 1.0
+fixed_fps = 60
+process_material = SubResource("ParticleProcessMaterial_huvch")
+draw_pass_1 = SubResource("QuadMesh_huvch")
