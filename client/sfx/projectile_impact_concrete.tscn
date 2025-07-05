@@ -1,6 +1,6 @@
 [gd_scene load_steps=10 format=3 uid="uid://do1p3pnil0cpc"]
 
-[ext_resource type="Script" uid="uid://be4dykb1p5sbh" path="res://sfx/generic_particle.gd" id="1_4qlwa"]
+[ext_resource type="Script" uid="uid://be4dykb1p5sbh" path="res://classes/sfx/disposable_gpu_particles_3d.gd" id="1_4qlwa"]
 [ext_resource type="Texture2D" uid="uid://xg6sh3duqlx0" path="res://assets/textures/sfx/smoke/smoke_03.png" id="1_y3a42"]
 
 [sub_resource type="Gradient" id="Gradient_cjoab"]

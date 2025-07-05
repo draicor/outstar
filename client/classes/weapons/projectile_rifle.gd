@@ -6,6 +6,8 @@ class_name ProjectileRifle
 @onready var muzzle_marker_3d: Marker3D = $MuzzleMarker3D
 @onready var projectile_muzzle_flash: Node3D = $MuzzleMarker3D/ProjectileMuzzleFlash
 
+const BULLET_TRACER = preload("res://sfx/bullet_tracer.tscn")
+
 
 func single_fire() -> Vector3:
 	# Get weapon muzzle position
@@ -22,6 +24,10 @@ func single_fire() -> Vector3:
 	
 	# CAUTION check if we fired first
 	projectile_muzzle_flash.restart()
+	# Add the bullet tracer
+	var tracer := BULLET_TRACER.instantiate()
+	get_tree().current_scene.add_child(tracer)
+	tracer.initialize(muzzle_position, hit_position)
 	
 	# Draw debug line from weapon to hit point
 	if hit:

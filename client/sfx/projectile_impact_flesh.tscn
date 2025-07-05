@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://7et5m8gspynn"]
 
 [ext_resource type="Texture2D" uid="uid://bq1xr4a1c5ygb" path="res://assets/textures/sfx/blood/blood_splatter_01.png" id="1_kicbs"]
-[ext_resource type="Script" uid="uid://be4dykb1p5sbh" path="res://sfx/generic_particle.gd" id="2_warbm"]
+[ext_resource type="Script" uid="uid://be4dykb1p5sbh" path="res://classes/sfx/disposable_gpu_particles_3d.gd" id="2_warbm"]
 
 [sub_resource type="Gradient" id="Gradient_8y43a"]
 interpolation_mode = 2

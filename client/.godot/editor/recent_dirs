@@ -1,5 +1,6 @@
-res://classes/sfx
 res://sfx
+res://assets/shaders
+res://classes/sfx
 res://autoloads
 res://classes/weapons
 res://objects/weapons
