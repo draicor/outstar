@@ -2,8 +2,8 @@ extends Node
 
 
 # Preloading scenes
-const projectile_impact_flesh_scene = preload("res://sfx/projectile_impact_flesh.tscn")
-const projectile_impact_concrete_scene = preload("res://sfx/projectile_impact_concrete.tscn")
+const PROJECTILE_IMPACT_FLESH = preload("res://sfx/projectile/projectile_impact_flesh.tscn")
+const PROJECTILE_IMPACT_CONCRETE = preload("res://sfx/projectile/projectile_impact_concrete.tscn")
 # Decals
 const CONCRETE_DECALS = [
 	preload("res://decals/impact_concrete_decal_01.tscn"),
@@ -22,7 +22,7 @@ const MAX_DECALS_PER_MESH: int = 8 # Godot Mobile renderer limitation
 
 # Particle effect for flesh impacts
 func spawn_projectile_impact_flesh(spawn_position: Vector3, spawn_normal: Vector3) -> void:
-	var projectile_impact_flesh := projectile_impact_flesh_scene.instantiate()
+	var projectile_impact_flesh := PROJECTILE_IMPACT_FLESH.instantiate()
 	
 	# Add to scene
 	add_child(projectile_impact_flesh)
@@ -35,7 +35,7 @@ func spawn_projectile_impact_flesh(spawn_position: Vector3, spawn_normal: Vector
 
 # Particle effect for concrete impacts
 func spawn_projectile_impact_concrete(spawn_position: Vector3, spawn_normal: Vector3) -> void:
-	var projectile_impact_concrete := projectile_impact_concrete_scene.instantiate()
+	var projectile_impact_concrete := PROJECTILE_IMPACT_CONCRETE.instantiate()
 	
 	# Add to scene
 	add_child(projectile_impact_concrete)

@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://cy3le10j6i1jt"]
+
+[ext_resource type="Script" uid="uid://blvk4ysmplitm" path="res://sfx/projectile/bullet_tracer.gd" id="1_edhsa"]
+[ext_resource type="PackedScene" uid="uid://rue1ohc7srba" path="res://sfx/projectile/bullet.tscn" id="2_qspqj"]
+
+[node name="BulletTracer" type="Node3D"]
+script = ExtResource("1_edhsa")
+bullet_scene = ExtResource("2_qspqj")

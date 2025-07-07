@@ -6,7 +6,7 @@ class_name ProjectileRifle
 @onready var muzzle_marker_3d: Marker3D = $MuzzleMarker3D
 @onready var projectile_muzzle_flash: Node3D = $MuzzleMarker3D/ProjectileMuzzleFlash
 
-const BULLET_TRACER = preload("res://sfx/bullet_tracer.tscn")
+const BULLET_TRACER = preload("res://sfx/projectile/bullet_tracer.tscn")
 
 
 func single_fire() -> Vector3:
@@ -22,7 +22,7 @@ func single_fire() -> Vector3:
 	var hit: Dictionary = weapon_raycast(muzzle_position, horizontal_direction)
 	var hit_position: Vector3 = hit.position if hit else muzzle_position + horizontal_direction * weapon_max_distance
 	
-	# CAUTION check if we fired first
+	# CAUTION check if we fired first (had ammo, can_shoot is valid, etc)
 	projectile_muzzle_flash.restart()
 	# Add the bullet tracer
 	var tracer := BULLET_TRACER.instantiate()

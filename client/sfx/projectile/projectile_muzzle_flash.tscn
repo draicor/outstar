@@ -1,6 +1,6 @@
 [gd_scene load_steps=32 format=4 uid="uid://cb5es8vr13ukq"]
 
-[ext_resource type="Script" uid="uid://ews1d10clxi3" path="res://sfx/projectile_muzzle_flash.gd" id="1_plcon"]
+[ext_resource type="Script" uid="uid://ews1d10clxi3" path="res://sfx/projectile/projectile_muzzle_flash.gd" id="1_plcon"]
 [ext_resource type="Texture2D" uid="uid://cr458d4loif5y" path="res://assets/textures/sfx/flash/flash_01.png" id="2_gw5d1"]
 [ext_resource type="Texture2D" uid="uid://cnku63gfss23d" path="res://assets/textures/sfx/muzzle/muzzle_04_rotated.png" id="2_plcon"]
 [ext_resource type="Texture2D" uid="uid://b5gew0shg3e20" path="res://assets/textures/sfx/smoke/smoke_sprites.png" id="4_plcon"]

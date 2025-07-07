@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://dtdbmqqgbxadc" path="res://assets/models/weapons/projectile_rifle.glb" id="1_4vbof"]
 [ext_resource type="Script" uid="uid://bmhccrri2xibs" path="res://classes/weapons/projectile_rifle.gd" id="2_on7n8"]
-[ext_resource type="PackedScene" uid="uid://cb5es8vr13ukq" path="res://sfx/projectile_muzzle_flash.tscn" id="3_w7ryd"]
+[ext_resource type="PackedScene" uid="uid://cb5es8vr13ukq" path="res://sfx/projectile/projectile_muzzle_flash.tscn" id="3_w7ryd"]
 
 [node name="ProjectileRifle" instance=ExtResource("1_4vbof")]
 script = ExtResource("2_on7n8")
