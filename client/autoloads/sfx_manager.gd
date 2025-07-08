@@ -3,6 +3,7 @@ extends Node
 
 # Preloading scenes
 const PROJECTILE_IMPACT_FLESH = preload("res://sfx/projectile/projectile_impact_flesh.tscn")
+const PROJECTILE_IMPACT_HEADSHOT = preload("res://sfx/projectile/projectile_impact_headshot.tscn")
 const PROJECTILE_IMPACT_CONCRETE = preload("res://sfx/projectile/projectile_impact_concrete.tscn")
 # Decals
 const CONCRETE_DECALS = [
@@ -31,6 +32,19 @@ func spawn_projectile_impact_flesh(spawn_position: Vector3, spawn_normal: Vector
 	projectile_impact_flesh.global_position = spawn_position
 	# Use the reverse of the normal for bullet impacts (position - normal)
 	projectile_impact_flesh.look_at(spawn_position - spawn_normal, Vector3.UP)
+
+
+# Particle effect for headshot impacts
+func spawn_projectile_impact_headshot(spawn_position: Vector3, spawn_normal: Vector3) -> void:
+	var projectile_impact_headshot := PROJECTILE_IMPACT_HEADSHOT.instantiate()
+	
+	# Add to scene
+	add_child(projectile_impact_headshot)
+	
+	# Position and orient sfx
+	projectile_impact_headshot.global_position = spawn_position
+	# Use the reverse of the normal for bullet impacts (position - normal)
+	projectile_impact_headshot.look_at(spawn_position - spawn_normal, Vector3.UP)
 
 
 # Particle effect for concrete impacts

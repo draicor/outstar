@@ -109,11 +109,14 @@ func _apply_recoil(direction: Vector3) -> Vector3:
 	return direction
 
 
-# Handle SFXs and maybe sounds here too?
+# Handle SFXs and ¿maybe impact sounds here?
 func _process_hit(hit: Dictionary) -> void:
 	var collider = hit.get("collider")
+	
 	if collider and collider.is_in_group("flesh_material"):
 		SfxManager.spawn_projectile_impact_flesh(hit.position, hit.normal)
+	elif collider and collider.is_in_group("headshot_material"):
+		SfxManager.spawn_projectile_impact_headshot(hit.position, hit.normal)
 	elif collider and collider.is_in_group("concrete_material"):
 		SfxManager.spawn_projectile_impact_decal(hit.position, hit.normal, collider, "concrete_material")
 		SfxManager.spawn_projectile_impact_concrete(hit.position, hit.normal)

@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://bovu6qxifxfrx"]
 
-[ext_resource type="PackedScene" uid="uid://cwl8jxnw6or3f" path="res://assets/models/male_bot.glb" id="1_j2o5h"]
+[ext_resource type="PackedScene" uid="uid://cwl8jxnw6or3f" path="res://assets/models/characters/male_bot.glb" id="1_j2o5h"]
 [ext_resource type="AnimationLibrary" uid="uid://blareqgb0gw8i" path="res://assets/animations/male.glb" id="2_afymc"]
 [ext_resource type="AnimationLibrary" uid="uid://dniwhojskiyvl" path="res://assets/animations/female.glb" id="2_jyuu2"]
 [ext_resource type="AnimationLibrary" uid="uid://juh65d4bj2ca" path="res://assets/animations/rifle.glb" id="4_lowde"]

@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3 uid="uid://b50kp036v1tmq"]
+
+[ext_resource type="PackedScene" uid="uid://bktanxbpg7grl" path="res://assets/models/static/dummy_target/dummy_target.glb" id="1_w2hw6"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_g6upv"]
+size = Vector3(0.2, 0.3, 0.17)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_w2hw6"]
+size = Vector3(0.4, 0.7, 0.17)
+
+[node name="DummyTarget" instance=ExtResource("1_w2hw6")]
+
+[node name="HeadCollision" type="StaticBody3D" parent="." index="1" groups=["headshot_material"]]
+
+[node name="HeadCollisionShape3D" type="CollisionShape3D" parent="HeadCollision" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.615, 0.13)
+shape = SubResource("BoxShape3D_g6upv")
+
+[node name="BodyCollision" type="StaticBody3D" parent="." index="2" groups=["flesh_material"]]
+
+[node name="BodyCollisionShape3D" type="CollisionShape3D" parent="BodyCollision" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.11, 0.13)
+shape = SubResource("BoxShape3D_w2hw6")

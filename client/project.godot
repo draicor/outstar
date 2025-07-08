@@ -45,6 +45,7 @@ enabled=PackedStringArray("res://addons/protobuf/plugin.cfg")
 
 concrete_material=""
 flesh_material="Any player controller character (local or remote)"
+headshot_material=""
 
 [gui]
 

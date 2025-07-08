@@ -1,5 +1,7 @@
-MeshInstance3D
 Node3D
+CollisionShape3D
+StaticBody3D
+MeshInstance3D
 GPUParticles3D
 Decal
 GPUParticlesAttractorSphere3D
@@ -10,5 +12,3 @@ Label
 MarginContainer
 PlayerEquipment
 BoneAttachment3D
-SkeletonIK3D
-PlayerAudio

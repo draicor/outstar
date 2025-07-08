@@ -1,9 +1,10 @@
-[gd_scene load_steps=9 format=3 uid="uid://jhkvchq2mafw"]
+[gd_scene load_steps=10 format=3 uid="uid://jhkvchq2mafw"]
 
 [ext_resource type="Material" uid="uid://b3onmphfaukv7" path="res://materials/floor_material.tres" id="1_yug3s"]
 [ext_resource type="Texture2D" uid="uid://b7ybyv5g56u4b" path="res://assets/textures/prototype/orange/texture_03.png" id="2_mbxpg"]
 [ext_resource type="PackedScene" uid="uid://c02g6pvx6whn1" path="res://objects/interactables/containers/crate.tscn" id="3_mbxpg"]
 [ext_resource type="PackedScene" uid="uid://bppqkbicuvcd5" path="res://objects/interactables/portals/portal.tscn" id="4_cf12v"]
+[ext_resource type="PackedScene" uid="uid://b50kp036v1tmq" path="res://objects/destructible/dummy_target/dummy_target.tscn" id="5_wq85k"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf12v"]
 albedo_texture = ExtResource("2_mbxpg")
@@ -134,3 +135,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.5, 5.5)
 [node name="Portal" parent="World/Interactables" instance=ExtResource("4_cf12v")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 1, 19.5)
 region_id = 2
+
+[node name="Destructible" type="Node3D" parent="World"]
+
+[node name="DummyTarget" parent="World/Destructible" instance=ExtResource("5_wq85k")]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 19.5, 0, 11.5)
