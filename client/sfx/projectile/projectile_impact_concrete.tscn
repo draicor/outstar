@@ -1,7 +1,14 @@
-[gd_scene load_steps=10 format=3 uid="uid://do1p3pnil0cpc"]
+[gd_scene load_steps=12 format=3 uid="uid://do1p3pnil0cpc"]
 
 [ext_resource type="Script" uid="uid://be4dykb1p5sbh" path="res://classes/sfx/disposable_gpu_particles_3d.gd" id="1_4qlwa"]
-[ext_resource type="Texture2D" uid="uid://xg6sh3duqlx0" path="res://assets/textures/sfx/smoke/smoke_03.png" id="1_y3a42"]
+[ext_resource type="Texture2D" uid="uid://w2aikkqwgdqs" path="res://assets/textures/sfx/smoke/smoke_sprite_sheet.png" id="1_q18yy"]
+
+[sub_resource type="Curve" id="Curve_q18yy"]
+_data = [Vector2(0.5, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_ntdth"]
+curve = SubResource("Curve_q18yy")
 
 [sub_resource type="Gradient" id="Gradient_cjoab"]
 colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 0)
@@ -11,8 +18,8 @@ gradient = SubResource("Gradient_cjoab")
 
 [sub_resource type="Curve" id="Curve_y3a42"]
 _limits = [0.0, 1.0, 0.0, 0.7]
-_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.497978, 1), -0.617119, 0.0, 0, 0, Vector2(0.7, 0), 0.0, 0.0, 0, 0]
-point_count = 3
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.7, 1), -0.617119, 0.0, 0, 0]
+point_count = 2
 
 [sub_resource type="CurveTexture" id="CurveTexture_kiohl"]
 curve = SubResource("Curve_y3a42")
@@ -31,6 +38,8 @@ damping_min = 0.5
 damping_max = 0.5
 scale_curve = SubResource("CurveTexture_kiohl")
 color_ramp = SubResource("GradientTexture1D_i3kli")
+alpha_curve = SubResource("CurveTexture_ntdth")
+anim_offset_max = 1.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_y3a42"]
 transparency = 1
@@ -38,15 +47,15 @@ shading_mode = 0
 disable_ambient_light = true
 vertex_color_use_as_albedo = true
 vertex_color_is_srgb = true
-albedo_color = Color(100, 100, 100, 0.1)
-albedo_texture = ExtResource("1_y3a42")
+albedo_color = Color(100, 100, 100, 0.196078)
+albedo_texture = ExtResource("1_q18yy")
 albedo_texture_msdf = true
 disable_receive_shadows = true
 billboard_mode = 3
 billboard_keep_scale = true
-particles_anim_h_frames = 1
-particles_anim_v_frames = 1
-particles_anim_loop = false
+particles_anim_h_frames = 4
+particles_anim_v_frames = 2
+particles_anim_loop = true
 
 [sub_resource type="QuadMesh" id="QuadMesh_kiohl"]
 material = SubResource("StandardMaterial3D_y3a42")
@@ -54,7 +63,7 @@ size = Vector2(0.4, 0.4)
 
 [node name="ProjectileConcreteImpact" type="GPUParticles3D"]
 emitting = false
-amount = 3
+amount = 1
 lifetime = 0.7
 one_shot = true
 explosiveness = 1.0
