@@ -5,7 +5,7 @@ const packets := preload("res://packets.gd")
 
 
 func _ready() -> void:
-	GameManager.set_state(GameManager.State.CONNECTED)
+	GameManager.set_state(GameManager.State.START)
 
 
 # We use the _process to check for input faster, its better than using _input

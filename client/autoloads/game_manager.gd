@@ -4,12 +4,14 @@ const Player := preload("res://objects/player/player.gd")
 
 # Game States
 enum State {
+	START,
 	CONNECTED,
 	AUTHENTICATION,
 	GAME,
 }
 
 var _states_scenes: Dictionary[State, String] = {
+	State.START: "res://states/start/start.tscn",
 	State.CONNECTED: "res://states/connected/connected.tscn",
 	State.AUTHENTICATION: "res://states/authentication/authentication.tscn",
 	State.GAME: "res://states/game/game.tscn",

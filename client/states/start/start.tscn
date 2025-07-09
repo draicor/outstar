@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://bxut5ot2lx31y"]
+
+[ext_resource type="Script" uid="uid://ddui6u7d0c4ll" path="res://states/start/start.gd" id="1_ctr6y"]
+
+[node name="Start" type="Node"]
+script = ExtResource("1_ctr6y")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Status" type="Label" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Loading..."
+horizontal_alignment = 1
+vertical_alignment = 1

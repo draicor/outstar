@@ -21,8 +21,6 @@ const CONCRETE_DECALS = [
 const MAX_DECALS_PER_MESH: int = 64 # Forward+ renderer limitation
 
 
-# PARTICLE EFFECTS #
-
 func spawn_projectile_impact_flesh(spawn_position: Vector3, spawn_normal: Vector3) -> void:
 	_spawn_impact_effect(PROJECTILE_IMPACT_FLESH, spawn_position, spawn_normal)
 
