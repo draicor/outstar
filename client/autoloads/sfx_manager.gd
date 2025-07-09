@@ -18,46 +18,21 @@ const CONCRETE_DECALS = [
 ]
 
 # Constants
-const MAX_DECALS_PER_MESH: int = 8 # Godot Mobile renderer limitation
+const MAX_DECALS_PER_MESH: int = 64 # Forward+ renderer limitation
 
 
-# Particle effect for flesh impacts
+# PARTICLE EFFECTS #
+
 func spawn_projectile_impact_flesh(spawn_position: Vector3, spawn_normal: Vector3) -> void:
-	var projectile_impact_flesh := PROJECTILE_IMPACT_FLESH.instantiate()
-	
-	# Add to scene
-	add_child(projectile_impact_flesh)
-	
-	# Position and orient sfx
-	projectile_impact_flesh.global_position = spawn_position
-	# Use the reverse of the normal for bullet impacts (position - normal)
-	projectile_impact_flesh.look_at(spawn_position - spawn_normal, Vector3.UP)
+	_spawn_impact_effect(PROJECTILE_IMPACT_FLESH, spawn_position, spawn_normal)
 
 
-# Particle effect for headshot impacts
 func spawn_projectile_impact_headshot(spawn_position: Vector3, spawn_normal: Vector3) -> void:
-	var projectile_impact_headshot := PROJECTILE_IMPACT_HEADSHOT.instantiate()
-	
-	# Add to scene
-	add_child(projectile_impact_headshot)
-	
-	# Position and orient sfx
-	projectile_impact_headshot.global_position = spawn_position
-	# Use the reverse of the normal for bullet impacts (position - normal)
-	projectile_impact_headshot.look_at(spawn_position - spawn_normal, Vector3.UP)
+	_spawn_impact_effect(PROJECTILE_IMPACT_HEADSHOT, spawn_position, spawn_normal)
 
 
-# Particle effect for concrete impacts
 func spawn_projectile_impact_concrete(spawn_position: Vector3, spawn_normal: Vector3) -> void:
-	var projectile_impact_concrete := PROJECTILE_IMPACT_CONCRETE.instantiate()
-	
-	# Add to scene
-	add_child(projectile_impact_concrete)
-	
-	# Position and orient sfx
-	projectile_impact_concrete.global_position = spawn_position
-	# Use the reverse of the normal for bullet impacts (position - normal)
-	projectile_impact_concrete.look_at(spawn_position - spawn_normal, Vector3.UP)
+	_spawn_impact_effect(PROJECTILE_IMPACT_CONCRETE, spawn_position, spawn_normal)
 
 
 # Spawn decal for impacts based on material typed
@@ -70,7 +45,43 @@ func spawn_projectile_impact_decal(spawn_position: Vector3, spawn_normal: Vector
 	
 	# Get random decal scene from selected pool
 	var decal_scene = decal_pool[randi() % decal_pool.size()]
+	_spawn_decal(decal_scene, spawn_position, spawn_normal, target_mesh)
+
+
+# Handle cases where the direction is parallel to the global up vector
+func get_safe_up_vector(direction: Vector3) -> Vector3:
+	var up: Vector3 = Vector3.UP
+	# Check if direction is near-parallel to UP vector
+	if abs(direction.normalized().dot(up)) > 0.99:
+		# Use right vector as fallback (perpendicular to default up)
+		return Vector3.RIGHT
+	return up
+
+
+# Helper function to instantiate, spawn, position and oriente the sfx
+func _spawn_impact_effect(effect_scene: PackedScene, spawn_position: Vector3, spawn_normal: Vector3) -> void:
+	var effect := effect_scene.instantiate()
+	add_child(effect)
 	
+	# Position and orient sfx
+	effect.global_position = spawn_position
+	# Use the reverse of the normal for bullet impacts (position - normal)
+	var target_position = spawn_position - spawn_normal
+	var safe_up = get_safe_up_vector(-spawn_normal)
+	effect.look_at(target_position, safe_up)
+
+
+# Get all decals on a specific mesh
+func get_decals_on_mesh(mesh: Node3D) -> Array:
+	var decals = []
+	for child in mesh.get_children():
+		if child is GenericDecal and child.parent_mesh == mesh:
+			decals.append(child)
+	return decals
+
+
+# Helper function to instantiate, spawn, position and orientate decals
+func _spawn_decal(decal_scene: PackedScene, spawn_position: Vector3, spawn_normal: Vector3, target_mesh: Node3D) -> void:
 	# Get existing decals on this mesh
 	var existing_decals = get_decals_on_mesh(target_mesh)
 	
@@ -89,7 +100,7 @@ func spawn_projectile_impact_decal(spawn_position: Vector3, spawn_normal: Vector
 	decal.global_position = spawn_position + (spawn_normal * 0.01)
 	
 	# Create proper basis for orientation
-	var y_axis: Vector3 = spawn_position.normalized()
+	var y_axis: Vector3 = spawn_normal.normalized()
 	var x_axis: Vector3 = Vector3.UP.cross(y_axis)
 	# Handle edge case when normal is parallel to UP
 	if x_axis.length_squared() < 0.001:
@@ -99,12 +110,3 @@ func spawn_projectile_impact_decal(spawn_position: Vector3, spawn_normal: Vector
 	var z_axis: Vector3 = y_axis.cross(x_axis)
 	# Apply the new basis
 	decal.global_transform.basis = Basis(x_axis, y_axis, z_axis)
-
-
-# Get all decals on a specific mesh
-func get_decals_on_mesh(mesh: Node3D) -> Array:
-	var decals = []
-	for child in mesh.get_children():
-		if child is GenericDecal and child.parent_mesh == mesh:
-			decals.append(child)
-	return decals

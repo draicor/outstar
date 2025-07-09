@@ -47,7 +47,6 @@ shading_mode = 0
 disable_ambient_light = true
 vertex_color_use_as_albedo = true
 vertex_color_is_srgb = true
-albedo_color = Color(100, 100, 100, 0.196078)
 albedo_texture = ExtResource("1_q18yy")
 albedo_texture_msdf = true
 disable_receive_shadows = true
