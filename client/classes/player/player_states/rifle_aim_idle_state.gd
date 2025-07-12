@@ -9,6 +9,11 @@ func _init() -> void:
 func enter() -> void:
 	player.player_animator.switch_animation_library("rifle_aim")
 	player.player_animator.switch_animation("idle")
+	player.set_mouse_cursor("crosshair")
+
+
+func exit() -> void:
+	player.set_mouse_cursor("default")
 
 
 # We have to update rotations here so we can rotate towards our targets
@@ -22,8 +27,14 @@ func update(_delta: float) -> void:
 	if player.is_busy or player.player_movement.autopilot_active:
 		return
 	
+	# Handle lower weapon
+	if not Input.is_action_pressed("right_click") and not player.is_busy:
+		await player.player_animator.play_animation_and_await("rifle/rifle_aim_to_down", 3.5)
+		player.player_state_machine.change_state("rifle_down_idle")
+		return
+	
 	# Fire rifle if mouse isn't over the UI
-	if Input.is_action_pressed("right_click") and not player.is_mouse_over_ui:
+	if Input.is_action_pressed("left_click") and not player.is_mouse_over_ui:
 		# Get the space point the mouse clicked on
 		var mouse_position: Vector2 = player.get_viewport().get_mouse_position()
 		var target_point: Vector3 = player.mouse_raycast(mouse_position)
@@ -45,25 +56,10 @@ func handle_input(event: InputEvent) -> void:
 	if player.is_busy or player.player_movement.autopilot_active:
 		return
 	
-	if event.is_action_pressed("left_click"):
-		# Get the mouse position and check what kind of target we have
-		var mouse_position: Vector2 = player.get_viewport().get_mouse_position()
-		var target: Object = player.get_mouse_click_target(mouse_position)
-		
-		# If we have a valid target, we try to determine what kind of class it is
-		if target:
-			if target is Interactable:
-				player.start_interaction(target)
-			# Add other types of target classes later
-		
-		# If we didn't click on anything interactable, then attempt to move to that cell
-		else:
-			player.handle_movement_click(mouse_position)
-	
 	# Reload rifle
-	elif event.is_action_pressed("weapon_reload"):
+	if event.is_action_pressed("weapon_reload"):
 		player.player_equipment.disable_left_hand_ik()
-		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast")
+		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast", 1.2)
 		player.player_equipment.reload_equipped_weapon()
 		
 		# Do this only for my local character
@@ -71,8 +67,6 @@ func handle_input(event: InputEvent) -> void:
 			Signals.ui_update_ammo.emit() # Update our ammo counter
 		
 		player.player_equipment.enable_left_hand_ik()
-	
-	# Lower rifle
-	elif event.is_action_pressed("weapon_rifle") or event.is_action_pressed("weapon_unequip"):
-		await player.player_animator.play_animation_and_await("rifle/rifle_aim_to_down", 2.0)
-		player.player_state_machine.change_state("rifle_down_idle")
+		# If we are still holding right click, play the rifle aim idle animation
+		if Input.is_action_pressed("right_click"):
+			player.player_animator.switch_animation("idle")

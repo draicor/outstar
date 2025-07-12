@@ -8,6 +8,9 @@ const Pathfinding: GDScript = preload("res://classes/pathfinding/pathfinding.gd"
 # Preloading scenes
 const player_scene: PackedScene = preload("res://objects/player/player.tscn")
 
+# Preloading textures
+const crosshair_cursor = preload("res://assets/textures/ui/circle_02.png")
+
 # Character model selector
 var character_scenes: Dictionary[String, PackedScene] = {
 	"female": preload("res://objects/characters/female_bot.tscn"),
@@ -286,6 +289,21 @@ func get_mouse_click_target(mouse_position: Vector2) -> Object:
 	
 	# If we didn't collide with anything, return null
 	return null
+
+
+# Changes the mouse cursor
+func set_mouse_cursor(cursor_type: String) -> void:
+	match cursor_type:
+		"crosshair":
+			Input.set_custom_mouse_cursor(
+				crosshair_cursor,
+				Input.CURSOR_ARROW,
+				crosshair_cursor.get_size() / 2
+			)
+		_:
+			# Reset any custom cursor first
+			Input.set_custom_mouse_cursor(null)
+			Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 
 
 #####################

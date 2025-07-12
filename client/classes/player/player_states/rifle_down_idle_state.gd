@@ -22,6 +22,18 @@ func physics_update(delta: float) -> void:
 	player.player_movement.handle_rotation(delta)
 
 
+# Held inputs
+func update(_delta: float) -> void:
+	# If we are busy, ignore input
+	if player.is_busy or player.player_movement.autopilot_active:
+		return
+	
+	# Handle raise weapon
+	if Input.is_action_pressed("right_click") and not player.is_busy and not player.is_mouse_over_ui:
+		await player.player_animator.play_animation_and_await("rifle/rifle_down_to_aim", 2.5)
+		player.player_state_machine.change_state("rifle_aim_idle")
+
+
 func handle_input(event: InputEvent) -> void:
 	# If we are busy, ignore input
 	if player.is_busy or player.player_movement.autopilot_active:
@@ -42,14 +54,30 @@ func handle_input(event: InputEvent) -> void:
 		else:
 			player.handle_movement_click(mouse_position)
 	
-	# Raise rifle
-	elif event.is_action_pressed("weapon_rifle") or event.is_action_pressed("right_click"):
-		await player.player_animator.play_animation_and_await("rifle/rifle_down_to_aim", 2.0)
-		player.player_state_machine.change_state("rifle_aim_idle")
+	# Reload rifle
+	elif event.is_action_pressed("weapon_reload"):
+		await player.player_animator.play_animation_and_await("rifle/rifle_down_to_aim", 1.5)
+		player.player_equipment.disable_left_hand_ik()
+		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast")
+		player.player_equipment.reload_equipped_weapon()
+		
+		# Do this only for my local character
+		if player.my_player_character:
+			Signals.ui_update_ammo.emit() # Update our ammo counter
+		
+		player.player_equipment.enable_left_hand_ik()
+		
+		# If we are holding right click here, switch states
+		if Input.is_action_pressed("right_click"):
+			player.player_state_machine.change_state("rifle_aim_idle")
+		# If we are NOT holding right click, lower the rifle and loop the rifle aim idle animation
+		else:
+			await player.player_animator.play_animation_and_await("rifle/rifle_aim_to_down", 2.5)
+			player.player_animator.switch_animation("idle")
 	
 	# Unequip rifle
 	elif event.is_action_pressed("weapon_unequip"):
 		player.player_equipment.disable_left_hand_ik()
-		await player.player_animator.play_animation_and_await("rifle/rifle_unequip", 1.5)
+		await player.player_animator.play_animation_and_await("rifle/rifle_unequip", 1.3)
 		player.player_equipment.unequip_weapon()
 		player.player_state_machine.change_state("idle")
