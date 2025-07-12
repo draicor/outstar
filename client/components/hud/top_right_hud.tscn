@@ -22,7 +22,9 @@ texture = ExtResource("2_oe82i")
 layout_mode = 0
 offset_right = 64.0
 offset_bottom = 64.0
-tooltip_text = "Movement Speed"
+tooltip_text = "Movement Speed
+Left click decreases move speed.
+Right click increases move speed."
 theme_override_constants/outline_size = 0
 theme_override_constants/h_separation = 0
 theme_override_constants/icon_max_width = 0

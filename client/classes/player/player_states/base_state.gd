@@ -1,9 +1,6 @@
 extends Node
 class_name BaseState
 
-# Preloading scripts
-const Player: GDScript = preload("res://objects/player/player.gd")
-
 signal finished(next_state_name)
 
 var player_state_machine: PlayerStateMachine = null

@@ -20,6 +20,7 @@ var port: Dictionary[Server, int] = {
 # We make the enum easily accesible for testing
 @export var server : Server
 
+
 func _ready() -> void:
 	# Connecting signals
 	Signals.connected_to_server.connect(_on_websocket_connected_to_server)
@@ -35,17 +36,21 @@ func _ready() -> void:
 	
 	WebSocket.connect_to_url(url_address)
 
+
 func _on_websocket_connected_to_server() -> void:
 	status.text = "Connection established"
 
+
 func _on_websocket_connection_closed() -> void:
 	status.text = "Connection to the server failed"
+
 
 func _on_websocket_packet_received(packet: packets.Packet) -> void:
 	# If the packet is a handshake packet
 	if packet.has_handshake():
 		# We get the sender_id and store it on our client
 		_handle_packet_handshake(packet.get_sender_id(), packet.get_handshake().get_version())
+
 
 func _handle_packet_handshake(sender_id: int, server_version: String) -> void:
 	# We save the client ID in the GameManager Autoload

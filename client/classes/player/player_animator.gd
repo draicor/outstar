@@ -2,9 +2,6 @@ extends Node
 class_name PlayerAnimator
 
 
-# Preloading scripts
-const Player: GDScript = preload("res://objects/player/player.gd")
-
 # Internal variables
 var player: Player = null # Our parent node
 var animation_player: AnimationPlayer # Our player's AnimationPlayer

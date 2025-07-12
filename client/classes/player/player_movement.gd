@@ -3,7 +3,6 @@ class_name PlayerMovement
 
 # Preloading scripts
 const Packets: GDScript = preload("res://packets.gd")
-const Player: GDScript = preload("res://objects/player/player.gd")
 const Pathfinding: GDScript = preload("res://classes/pathfinding/pathfinding.gd")
 
 # EXPORTED VARIABLES

@@ -10,9 +10,6 @@ const PROJECTILE_RIFLE_INSERT_MAGAZINE = preload("res://assets/sounds/sfx/projec
 const PROJECTILE_RIFLE_CHARGING_HANDLE = preload("res://assets/sounds/sfx/projectile_rifle_charging handle.wav")
 
 
-# Preloading scripts
-const Player: GDScript = preload("res://objects/player/player.gd")
-
 # Internal variables
 var player: Player = null # Our parent node
 

@@ -42,11 +42,32 @@ collision_mask = 0
 size = Vector3(20, 1, 20)
 
 [node name="Wall" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.9, 1, 20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.1, 1, 20)
 material_override = SubResource("StandardMaterial3D_cf12v")
 use_collision = true
 collision_mask = 0
 size = Vector3(0.2, 2, 40)
+
+[node name="Wall2" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 1, 20)
+material_override = SubResource("StandardMaterial3D_cf12v")
+use_collision = true
+collision_mask = 0
+size = Vector3(0.2, 2, 40)
+
+[node name="Wall3" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 10, 1, 40.1)
+material_override = SubResource("StandardMaterial3D_cf12v")
+use_collision = true
+collision_mask = 0
+size = Vector3(0.2, 2, 20)
+
+[node name="Wall4" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 10, 1, -0.1)
+material_override = SubResource("StandardMaterial3D_cf12v")
+use_collision = true
+collision_mask = 0
+size = Vector3(0.2, 2, 20)
 
 [node name="Lights" type="Node3D" parent="World"]
 

@@ -2,7 +2,6 @@ extends Node
 
 # Preload resources
 const Packets: GDScript = preload("res://packets.gd")
-const Player: GDScript = preload("res://objects/player/player.gd")
 const game_escape_menu_scene: PackedScene = preload("res://components/escape_menu/game/game_escape_menu.tscn")
 
 # Holds our current map node so we can spawn scenes into it

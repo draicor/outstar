@@ -47,27 +47,12 @@ func _on_change_move_speed_button_down() -> void:
 	# Stop click event from propagating through this button
 	get_viewport().set_input_as_handled()
 	
+	# If the button is not enabled, abort (player in motion for example)
 	if not button_enabled:
 		return
 	
-	# Left click increases speed
+	# Left click decreases speed
 	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
-		# Left click detected, increase speed
-		if GameManager.player_character.player_speed == 3:
-			# Already at max speed, ignore this
-			return
-		# If I was jogging, start running
-		elif GameManager.player_character.player_speed == 2:
-			texture_rect.texture = run_texture
-			Signals.ui_change_move_speed_button.emit(3) # RUN
-		# If I was walking, start jogging
-		elif GameManager.player_character.player_speed == 1:
-			texture_rect.texture = jog_texture
-			Signals.ui_change_move_speed_button.emit(2) # JOG
-	
-	# Right click decreases speed
-	elif Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		# Right click detected, decrease speed
 		if GameManager.player_character.player_speed == 1:
 			# Already at min speed, ignore this
 			return
@@ -77,6 +62,20 @@ func _on_change_move_speed_button_down() -> void:
 			Signals.ui_change_move_speed_button.emit(1) # WALK
 		# If I was running, start jogging
 		elif GameManager.player_character.player_speed == 3:
+			texture_rect.texture = jog_texture
+			Signals.ui_change_move_speed_button.emit(2) # JOG
+
+	# Right click increases speed
+	elif Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		if GameManager.player_character.player_speed == 3:
+			# Already at max speed, ignore this
+			return
+		# If I was jogging, start running
+		elif GameManager.player_character.player_speed == 2:
+			texture_rect.texture = run_texture
+			Signals.ui_change_move_speed_button.emit(3) # RUN
+		# If I was walking, start jogging
+		elif GameManager.player_character.player_speed == 1:
 			texture_rect.texture = jog_texture
 			Signals.ui_change_move_speed_button.emit(2) # JOG
 

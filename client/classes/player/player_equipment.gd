@@ -1,8 +1,6 @@
 extends Node
 class_name PlayerEquipment
 
-# Preloading scripts
-const Player: GDScript = preload("res://objects/player/player.gd")
 
 # Weapon scene selector
 var weapon_scenes: Dictionary[String, PackedScene] = {
