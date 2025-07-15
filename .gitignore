@@ -29,7 +29,8 @@ go.work
 # Client Code
 # Godot 4+ specific ignores
 .godot/
-/client/bin
+/client/bin/windows
+/client/bin/linux
 
 # Godot-specific ignores
 .import/

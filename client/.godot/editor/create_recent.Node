@@ -1,3 +1,4 @@
+Label
 Node3D
 CollisionShape3D
 StaticBody3D
@@ -8,7 +9,6 @@ GPUParticlesAttractorSphere3D
 Marker3D
 PlayerMovement
 HBoxContainer
-Label
 MarginContainer
 PlayerEquipment
 BoneAttachment3D
