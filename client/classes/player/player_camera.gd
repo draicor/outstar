@@ -10,17 +10,20 @@ extends Camera3D
 @export var ZOOM_STEP: float = 1.0 # Distance per zoom action
 @export var ZOOM_SPEED: float = 6.0 # Smoothing speed
 # Rotation settings
-@export var ROTATION_SPEED: float = 5.0
-@export var ROTATION_STEP: float = 45.0
+@export var ROTATION_SPEED: float = 4.0
+@export var BASE_ROTATION_STEP: float = 4.0
 
 # Zoom internal variables
 var target_zoom_distance: float = 6.0 # Initial zoom
 var zoom_direction: int = 0 # Direction we want to zoom (-1 zooms in, 1 zooms out)
 var last_position: Vector3 # Keep track of last camera position to detect changes
 # Rotation internal variables
+var ROTATION_STEP: float
 var target_rotation: float = 0.0
 var current_rotation: float = 0.0
 var rotation_direction: int = 0 # Direction we want to zoom ()
+# Follow player camera
+var follow_player: bool = false
 
 @onready var camera_rig: Node3D = get_parent()
 @onready var camera_pivot: Node3D = camera_rig.get_parent()
@@ -33,6 +36,9 @@ func _ready() -> void:
 	Signals.ui_zoom_out.connect(_handle_signal_ui_zoom_out)
 	Signals.ui_rotate_camera_left.connect(_handle_signal_ui_rotate_camera_left)
 	Signals.ui_rotate_camera_right.connect(_handle_signal_ui_rotate_camera_right)
+	
+	# Setup variables
+	ROTATION_STEP = BASE_ROTATION_STEP
 	
 	# Initialize zoom
 	target_zoom_distance = camera_rig.position.length()
@@ -125,4 +131,4 @@ func _handle_signal_ui_rotate_camera_left() -> void:
 
 func _handle_signal_ui_rotate_camera_right() -> void:
 	if not GameManager.is_player_typing:
-		rotation_direction = -1 # Negative for right rotation 
+		rotation_direction = -1 # Negative for right rotation

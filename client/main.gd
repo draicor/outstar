@@ -14,11 +14,15 @@ func _process(_delta):
 		Signals.ui_chat_input_toggle.emit()
 	if Input.is_action_just_pressed("ui_escape"):
 		Signals.ui_escape_menu_toggle.emit()
-	elif Input.is_action_just_pressed("zoom_in"):
+	elif Input.is_action_just_pressed("zoom_in_mouse"):
 		Signals.ui_zoom_in.emit()
-	elif Input.is_action_just_pressed("zoom_out"):
+	elif Input.is_action_just_pressed("zoom_out_mouse"):
 		Signals.ui_zoom_out.emit()
-	elif Input.is_action_just_pressed("rotate_camera_left"):
+	elif Input.is_action_pressed("rotate_camera_left"):
 		Signals.ui_rotate_camera_left.emit()
-	elif Input.is_action_just_pressed("rotate_camera_right"):
+	elif Input.is_action_pressed("rotate_camera_right"):
 		Signals.ui_rotate_camera_right.emit()
+	elif Input.is_action_pressed("zoom_in_keyboard"):
+		Signals.ui_zoom_in.emit()
+	elif Input.is_action_pressed("zoom_out_keyboard"):
+		Signals.ui_zoom_out.emit()

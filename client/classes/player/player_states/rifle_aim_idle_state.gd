@@ -1,8 +1,9 @@
 extends BaseState
 class_name RifleAimIdleState
 
-var is_aim_rotating: bool = false
 var last_target_point: Vector3 = Vector3.ZERO
+var is_aim_rotating: bool = false
+var mouse_captured: bool = false
 
 
 func _init() -> void:
@@ -15,12 +16,15 @@ func enter() -> void:
 	player.set_mouse_cursor("crosshair")
 	# Initialize with current mouse world position
 	is_aim_rotating = true
+	# Reduce the rotation step to minimum when aiming
+	player.camera.ROTATION_STEP = 1.0
 
 
 func exit() -> void:
 	player.set_mouse_cursor("default")
 	player.player_movement.is_rotating = false
-
+	# Restore the camera rotation step to default
+	player.camera.ROTATION_STEP = player.camera.BASE_ROTATION_STEP
 
 # Rotates the character on tick to match the mouse position
 func physics_update(delta: float) -> void:
@@ -77,7 +81,7 @@ func handle_input(event: InputEvent) -> void:
 		return
 	
 	# Reload rifle
-	if event.is_action_pressed("weapon_reload"):
+	elif event.is_action_pressed("weapon_reload"):
 		is_aim_rotating = false
 		player.player_equipment.disable_left_hand_ik()
 		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast", 1.2)

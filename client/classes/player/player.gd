@@ -18,7 +18,7 @@ var character_scenes: Dictionary[String, PackedScene] = {
 }
 
 # EXPORTED VARIABLES
-@export var RAYCAST_DISTANCE: float = 25 # 25 meters
+@export var RAYCAST_DISTANCE: float = 40 # meters
 @export var CHAT_BUBBLE_OFFSET: Vector3 = Vector3(0, 0.4, 0)
 
 # Spawn data
