@@ -18,6 +18,8 @@ var min_yaw_recoil: float
 var max_yaw_recoil: float
 var min_pitch_recoil: float
 var max_pitch_recoil: float
+# Target variables
+var target_direction: Vector3
 
 
 func _ready() -> void:
@@ -38,10 +40,12 @@ func single_fire() -> Vector3:
 	# Get weapon muzzle position
 	var muzzle_position: Vector3 = muzzle_marker_3d.global_position
 	
-	# Create horizontal direction (ignoring weapon's vertical angle)
-	var horizontal_direction := -muzzle_marker_3d.global_transform.basis.z
-	
-	var direction: Vector3 = _apply_recoil(horizontal_direction)
+	# If we forgot to set this, at least it will fire in the same direction
+	if not target_direction:
+		# Create horizontal direction (ignoring weapon's vertical angle)
+		target_direction = -muzzle_marker_3d.global_transform.basis.z
+		
+	var direction: Vector3 = _apply_recoil(target_direction)
 
 	# Perform raycast
 	var hit: Dictionary = weapon_raycast(muzzle_position, direction)

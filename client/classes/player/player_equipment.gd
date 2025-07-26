@@ -181,8 +181,26 @@ func can_fire_weapon() -> bool:
 		return false
 
 
+# Single fire for the rifle
 func weapon_fire_single() -> void:
 	# If we can fire the weapon and we have a valid target location
 	if equipped_weapon and can_fire_weapon():
 		equipped_weapon.single_fire()
 		decrement_ammo()
+
+
+# Returns the muzzle position for firearms
+func get_muzzle_position() -> Vector3:
+	if equipped_weapon and equipped_weapon.has_node("MuzzleMarker3D"):
+		return equipped_weapon.get_node("MuzzleMarker3D").global_position
+	# Fallback if the node is not set
+	push_error("MuzzleMarker3D not set")
+	return player.global_position
+
+
+func calculate_weapon_direction(target_position: Vector3) -> void:
+	if not equipped_weapon:
+		return
+	
+	# Calculate accurate firing direction using our weapon's muzzle marker 3d
+	equipped_weapon.target_direction = (target_position - get_muzzle_position()).normalized()

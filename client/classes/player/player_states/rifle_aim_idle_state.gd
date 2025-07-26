@@ -41,12 +41,18 @@ func update(_delta: float) -> void:
 		
 		# If we clicked somewhere valid (explicit check)
 		if target_point != Vector3.ZERO:
-			# Calculate direction from player to target point
+			# If our equipped weapon is not valid, abort
+			if not player.player_equipment.equipped_weapon:
+				return
+			
+			# Calculate direction from player to target point for rotation only
 			var direction_to_target: Vector3 = (target_point - player.global_position).normalized()
-			# Rotate towards it and then fire
+			# Rotate towards target
 			await player.player_movement.await_rotation(direction_to_target)
-			# If we are NOT moving, fire
+			
+			# If we are NOT moving, calculate fire direction and fire
 			if not player.player_movement.in_motion:
+				player.player_equipment.calculate_weapon_direction(target_point)
 				await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast")
 
 
