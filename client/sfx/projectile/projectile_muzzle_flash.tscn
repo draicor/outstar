@@ -216,6 +216,7 @@ lifetime = 0.15
 one_shot = true
 randomness = 1.0
 fixed_fps = 60
+local_coords = true
 process_material = SubResource("ParticleProcessMaterial_plcon")
 draw_pass_1 = SubResource("ArrayMesh_dmkd8")
 
@@ -227,6 +228,7 @@ lifetime = 0.08
 one_shot = true
 randomness = 1.0
 fixed_fps = 60
+local_coords = true
 process_material = SubResource("ParticleProcessMaterial_uwn06")
 draw_pass_1 = SubResource("QuadMesh_3cbtf")
 

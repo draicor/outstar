@@ -234,6 +234,12 @@ func _register_global_references() -> void:
 # MOUSE LOGIC #
 ###############
 
+# Returns a vector3 position in the world where the mouse is aiming at
+func get_mouse_world_position() -> Vector3:
+	var mouse_position: Vector2 = get_viewport().get_mouse_position()
+	return mouse_raycast(mouse_position)
+
+
 # Used to cast a ray from the camera view to the mouse position
 func mouse_raycast(mouse_position: Vector2) -> Vector3:
 	var vector: Vector3 = Vector3.ZERO

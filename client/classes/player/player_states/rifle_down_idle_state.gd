@@ -39,6 +39,7 @@ func handle_input(event: InputEvent) -> void:
 	if player.is_busy or player.player_movement.autopilot_active:
 		return
 	
+	# If we left clicked to move BUT we weren't holding right click to start aiming
 	if event.is_action_pressed("left_click"):
 		# Get the mouse position and check what kind of target we have
 		var mouse_position: Vector2 = player.get_viewport().get_mouse_position()
