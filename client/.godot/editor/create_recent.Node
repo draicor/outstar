@@ -1,5 +1,6 @@
-TextureRect
 Button
+TextureRect
+MarginContainer
 VBoxContainer
 Label
 Node3D
@@ -11,4 +12,3 @@ Decal
 GPUParticlesAttractorSphere3D
 Marker3D
 PlayerMovement
-HBoxContainer

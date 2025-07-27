@@ -1,8 +1,13 @@
 extends Node
 
-# Preload resources
+# Preload scripts
 const Packets: GDScript = preload("res://packets.gd")
+const GameEscapeMenu: GDScript = preload("res://components/escape_menu/game/game_escape_menu.gd")
+const GameControlsMenu: GDScript = preload("res://components/controls_menu/game/game_controls_menu.gd")
+
+# Preload scenes
 const game_escape_menu_scene: PackedScene = preload("res://components/escape_menu/game/game_escape_menu.tscn")
+const GAME_CONTROLS_MENU = preload("res://components/controls_menu/game/game_controls_menu.tscn")
 
 # Holds our current map node so we can spawn scenes into it
 var _current_map_scene: Node
@@ -16,7 +21,8 @@ var _players: Dictionary[int, Player]
 
 var chat_container: VBoxContainer
 var chat_input: LineEdit
-var game_escape_menu
+var game_escape_menu: GameEscapeMenu
+var game_controls_menu: GameControlsMenu
 
 
 func _ready() -> void:
@@ -28,6 +34,8 @@ func _initialize() -> void:
 	chat_container = chat.find_child("ChatContainer")
 	chat_input = chat.find_child("ChatInput")
 	
+	_create_ui_scenes()
+	
 	# Websocket signals
 	Signals.connection_closed.connect(_on_websocket_connection_closed)
 	Signals.packet_received.connect(_on_websocket_packet_received)
@@ -35,12 +43,19 @@ func _initialize() -> void:
 	# User Interface signals
 	Signals.ui_escape_menu_toggle.connect(_on_ui_escape_menu_toggle)
 	Signals.ui_logout.connect(_handle_signal_ui_logout)
+	Signals.ui_controls_menu_toggle.connect(_handle_signal_ui_controls_menu_toggle)
 	# Chat signals
 	Signals.chat_public_message_sent.connect(_handle_signal_chat_public_message_sent)
 	
-	# Create and add the escape menu to the UI canvas layer, hidden
+
+
+func _create_ui_scenes() -> void:
+	# Create and add each UI scene to the UI canvas layer, hidden
 	game_escape_menu = game_escape_menu_scene.instantiate()
 	ui_canvas.add_child(game_escape_menu)
+	
+	game_controls_menu = GAME_CONTROLS_MENU.instantiate()
+	ui_canvas.add_child(game_controls_menu)
 
 
 # If our connection to the server closed
@@ -154,7 +169,18 @@ func _handle_signal_chat_public_message_sent(text: String) -> void:
 
 # If the ui_escape key is pressed, toggle the escape menu
 func _on_ui_escape_menu_toggle() -> void:
+	# If we had our controls menu open, close it
+	if game_controls_menu.is_active:
+		game_controls_menu.toggle()
+		return
+	
+	# Toggle our game escape menu
 	game_escape_menu.toggle()
+
+
+# If the F1 key is pressed, toggle the controls menu
+func _handle_signal_ui_controls_menu_toggle() -> void:
+	game_controls_menu.toggle()
 
 
 # Used to request the server to switch us to the authentication state

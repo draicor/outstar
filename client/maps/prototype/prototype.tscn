@@ -80,10 +80,10 @@ environment = SubResource("Environment_pjqxs")
 
 [node name="Interactables" type="Node3D" parent="World"]
 
-[node name="Crate" parent="World/Interactables" instance=ExtResource("3_mbxpg")]
+[node name="Crate" parent="World/Interactables" groups=["concrete_material"] instance=ExtResource("3_mbxpg")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.5, 5.5)
 
-[node name="Portal" parent="World/Interactables" instance=ExtResource("4_cf12v")]
+[node name="Portal" parent="World/Interactables" groups=["concrete_material"] instance=ExtResource("4_cf12v")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 1, 19.5)
 region_id = 2
 

@@ -1,0 +1,43 @@
+[gd_scene load_steps=5 format=3 uid="uid://svxluhdgxar0"]
+
+[ext_resource type="Script" uid="uid://dwu1ayscvytot" path="res://components/controls_menu/game/game_controls_menu.gd" id="1_7cvx0"]
+[ext_resource type="Shader" uid="uid://dcoepyfyau57s" path="res://assets/shaders/blur.gdshader" id="2_ldagm"]
+[ext_resource type="Texture2D" uid="uid://bqkom2fi66g17" path="res://assets/textures/ui/keyboard_layout.png" id="3_1rqb3"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_weroa"]
+shader = ExtResource("2_ldagm")
+shader_parameter/amount = 1.0
+
+[node name="ControlsHud" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7cvx0")
+
+[node name="Background" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_weroa")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="KeyboardLayout" type="TextureRect" parent="MarginContainer"]
+custom_minimum_size = Vector2(640, 182)
+layout_mode = 2
+texture = ExtResource("3_1rqb3")
+expand_mode = 1

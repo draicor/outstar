@@ -9,7 +9,8 @@ var ping : int = 0
 
 # Start hidden
 func _init() -> void:
-	self.hide()
+	hide()
+
 
 func _ready() -> void:
 	# Connect the heartbeat signals
@@ -48,8 +49,12 @@ func _on_quit_pressed() -> void:
 # Used to show/hide this menu
 func toggle() -> void:
 	if is_active:
-		self.hide()
+		hide()
 		is_active = false
 	else:
-		self.show()
+		show()
 		is_active = true
+
+
+func _on_controls_pressed() -> void:
+	Signals.ui_controls_menu_toggle.emit()

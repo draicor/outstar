@@ -30,6 +30,7 @@ signal ui_change_move_speed_button(new_move_speed: int)
 signal ui_hide_bottom_right_hud
 signal ui_show_bottom_right_hud
 signal ui_update_ammo
+signal ui_controls_menu_toggle
 
 # Chat signals
 signal chat_public_message_sent(text: String)
