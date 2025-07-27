@@ -1,3 +1,6 @@
+TextureRect
+Button
+VBoxContainer
 Label
 Node3D
 CollisionShape3D
@@ -9,6 +12,3 @@ GPUParticlesAttractorSphere3D
 Marker3D
 PlayerMovement
 HBoxContainer
-MarginContainer
-PlayerEquipment
-BoneAttachment3D

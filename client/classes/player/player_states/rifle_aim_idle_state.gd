@@ -45,7 +45,7 @@ func physics_update(delta: float) -> void:
 		if direction.length_squared() > 0.01:
 			# Update rotation target if it changed significantly
 			if last_target_point.distance_to(target_point) > 0.01:
-				player.player_movement._rotate_towards_direction(direction)
+				player.player_movement.rotate_towards_direction(direction)
 				last_target_point = target_point
 			
 			# We tick handle_rotation here so we can rotate towards our target

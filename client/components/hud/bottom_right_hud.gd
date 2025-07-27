@@ -1,6 +1,6 @@
 extends Control
 
-@onready var ammo_label: Label = $MarginContainer/HBoxContainer/AmmoLabel
+@onready var ammo_label: Label = $WeaponContainer/VBoxContainer/AmmoContainer/AmmoLabel
 
 
 func _init() -> void:

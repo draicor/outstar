@@ -35,17 +35,15 @@ theme_override_constants/margin_bottom = 8
 layout_mode = 2
 
 [node name="WeaponIcon" type="TextureRect" parent="WeaponContainer/VBoxContainer"]
-custom_minimum_size = Vector2(60, 20)
 layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
+size_flags_horizontal = 0
+size_flags_vertical = 0
 texture = ExtResource("2_t4xdl")
-expand_mode = 3
 
 [node name="AmmoContainer" type="HBoxContainer" parent="WeaponContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 0
-alignment = 1
+alignment = 2
 
 [node name="AmmoLabel" type="Label" parent="WeaponContainer/VBoxContainer/AmmoContainer"]
 layout_mode = 2

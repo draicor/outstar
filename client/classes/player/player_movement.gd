@@ -10,7 +10,7 @@ const Pathfinding: GDScript = preload("res://classes/pathfinding/pathfinding.gd"
 
 # CONSTANTS
 const SERVER_TICK: float = 0.5 # Controls local player move speed
-const ANGLE_THRESHOLD: float = 0.05 # Radians threshold for considering rotation complete
+const ANGLE_THRESHOLD: float = 0.01 # Radians threshold for considering rotation complete
 
 # Signals
 signal rotation_completed
@@ -78,40 +78,44 @@ func setup_movement_data_at_spawn() -> void:
 # ROTATION LOGIC #
 ##################
 
-# Rotates our character on tick
+
+# Since our movement system snaps the character into the correct rotation pretty quickly,
+# we need a smoother rotation when aiming a weapon to is not as twitchy
 func handle_rotation(delta: float) -> void:
-	# If we are not trying to rotate, abort
 	if not is_rotating:
 		return
 	
-	# Calculate how much we should rotate this frame
-	var rotation_step = tick_rotation_speed * delta
+	var current = player.model.rotation.y
+	var target = rotation_target
 	
-	# Apply rotation to our model
-	player.model.rotation.y += rotation_step
+	# Calculate the shortest angular difference with wrapping
+	var diff = wrapf(target - current, -PI, PI)
 	
-	# Calculate new angle difference after rotation
-	var new_diff = wrapf(rotation_target - player.model.rotation.y, -PI, PI)
+	# Calculate rotation step with direction
+	var rotation_amount = sign(diff) * min(tick_rotation_speed * delta, abs(diff))
 	
-	# Check if we've passed the target or are close enough
-	# If we went past the rotation target OR we are within the angle threshold
-	if sign(new_diff) != sign(rotation_step) or abs(new_diff) <= ANGLE_THRESHOLD:
-		# Snap to exact target rotation
-		player.model.rotation.y = rotation_target
+	# Apply the rotation
+	player.model.rotation.y += rotation_amount
+	
+	# Calculate new difference after rotation
+	var new_diff = wrapf(target - player.model.rotation.y, -PI, PI)
+	
+	# Check if we've reached the target
+	if abs(new_diff) <= ANGLE_THRESHOLD:
+		player.model.rotation.y = target
 		is_rotating = false
-		# Report our rotation completed so input is returned to the player
 		rotation_completed.emit()
 
 
 # Public method to rotate and await the rotation to complete
 func await_rotation(direction: Vector3) -> void:
-	if _rotate_towards_direction(direction):
+	if rotate_towards_direction(direction):
 		await rotation_completed
 
 
 # Rotates our character towards a direction
 # Returns true if rotation was started, false if already facing target
-func _rotate_towards_direction(direction: Vector3) -> bool:
+func rotate_towards_direction(direction: Vector3) -> bool:
 	# Remove vertical component and normalize
 	var horizontal_direction: Vector3 = direction.normalized()
 	# Calculate target yaw directly from world direction (flip the sign to match Godot's system)
@@ -130,7 +134,7 @@ func _rotate_towards_direction(direction: Vector3) -> bool:
 	
 	# Set rotation target
 	rotation_target = new_yaw
-	tick_rotation_speed = sign(angle_diff) * ROTATION_SPEED
+	tick_rotation_speed = ROTATION_SPEED # Should always be positive
 	is_rotating = true
 	return true
 
@@ -321,7 +325,7 @@ func setup_movement_step(path: Array[Vector2i]) -> void:
 		# Compare with previous direction using a threshold
 		if move_direction.distance_to(forward_direction) > ANGLE_THRESHOLD:
 			# Handle rotation if direction changed
-			_rotate_towards_direction(move_direction)
+			rotate_towards_direction(move_direction)
 	
 	# Update our step duration based on the distance we have to traverse
 	calculate_step_duration(grid_position, next_grid_position)
