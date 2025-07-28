@@ -1,29 +1,53 @@
 extends Node3D
 class_name ProjectileRifle
 
-@export var weapon_debug: bool = false
-@export var weapon_max_distance: float = 40.0
-@export var weapon_debug_duration: float = 0.2
+# This is how we will spawn the correct weapon model
+enum FireModes { SEMI, AUTO }
+enum Rifles { PROJECTILE_RIFLE, M16 }
+var RifleType: Dictionary[Rifles, String] = {
+	Rifles.PROJECTILE_RIFLE: "projectile_rifle",
+	Rifles.M16: "m16",
+}
+
+@export var weapon_model: Rifles = Rifles.PROJECTILE_RIFLE
+# Debug
+@export var debug: bool = false
+@export var debug_duration: float = 0.2
+# Weapon stats
+@export var weapon_max_distance: float = 40.0 # meters
+
+# Recoil
 @export var horizontal_recoil: float = 1.2
 @export var vertical_recoil: float = 1.1
 @export var lower_vertical_recoil: float = 4.5
-
-@onready var muzzle_marker_3d: Marker3D = $MuzzleMarker3D
-@onready var projectile_muzzle_flash: Node3D = $MuzzleMarker3D/ProjectileMuzzleFlash
-
-const BULLET_TRACER = preload("res://sfx/projectile/bullet_tracer.tscn")
-
-# Recoil variables
 var min_yaw_recoil: float
 var max_yaw_recoil: float
 var min_pitch_recoil: float
 var max_pitch_recoil: float
+
+# References
+@onready var muzzle_marker_3d: Marker3D = $MuzzleMarker3D
+@onready var projectile_muzzle_flash: Node3D = $MuzzleMarker3D/ProjectileMuzzleFlash
+
+# Preload scenes
+const BULLET_TRACER = preload("res://sfx/projectile/bullet_tracer.tscn")
+
 # Target variables
 var target_direction: Vector3
+
+# Fire rate mode system
+var fire_rates: Dictionary = {}
+@export var has_multiple_modes: bool = true
+@export var semi_fire_rate: float = 1.0
+@export var auto_fire_rate: float = 3.0 # 0.1 seconds per shot, 600 RPM
+@export var automatic_mode_extra_recoil: float = 1.8
+var current_fire_mode: FireModes = FireModes.SEMI
+
 
 
 func _ready() -> void:
 	calculate_recoil()
+	_initialize_fire_rates()
 
 
 # Calculate the recoil deviation angles,
@@ -34,9 +58,30 @@ func calculate_recoil() -> void:
 	max_yaw_recoil = horizontal_recoil
 	min_pitch_recoil = -vertical_recoil * lower_vertical_recoil
 	max_pitch_recoil = vertical_recoil
+	
+	# If using automatic mode, double the recoil
+	if current_fire_mode == FireModes.AUTO:
+		min_yaw_recoil *= automatic_mode_extra_recoil
+		max_yaw_recoil *= automatic_mode_extra_recoil
+		min_pitch_recoil *= automatic_mode_extra_recoil
+		max_pitch_recoil *= automatic_mode_extra_recoil
 
 
-func single_fire() -> Vector3:
+# Sets the dictionary variables that will control the attack speed of this weapon
+func _initialize_fire_rates() -> void:
+	fire_rates = {
+		FireModes.SEMI: {
+			"animation": "rifle/rifle_aim_fire_single_fast",
+			"play_rate": semi_fire_rate
+		},
+		FireModes.AUTO: {
+			"animation": "rifle/rifle_aim_fire_single_fast",
+			"play_rate": auto_fire_rate
+		}
+	}
+
+
+func fire() -> Vector3:
 	# Get weapon muzzle position
 	var muzzle_position: Vector3 = muzzle_marker_3d.global_position
 	
@@ -59,23 +104,9 @@ func single_fire() -> Vector3:
 	get_tree().current_scene.add_child(tracer)
 	tracer.initialize(muzzle_position, hit_position)
 	
-	if weapon_debug:
-		if hit:
-			# Draw green line from weapon to hit point
-			DebugDraw3D.draw_line(
-				muzzle_position,
-				hit_position,
-				Color(0.0, 1.0, 0.0, 0.3), # GREEN
-				weapon_debug_duration
-			)
-		else:
-			# If we missed, draw red line
-			DebugDraw3D.draw_line(
-				muzzle_position,
-				hit_position,
-				Color(1.0, 0.0, 0.0, 0.3), # RED
-				weapon_debug_duration
-			)
+	if debug:
+		var debug_color = Color.GREEN if hit else Color.RED
+		DebugDraw3D.draw_line(muzzle_position, hit_position, debug_color, debug_duration)
 	
 	if hit:
 		# Check what kind of target we hit
@@ -111,6 +142,22 @@ func _apply_recoil(direction: Vector3) -> Vector3:
 	direction = direction.rotated(right, pitch_angle)
 	
 	return direction
+
+
+# If this weapon has multiple fire modes, then cycle between them
+# It always starts in the semi automatic mode, which is the default of all firearms
+func toggle_fire_mode() -> void:
+	if has_multiple_modes:
+		current_fire_mode = (current_fire_mode + 1) % FireModes.size() as FireModes
+		calculate_recoil()
+
+
+func get_animation() -> String:
+	return fire_rates[current_fire_mode]["animation"]
+
+
+func get_animation_play_rate() -> float:
+	return fire_rates[current_fire_mode]["play_rate"]
 
 
 # Handle SFXs and ¿maybe impact sounds here?

@@ -8,6 +8,7 @@ var weapon_scenes: Dictionary[String, PackedScene] = {
 }
 var weapon_types: Dictionary[String, String] = {
 	"projectile_rifle": "rifle",
+	"m16": "rifle",
 }
 
 # Player variables
@@ -181,12 +182,14 @@ func can_fire_weapon() -> bool:
 		return false
 
 
-# Single fire for the rifle
-func weapon_fire_single() -> void:
-	# If we can fire the weapon and we have a valid target location
-	if equipped_weapon and can_fire_weapon():
-		equipped_weapon.single_fire()
-		decrement_ammo()
+# Fires the actual weapon (the fire animation is already playing here)
+func weapon_fire() -> void:
+	# If we don't have a weapon equipped or we do but we can't fire it
+	if not equipped_weapon or not can_fire_weapon():
+		return
+	
+	equipped_weapon.fire()
+	decrement_ammo()
 
 
 # Returns the muzzle position for firearms
@@ -204,3 +207,10 @@ func calculate_weapon_direction(target_position: Vector3) -> void:
 		return
 	
 	equipped_weapon.target_direction = (target_position - get_muzzle_position()).normalized()
+
+
+# Cycles through the weapon modes of this weapon, if available
+func toggle_weapon_fire_mode() -> void:
+	# If we have a weapon equipped and this weapon has more than one weapon mode
+	if equipped_weapon and equipped_weapon.has_multiple_modes:
+		equipped_weapon.toggle_fire_mode()

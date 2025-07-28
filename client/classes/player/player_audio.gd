@@ -8,6 +8,8 @@ const PROJECTILE_RIFLE_DRY_FIRE_SINGLE = preload("res://assets/sounds/sfx/projec
 const PROJECTILE_RIFLE_REMOVE_MAGAZINE = preload("res://assets/sounds/sfx/projectile_rifle_remove_magazine.wav")
 const PROJECTILE_RIFLE_INSERT_MAGAZINE = preload("res://assets/sounds/sfx/projectile_rifle_insert_magazine.wav")
 const PROJECTILE_RIFLE_CHARGING_HANDLE = preload("res://assets/sounds/sfx/projectile_rifle_charging handle.wav")
+# Projectile rifle selector sounds
+const PROJECTILE_RIFLE_MODE_SELECTOR = preload("res://assets/sounds/sfx/projectile_rifle_mode_selector.wav")
 
 
 # Internal variables
@@ -23,12 +25,14 @@ var current_weapon_dry_fire_single_index: int = 0
 var remove_magazine_audio_player_3d: AudioStreamPlayer3D
 var insert_magazine_audio_player_3d: AudioStreamPlayer3D
 var charging_handle_audio_player_3d: AudioStreamPlayer3D
+# AudioStreamPlayer mode selector audio player
+var mode_selector_audio_player: AudioStreamPlayer
 
 
 # Setup
 const POOL_SIZE: int = 5 # Number of overlapping sounds
 const BASE_VOLUME: float = 0.0 # Base volume in DB
-const MAX_DISTANCE: float = 100.0 # Max sound distance in meters
+const MAX_DISTANCE: float = 80.0 # Max sound distance in meters
 
 
 func _ready() -> void:
@@ -57,9 +61,11 @@ func _ready() -> void:
 		weapon_dry_fire_single_audio_pool.append(weapon_dry_fire_single_audio_player)
 	
 	# Create reload audio players
-	remove_magazine_audio_player_3d = create_single_audio_player_3d(PROJECTILE_RIFLE_REMOVE_MAGAZINE, 8.0, 15.0, "SFX")
-	insert_magazine_audio_player_3d = create_single_audio_player_3d(PROJECTILE_RIFLE_INSERT_MAGAZINE, 8.0, 15.0, "SFX")
+	remove_magazine_audio_player_3d = create_single_audio_player_3d(PROJECTILE_RIFLE_REMOVE_MAGAZINE, 8.0, 20.0, "SFX")
+	insert_magazine_audio_player_3d = create_single_audio_player_3d(PROJECTILE_RIFLE_INSERT_MAGAZINE, 8.0, 20.0, "SFX")
 	charging_handle_audio_player_3d = create_single_audio_player_3d(PROJECTILE_RIFLE_CHARGING_HANDLE, 15.0, 20.0, "SFX")
+	# Create mode selector audio player
+	mode_selector_audio_player = create_single_audio_player(PROJECTILE_RIFLE_MODE_SELECTOR, -3.0, "SFX")
 
 
 # Plays a 3d sound from the pool at the index provided
@@ -85,6 +91,15 @@ func create_single_audio_player_3d(stream: AudioStream, volume_db: float, max_di
 	audio_player_3d.bus = bus
 	add_child(audio_player_3d)
 	return audio_player_3d
+
+
+func create_single_audio_player(stream: AudioStream, volume_db: float, bus: String) -> AudioStreamPlayer:
+	var audio_player = AudioStreamPlayer.new()
+	audio_player.stream = stream
+	audio_player.volume_db = volume_db
+	audio_player.bus = bus
+	add_child(audio_player)
+	return audio_player
 
 
 func play_projectile_rifle_fire_single() -> void:
@@ -127,3 +142,11 @@ func play_projectile_rifle_charging_handle() -> void:
 	
 	charging_handle_audio_player_3d.pitch_scale = randf_range(0.98, 1.02)
 	charging_handle_audio_player_3d.play()
+
+
+func play_projectile_rifle_mode_selector() -> void:
+	if mode_selector_audio_player.playing:
+		return # Don't interrupt ongoing sound
+	
+	mode_selector_audio_player.pitch_scale = randf_range(0.95, 1.05)
+	mode_selector_audio_player.play()

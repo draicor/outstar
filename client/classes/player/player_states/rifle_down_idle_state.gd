@@ -76,6 +76,11 @@ func handle_input(event: InputEvent) -> void:
 			await player.player_animator.play_animation_and_await("rifle/rifle_aim_to_down", 3.5)
 			player.player_animator.switch_animation("idle")
 	
+	# Toggle weapon fire mode
+	elif event.is_action_pressed("weapon_mode"):
+		player.player_audio.play_projectile_rifle_mode_selector()
+		player.player_equipment.toggle_weapon_fire_mode()
+	
 	# Unequip rifle
 	elif event.is_action_pressed("weapon_unequip"):
 		player.player_equipment.disable_left_hand_ik()

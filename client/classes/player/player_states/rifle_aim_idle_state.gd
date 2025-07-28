@@ -68,11 +68,7 @@ func update(_delta: float) -> void:
 	
 	# Fire rifle if mouse isn't over the UI
 	if Input.is_action_pressed("left_click") and not player.is_mouse_over_ui:
-		# If our mouse is somewhere valid (explicit check)
-		var target_point: Vector3 = player.get_mouse_world_position()
-		if target_point != Vector3.ZERO:
-			player.player_equipment.calculate_weapon_direction(target_point)
-			await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast", 2.5) # CAUTION REPLACE THIS
+		_handle_firing()
 
 
 # One-time inputs
@@ -97,3 +93,23 @@ func handle_input(event: InputEvent) -> void:
 		if Input.is_action_pressed("right_click"):
 			player.player_animator.switch_animation("idle")
 			is_aim_rotating = true
+	
+	# Toggle weapon fire mode
+	elif event.is_action_pressed("weapon_mode"):
+		player.player_audio.play_projectile_rifle_mode_selector()
+		player.player_equipment.toggle_weapon_fire_mode()
+
+
+func _handle_firing() -> void:
+	# If our mouse is somewhere valid (explicit check)
+	var target_point: Vector3 = player.get_mouse_world_position()
+	if target_point != Vector3.ZERO:
+		player.player_equipment.calculate_weapon_direction(target_point)
+		
+		# Get the weapon data from the player equipment system
+		var weapon = player.player_equipment.equipped_weapon
+		var anim_name: String = weapon.get_animation()
+		var play_rate: float = weapon.get_animation_play_rate()
+		
+		# Play the animation
+		await player.player_animator.play_animation_and_await(anim_name, play_rate)
