@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c607wt0n74jel"
-path.s3tc="res://.godot/imported/dummy_target_dummy_target_base_color.png-c9bff8b8e84074fe23030183b4d3c111.s3tc.ctex"
+uid="uid://du64fcrmysab1"
+path.s3tc="res://.godot/imported/target_dummy_dummy_target_base_color.png-61b68a464487a64cb0d7a16e82a831d5.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -14,8 +14,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://assets/models/static/dummy_target/dummy_target_dummy_target_base_color.png"
-dest_files=["res://.godot/imported/dummy_target_dummy_target_base_color.png-c9bff8b8e84074fe23030183b4d3c111.s3tc.ctex"]
+source_file="res://assets/models/static/target_dummy/target_dummy_dummy_target_base_color.png"
+dest_files=["res://.godot/imported/target_dummy_dummy_target_base_color.png-61b68a464487a64cb0d7a16e82a831d5.s3tc.ctex"]
 
 [params]
 

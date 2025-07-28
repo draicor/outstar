@@ -26,6 +26,7 @@ func exit() -> void:
 	# Restore the camera rotation step to default
 	player.camera.ROTATION_STEP = player.camera.BASE_ROTATION_STEP
 
+
 # Rotates the character on tick to match the mouse position
 func physics_update(delta: float) -> void:
 	# If we are leaving this state, don't rotate anymore
@@ -71,7 +72,7 @@ func update(_delta: float) -> void:
 		var target_point: Vector3 = player.get_mouse_world_position()
 		if target_point != Vector3.ZERO:
 			player.player_equipment.calculate_weapon_direction(target_point)
-			await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast")
+			await player.player_animator.play_animation_and_await("rifle/rifle_aim_fire_single_fast", 2.5) # CAUTION REPLACE THIS
 
 
 # One-time inputs

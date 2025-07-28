@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dfsiqqlk4nkay"
-path.s3tc="res://.godot/imported/dummy_target_dummy_target_metallic-dummy_target_roughness.png-2fe7b5e1725084a28cf94bc74277eca7.s3tc.ctex"
+uid="uid://cf00spb7cojfd"
+path.s3tc="res://.godot/imported/target_dummy_dummy_target_metallic-dummy_target_roughness.png-0b5941a85d5a7e1972cca1254a0b5074.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -14,8 +14,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://assets/models/static/dummy_target/dummy_target_dummy_target_metallic-dummy_target_roughness.png"
-dest_files=["res://.godot/imported/dummy_target_dummy_target_metallic-dummy_target_roughness.png-2fe7b5e1725084a28cf94bc74277eca7.s3tc.ctex"]
+source_file="res://assets/models/static/target_dummy/target_dummy_dummy_target_metallic-dummy_target_roughness.png"
+dest_files=["res://.godot/imported/target_dummy_dummy_target_metallic-dummy_target_roughness.png-0b5941a85d5a7e1972cca1254a0b5074.s3tc.ctex"]
 
 [params]
 

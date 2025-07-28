@@ -2,7 +2,7 @@ extends Node3D
 class_name ProjectileRifle
 
 @export var weapon_debug: bool = false
-@export var weapon_max_distance: float = 50.0
+@export var weapon_max_distance: float = 40.0
 @export var weapon_debug_duration: float = 0.2
 @export var horizontal_recoil: float = 1.2
 @export var vertical_recoil: float = 1.1

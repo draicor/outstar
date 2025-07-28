@@ -1,6 +1,6 @@
 extends Node
 
-@export var RAYCAST_DISTANCE: float = 20 # 20 meters
+@export var RAYCAST_DISTANCE: float = 40 # 20 meters
 
 var tooltip: CanvasLayer = null
 var player_camera: PlayerCamera = null
@@ -50,7 +50,7 @@ func _process(_delta: float) -> void:
 			if current_hovered_object:
 				tooltip.hide_tooltip()
 		
-		# Start new hover if the object is interactable
+		# Start new hover if the object is interactable (in our array)
 		if interactables.has(new_hovered):
 			# If the object has a tooltip text set
 			if not new_hovered.tooltip.is_empty():

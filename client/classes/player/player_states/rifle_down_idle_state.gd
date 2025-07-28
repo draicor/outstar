@@ -57,9 +57,9 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):
-		await player.player_animator.play_animation_and_await("rifle/rifle_down_to_aim", 1.5)
+		await player.player_animator.play_animation_and_await("rifle/rifle_down_to_aim", 2.5)
 		player.player_equipment.disable_left_hand_ik()
-		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast")
+		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast", 1.2)
 		player.player_equipment.reload_equipped_weapon()
 		
 		# Do this only for my local character
@@ -73,7 +73,7 @@ func handle_input(event: InputEvent) -> void:
 			player.player_state_machine.change_state("rifle_aim_idle")
 		# If we are NOT holding right click, lower the rifle and loop the rifle aim idle animation
 		else:
-			await player.player_animator.play_animation_and_await("rifle/rifle_aim_to_down", 2.5)
+			await player.player_animator.play_animation_and_await("rifle/rifle_aim_to_down", 3.5)
 			player.player_animator.switch_animation("idle")
 	
 	# Unequip rifle

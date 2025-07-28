@@ -198,9 +198,9 @@ func get_muzzle_position() -> Vector3:
 	return player.global_position
 
 
+# Calculate accurate firing direction using our weapon's muzzle marker 3d
 func calculate_weapon_direction(target_position: Vector3) -> void:
 	if not equipped_weapon:
 		return
 	
-	# Calculate accurate firing direction using our weapon's muzzle marker 3d
 	equipped_weapon.target_direction = (target_position - get_muzzle_position()).normalized()

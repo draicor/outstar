@@ -11,13 +11,9 @@ func _ready() -> void:
 # We use the _process to check for input faster, its better than using _input
 func _process(_delta):
 	# CAMERA ZOOM
-	if Input.is_action_just_pressed("zoom_in_mouse"):
+	if Input.is_action_just_pressed("zoom_in"):
 		Signals.ui_zoom_in.emit()
-	elif Input.is_action_just_pressed("zoom_out_mouse"):
-		Signals.ui_zoom_out.emit()
-	elif Input.is_action_pressed("zoom_in_keyboard"):
-		Signals.ui_zoom_in.emit()
-	elif Input.is_action_pressed("zoom_out_keyboard"):
+	elif Input.is_action_just_pressed("zoom_out"):
 		Signals.ui_zoom_out.emit()
 	
 	# CAMERA ROTATION
