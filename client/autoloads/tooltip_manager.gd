@@ -7,6 +7,7 @@ var player_camera: PlayerCamera = null
 var current_hovered_object = null
 var interactables = []
 
+
 # Instantiate the tooltip scene at start up
 func _ready() -> void:
 	tooltip = preload("res://components/tooltip/tooltip.tscn").instantiate()
@@ -47,6 +48,10 @@ func _process(_delta: float) -> void:
 		if interactables.has(new_hovered):
 			# If the object has a tooltip text set
 			if not new_hovered.tooltip.is_empty():
+				# Don't display a tooltip for our own local player character
+				if new_hovered == GameManager.player_character:
+					return
+				
 				tooltip.show_tooltip(new_hovered.tooltip)
 				# Make this our new hovered object
 				current_hovered_object = new_hovered
