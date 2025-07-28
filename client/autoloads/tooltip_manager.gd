@@ -24,6 +24,12 @@ func _process(_delta: float) -> void:
 		tooltip.hide()
 		return
 	
+	# If we have a menu open, we hide the tooltip
+	if GameManager.is_ui_menu_active():
+		if tooltip.visible:
+			tooltip.hide()
+		return
+	
 	if tooltip.visible:
 		tooltip.update_position()
 	

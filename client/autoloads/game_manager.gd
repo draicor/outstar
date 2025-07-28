@@ -22,6 +22,8 @@ var player_character: Player
 # Prevents rotation and other actions while typing, also
 # holds state in between map changes for my player character
 var is_player_typing: bool = false
+# Prevents game world tooltip to display over menus
+var ui_menu_active: bool = false
 
 # Internal variables
 var _current_scene_root: Node
@@ -44,3 +46,11 @@ func set_state(state: State) -> void:
 # After instancing the player character, store it as a global variable
 func set_player_character(player_node: Player):
 	player_character = player_node
+
+
+func is_ui_menu_active() -> bool:
+	return ui_menu_active
+
+
+func set_ui_menu_active(is_active: bool) -> void:
+	ui_menu_active = is_active

@@ -51,9 +51,11 @@ func toggle() -> void:
 	if is_active:
 		hide()
 		is_active = false
+		GameManager.set_ui_menu_active(false)
 	else:
 		show()
 		is_active = true
+		GameManager.set_ui_menu_active(true)
 
 
 func _on_controls_pressed() -> void:
