@@ -1,0 +1,30 @@
+Projectile Rifle Settings:
+
+Mesh Position:
+x: 0.031m
+y: 0.132m
+z: 0.025m
+
+Mesh Rotation:
+x: 6.5°
+y: -90.0°
+z: -176.5°
+
+Mesh Scale:
+x: 0.062
+y: 0.05
+z: 0.047
+
+LeftHandMarker3D as child of the weapon root node:
+LeftHandMarker3D Position:
+x: -0.013m
+y: 0.333m
+z: 0.071m
+
+LeftHandMarker3D Rotation:
+x: 5.5°
+y: 81.8°
+z: -66.1°
+
+root_bone: LeftShoulder
+tip_bone: LeftHand

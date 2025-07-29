@@ -6,7 +6,7 @@ enum FireModes { SEMI, AUTO }
 enum Rifles { PROJECTILE_RIFLE, M16 }
 var RifleType: Dictionary[Rifles, String] = {
 	Rifles.PROJECTILE_RIFLE: "projectile_rifle",
-	Rifles.M16: "m16",
+	Rifles.M16: "m16_rifle",
 }
 
 @export var weapon_model: Rifles = Rifles.PROJECTILE_RIFLE
@@ -16,7 +16,8 @@ var RifleType: Dictionary[Rifles, String] = {
 # Weapon stats
 @export var weapon_max_distance: float = 40.0 # meters
 
-# Recoil
+# Recoil stats
+@export var automatic_mode_extra_recoil: float = 1.8
 @export var horizontal_recoil: float = 1.2
 @export var vertical_recoil: float = 1.1
 @export var lower_vertical_recoil: float = 4.5
@@ -40,7 +41,6 @@ var fire_rates: Dictionary = {}
 @export var has_multiple_modes: bool = true
 @export var semi_fire_rate: float = 1.0
 @export var auto_fire_rate: float = 3.0 # 0.1 seconds per shot, 600 RPM
-@export var automatic_mode_extra_recoil: float = 1.8
 var current_fire_mode: FireModes = FireModes.SEMI
 
 

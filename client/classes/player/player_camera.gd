@@ -5,7 +5,7 @@ extends Camera3D
 @export var CAMERA_NEAR_PLANE: float = 0.1
 @export var CAMERA_FAR_PLANE: float = 100
 # Zoom settings
-@export var MIN_DISTANCE: float = 4.0 # Closest distance (zoomed in)
+@export var MIN_DISTANCE: float = 3.0 # Closest distance (zoomed in)
 @export var MAX_DISTANCE: float = 10.0 # Farthest distance (zoomed out)
 @export var ZOOM_STEP: float = 1.0 # Distance per zoom action
 @export var ZOOM_SPEED: float = 6.0 # Smoothing speed

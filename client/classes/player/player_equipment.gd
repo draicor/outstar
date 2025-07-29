@@ -5,10 +5,11 @@ class_name PlayerEquipment
 # Weapon scene selector
 var weapon_scenes: Dictionary[String, PackedScene] = {
 	"projectile_rifle": preload("res://objects/weapons/projectile_rifle.tscn"),
+	"m16_rifle": preload("res://objects/weapons/m16_rifle.tscn")
 }
 var weapon_types: Dictionary[String, String] = {
 	"projectile_rifle": "rifle",
-	"m16": "rifle",
+	"m16_rifle": "rifle",
 }
 
 # Player variables
@@ -88,7 +89,7 @@ func disable_left_hand_ik() -> void:
 		left_hand_ik,
 		"interpolation",
 		0.0, # target interpolation
-		0.2 # duration in seconds
+		0.1 # duration in seconds
 	).set_ease(Tween.EASE_IN)
 
 
@@ -103,7 +104,7 @@ func enable_left_hand_ik() -> void:
 				left_hand_ik,
 				"interpolation",
 				1.0, # target interpolation
-				0.3 # duration in seconds
+				0.1 # duration in seconds
 			).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 
 
@@ -160,8 +161,11 @@ func get_equipped_weapon_ammo() -> int:
 func reload_equipped_weapon() -> void:
 	match equipped_weapon_name:
 		"unarmed": return
-		"projectile_rifle": equipped_weapon_ammo = 30
-		_: return
+		"projectile_rifle": equipped_weapon_ammo = 20
+		"m16_rifle": equipped_weapon_ammo = 30
+		_:
+			push_error("reload_equipment_weapon failed, weapon not found")
+			return
 
 
 # Decreases the amount of ammo in our equipped weapon

@@ -80,7 +80,6 @@ func handle_input(event: InputEvent) -> void:
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):
 		is_aim_rotating = false
-		player.player_equipment.disable_left_hand_ik()
 		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast", 1.2)
 		player.player_equipment.reload_equipped_weapon()
 		
@@ -88,7 +87,6 @@ func handle_input(event: InputEvent) -> void:
 		if player.my_player_character:
 			Signals.ui_update_ammo.emit() # Update our ammo counter
 		
-		player.player_equipment.enable_left_hand_ik()
 		# If we are still holding right click, play the rifle aim idle animation
 		if Input.is_action_pressed("right_click"):
 			player.player_animator.switch_animation("idle")

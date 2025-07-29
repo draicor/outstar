@@ -1,0 +1,5 @@
+Default Blender: +Z-up and +Y-forward
+Default Godot: +Y-up and -Z-forward
+
+In blender, the model should be +Z-up and facing -Y.
+control+A -> Apply rotation

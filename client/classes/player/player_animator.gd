@@ -52,9 +52,11 @@ var animation_events: Dictionary[String, Array] = {
 		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["weapon_fire"]},
 	],
 	"rifle/rifle_aim_reload_fast": [
+		{"time": 0.2, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
 		{"time": 0.7, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_remove_magazine"]},
 		{"time": 1.6, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_insert_magazine"]},
 		{"time": 2.1, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_charging_handle"]},
+		{"time": 2.5, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
 	]
 }
 
