@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://chmjg7ebbqgo8"]
+[gd_scene load_steps=9 format=3 uid="uid://chmjg7ebbqgo8"]
 
 [ext_resource type="PackedScene" uid="uid://d0r280h3aimw4" path="res://assets/models/characters/female_bot.glb" id="1_wm4mk"]
 [ext_resource type="AnimationLibrary" uid="uid://dniwhojskiyvl" path="res://assets/animations/female.glb" id="2_1yyq5"]
 [ext_resource type="PackedScene" uid="uid://d3gy6y7nv8d8r" path="res://objects/weapons/m16_rifle.tscn" id="2_d8d5i"]
 [ext_resource type="AnimationLibrary" uid="uid://blareqgb0gw8i" path="res://assets/animations/male.glb" id="3_1yyq5"]
+[ext_resource type="PackedScene" uid="uid://7ck62sat0adv" path="res://objects/weapons/akm_rifle.tscn" id="3_yoqgj"]
 [ext_resource type="AnimationLibrary" uid="uid://juh65d4bj2ca" path="res://assets/animations/rifle.glb" id="4_hscu1"]
 
 [sub_resource type="Animation" id="Animation_38w5f"]
@@ -342,14 +343,17 @@ bone_idx = 10
 
 [node name="M16Rifle" parent="Armature/GeneralSkeleton/RightHandTest" index="0" instance=ExtResource("2_d8d5i")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.999999, 0, 0, 0)
+visible = false
 
 [node name="LeftHandMarkerM16" type="Marker3D" parent="Armature/GeneralSkeleton/RightHandTest/M16Rifle" index="3"]
-transform = Transform3D(-0.00644625, -0.018543, 0.0435808, -0.0590104, 0.0164724, 0.00122826, -0.0195552, -0.0435955, -0.0180727, 0.0205201, 0.265384, 0.0886856)
+transform = Transform3D(-0.00644626, -0.018543, 0.0435808, -0.0590104, 0.0164724, 0.00122826, -0.0195552, -0.0435955, -0.0180727, 0.021, 0.265, 0.089)
+
+[node name="akm_rifle" parent="Armature/GeneralSkeleton/RightHandTest" index="1" instance=ExtResource("3_yoqgj")]
+visible = false
 
 [node name="LeftHandTest" type="SkeletonIK3D" parent="Armature/GeneralSkeleton" index="3"]
 transform = Transform3D(0.118473, 0.0981278, -0.988097, -0.895587, 0.440309, -0.063654, 0.428822, 0.892467, 0.140047, -0.0732116, 1.36527, 0.636934)
 visible = false
-active = false
 root_bone = &"LeftShoulder"
 tip_bone = &"LeftHand"
 target_node = NodePath("../RightHandTest/M16Rifle/LeftHandMarkerM16")

@@ -3,13 +3,13 @@ class_name ProjectileRifle
 
 # This is how we will spawn the correct weapon model
 enum FireModes { SEMI, AUTO }
-enum Rifles { PROJECTILE_RIFLE, M16 }
+enum Rifles { M16, AKM }
 var RifleType: Dictionary[Rifles, String] = {
-	Rifles.PROJECTILE_RIFLE: "projectile_rifle",
 	Rifles.M16: "m16_rifle",
+	Rifles.AKM: "akm_rifle",
 }
 
-@export var weapon_model: Rifles = Rifles.PROJECTILE_RIFLE
+@export var weapon_model: Rifles = Rifles.M16
 # Debug
 @export var debug: bool = false
 @export var debug_duration: float = 0.2

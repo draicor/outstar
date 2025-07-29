@@ -4,12 +4,12 @@ class_name PlayerEquipment
 
 # Weapon scene selector
 var weapon_scenes: Dictionary[String, PackedScene] = {
-	"projectile_rifle": preload("res://objects/weapons/projectile_rifle.tscn"),
-	"m16_rifle": preload("res://objects/weapons/m16_rifle.tscn")
+	"m16_rifle": preload("res://objects/weapons/m16_rifle.tscn"),
+	"akm_rifle": preload("res://objects/weapons/akm_rifle.tscn"),
 }
 var weapon_types: Dictionary[String, String] = {
-	"projectile_rifle": "rifle",
 	"m16_rifle": "rifle",
+	"akm_rifle": "rifle",
 }
 
 # Player variables
@@ -161,8 +161,8 @@ func get_equipped_weapon_ammo() -> int:
 func reload_equipped_weapon() -> void:
 	match equipped_weapon_name:
 		"unarmed": return
-		"projectile_rifle": equipped_weapon_ammo = 20
 		"m16_rifle": equipped_weapon_ammo = 30
+		"akm_rifle": equipped_weapon_ammo = 30
 		_:
 			push_error("reload_equipment_weapon failed, weapon not found")
 			return
