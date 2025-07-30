@@ -33,7 +33,7 @@ func _ready() -> void:
 # Returns the current state name
 func get_current_state_name() -> String:
 	if current_state:
-		return current_state.name
+		return current_state.state_name
 	else:
 		return ""
 
