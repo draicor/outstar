@@ -41,9 +41,23 @@ func handle_input(event: InputEvent) -> void:
 		else:
 			player.handle_movement_click(mouse_position)
 	
-	# Equip rifle
-	elif event.is_action_pressed("weapon_rifle"):
-		player.player_equipment.equip_weapon("akm_rifle")
-		await player.player_animator.play_animation_and_await("rifle/rifle_equip", 1.3)
-		player.player_equipment.enable_left_hand_ik()
-		player.player_state_machine.change_state("rifle_down_idle")
+	# Weapon equip
+	elif event.is_action_pressed("weapon_one"):
+		switch_weapon("m16_rifle")
+	elif event.is_action_pressed("weapon_two"):
+		switch_weapon("akm_rifle")
+
+
+func switch_weapon(weapon_name: String) -> void:
+	# Unequip weapon if equipped
+	if player.player_equipment.equipped_weapon:
+		# CAUTION this should be flexible
+		player.player_equipment.disable_left_hand_ik() # NOTE call this from the animation instead!
+		await player.player_animator.play_animation_and_await("rifle/rifle_unequip", 1.3)
+		player.player_equipment.unequip_weapon()
+	
+	# Equip weapon one
+	player.player_equipment.equip_weapon(weapon_name) # CAUTION set this to work with weapon slots
+	await player.player_animator.play_animation_and_await("rifle/rifle_equip", 1.3)
+	player.player_equipment.enable_left_hand_ik() # NOTE call this from the animation instead!
+	player.player_state_machine.change_state("rifle_down_idle")

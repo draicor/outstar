@@ -32,7 +32,10 @@ func _ready() -> void:
 
 # Returns the current state name
 func get_current_state_name() -> String:
-	return current_state.name
+	if current_state:
+		return current_state.name
+	else:
+		return ""
 
 
 func change_state(new_state_name: String) -> void:

@@ -8,6 +8,9 @@ var RifleType: Dictionary[Rifles, String] = {
 	Rifles.M16: "m16_rifle",
 	Rifles.AKM: "akm_rifle",
 }
+# Automatic rifle default stats
+# M16 800 RPM -> 4.0 fire rate, 1.2 hrecoil, 1.3 vrecoil
+# AKM 600 RPM -> 3.0 fire rate, 1.4 hrecoil, 1.7 vrecoil
 
 @export var weapon_model: Rifles = Rifles.M16
 # Debug
@@ -17,9 +20,9 @@ var RifleType: Dictionary[Rifles, String] = {
 @export var weapon_max_distance: float = 40.0 # meters
 
 # Recoil stats
-@export var automatic_mode_extra_recoil: float = 1.8
-@export var horizontal_recoil: float = 1.2
-@export var vertical_recoil: float = 1.1
+@export var automatic_mode_extra_recoil: float = 2.0
+@export var horizontal_recoil: float = 1.0
+@export var vertical_recoil: float = 1.0
 @export var lower_vertical_recoil: float = 4.5
 var min_yaw_recoil: float
 var max_yaw_recoil: float
@@ -56,15 +59,16 @@ func _ready() -> void:
 func calculate_recoil() -> void:
 	min_yaw_recoil = -horizontal_recoil
 	max_yaw_recoil = horizontal_recoil
-	min_pitch_recoil = -vertical_recoil * lower_vertical_recoil
+	min_pitch_recoil = -lower_vertical_recoil
 	max_pitch_recoil = vertical_recoil
 	
-	# If using automatic mode, double the recoil
+	# If using automatic mode
 	if current_fire_mode == FireModes.AUTO:
-		min_yaw_recoil *= automatic_mode_extra_recoil
-		max_yaw_recoil *= automatic_mode_extra_recoil
-		min_pitch_recoil *= automatic_mode_extra_recoil
+		# Double the vertical recoil
 		max_pitch_recoil *= automatic_mode_extra_recoil
+		# Slightly increase the horizontal recoil
+		min_yaw_recoil *= 1.1
+		max_yaw_recoil *= 1.1
 
 
 # Sets the dictionary variables that will control the attack speed of this weapon

@@ -90,13 +90,13 @@ region_id = 2
 [node name="Destructible" type="Node3D" parent="World"]
 
 [node name="TargetDummy" parent="World/Destructible" instance=ExtResource("5_wq85k")]
-transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, 11.5, 0, 10.5)
+transform = Transform3D(1, 0, -2.54312e-07, 0, 1, 0, 2.54312e-07, 0, 1, 11.5, 0, 0.5)
 
 [node name="TargetDummy2" parent="World/Destructible" instance=ExtResource("5_wq85k")]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 8.5, 0, 20.5)
 
 [node name="TargetDummy3" parent="World/Destructible" instance=ExtResource("5_wq85k")]
-transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 14.5, 0, 16.5)
+transform = Transform3D(1, 0, -1.06581e-14, 0, 1, 0, 1.06581e-14, 0, 1, 14.5, 0, 0.5)
 
 [node name="TargetDummy4" parent="World/Destructible" instance=ExtResource("5_wq85k")]
 transform = Transform3D(-0.706963, -0.000309686, 0.707251, -0.000290337, 1, 0.000147649, -0.707251, -0.000100947, -0.706963, 3.5, 0, 19.5)

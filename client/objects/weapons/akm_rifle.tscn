@@ -7,16 +7,15 @@
 [node name="akm_rifle" instance=ExtResource("1_qdh54")]
 script = ExtResource("2_3n2jg")
 weapon_model = 1
-automatic_mode_extra_recoil = 2.16
-horizontal_recoil = 1.44
-vertical_recoil = 1.32
-lower_vertical_recoil = 5.4
+weapon_max_distance = 35.0
+horizontal_recoil = 1.4
+vertical_recoil = 1.7
 
 [node name="Mesh" parent="." index="0"]
-transform = Transform3D(0.00394166, 0.0644456, -0.00735637, 0.000449096, 0.00734265, 0.064566, 0.0648625, -0.00396716, -3.21557e-10, 0.014, 0.133, 0.03)
+transform = Transform3D(0.0606562, 0.991719, -0.113203, 0.00691089, 0.112992, 0.993572, 0.998135, -0.0610486, -4.94826e-09, 0.014, 0.133, 0.03)
 
 [node name="LeftHandMarker3D" type="Marker3D" parent="." index="1"]
-transform = Transform3D(-0.00643824, -0.0185256, 0.043588, -0.0590028, 0.0164894, 0.00123543, -0.0195807, -0.0435965, -0.0180547, 0.017, 0.3, 0.087)
+transform = Transform3D(-0.00643824, -0.0185256, 0.043588, -0.0590028, 0.0164894, 0.00123543, -0.0195807, -0.0435965, -0.0180547, 0.017, 0.333038, 0.087)
 
 [node name="MuzzleMarker3D" type="Marker3D" parent="." index="2"]
 transform = Transform3D(1, 0, 0, 0, 0.0314107, -0.999507, 0, 0.999507, 0.0314107, 0.0112305, 0.681912, 0.0260029)
