@@ -80,7 +80,6 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Unequip rifle
 	elif event.is_action_pressed("weapon_unequip"):
-		player.player_equipment.disable_left_hand_ik()
 		await player.player_animator.play_animation_and_await("rifle/rifle_unequip", 1.3)
 		player.player_equipment.unequip_weapon()
 		player.player_state_machine.change_state("idle")

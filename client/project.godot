@@ -35,8 +35,8 @@ gdscript/warnings/unused_signal=0
 
 [display]
 
-window/size/viewport_width=680
-window/size/viewport_height=324
+window/size/viewport_width=800
+window/size/viewport_height=600
 
 [editor_plugins]
 

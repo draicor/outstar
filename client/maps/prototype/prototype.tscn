@@ -81,7 +81,7 @@ environment = SubResource("Environment_pjqxs")
 [node name="Interactables" type="Node3D" parent="World"]
 
 [node name="Crate" parent="World/Interactables" groups=["concrete_material"] instance=ExtResource("3_mbxpg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.5, 5.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.5, 2.5)
 
 [node name="Portal" parent="World/Interactables" groups=["concrete_material"] instance=ExtResource("4_cf12v")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 1, 19.5)
@@ -90,22 +90,19 @@ region_id = 2
 [node name="Destructible" type="Node3D" parent="World"]
 
 [node name="TargetDummy" parent="World/Destructible" instance=ExtResource("5_wq85k")]
-transform = Transform3D(1, 0, -2.54312e-07, 0, 1, 0, 2.54312e-07, 0, 1, 11.5, 0, 0.5)
+transform = Transform3D(1, 0, -2.54312e-07, 0, 1, 0, 2.54312e-07, 0, 1, 12.5, 0, 0.5)
 
 [node name="TargetDummy2" parent="World/Destructible" instance=ExtResource("5_wq85k")]
-transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 8.5, 0, 20.5)
+transform = Transform3D(1, 0, -1.74846e-07, 0, 1, 0, 1.74846e-07, 0, 1, 10.5, 0, 0.5)
 
 [node name="TargetDummy3" parent="World/Destructible" instance=ExtResource("5_wq85k")]
 transform = Transform3D(1, 0, -1.06581e-14, 0, 1, 0, 1.06581e-14, 0, 1, 14.5, 0, 0.5)
 
 [node name="TargetDummy4" parent="World/Destructible" instance=ExtResource("5_wq85k")]
-transform = Transform3D(-0.706963, -0.000309686, 0.707251, -0.000290337, 1, 0.000147649, -0.707251, -0.000100947, -0.706963, 3.5, 0, 19.5)
+transform = Transform3D(1, 0.000290361, -0.000203669, -0.000290337, 1, 0.000147649, 0.000203669, -0.000147601, 1, 6.5, 0, 0.5)
 
 [node name="TargetDummy5" parent="World/Destructible" instance=ExtResource("5_wq85k")]
-transform = Transform3D(-0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, -0.707107, 13.5, 0, 23.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0, 0.5)
 
 [node name="TargetDummy6" parent="World/Destructible" instance=ExtResource("5_wq85k")]
-transform = Transform3D(-0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, -0.866025, 5.5, 0, 22.5)
-
-[node name="TargetDummy7" parent="World/Destructible" instance=ExtResource("5_wq85k")]
-transform = Transform3D(-0.965926, 0, 0.258819, 0, 1, 0, -0.258819, 0, -0.965926, 3.5, 0, 32.5)
+transform = Transform3D(1, 0, -1.78814e-07, 0, 1, 0, 1.78814e-07, 0, 1, 8.5, 0, 0.5)

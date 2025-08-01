@@ -1,0 +1,113 @@
+[gd_scene load_steps=3 format=3 uid="uid://b71pvu3jues8q"]
+
+[ext_resource type="Script" uid="uid://es7nri4rsukm" path="res://components/hud/center_left_hud.gd" id="1_atyk0"]
+[ext_resource type="Texture2D" uid="uid://bcgnju7lnt2vf" path="res://assets/icons/icon_empty.png" id="2_5icx8"]
+
+[node name="CenterLeftHud" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_atyk0")
+
+[node name="WeaponIcons" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+offset_top = -80.0
+offset_right = 40.0
+offset_bottom = 80.0
+theme_override_constants/separation = 0
+
+[node name="WeaponOneIcon" type="TextureRect" parent="WeaponIcons"]
+custom_minimum_size = Vector2(24, 32)
+layout_mode = 2
+texture = ExtResource("2_5icx8")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="WeaponOneButton" type="Button" parent="WeaponIcons/WeaponOneIcon"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+tooltip_text = "Weapon Slot"
+focus_mode = 0
+flat = true
+
+[node name="WeaponTwoIcon" type="TextureRect" parent="WeaponIcons"]
+custom_minimum_size = Vector2(24, 32)
+layout_mode = 2
+texture = ExtResource("2_5icx8")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="WeaponTwoButton" type="Button" parent="WeaponIcons/WeaponTwoIcon"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+tooltip_text = "Weapon Slot"
+focus_mode = 0
+flat = true
+
+[node name="WeaponThreeIcon" type="TextureRect" parent="WeaponIcons"]
+custom_minimum_size = Vector2(24, 32)
+layout_mode = 2
+texture = ExtResource("2_5icx8")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="WeaponThreeButton" type="Button" parent="WeaponIcons/WeaponThreeIcon"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+tooltip_text = "Weapon Slot"
+focus_mode = 0
+flat = true
+
+[node name="WeaponFourIcon" type="TextureRect" parent="WeaponIcons"]
+custom_minimum_size = Vector2(24, 32)
+layout_mode = 2
+texture = ExtResource("2_5icx8")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="WeaponFourButton" type="Button" parent="WeaponIcons/WeaponFourIcon"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+tooltip_text = "Weapon Slot"
+focus_mode = 0
+flat = true
+
+[node name="WeaponFiveIcon" type="TextureRect" parent="WeaponIcons"]
+custom_minimum_size = Vector2(24, 32)
+layout_mode = 2
+texture = ExtResource("2_5icx8")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="WeaponFiveButton" type="Button" parent="WeaponIcons/WeaponFiveIcon"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+tooltip_text = "Weapon Slot"
+focus_mode = 0
+flat = true
+
+[connection signal="pressed" from="WeaponIcons/WeaponOneIcon/WeaponOneButton" to="." method="_on_weapon_one_button_pressed"]
+[connection signal="pressed" from="WeaponIcons/WeaponTwoIcon/WeaponTwoButton" to="." method="_on_weapon_two_button_pressed"]
+[connection signal="pressed" from="WeaponIcons/WeaponThreeIcon/WeaponThreeButton" to="." method="_on_weapon_three_button_pressed"]
+[connection signal="pressed" from="WeaponIcons/WeaponFourIcon/WeaponFourButton" to="." method="_on_weapon_four_button_pressed"]
+[connection signal="pressed" from="WeaponIcons/WeaponFiveIcon/WeaponFiveButton" to="." method="_on_weapon_five_button_pressed"]

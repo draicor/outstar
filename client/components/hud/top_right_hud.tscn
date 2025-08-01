@@ -4,7 +4,6 @@
 [ext_resource type="Texture2D" uid="uid://dahiyd6f371gx" path="res://assets/icons/icon_movement_speed_run.png" id="2_oe82i"]
 
 [node name="TopRightHUD" type="Control"]
-custom_minimum_size = Vector2(64, 64)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 48.0
@@ -14,17 +13,20 @@ script = ExtResource("1_e2m3u")
 
 [node name="TextureRect" type="TextureRect" parent="."]
 layout_mode = 0
-offset_right = 64.0
-offset_bottom = 64.0
+offset_right = 48.0
+offset_bottom = 48.0
 texture = ExtResource("2_oe82i")
+expand_mode = 3
+stretch_mode = 4
 
 [node name="ChangeMoveSpeed" type="Button" parent="TextureRect"]
 layout_mode = 0
-offset_right = 64.0
-offset_bottom = 64.0
+offset_right = 48.0
+offset_bottom = 48.0
 tooltip_text = "Movement Speed
 Left click decreases move speed.
 Right click increases move speed."
+focus_mode = 0
 theme_override_constants/outline_size = 0
 theme_override_constants/h_separation = 0
 theme_override_constants/icon_max_width = 0

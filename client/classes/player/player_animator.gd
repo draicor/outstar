@@ -57,7 +57,13 @@ var animation_events: Dictionary[String, Array] = {
 		{"time": 1.6, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_insert_magazine"]},
 		{"time": 2.1, "method": "_call_player_audio_method", "args": ["play_projectile_rifle_charging_handle"]},
 		{"time": 2.5, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
-	]
+	],
+	"rifle/rifle_equip": [
+		{"time": 1.5, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
+	],
+	"rifle/rifle_unequip": [
+		{"time": 0.0, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
+	],
 }
 
 

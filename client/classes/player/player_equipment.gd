@@ -22,9 +22,9 @@ var left_hand_ik_tween: Tween # Smooths out the transition for ik enable/disable
 var equipped_weapon_name: String = "unarmed"
 var equipped_weapon_type: String = "unarmed" # Used to switch states and animations too
 var equipped_weapon = null # Instantiated scene of our weapon
+var max_correction_angle: float = deg_to_rad(5.0) # 5 degrees deviation
 # Ammo system
 var equipped_weapon_ammo: int = 30
-var max_correction_angle: float = deg_to_rad(5.0) # 5 degrees deviation
 
 
 func _ready() -> void:
@@ -140,7 +140,6 @@ func equip_weapon(weapon_name: String) -> void:
 # Stops left hand IK and removes our equipped weapon
 func unequip_weapon() -> void:
 	# Stop IK processing completely
-	disable_left_hand_ik()
 	left_hand_ik.stop()
 	left_hand_ik.target_node = ""
 	

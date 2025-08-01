@@ -1,8 +1,7 @@
-Destructible
 Button
 TextureRect
-MarginContainer
 VBoxContainer
+MarginContainer
 Label
 Node3D
 CollisionShape3D
