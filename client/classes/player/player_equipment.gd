@@ -24,6 +24,7 @@ var equipped_weapon_type: String = "unarmed" # Used to switch states and animati
 var equipped_weapon = null # Instantiated scene of our weapon
 # Ammo system
 var equipped_weapon_ammo: int = 30
+var max_correction_angle: float = deg_to_rad(5.0) # 5 degrees deviation
 
 
 func _ready() -> void:
@@ -210,7 +211,24 @@ func calculate_weapon_direction(target_position: Vector3) -> void:
 	if not equipped_weapon:
 		return
 	
-	equipped_weapon.target_direction = (target_position - get_muzzle_position()).normalized()
+	# Get weapon's natural forward direction using the muzzle position as the start position
+	var muzzle_position: Vector3 = get_muzzle_position()
+	var weapon_forward: Vector3 = -equipped_weapon.muzzle_marker_3d.global_transform.basis.z
+	# Calculate vector to target
+	var to_target: Vector3 = target_position - muzzle_position
+	
+	# Calculate angle between weapon forward and target direction
+	var angle: float = weapon_forward.angle_to(to_target)
+	
+	# If target is within correction cone, use exact target direction
+	if angle < max_correction_angle:
+		equipped_weapon.target_direction = to_target
+	else:
+		# Otherwise, blend toward max allowed angle
+		equipped_weapon.target_direction = weapon_forward.slerp(
+			to_target,
+			max_correction_angle / angle
+		)
 
 
 # Cycles through the weapon modes of this weapon, if available
