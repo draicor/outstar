@@ -9,12 +9,6 @@ func _init() -> void:
 func enter() -> void:
 	player.player_animator.switch_animation_library("rifle_down")
 	player.player_animator.switch_animation("idle")
-	
-	# Do this only for my local character
-	if player.my_player_character:
-		# We update our ammo counter and then we display it
-		Signals.ui_update_ammo.emit()
-		Signals.ui_show_bottom_right_hud.emit()
 
 
 # We have to update rotations here so we can rotate towards our targets
@@ -61,10 +55,6 @@ func handle_input(event: InputEvent) -> void:
 		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast", 1.2)
 		player.player_equipment.reload_equipped_weapon()
 		
-		# Do this only for my local character
-		if player.my_player_character:
-			Signals.ui_update_ammo.emit() # Update our ammo counter
-		
 		# If we are holding right click here, switch states
 		if Input.is_action_pressed("right_click"):
 			player.player_state_machine.change_state("rifle_aim_idle")
@@ -76,10 +66,20 @@ func handle_input(event: InputEvent) -> void:
 	# Toggle weapon fire mode
 	elif event.is_action_pressed("weapon_mode"):
 		player.player_audio.play_projectile_rifle_mode_selector()
-		player.player_equipment.toggle_weapon_fire_mode()
+		player.player_equipment.toggle_fire_mode()
 	
 	# Unequip rifle
 	elif event.is_action_pressed("weapon_unequip"):
-		await player.player_animator.play_animation_and_await("rifle/rifle_unequip", 1.3)
-		player.player_equipment.unequip_weapon()
-		player.player_state_machine.change_state("idle")
+		switch_weapon(0) # Unarmed
+	
+	# Weapon switch
+	elif event.is_action_pressed("weapon_one"): # Unarmed
+		switch_weapon(0)
+	elif event.is_action_pressed("weapon_two"):
+		switch_weapon(1)
+	elif event.is_action_pressed("weapon_three"):
+		switch_weapon(2)
+	elif event.is_action_pressed("weapon_four"):
+		switch_weapon(3)
+	elif event.is_action_pressed("weapon_five"):
+		switch_weapon(4)

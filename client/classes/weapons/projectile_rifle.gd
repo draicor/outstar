@@ -101,7 +101,7 @@ func fire() -> Vector3:
 	var hit_position: Vector3 = hit.position if hit else muzzle_position + direction * weapon_max_distance
 	
 	# CAUTION
-	# Check if we CAN fire first (have ammo, can_shoot is valid, etc)
+	# Check if we CAN fire first (can_shoot is valid, etc)
 	projectile_muzzle_flash.restart()
 	# Add the bullet tracer
 	var tracer := BULLET_TRACER.instantiate()
@@ -154,6 +154,11 @@ func toggle_fire_mode() -> void:
 	if has_multiple_modes:
 		current_fire_mode = (current_fire_mode + 1) % FireModes.size() as FireModes
 		calculate_recoil()
+
+
+func set_fire_mode(mode: int) -> void:
+	current_fire_mode = mode as FireModes
+	calculate_recoil()
 
 
 func get_animation() -> String:

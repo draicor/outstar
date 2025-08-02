@@ -66,6 +66,20 @@ var animation_events: Dictionary[String, Array] = {
 	],
 }
 
+var weapon_animations: Dictionary[String, Dictionary] = {
+	"rifle": {
+		"equip": {
+			animation = "rifle/rifle_equip",
+			play_rate = 1.3
+		},
+		"unequip": {
+			animation = "rifle/rifle_unequip",
+			play_rate = 1.3
+		},
+	},
+	# Add more weapon types here
+}
+
 
 func _ready() -> void:
 	# Wait for parent to be ready, then store a reference to it
@@ -82,7 +96,6 @@ func _ready() -> void:
 	if not player_equipment:
 		push_error("Player Equipment not available")
 	
-	# CAUTION Modify this to keep in mind the equipped weapon in our DB too!
 	# Switch our locomotion depending on our player's gender
 	switch_animation_library(player.gender)
 	animation_player = player.find_child("AnimationPlayer", true, false)
@@ -277,3 +290,29 @@ func check_animation_events() -> void:
 			if current_time < event["time"] + 0.1: # 100ms tolerance
 				callv(event["method"], event["args"])
 				triggered_events[event_id] = true
+
+
+# Looks into our weapon animations dictionary for this animation, if it exists, return the animation name and play rate
+func get_weapon_animation(animation_type: String, weapon_type: String) -> Dictionary:
+	if weapon_animations.has(weapon_type) and weapon_animations[weapon_type].has(animation_type):
+		return weapon_animations[weapon_type][animation_type]
+	return {}
+
+
+# Plays the weapon animation if found within our weapon dictionary
+func play_weapon_animation_and_await(animation_type: String, weapon_type: String, custom_speed: float = 1.0) -> void:
+	var anim = get_weapon_animation(animation_type, weapon_type)
+	if anim.is_empty():
+		push_error("[%s, %s] not found." % [weapon_type, animation_type])
+		return
+	
+	var animation_name: String = anim.animation
+	var animation_play_rate: float = anim.play_rate
+	
+	# If the animation name is valid
+	if animation_name != "":
+		# If we passed a different speed here, use that custom speed, else use the default one
+		if custom_speed != 1.0:
+			animation_play_rate = custom_speed
+		
+		await play_animation_and_await(animation_name, animation_play_rate)

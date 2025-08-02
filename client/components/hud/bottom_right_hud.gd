@@ -22,4 +22,4 @@ func _handle_signal_show_buttom_right_hud() -> void:
 
 
 func _handle_signal_update_ammo() -> void:
-	ammo_label.text = str(GameManager.player_character.player_equipment.get_equipped_weapon_ammo())
+	ammo_label.text = str(GameManager.player_character.player_equipment.get_current_ammo())

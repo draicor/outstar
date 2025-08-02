@@ -83,10 +83,6 @@ func handle_input(event: InputEvent) -> void:
 		await player.player_animator.play_animation_and_await("rifle/rifle_aim_reload_fast", 1.2)
 		player.player_equipment.reload_equipped_weapon()
 		
-		# Do this only for my local character
-		if player.my_player_character:
-			Signals.ui_update_ammo.emit() # Update our ammo counter
-		
 		# If we are still holding right click, play the rifle aim idle animation
 		if Input.is_action_pressed("right_click"):
 			player.player_animator.switch_animation("idle")
@@ -95,9 +91,11 @@ func handle_input(event: InputEvent) -> void:
 	# Toggle weapon fire mode
 	elif event.is_action_pressed("weapon_mode"):
 		player.player_audio.play_projectile_rifle_mode_selector()
-		player.player_equipment.toggle_weapon_fire_mode()
+		player.player_equipment.toggle_fire_mode()
 
 
+# CAUTION
+# Move this to base_state once we add another weapon
 func _handle_firing() -> void:
 	# If our mouse is somewhere valid (explicit check)
 	var target_point: Vector3 = player.get_mouse_world_position()
