@@ -4,6 +4,8 @@ class_name RifleDownIdleState
 
 func _init() -> void:
 	state_name = "rifle_down_idle"
+	# Connect signals
+	Signals.ui_hud_weapon_slot.connect(switch_weapon)
 
 
 func enter() -> void:

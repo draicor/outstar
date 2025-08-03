@@ -46,7 +46,7 @@ func _ready() -> void:
 	# Create and add our IK nodes
 	_setup_left_hand_ik()
 	
-	# Initialize weapon slots
+	# Initialize all weapon slots to empty at spawn
 	for i in range(MAX_WEAPON_SLOTS):
 		weapon_slots.append({
 			"weapon_name": "",
@@ -56,9 +56,10 @@ func _ready() -> void:
 			"display_name": "Empty",
 		})
 	
-	# CAUTION (replace with pickup logic later)
-	# Assign default weapons
 	add_weapon_to_slot(0, "unarmed")
+	
+	# Assign default weapons
+	# CAUTION (replace with pickup logic later)
 	add_weapon_to_slot(1, "akm_rifle", 30)
 	add_weapon_to_slot(2, "m16_rifle", 30)
 
@@ -317,6 +318,10 @@ func get_fire_mode() -> int:
 
 func get_current_weapon_type() -> String:
 	return weapon_slots[current_slot]["weapon_type"]
+
+
+func get_current_weapon_name() -> String:
+	return weapon_slots[current_slot]["weapon_name"]
 
 
 func get_weapon_state_by_weapon_type(weapon_type: String) -> String:

@@ -24,20 +24,20 @@ extends Control
 
 
 func _on_weapon_one_button_pressed() -> void:
-	print("Weapon one")
+	Signals.ui_hud_weapon_slot.emit(0)
 
 
 func _on_weapon_two_button_pressed() -> void:
-	print("Weapon two")
+	Signals.ui_hud_weapon_slot.emit(1)
 
 
 func _on_weapon_three_button_pressed() -> void:
-	print("Weapon three")
+	Signals.ui_hud_weapon_slot.emit(2)
 
 
 func _on_weapon_four_button_pressed() -> void:
-	print("Weapon four")
+	Signals.ui_hud_weapon_slot.emit(3)
 
 
 func _on_weapon_five_button_pressed() -> void:
-	print("Weapon five")
+	Signals.ui_hud_weapon_slot.emit(4)

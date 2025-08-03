@@ -1,6 +1,11 @@
 extends Control
 
 @onready var ammo_label: Label = $WeaponContainer/VBoxContainer/AmmoContainer/AmmoLabel
+@onready var weapon_icon: TextureRect = $WeaponContainer/VBoxContainer/WeaponIcon
+
+# Textures
+const ICON_WEAPON_M16 = preload("res://assets/icons/icon_weapon_m16.png")
+const ICON_WEAPON_AKM = preload("res://assets/icons/icon_weapon_akm.png")
 
 
 func _init() -> void:
@@ -18,8 +23,20 @@ func _handle_signal_hide_buttom_right_hud() -> void:
 
 
 func _handle_signal_show_buttom_right_hud() -> void:
+	update_weapon_icon()
 	show()
 
 
 func _handle_signal_update_ammo() -> void:
 	ammo_label.text = str(GameManager.player_character.player_equipment.get_current_ammo())
+
+
+func update_weapon_icon() -> void:
+	var weapon_name: String = GameManager.player_character.player_equipment.get_current_weapon_name()
+	match weapon_name:
+		"m16_rifle":
+			weapon_icon.texture = ICON_WEAPON_M16
+		"akm_rifle":
+			weapon_icon.texture = ICON_WEAPON_AKM
+		"_":
+			weapon_icon.texture = null

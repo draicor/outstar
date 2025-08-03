@@ -8,6 +8,9 @@ var player: Player = null
 var state_name: String = "unnamed_state"
 
 
+
+
+
 func enter() -> void:
 	pass
 
