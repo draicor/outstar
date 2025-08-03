@@ -162,6 +162,8 @@ func equip_weapon(weapon_name: String) -> void:
 			
 			# Display the weapon hud after spawning the weapon
 			show_weapon_hud()
+			# Initialize the weapon sounds for this weapon
+			player.player_audio.setup_weapon_audio_players(weapon_name)
 	else:
 		print("Weapon %s (%s) not found" % [weapon_name, weapon_types[weapon_name]])
 
