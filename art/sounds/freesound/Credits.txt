@@ -1,19 +1,46 @@
-pulse rifle 1.wav by TRXone -- https://freesound.org/s/475158/ -- License: Attribution 3.0
-
-Random sci-fi sounds by Patrick_Corra -- https://freesound.org/s/633234/ -- License: Creative Commons 0
-
-LASRGun_Warp Rifle Energy Blast_Funky Audio_Sonic Spices by Funky_Audio -- https://freesound.org/s/705494/ -- License: Creative Commons 0
-
-Rifle-or-shotgun-reload.wav by MaximBomba -- https://freesound.org/s/432141/ -- License: Creative Commons 0
-
-Empty Gun Shot by KlawyKogut -- https://freesound.org/s/154934/ -- License: Creative Commons 0
-
-Metal Slide 1 by WasabiWielder -- https://freesound.org/s/323368/ -- License: Creative Commons 0
+-------------------------------------------------------------------
+PISTOL SOUNDS
 
 M9_noisegate-17.80.wav by DarkShroom -- https://freesound.org/s/645317/ -- License: Creative Commons 0
 
 snub_nose_357_magnum_noisegate-17.80.wav by DarkShroom -- https://freesound.org/s/645316/ -- License: Creative Commons 0
 
-Lake Night.wav by ChristmasKrumble666 -- https://freesound.org/s/744098/ -- License: Creative Commons 0
+-------------------------------------------------------------------
+RIFLE SOUNDS
+
+Rifle dropped on floor 3x by serøtōnin --
+https://freesound.org/people/ser%C3%B8t%C5%8Dnin/sounds/675009/ -- License: Creative Commons 0
+
+-------------------------------------------------------------------
+AKM RIFLE SOUNDS
+
+AssaultRiflePack1 by SuperPhat --
+https://freesound.org/people/SuperPhat/packs/22885/ -- License: Creative Commons 0
+
+AK-47 assault rifle being cocked 3x by serøtōnin --
+https://freesound.org/people/ser%C3%B8t%C5%8Dnin/sounds/675008/ -- License: Creative Commons 0
+
+A rifle being dry fired once by serøtōnin --
+https://freesound.org/people/ser%C3%B8t%C5%8Dnin/sounds/725402/ -- License: Creative Commons 0
+
+krinkov-aks74u-rifle_switch by Artninja -- https://freesound.org/s/712558/ -- License: Attribution 4.0
+
+-------------------------------------------------------------------
+M16 RIFLE SOUNDS
+
+Rifle-or-shotgun-reload.wav by MaximBomba -- https://freesound.org/s/432141/ -- License: Creative Commons 0
+
+Empty Gun Shot by KlawyKogut -- https://freesound.org/s/154934/ -- License: Creative Commons 0
 
 m4 rifle reload.wav by Freeman213SG -- https://freesound.org/s/326042/ -- License: Creative Commons 0
+
+m4a1 or m16 reload sound.mp3 by GFL7 --
+https://freesound.org/people/GFL7/sounds/276964/ -- License: Creative Commons 0
+
+M16 Rifle Shots.flac by qubodup --
+https://freesound.org/people/qubodup/sounds/187677/ -- License: Creative Commons 0
+
+-------------------------------------------------------------------
+OST SOUNDS
+
+Lake Night.wav by ChristmasKrumble666 -- https://freesound.org/s/744098/ -- License: Creative Commons 0
