@@ -4,6 +4,7 @@ class_name RifleAimIdleState
 var last_target_point: Vector3 = Vector3.ZERO
 var is_aim_rotating: bool = false
 var mouse_captured: bool = false
+var dry_fired: bool = false
 
 
 func _init() -> void:
@@ -18,6 +19,8 @@ func enter() -> void:
 	is_aim_rotating = true
 	# Reduce the rotation step to minimum when aiming
 	player.camera.ROTATION_STEP = 1.0
+	# Always reset dry_fired to false on state changes
+	dry_fired = false
 
 
 func exit() -> void:
@@ -68,7 +71,7 @@ func update(_delta: float) -> void:
 	
 	# Fire rifle if mouse isn't over the UI
 	if Input.is_action_pressed("left_click") and not player.is_mouse_over_ui:
-		_handle_firing()
+		handle_firing()
 
 
 # One-time inputs
@@ -76,6 +79,10 @@ func handle_input(event: InputEvent) -> void:
 	# If we are busy, ignore input
 	if player.is_busy or player.player_movement.autopilot_active:
 		return
+	
+	# Track trigger release
+	if event.is_action_released("left_click"):
+		dry_fired = false
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):
@@ -96,16 +103,32 @@ func handle_input(event: InputEvent) -> void:
 
 # CAUTION
 # Move this to base_state once we add another weapon
-func _handle_firing() -> void:
-	# If our mouse is somewhere valid (explicit check)
+func handle_firing() -> void:
+	# Make sure our mouse is clicking somewhere valid
 	var target_point: Vector3 = player.get_mouse_world_position()
-	if target_point != Vector3.ZERO:
-		player.player_equipment.calculate_weapon_direction(target_point)
-		
-		# Get the weapon data from the player equipment system
-		var weapon = player.player_equipment.equipped_weapon
-		var anim_name: String = weapon.get_animation()
-		var play_rate: float = weapon.get_animation_play_rate()
-		
-		# Play the animation
-		await player.player_animator.play_animation_and_await(anim_name, play_rate)
+	if target_point == Vector3.ZERO:
+		return
+	
+	player.player_equipment.calculate_weapon_direction(target_point)
+	# Get the weapon data from the player equipment system
+	var weapon = player.player_equipment.equipped_weapon
+	var anim_name: String = weapon.get_animation()
+	var play_rate: float = weapon.get_animation_play_rate()
+	
+	# Check for an empty gun
+	if not player.player_equipment.can_fire_weapon():
+		if not dry_fired:
+			dry_fired = true
+			# Override play rate for dry fire (always use semi-auto speed)
+			await player.player_animator.play_animation_and_await(anim_name, weapon.semi_fire_rate)
+			# If after the animation ends our trigger is not pressed
+			if not Input.is_action_pressed("left_click"):
+				dry_fired = false
+		# Abort here preventing shooting another round
+		return
+	
+	# Play normal firing logic
+	await player.player_animator.play_animation_and_await(anim_name, play_rate)
+	# If after the animation ends our trigger is not pressed
+	if not Input.is_action_pressed("left_click"):
+		dry_fired = false

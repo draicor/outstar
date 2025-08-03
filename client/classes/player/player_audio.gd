@@ -169,7 +169,7 @@ func create_single_audio_player(stream: AudioStream, volume_db: float, bus: Stri
 
 func play_weapon_fire_single() -> void:
 	# Check if we have ammo to fire
-	if player.player_equipment.get_current_ammo() > 0:
+	if player.player_equipment.can_fire_weapon():
 		_play_weapon_fire_single()
 	else:
 		_play_weapon_dry_fire_single()
