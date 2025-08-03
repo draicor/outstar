@@ -56,12 +56,13 @@ func _ready() -> void:
 			"display_name": "Empty",
 		})
 	
-	add_weapon_to_slot(0, "unarmed")
-	
 	# Assign default weapons
 	# CAUTION (replace with pickup logic later)
+	add_weapon_to_slot(0, "unarmed")
 	add_weapon_to_slot(1, "akm_rifle", 30)
 	add_weapon_to_slot(2, "m16_rifle", 30)
+	add_weapon_to_slot(3, "unarmed")
+	add_weapon_to_slot(4, "unarmed")
 
 
 # Creates and configurates a left hand IK 3D node, then adds it to our skeleton

@@ -6,7 +6,7 @@ const Packets: GDScript = preload("res://packets.gd")
 const Pathfinding: GDScript = preload("res://classes/pathfinding/pathfinding.gd")
 
 # EXPORTED VARIABLES
-@export var ROTATION_SPEED: float = 10.0 # Radians per second
+@export var ROTATION_SPEED: float = 13.0 # Radians per second
 
 # CONSTANTS
 const SERVER_TICK: float = 0.5 # Controls local player move speed

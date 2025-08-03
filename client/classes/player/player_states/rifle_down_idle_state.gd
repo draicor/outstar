@@ -4,13 +4,17 @@ class_name RifleDownIdleState
 
 func _init() -> void:
 	state_name = "rifle_down_idle"
-	# Connect signals
-	Signals.ui_hud_weapon_slot.connect(switch_weapon)
 
 
 func enter() -> void:
 	player.player_animator.switch_animation_library("rifle_down")
 	player.player_animator.switch_animation("idle")
+	
+	# Only connect these signals for my local player character, once
+	if is_local_player:
+		if not signals_connected:
+			Signals.ui_hud_weapon_slot.connect(switch_weapon)
+			signals_connected = true
 
 
 # We have to update rotations here so we can rotate towards our targets

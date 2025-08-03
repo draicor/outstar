@@ -6,9 +6,8 @@ signal finished(next_state_name)
 var player_state_machine: PlayerStateMachine = null
 var player: Player = null
 var state_name: String = "unnamed_state"
-
-
-
+var is_local_player: bool = false # set to true for local player
+var signals_connected: bool = false # to only do this once
 
 
 func enter() -> void:

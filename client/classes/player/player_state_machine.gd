@@ -12,17 +12,22 @@ var is_local_player: bool = false # set to true for local player
 
 
 func _ready() -> void:
+	# Wait for parent to be ready
+	await get_parent().ready
+	# Wait a single frame to allow time for the player_animator to initialize
+	await get_tree().process_frame
+	
+	var player: Player = get_parent()
+	if player.my_player_character:
+		is_local_player = true
+	
 	# Collect all child states
 	for child in get_children():
 		if child is BaseState:
 			states_map[child.state_name] = child
 			child.player_state_machine = self
-			child.player = get_parent()
-	
-	# Wait for parent to be ready
-	await get_parent().ready
-	# Wait a single frame to allow time for the player_animator to initialize
-	await get_tree().process_frame
+			child.player = player
+			child.is_local_player = is_local_player
 	
 	if states_map.has(initial_state):
 		change_state(initial_state)
