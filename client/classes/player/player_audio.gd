@@ -39,10 +39,10 @@ const MAX_DISTANCE: float = 80.0 # Max sound distance in meters
 const POOL_SIZE: int = 5 # Number of overlapping sounds
 # M16 RIFLE Setup
 const M16_RIFLE_FIRE_VOLUME: float = -5.0 # Base volume in DB
-const M16_RIFLE_DRY_FIRE_VOLUME: float = -10.0 # Base volume in DB
+const M16_RIFLE_DRY_FIRE_VOLUME: float = -9.0 # Base volume in DB
 # AKM RIFLE Setup
-const AKM_RIFLE_FIRE_VOLUME: float = 0.0 # Base volume in DB
-const AKM_RIFLE_DRY_FIRE_VOLUME: float = -14.0 # Base volume in DB
+const AKM_RIFLE_FIRE_VOLUME: float = -5.0 # Base volume in DB
+const AKM_RIFLE_DRY_FIRE_VOLUME: float = -13.0 # Base volume in DB
 
 
 func _ready() -> void:

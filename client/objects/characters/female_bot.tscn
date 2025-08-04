@@ -276,7 +276,6 @@ _data = {
 }
 
 [node name="FemaleBot" instance=ExtResource("1_wm4mk")]
-transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 0)
 
 [node name="GeneralSkeleton" parent="Armature" index="0"]
 bones/0/position = Vector3(1.09657e-05, 0.917091, 0)
@@ -336,7 +335,7 @@ bones/62/rotation = Quaternion(0.0695243, 0.558922, -0.826278, -0.0060655)
 bones/63/rotation = Quaternion(-0.0013865, 0.997285, 0.0736147, 0.00102171)
 
 [node name="RightHandTest" type="BoneAttachment3D" parent="Armature/GeneralSkeleton" index="2"]
-transform = Transform3D(-0.102822, 0.052415, 0.993318, 0.988973, 0.112388, 0.0964419, -0.106582, 0.992281, -0.0633929, -0.19615, 1.22694, 0.295679)
+transform = Transform3D(-0.102822, 0.052417, 0.993318, 0.988973, 0.112387, 0.096442, -0.106581, 0.992281, -0.063395, -0.19615, 1.22694, 0.295679)
 visible = false
 bone_name = "RightHand"
 bone_idx = 10

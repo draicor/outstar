@@ -69,7 +69,7 @@ func _ready() -> void:
 func setup_movement_data_at_spawn() -> void:
 	player.position = interpolated_position # Has to be set after the player scene has been created
 	# Convert our model's y-rotation (radians) to a forward direction vector
-	forward_direction = Vector3(-sin(player.spawn_rotation), 0, -cos(player.spawn_rotation))
+	forward_direction = Vector3(sin(player.spawn_rotation), 0, cos(player.spawn_rotation))
 	# Update our player's movement tick at spawn
 	player.update_player_speed(player.player_speed)
 
@@ -119,10 +119,10 @@ func rotate_towards_direction(direction: Vector3) -> bool:
 	# Remove vertical component and normalize
 	var horizontal_direction: Vector3 = direction.normalized()
 	# Calculate target yaw directly from world direction (flip the sign to match Godot's system)
-	var new_yaw: float = atan2(-horizontal_direction.x, -horizontal_direction.z)
+	var new_yaw: float = atan2(horizontal_direction.x, horizontal_direction.z)
 	
 	# Update forward direction immediately to target rotation
-	forward_direction = Vector3(-sin(new_yaw), 0, -cos(new_yaw))
+	forward_direction = Vector3(sin(new_yaw), 0, cos(new_yaw))
 	
 	# Calculate shortest angle difference
 	var current_yaw: float = player.model.rotation.y

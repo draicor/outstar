@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"server/internal/server"
-	"server/internal/server/math"
 	"server/internal/server/objects"
 	"strings"
 	"time"
@@ -170,7 +169,6 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	}
 
 	// TO FIX -> Load all of this from the database [eventually!]
-	var rotationY float64 = math.DegreesToRadians(180) // Start looking south
 	var level uint64 = 1
 	var experience uint64 = 1
 
@@ -180,7 +178,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 		user.Nickname,
 		character.Gender,
 		uint64(character.Speed),
-		rotationY,
+		character.RotationY,
 		// Stats
 		level, experience,
 		// Atributes

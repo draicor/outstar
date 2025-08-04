@@ -1,8 +1,21 @@
 package objects
 
-import "server/internal/server/pathfinding"
+import (
+	"math"
+	"server/internal/server/pathfinding"
+)
 
-const MAX_SPEED uint64 = 3
+const (
+	MAX_SPEED uint64  = 3
+	NORTH     float64 = math.Pi          // 180°
+	SOUTH     float64 = 0                // 0°
+	EAST      float64 = math.Pi / 2      // 90°
+	WEST      float64 = -math.Pi / 2     // -90°
+	NORTHEAST float64 = 3 * math.Pi / 4  // 135°
+	NORTHWEST float64 = -3 * math.Pi / 4 // -135°
+	SOUTHEAST float64 = math.Pi / 4      // 45°
+	SOUTHWEST float64 = -math.Pi / 4     // -45°
+)
 
 type Player struct {
 	Name string
@@ -102,5 +115,39 @@ func CreatePlayer(
 		Experience: experience,
 		// Attributes
 		speed: speed,
+	}
+}
+
+// Calculate rotation from movement vector
+func (player *Player) CalculateRotation(currentCell, nextCell *pathfinding.Cell) {
+	var dx int64 = int64(nextCell.X - currentCell.X)
+	var dz int64 = int64(nextCell.Z - currentCell.Z)
+
+	// Map direction vector to rotation
+	switch {
+	// North
+	case dx == 0 && dz < 0:
+		player.SetRotation(NORTH)
+	// South
+	case dx == 0 && dz > 0:
+		player.SetRotation(SOUTH)
+	// East
+	case dx > 0 && dz == 0:
+		player.SetRotation(EAST)
+	// West
+	case dx < 0 && dz == 0:
+		player.SetRotation(WEST)
+	// North-East
+	case dx > 0 && dz < 0:
+		player.SetRotation(NORTHEAST)
+	// North-West
+	case dx < 0 && dz < 0:
+		player.SetRotation(NORTHWEST)
+	// South-East
+	case dx > 0 && dz > 0:
+		player.SetRotation(SOUTHEAST)
+	// South-West
+	case dx < 0 && dz > 0:
+		player.SetRotation(SOUTHWEST)
 	}
 }

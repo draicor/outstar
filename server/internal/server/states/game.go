@@ -99,17 +99,20 @@ func (state *Game) updateCharacter() {
 		// Based on our player's speed and the remaining cells to traverse
 		// We determine how many cells we can move
 		for steps < stepsRemaining {
-			// Get the next cell from our path
+			// Get the current and next cell from our path before moving
+			currentCell := state.player.GetGridPosition()
 			nextCell := path[1]
 
 			// If the next cell exists
 			if nextCell != nil {
 				// If the next cell is both reachable and not occupied
 				if grid.IsCellReachable(nextCell) && grid.IsCellAvailable(nextCell) {
-					// Move our character into that cell in our region grid
+					// Move player to next cell in the grid
 					grid.SetObject(nextCell, state.player)
-					// Keep track of our position in our player character
+					// Keep track of our position in our player object
 					state.player.SetGridPosition(nextCell)
+					// Calculate new rotation based on movement direction
+					state.player.CalculateRotation(currentCell, nextCell)
 					// We overwrite our path variable to remove the first cell
 					path = path[1:]
 					// We mark our step as completed
@@ -281,8 +284,12 @@ func (state *Game) HandleUpdateSpeed(payload *packets.UpdateSpeed) {
 
 // Sent by the client to request joining another region
 func (state *Game) HandleJoinRegionRequest(payload *packets.JoinRegionRequest) {
+	// Before switching regions, save current rotation
+	currentRotation := state.player.RotationY
+
 	hub := state.client.GetHub()
-	// TO FIX
+
+	// TO FIX?
 	// MAP_ID SHOULDNT be the same as REGION_ID if I want to use instances
 	hub.SwitchRegion(state.client.GetAccountUsername(), payload.GetRegionId(), payload.GetRegionId())
 
@@ -290,6 +297,9 @@ func (state *Game) HandleJoinRegionRequest(payload *packets.JoinRegionRequest) {
 
 	// Wait a brief moment to ensure client receives packets
 	time.Sleep(250 * time.Millisecond)
+
+	// Restore rotation after switch
+	state.player.RotationY = currentRotation
 
 	// Create an update packet to be sent to everyone in this region
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)

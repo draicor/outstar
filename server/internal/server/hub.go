@@ -391,15 +391,16 @@ func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.Us
 
 	// Step 2: Create Character
 	character, err := q.CreateCharacter(ctx, db.CreateCharacterParams{
-		UserID:   user.ID,
-		Gender:   gender,
-		RegionID: 1, // We could have the player choose his starting location
-		MapID:    1, // We could have the player choose his starting location
-		X:        0, // Update this depending on the spawn location?
-		Z:        0, // Update this depending on the spawn location?
-		Hp:       100,
-		MaxHp:    100,
-		Speed:    1, // Create character with speed set to walk
+		UserID:    user.ID,
+		Gender:    gender,
+		RegionID:  1, // We could have the player choose his starting location
+		MapID:     1, // We could have the player choose his starting location
+		X:         0, // Update this depending on the spawn location?
+		Z:         0, // Update this depending on the spawn location?
+		Hp:        100,
+		MaxHp:     100,
+		Speed:     2,             // Create character with speed set to jog
+		RotationY: objects.SOUTH, // Always spawn looking south when creating the character
 	})
 	if err != nil {
 		return db.User{}, fmt.Errorf("create character: %w", err)
@@ -448,14 +449,15 @@ func (h *Hub) SaveCharacter(client Client) error {
 	character := client.GetPlayerCharacter()
 
 	return h.queries.UpdateFullCharacterData(ctx, db.UpdateFullCharacterDataParams{
-		RegionID: int64(character.GetRegionId()),
-		MapID:    int64(character.GetMapId()),
-		X:        int64(character.GetGridPosition().X),
-		Z:        int64(character.GetGridPosition().Z),
-		Hp:       int64(100), // TO FIX Create character.GetHealth()
-		MaxHp:    int64(100), // TO FIX Create character.GetMaxHealth()
-		Speed:    int64(character.GetSpeed()),
-		ID:       client.GetCharacterId(), // Character ID to find it in the DB
+		RegionID:  int64(character.GetRegionId()),
+		MapID:     int64(character.GetMapId()),
+		X:         int64(character.GetGridPosition().X),
+		Z:         int64(character.GetGridPosition().Z),
+		Hp:        int64(100), // TO FIX Create character.GetHealth()
+		MaxHp:     int64(100), // TO FIX Create character.GetMaxHealth()
+		Speed:     int64(character.GetSpeed()),
+		RotationY: float64(character.GetRotation()),
+		ID:        client.GetCharacterId(), // Character ID to find it in the DB
 	})
 }
 

@@ -20,5 +20,6 @@ CREATE TABLE IF NOT EXISTS characters (
   hp INTEGER NOT NULL DEFAULT 100,
   max_hp INTEGER NOT NULL DEFAULT 100,
   speed INTEGER NOT NULL DEFAULT 1 CHECK (speed BETWEEN 1 and 3), -- Clamp speed
+  rotation_y REAL NOT NULL DEFAULT 0.0,
   FOREIGN KEY (user_id) REFERENCES users(id) -- 1:1 relationship (only one character per user)
 );
