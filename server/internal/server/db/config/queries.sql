@@ -21,8 +21,8 @@ LIMIT 1;
 
 -- Character Operations
 -- name: CreateCharacter :one
-INSERT INTO characters (user_id, gender, region_id, map_id, x, z, hp, max_hp, speed, rotation_y, weapon_name, weapon_type, weapon_state)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO characters (user_id, gender, region_id, map_id, x, z, hp, max_hp, speed, rotation_y)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: SetUserCharacterID :exec
@@ -37,14 +37,12 @@ SELECT * FROM characters WHERE user_id = ?;
 -- name: UpdateFullCharacterData :exec
 UPDATE characters
 SET
-  region_id = ?, map_id = ?, x = ?, z = ?, hp = ?, max_hp = ?, speed = ?, rotation_y = ?,
-  weapon_name = ?, weapon_type = ?, weapon_state = ?
+  region_id = ?, map_id = ?, x = ?, z = ?, hp = ?, max_hp = ?, speed = ?, rotation_y = ?
 WHERE id = ?;
 
 -- name: GetFullCharacterData :one
 SELECT
   c.id, c.gender, c.region_id, c.map_id, c.x, c.z, c.hp, c.max_hp, c.speed, c.rotation_y,
-  c.weapon_name, c.weapon_type, c.weapon_state,
   u.username, u.nickname
 FROM characters c
 JOIN users u ON c.user_id = u.id
@@ -57,3 +55,17 @@ SELECT region_id, map_id, x, z FROM characters WHERE id = ? LIMIT 1;
 UPDATE characters
 set hp = ?, max_hp = ?
 WHERE id = ?;
+
+-- Weapon Slot Operations
+-- name: DeleteWeaponSlots :exec
+DELETE FROM character_weapons WHERE character_id = ?;
+
+-- name: InsertWeaponSlot :exec
+INSERT INTO character_weapons
+  (character_id, slot_index, weapon_name, weapon_type, display_name, ammo, fire_mode)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+-- name: LoadWeaponSlots :many
+SELECT slot_index, weapon_name, weapon_type, display_name, ammo, fire_mode
+FROM character_weapons
+WHERE character_id = ?

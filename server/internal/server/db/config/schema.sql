@@ -21,8 +21,19 @@ CREATE TABLE IF NOT EXISTS characters (
   max_hp INTEGER NOT NULL DEFAULT 100,
   speed INTEGER NOT NULL DEFAULT 1 CHECK (speed BETWEEN 1 and 3), -- Clamp speed
   rotation_y REAL NOT NULL DEFAULT 0.0,
+  FOREIGN KEY (user_id) REFERENCES users(id) -- 1:1 relationship (only one character per user)
+);
+
+-- Weapon slots for each character (game data)
+CREATE TABLE IF NOT EXISTS character_weapons (
+  character_id INTEGER NOT NULL,
+  slot_index INTEGER NOT NULL CHECK (slot_index BETWEEN 0 AND 4), -- 0 to 4 (5 slots)
   weapon_name TEXT NOT NULL DEFAULT 'unarmed',
   weapon_type TEXT NOT NULL DEFAULT 'unarmed',
   weapon_state TEXT NOT NULL DEFAULT 'idle',
-  FOREIGN KEY (user_id) REFERENCES users(id) -- 1:1 relationship (only one character per user)
+  ammo INTEGER NOT NULL DEFAULT 0,
+  fire_mode INTEGER NOT NULL DEFAULT 0, -- 0: semi, 1: auto
+  display_name TEXT NOT NULL DEFAULT 'Empty',
+  PRIMARY KEY (character_id, slot_index),
+  FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
 );

@@ -49,7 +49,7 @@ func main() {
 	log.Printf("Connecting to the database at %s\\db.sqlite", execPath)
 	// This generates the db.sqlite file if it doesn't exists
 	// We need to place the db next to the executable for easy of access
-	database, err := sql.Open("sqlite", execPath+"/db.sqlite")
+	database, err := sql.Open("sqlite", execPath+"/db.sqlite?_busy_timeout=5000&_journal_mode=WAL&_sync=NORMAL")
 	if err != nil {
 		panic(err)
 	}

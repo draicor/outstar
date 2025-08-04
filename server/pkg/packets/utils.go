@@ -1,6 +1,8 @@
 package packets
 
-import "server/internal/server/objects"
+import (
+	"server/internal/server/objects"
+)
 
 // The Packet Struct contains a Payload as an interface called isPacket_Payload
 type Payload = isPacket_Payload
@@ -109,6 +111,21 @@ func NewPosition(x, z uint64) Payload {
 func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
 	position := player.GetGridPosition()
 
+	// Convert weapon slots to protobuf format
+	var pbSlots []*WeaponSlot
+	for slotIndex, weapon := range *player.GetWeapons() {
+		if weapon != nil {
+			pbSlots = append(pbSlots, &WeaponSlot{
+				SlotIndex:   uint64(slotIndex),
+				WeaponName:  weapon.WeaponName,
+				WeaponType:  weapon.WeaponType,
+				DisplayName: weapon.DisplayName,
+				Ammo:        weapon.Ammo,
+				FireMode:    weapon.FireMode,
+			})
+		}
+	}
+
 	return &Packet_UpdatePlayer{
 		UpdatePlayer: &UpdatePlayer{
 			Id:   id,
@@ -117,12 +134,11 @@ func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
 				X: position.X,
 				Z: position.Z,
 			},
-			RotationY:   player.GetRotation(),
-			Gender:      player.GetGender(),
-			Speed:       player.GetSpeed(),
-			WeaponName:  player.GetWeaponName(),
-			WeaponType:  player.GetWeaponType(),
-			WeaponState: player.GetWeaponState(),
+			RotationY:     player.GetRotation(),
+			Gender:        player.GetGender(),
+			Speed:         player.GetSpeed(),
+			CurrentWeapon: player.GetCurrentWeapon(),
+			Weapons:       pbSlots,
 		},
 	}
 }
@@ -146,12 +162,10 @@ func NewChatBubble(isActive bool) Payload {
 }
 
 // Sent by both client and server to broadcast weapon state
-func NewSwitchWeapon(weaponName, weaponType, weaponState string) Payload {
+func NewSwitchWeapon(slot uint64) Payload {
 	return &Packet_SwitchWeapon{
 		SwitchWeapon: &SwitchWeapon{
-			WeaponName:  weaponName,
-			WeaponType:  weaponType,
-			WeaponState: weaponState,
+			Slot: slot,
 		},
 	}
 }

@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+var createUserMutex sync.Mutex
+
 // The hub is the entry point for all connected clients and the only go routine
 // that should write to the database. It also keeps track of every available region
 // within the server.
@@ -368,6 +370,9 @@ func (h *Hub) GetConnectedAccounts() uint64 {
 
 // DATABASE USER OPERATIONS HANDLERS
 func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.User, error) {
+	createUserMutex.Lock()
+	defer createUserMutex.Unlock()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -402,9 +407,6 @@ func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.Us
 		Speed:     2,             // Create character with speed set to jog
 		RotationY: objects.SOUTH, // Always spawn looking south when creating the character
 		// Weapon data
-		WeaponName:  "unarmed",
-		WeaponType:  "unarmed",
-		WeaponState: "idle",
 	})
 	if err != nil {
 		return db.User{}, fmt.Errorf("create character: %w", err)
@@ -418,13 +420,27 @@ func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.Us
 		return db.User{}, fmt.Errorf("set character id: %w", err)
 	}
 
-	// Get complete user data before committing
+	// Step 4: Initialize and save default weapon slots
+	defaultSlots := []*objects.WeaponSlot{
+		{WeaponName: "unarmed", WeaponType: "unarmed", DisplayName: "Empty", Ammo: 0, FireMode: 0},
+		{WeaponName: "akm_rifle", WeaponType: "rifle", DisplayName: "AKM Rifle", Ammo: 30, FireMode: 0},
+		{WeaponName: "m16_rifle", WeaponType: "rifle", DisplayName: "M16 Rifle", Ammo: 30, FireMode: 0},
+		{WeaponName: "unarmed", WeaponType: "unarmed", DisplayName: "Empty", Ammo: 0, FireMode: 0},
+		{WeaponName: "unarmed", WeaponType: "unarmed", DisplayName: "Empty", Ammo: 0, FireMode: 0},
+	}
+
+	// Step 5: Execute bulk insert using helper function
+	if err := db.BulkInsertWeaponSlots(ctx, tx, character.ID, defaultSlots); err != nil {
+		return db.User{}, fmt.Errorf("bulk insert weapon slots: %w", err)
+	}
+
+	// Step 6: Get complete user data before committing
 	fullUser, err := q.GetUserByID(ctx, user.ID)
 	if err != nil {
 		return db.User{}, fmt.Errorf("get user: %w", err)
 	}
 
-	// Commit transaction
+	// Step 7: Commit transaction
 	if err := tx.Commit(); err != nil {
 		return db.User{}, fmt.Errorf("commit transaction: %w", err)
 	}
@@ -447,25 +463,66 @@ func (h *Hub) GetUserByNickname(nickname string) (db.User, error) {
 
 // DATABASE CHARACTER OPERATIONS HANDLERS
 func (h *Hub) SaveCharacter(client Client) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
+	tx, err := h.Database.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback()
 
 	character := client.GetPlayerCharacter()
 
-	return h.queries.UpdateFullCharacterData(ctx, db.UpdateFullCharacterDataParams{
-		RegionID:    int64(character.GetRegionId()),
-		MapID:       int64(character.GetMapId()),
-		X:           int64(character.GetGridPosition().X),
-		Z:           int64(character.GetGridPosition().Z),
-		Hp:          int64(100), // TO FIX Create character.GetHealth()
-		MaxHp:       int64(100), // TO FIX Create character.GetMaxHealth()
-		Speed:       int64(character.GetSpeed()),
-		RotationY:   float64(character.GetRotation()),
-		WeaponName:  character.GetWeaponName(),
-		WeaponType:  character.GetWeaponType(),
-		WeaponState: character.GetWeaponState(),
-		ID:          client.GetCharacterId(), // Character ID to find it in the DB
+	// Save character data
+	err = h.queries.UpdateFullCharacterData(ctx, db.UpdateFullCharacterDataParams{
+		RegionID:  int64(character.GetRegionId()),
+		MapID:     int64(character.GetMapId()),
+		X:         int64(character.GetGridPosition().X),
+		Z:         int64(character.GetGridPosition().Z),
+		Hp:        int64(100), // TO FIX Create character.GetHealth()
+		MaxHp:     int64(100), // TO FIX Create character.GetMaxHealth()
+		Speed:     int64(character.GetSpeed()),
+		RotationY: float64(character.GetRotation()),
+		ID:        client.GetCharacterId(), // Character ID to find it in the DB
 	})
+	if err != nil {
+		return fmt.Errorf("update character data: %w", err)
+	}
+
+	// Delete all weapon slots
+	err = h.queries.DeleteWeaponSlots(ctx, client.GetCharacterId())
+	if err != nil {
+		return fmt.Errorf("delete weapon slots: %w", err)
+	}
+
+	// Insert new slots
+	for slot := 0; slot < 5; slot++ {
+		weapon := character.GetWeaponSlot(uint64(slot))
+		if weapon == nil {
+			continue
+		}
+
+		err = h.queries.InsertWeaponSlot(ctx, db.InsertWeaponSlotParams{
+			CharacterID: client.GetCharacterId(),
+			SlotIndex:   int64(slot),
+			WeaponName:  weapon.WeaponName,
+			WeaponType:  weapon.WeaponType,
+			DisplayName: weapon.DisplayName,
+			Ammo:        int64(weapon.Ammo),
+			FireMode:    int64(weapon.FireMode),
+		})
+		if err != nil {
+			return fmt.Errorf("insert weapon slot %d: %w", slot, err)
+		}
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+
+	return nil
 }
 
 func (h *Hub) LoadCharacterPosition(client Client) (*db.GetCharacterPositionRow, error) {
@@ -480,14 +537,57 @@ func (h *Hub) LoadCharacterPosition(client Client) (*db.GetCharacterPositionRow,
 	return &position, nil
 }
 
-func (h *Hub) GetFullCharacterData(characterId int64) (*db.GetFullCharacterDataRow, error) {
+// Returns character and weapons as separate
+func (h *Hub) GetFullCharacterData(characterId int64) (*db.GetFullCharacterDataRow, *[]*objects.WeaponSlot, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	character, err := h.queries.GetFullCharacterData(ctx, characterId)
 	if err != nil {
-		return nil, fmt.Errorf("load full character data: %w", err)
+		return nil, nil, fmt.Errorf("load full character data: %w", err)
 	}
 
-	return &character, nil
+	weapons, err := h.LoadWeaponSlots(character.ID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("load full weapon data: %w", err)
+	}
+
+	return &character, weapons, nil
+}
+
+func (h *Hub) LoadWeaponSlots(characterId int64) (*[]*objects.WeaponSlot, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := h.queries.LoadWeaponSlots(ctx, characterId)
+	if err != nil {
+		return nil, fmt.Errorf("load weapon slots: %w", err)
+	}
+
+	slots := make([]*objects.WeaponSlot, 5)
+	// Initialize empty slots
+	for i := 0; i < 5; i++ {
+		slots[i] = &objects.WeaponSlot{
+			WeaponName:  "unarmed",
+			WeaponType:  "unarmed",
+			DisplayName: "Empty",
+			Ammo:        0,
+			FireMode:    0,
+		}
+	}
+
+	for _, row := range rows {
+		slotIndex := row.SlotIndex
+		if slotIndex < 5 {
+			slots[slotIndex] = &objects.WeaponSlot{
+				WeaponName:  row.WeaponName,
+				WeaponType:  row.WeaponType,
+				DisplayName: row.DisplayName,
+				Ammo:        uint64(row.Ammo),
+				FireMode:    uint64(row.FireMode),
+			}
+		}
+	}
+
+	return &slots, nil
 }

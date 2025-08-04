@@ -6,16 +6,25 @@ import (
 )
 
 const (
-	MAX_SPEED uint64  = 3
-	NORTH     float64 = math.Pi          // 180°
-	SOUTH     float64 = 0                // 0°
-	EAST      float64 = math.Pi / 2      // 90°
-	WEST      float64 = -math.Pi / 2     // -90°
-	NORTHEAST float64 = 3 * math.Pi / 4  // 135°
-	NORTHWEST float64 = -3 * math.Pi / 4 // -135°
-	SOUTHEAST float64 = math.Pi / 4      // 45°
-	SOUTHWEST float64 = -math.Pi / 4     // -45°
+	MAX_SPEED        uint64  = 3
+	MAX_WEAPON_SLOTS uint64  = 5
+	NORTH            float64 = math.Pi          // 180°
+	SOUTH            float64 = 0                // 0°
+	EAST             float64 = math.Pi / 2      // 90°
+	WEST             float64 = -math.Pi / 2     // -90°
+	NORTHEAST        float64 = 3 * math.Pi / 4  // 135°
+	NORTHWEST        float64 = -3 * math.Pi / 4 // -135°
+	SOUTHEAST        float64 = math.Pi / 4      // 45°
+	SOUTHWEST        float64 = -math.Pi / 4     // -45°
 )
+
+type WeaponSlot struct {
+	WeaponName  string
+	WeaponType  string
+	DisplayName string
+	Ammo        uint64
+	FireMode    uint64
+}
 
 type Player struct {
 	Name string
@@ -34,10 +43,9 @@ type Player struct {
 	Experience uint64
 	// Attributes
 	speed uint64 // Cells per tick
-	// Equipped Weapon Data
-	weaponName  string
-	weaponType  string
-	weaponState string
+	// Weapon state
+	currentWeapon uint64
+	weapons       []*WeaponSlot // Array of weapon slots
 }
 
 // RegionId get/set
@@ -97,30 +105,42 @@ func (player *Player) SetGender(newGender string) {
 	player.gender = newGender
 }
 
-// Weapon Name/Type get/set
-func (player *Player) GetWeaponName() string {
-	return player.weaponName
+// Current weapon slot get/set
+func (player *Player) GetCurrentWeapon() uint64 {
+	return player.currentWeapon
 }
-func (player *Player) GetWeaponType() string {
-	return player.weaponType
-}
-
-// TO FIX
-// This should probably check against some kind of list of weapons to make sure the name and type are valid
-func (player *Player) SetWeapon(newWeaponName, newWeaponType string) {
-	player.weaponName = newWeaponName
-	player.weaponType = newWeaponType
+func (player *Player) SetCurrentWeapon(slot uint64) {
+	if slot < MAX_WEAPON_SLOTS {
+		player.currentWeapon = slot
+	}
 }
 
-// Weapon State Machine get/set
-func (player *Player) GetWeaponState() string {
-	return player.weaponState
+// Weapon Slot get/set
+func (player *Player) GetWeaponSlot(slot uint64) *WeaponSlot {
+	if slot < MAX_WEAPON_SLOTS {
+		return player.weapons[slot]
+	}
+	return nil
+}
+func (player *Player) SetWeaponSlot(slot uint64, weaponName, weaponType, displayName string, ammo, fireMode uint64) {
+	if slot < MAX_WEAPON_SLOTS {
+		player.weapons[slot] = &WeaponSlot{
+			WeaponName:  weaponName,
+			WeaponType:  weaponType,
+			DisplayName: displayName,
+			Ammo:        ammo,
+			FireMode:    fireMode,
+		}
+	}
 }
 
-// TO FIX
-// This should probably check against some kind of list of states to make sure the state is valid
-func (player *Player) SetWeaponState(newWeaponState string) {
-	player.weaponState = newWeaponState
+// Weapons get/set
+func (player *Player) GetWeapons() *[]*WeaponSlot {
+	return &player.weapons
+}
+func (player *Player) SetWeapons(newWeapons []*WeaponSlot) {
+	player.weapons = newWeapons
+
 }
 
 // Static function to create a new player
@@ -129,9 +149,8 @@ func CreatePlayer(
 	gender string,
 	speed uint64,
 	rotationY float64,
-	weaponName string,
-	weaponType string,
-	weaponState string,
+	currentWeapon uint64,
+	weapons []*WeaponSlot,
 	// Stats
 	level uint64,
 	experience uint64,
@@ -149,9 +168,8 @@ func CreatePlayer(
 		// Attributes
 		speed: speed,
 		// Equipped Weapon Data
-		weaponName:  weaponName,
-		weaponType:  weaponType,
-		weaponState: weaponState,
+		currentWeapon: currentWeapon,
+		weapons:       weapons,
 	}
 }
 

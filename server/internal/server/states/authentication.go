@@ -159,7 +159,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	// Register this username in our Hub's usernameToClient map for 0(1) lookups
 	state.client.GetHub().RegisterUsername(username, state.client.GetId())
 
-	character, err := state.client.GetHub().GetFullCharacterData(user.CharacterID.Int64)
+	character, weapons, err := state.client.GetHub().GetFullCharacterData(user.CharacterID.Int64)
 
 	// If we got an error trying to load this character from database
 	if err != nil {
@@ -180,9 +180,8 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 		uint64(character.Speed),
 		character.RotationY,
 		// Weapon Data
-		character.WeaponName,
-		character.WeaponType,
-		character.WeaponState,
+		0, // FIX THIS SHIT TO LOAD from somewhere the current weapon index?
+		*weapons,
 		// Stats
 		level, experience,
 		// Atributes
