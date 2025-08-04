@@ -471,6 +471,16 @@ func _create_join_region_request_packet(region_id: int) -> Packets.Packet:
 	return packet
 
 
+# Creates and returns a switch_weapon packet
+func create_switch_weapon_packet(weapon_name: String, weapon_type: String, weapon_state: String) -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	var switch_weapon_packet := packet.new_switch_weapon()
+	switch_weapon_packet.set_weapon_name(weapon_name)
+	switch_weapon_packet.set_weapon_type(weapon_type)
+	switch_weapon_packet.set_weapon_state(weapon_state)
+	return packet
+
+
 ################
 # PACKETS SENT #
 ################
@@ -484,6 +494,12 @@ func request_switch_region(new_region: int) -> void:
 # Request the server to change the movement speed of my player
 func _handle_signal_ui_update_speed_button(new_move_speed: int) -> void:
 	var packet: Packets.Packet = _create_update_speed_packet(new_move_speed)
+	WebSocket.send(packet)
+
+
+# Creates and sends a packet to the server to inform we switched our weapon
+func send_switch_weapon_packet(weapon_name: String, weapon_type: String, weapon_state: String) -> void:
+	var packet: Packets.Packet = create_switch_weapon_packet(weapon_name, weapon_type, weapon_state)
 	WebSocket.send(packet)
 
 

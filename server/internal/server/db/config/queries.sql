@@ -21,8 +21,8 @@ LIMIT 1;
 
 -- Character Operations
 -- name: CreateCharacter :one
-INSERT INTO characters (user_id, gender, region_id, map_id, x, z, hp, max_hp, speed, rotation_y)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO characters (user_id, gender, region_id, map_id, x, z, hp, max_hp, speed, rotation_y, weapon_name, weapon_type, weapon_state)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: SetUserCharacterID :exec
@@ -36,12 +36,15 @@ SELECT * FROM characters WHERE user_id = ?;
 
 -- name: UpdateFullCharacterData :exec
 UPDATE characters
-SET region_id = ?, map_id = ?, x = ?, z = ?, hp = ?, max_hp = ?, speed = ?, rotation_y = ?
+SET
+  region_id = ?, map_id = ?, x = ?, z = ?, hp = ?, max_hp = ?, speed = ?, rotation_y = ?,
+  weapon_name = ?, weapon_type = ?, weapon_state = ?
 WHERE id = ?;
 
 -- name: GetFullCharacterData :one
 SELECT
   c.id, c.gender, c.region_id, c.map_id, c.x, c.z, c.hp, c.max_hp, c.speed, c.rotation_y,
+  c.weapon_name, c.weapon_type, c.weapon_state,
   u.username, u.nickname
 FROM characters c
 JOIN users u ON c.user_id = u.id

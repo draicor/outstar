@@ -179,6 +179,10 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 		character.Gender,
 		uint64(character.Speed),
 		character.RotationY,
+		// Weapon Data
+		character.WeaponName,
+		character.WeaponType,
+		character.WeaponState,
 		// Stats
 		level, experience,
 		// Atributes

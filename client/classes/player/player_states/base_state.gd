@@ -49,14 +49,16 @@ func switch_weapon(slot: int) -> void:
 	
 	equipment.switch_weapon_by_slot(slot) # <-- Calls unequip and equip weapon
 	
-	# If slot has a weapon, equip it
-	if equipment.weapon_slots[slot]["weapon_name"] != "":
-		var weapon_type: String = equipment.weapon_slots[slot]["weapon_type"]
-		if animator.get_weapon_animation("equip", weapon_type) != {}:
-			await animator.play_weapon_animation_and_await("equip", weapon_type)
-			equipment.update_hud_ammo()
-		
-		# Switch to the correct weapon state based on weapon type
+	# Check if slot has a valid weapon
+	var weapon_name: String = equipment.weapon_slots[slot]["weapon_name"]
+	var weapon_type: String = equipment.weapon_slots[slot]["weapon_type"]
+	if weapon_name != "" and weapon_type != "":
 		var weapon_state: String = equipment.get_weapon_state_by_weapon_type(weapon_type)
 		if weapon_state != "":
+			# Report to the server we'll switch weapons
+			player.send_switch_weapon_packet(weapon_name, weapon_type, weapon_state)
+			# Switch to the correct weapon state based on weapon type
+			if animator.get_weapon_animation("equip", weapon_type) != {}:
+				await animator.play_weapon_animation_and_await("equip", weapon_type)
+				equipment.update_hud_ammo()
 			player.player_state_machine.change_state(weapon_state)

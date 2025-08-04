@@ -1504,6 +1504,21 @@ class UpdatePlayer:
 		service.field = __speed
 		data[__speed.tag] = service
 		
+		__weapon_name = PBField.new("weapon_name", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = __weapon_name
+		data[__weapon_name.tag] = service
+		
+		__weapon_type = PBField.new("weapon_type", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 8, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = __weapon_type
+		data[__weapon_type.tag] = service
+		
+		__weapon_state = PBField.new("weapon_state", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 9, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = __weapon_state
+		data[__weapon_state.tag] = service
+		
 	var data = {}
 	
 	var __id: PBField
@@ -1584,6 +1599,45 @@ class UpdatePlayer:
 		__speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_speed(value : int) -> void:
 		__speed.value = value
+	
+	var __weapon_name: PBField
+	func has_weapon_name() -> bool:
+		if __weapon_name.value != null:
+			return true
+		return false
+	func get_weapon_name() -> String:
+		return __weapon_name.value
+	func clear_weapon_name() -> void:
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		__weapon_name.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_weapon_name(value : String) -> void:
+		__weapon_name.value = value
+	
+	var __weapon_type: PBField
+	func has_weapon_type() -> bool:
+		if __weapon_type.value != null:
+			return true
+		return false
+	func get_weapon_type() -> String:
+		return __weapon_type.value
+	func clear_weapon_type() -> void:
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		__weapon_type.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_weapon_type(value : String) -> void:
+		__weapon_type.value = value
+	
+	var __weapon_state: PBField
+	func has_weapon_state() -> bool:
+		if __weapon_state.value != null:
+			return true
+		return false
+	func get_weapon_state() -> String:
+		return __weapon_state.value
+	func clear_weapon_state() -> void:
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		__weapon_state.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_weapon_state(value : String) -> void:
+		__weapon_state.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1759,6 +1813,87 @@ class ChatBubble:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
+class SwitchWeapon:
+	func _init():
+		var service
+		
+		__weapon_name = PBField.new("weapon_name", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = __weapon_name
+		data[__weapon_name.tag] = service
+		
+		__weapon_type = PBField.new("weapon_type", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = __weapon_type
+		data[__weapon_type.tag] = service
+		
+		__weapon_state = PBField.new("weapon_state", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		service = PBServiceField.new()
+		service.field = __weapon_state
+		data[__weapon_state.tag] = service
+		
+	var data = {}
+	
+	var __weapon_name: PBField
+	func has_weapon_name() -> bool:
+		if __weapon_name.value != null:
+			return true
+		return false
+	func get_weapon_name() -> String:
+		return __weapon_name.value
+	func clear_weapon_name() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__weapon_name.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_weapon_name(value : String) -> void:
+		__weapon_name.value = value
+	
+	var __weapon_type: PBField
+	func has_weapon_type() -> bool:
+		if __weapon_type.value != null:
+			return true
+		return false
+	func get_weapon_type() -> String:
+		return __weapon_type.value
+	func clear_weapon_type() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__weapon_type.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_weapon_type(value : String) -> void:
+		__weapon_type.value = value
+	
+	var __weapon_state: PBField
+	func has_weapon_state() -> bool:
+		if __weapon_state.value != null:
+			return true
+		return false
+	func get_weapon_state() -> String:
+		return __weapon_state.value
+	func clear_weapon_state() -> void:
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__weapon_state.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_weapon_state(value : String) -> void:
+		__weapon_state.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
 class Packet:
 	func _init():
 		var service
@@ -1882,6 +2017,12 @@ class Packet:
 		service.func_ref = Callable(self, "new_chat_bubble")
 		data[__chat_bubble.tag] = service
 		
+		__switch_weapon = PBField.new("switch_weapon", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 21, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = __switch_weapon
+		service.func_ref = Callable(self, "new_switch_weapon")
+		data[__switch_weapon.tag] = service
+		
 	var data = {}
 	
 	var __sender_id: PBField
@@ -1945,6 +2086,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__public_message.value = PublicMessage.new()
 		return __public_message.value
 	
@@ -1996,6 +2139,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__handshake.value = Handshake.new()
 		return __handshake.value
 	
@@ -2047,6 +2192,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__heartbeat.value = Heartbeat.new()
 		return __heartbeat.value
 	
@@ -2098,6 +2245,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__server_metrics.value = ServerMetrics.new()
 		return __server_metrics.value
 	
@@ -2149,6 +2298,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__request_granted.value = RequestGranted.new()
 		return __request_granted.value
 	
@@ -2200,6 +2351,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__request_denied.value = RequestDenied.new()
 		return __request_denied.value
 	
@@ -2251,6 +2404,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__login_request.value = LoginRequest.new()
 		return __login_request.value
 	
@@ -2302,6 +2457,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__register_request.value = RegisterRequest.new()
 		return __register_request.value
 	
@@ -2353,6 +2510,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__login_success.value = LoginSuccess.new()
 		return __login_success.value
 	
@@ -2404,6 +2563,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__logout_request.value = LogoutRequest.new()
 		return __logout_request.value
 	
@@ -2455,6 +2616,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__client_entered.value = ClientEntered.new()
 		return __client_entered.value
 	
@@ -2506,6 +2669,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__client_left.value = ClientLeft.new()
 		return __client_left.value
 	
@@ -2557,6 +2722,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = JoinRegionRequest.new()
 		return __join_region_request.value
 	
@@ -2608,6 +2775,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__region_data.value = RegionData.new()
 		return __region_data.value
 	
@@ -2659,6 +2828,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = Position.new()
 		return __position.value
 	
@@ -2710,6 +2881,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__update_player.value = UpdatePlayer.new()
 		return __update_player.value
 	
@@ -2761,6 +2934,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__player_destination.value = PlayerDestination.new()
 		return __player_destination.value
 	
@@ -2812,6 +2987,8 @@ class Packet:
 		data[19].state = PB_SERVICE_STATE.FILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = UpdateSpeed.new()
 		return __update_speed.value
 	
@@ -2863,8 +3040,63 @@ class Packet:
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
 		data[20].state = PB_SERVICE_STATE.FILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = ChatBubble.new()
 		return __chat_bubble.value
+	
+	var __switch_weapon: PBField
+	func has_switch_weapon() -> bool:
+		if __switch_weapon.value != null:
+			return true
+		return false
+	func get_switch_weapon() -> SwitchWeapon:
+		return __switch_weapon.value
+	func clear_switch_weapon() -> void:
+		data[21].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_switch_weapon() -> SwitchWeapon:
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		__server_metrics.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		__logout_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
+		data[21].state = PB_SERVICE_STATE.FILLED
+		__switch_weapon.value = SwitchWeapon.new()
+		return __switch_weapon.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

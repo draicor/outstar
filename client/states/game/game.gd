@@ -86,6 +86,8 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_handle_region_data_packet(packet.get_region_data())
 	elif packet.has_chat_bubble():
 		_handle_chat_bubble_packet(sender_id, packet.get_chat_bubble())
+	elif packet.has_switch_weapon():
+		_handle_switch_weapon_packet(sender_id, packet.get_switch_weapon())
 
 # Print the message into our chat window and update that player's chat bubble
 func _handle_public_message_packet(sender_id: int, packet_public_message: Packets.PublicMessage) -> void:
@@ -345,3 +347,16 @@ func _handle_chat_bubble_packet(sender_id: int, chat_bubble_packet: Packets.Chat
 		if player:
 			# Toggle the chat bubble for this player
 			player.toggle_chat_bubble_icon(chat_bubble_packet.get_is_active())
+
+
+# Used to switch the weapon of this character
+func _handle_switch_weapon_packet(sender_id: int, switch_weapon_packet: Packets.SwitchWeapon) -> void:
+	# If the id is on our players dictionary
+	if sender_id in _players:
+		# Attempt to retrieve the player character object
+		var player: Player = _players[sender_id]
+		# If its valid
+		if player:
+			print(switch_weapon_packet.get_weapon_name())
+			print(switch_weapon_packet.get_weapon_type())
+			print(switch_weapon_packet.get_weapon_state())

@@ -214,6 +214,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_ChatBubble:
 			state.HandleChatBubble(casted_payload.ChatBubble)
 
+		// SWITCH WEAPON
+		case *packets.Packet_SwitchWeapon:
+			state.HandleSwitchWeapon(casted_payload.SwitchWeapon)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -358,6 +362,18 @@ func (state *Game) HandleLogoutRequest() {
 // Broadcast to everybody we either opened/closed our chat input
 func (state *Game) HandleChatBubble(payload *packets.ChatBubble) {
 	state.client.Broadcast(packets.NewChatBubble(payload.GetIsActive()))
+}
+
+func (state *Game) HandleSwitchWeapon(payload *packets.SwitchWeapon) {
+	// Update player state
+	state.player.SetWeapon(payload.WeaponName, payload.WeaponType)
+	state.player.SetWeaponState(payload.WeaponState)
+
+	// Broadcast update to everyone in the region
+	state.client.Broadcast(packets.NewSwitchWeapon(
+		state.player.GetWeaponName(),
+		state.player.GetWeaponType(),
+		state.player.GetWeaponState()))
 }
 
 // Executed automatically when a client leaves the game state

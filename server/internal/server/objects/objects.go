@@ -34,6 +34,10 @@ type Player struct {
 	Experience uint64
 	// Attributes
 	speed uint64 // Cells per tick
+	// Equipped Weapon Data
+	weaponName  string
+	weaponType  string
+	weaponState string
 }
 
 // RegionId get/set
@@ -93,12 +97,41 @@ func (player *Player) SetGender(newGender string) {
 	player.gender = newGender
 }
 
+// Weapon Name/Type get/set
+func (player *Player) GetWeaponName() string {
+	return player.weaponName
+}
+func (player *Player) GetWeaponType() string {
+	return player.weaponType
+}
+
+// TO FIX
+// This should probably check against some kind of list of weapons to make sure the name and type are valid
+func (player *Player) SetWeapon(newWeaponName, newWeaponType string) {
+	player.weaponName = newWeaponName
+	player.weaponType = newWeaponType
+}
+
+// Weapon State Machine get/set
+func (player *Player) GetWeaponState() string {
+	return player.weaponState
+}
+
+// TO FIX
+// This should probably check against some kind of list of states to make sure the state is valid
+func (player *Player) SetWeaponState(newWeaponState string) {
+	player.weaponState = newWeaponState
+}
+
 // Static function to create a new player
 func CreatePlayer(
 	name string,
 	gender string,
 	speed uint64,
 	rotationY float64,
+	weaponName string,
+	weaponType string,
+	weaponState string,
 	// Stats
 	level uint64,
 	experience uint64,
@@ -115,6 +148,10 @@ func CreatePlayer(
 		Experience: experience,
 		// Attributes
 		speed: speed,
+		// Equipped Weapon Data
+		weaponName:  weaponName,
+		weaponType:  weaponType,
+		weaponState: weaponState,
 	}
 }
 

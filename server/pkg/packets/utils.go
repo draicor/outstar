@@ -117,9 +117,12 @@ func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
 				X: position.X,
 				Z: position.Z,
 			},
-			RotationY: player.GetRotation(),
-			Gender:    player.GetGender(),
-			Speed:     player.GetSpeed(),
+			RotationY:   player.GetRotation(),
+			Gender:      player.GetGender(),
+			Speed:       player.GetSpeed(),
+			WeaponName:  player.GetWeaponName(),
+			WeaponType:  player.GetWeaponType(),
+			WeaponState: player.GetWeaponState(),
 		},
 	}
 }
@@ -138,6 +141,17 @@ func NewChatBubble(isActive bool) Payload {
 	return &Packet_ChatBubble{
 		ChatBubble: &ChatBubble{
 			IsActive: isActive,
+		},
+	}
+}
+
+// Sent by both client and server to broadcast weapon state
+func NewSwitchWeapon(weaponName, weaponType, weaponState string) Payload {
+	return &Packet_SwitchWeapon{
+		SwitchWeapon: &SwitchWeapon{
+			WeaponName:  weaponName,
+			WeaponType:  weaponType,
+			WeaponState: weaponState,
 		},
 	}
 }

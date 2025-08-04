@@ -9,17 +9,20 @@ import (
 )
 
 type Character struct {
-	ID        int64
-	UserID    int64
-	Gender    string
-	RegionID  int64
-	MapID     int64
-	X         int64
-	Z         int64
-	Hp        int64
-	MaxHp     int64
-	Speed     int64
-	RotationY float64
+	ID          int64
+	UserID      int64
+	Gender      string
+	RegionID    int64
+	MapID       int64
+	X           int64
+	Z           int64
+	Hp          int64
+	MaxHp       int64
+	Speed       int64
+	RotationY   float64
+	WeaponName  string
+	WeaponType  string
+	WeaponState string
 }
 
 type User struct {
