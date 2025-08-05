@@ -357,6 +357,8 @@ func _handle_switch_weapon_packet(sender_id: int, switch_weapon_packet: Packets.
 		var player: Player = _players[sender_id]
 		# If its valid
 		if player:
-			print(switch_weapon_packet.get_weapon_name())
-			print(switch_weapon_packet.get_weapon_type())
-			print(switch_weapon_packet.get_weapon_state())
+			# Get this player's current state
+			var current_state: BaseState = player.player_state_machine.get_current_state()
+			if current_state:
+				# Call the switch weapon method
+				current_state.switch_weapon(switch_weapon_packet.get_slot(), false)

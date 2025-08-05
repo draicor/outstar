@@ -1504,20 +1504,17 @@ class UpdatePlayer:
 		service.field = __speed
 		data[__speed.tag] = service
 		
-		__weapon_name = PBField.new("weapon_name", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__current_weapon = PBField.new("current_weapon", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = __weapon_name
-		data[__weapon_name.tag] = service
+		service.field = __current_weapon
+		data[__current_weapon.tag] = service
 		
-		__weapon_type = PBField.new("weapon_type", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 8, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		var __weapons_default: Array[WeaponSlot] = []
+		__weapons = PBField.new("weapons", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 8, true, __weapons_default)
 		service = PBServiceField.new()
-		service.field = __weapon_type
-		data[__weapon_type.tag] = service
-		
-		__weapon_state = PBField.new("weapon_state", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 9, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
-		service = PBServiceField.new()
-		service.field = __weapon_state
-		data[__weapon_state.tag] = service
+		service.field = __weapons
+		service.func_ref = Callable(self, "add_weapons")
+		data[__weapons.tag] = service
 		
 	var data = {}
 	
@@ -1600,44 +1597,29 @@ class UpdatePlayer:
 	func set_speed(value : int) -> void:
 		__speed.value = value
 	
-	var __weapon_name: PBField
-	func has_weapon_name() -> bool:
-		if __weapon_name.value != null:
+	var __current_weapon: PBField
+	func has_current_weapon() -> bool:
+		if __current_weapon.value != null:
 			return true
 		return false
-	func get_weapon_name() -> String:
-		return __weapon_name.value
-	func clear_weapon_name() -> void:
+	func get_current_weapon() -> int:
+		return __current_weapon.value
+	func clear_current_weapon() -> void:
 		data[7].state = PB_SERVICE_STATE.UNFILLED
-		__weapon_name.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
-	func set_weapon_name(value : String) -> void:
-		__weapon_name.value = value
+		__current_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_current_weapon(value : int) -> void:
+		__current_weapon.value = value
 	
-	var __weapon_type: PBField
-	func has_weapon_type() -> bool:
-		if __weapon_type.value != null:
-			return true
-		return false
-	func get_weapon_type() -> String:
-		return __weapon_type.value
-	func clear_weapon_type() -> void:
+	var __weapons: PBField
+	func get_weapons() -> Array[WeaponSlot]:
+		return __weapons.value
+	func clear_weapons() -> void:
 		data[8].state = PB_SERVICE_STATE.UNFILLED
-		__weapon_type.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
-	func set_weapon_type(value : String) -> void:
-		__weapon_type.value = value
-	
-	var __weapon_state: PBField
-	func has_weapon_state() -> bool:
-		if __weapon_state.value != null:
-			return true
-		return false
-	func get_weapon_state() -> String:
-		return __weapon_state.value
-	func clear_weapon_state() -> void:
-		data[9].state = PB_SERVICE_STATE.UNFILLED
-		__weapon_state.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
-	func set_weapon_state(value : String) -> void:
-		__weapon_state.value = value
+		__weapons.value.clear()
+	func add_weapons() -> WeaponSlot:
+		var element = WeaponSlot.new()
+		__weapons.value.append(element)
+		return element
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -1817,22 +1799,95 @@ class SwitchWeapon:
 	func _init():
 		var service
 		
-		__weapon_name = PBField.new("weapon_name", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__slot = PBField.new("slot", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __slot
+		data[__slot.tag] = service
+		
+	var data = {}
+	
+	var __slot: PBField
+	func has_slot() -> bool:
+		if __slot.value != null:
+			return true
+		return false
+	func get_slot() -> int:
+		return __slot.value
+	func clear_slot() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__slot.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_slot(value : int) -> void:
+		__slot.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
+class WeaponSlot:
+	func _init():
+		var service
+		
+		__slot_index = PBField.new("slot_index", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __slot_index
+		data[__slot_index.tag] = service
+		
+		__weapon_name = PBField.new("weapon_name", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
 		service.field = __weapon_name
 		data[__weapon_name.tag] = service
 		
-		__weapon_type = PBField.new("weapon_type", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__weapon_type = PBField.new("weapon_type", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
 		service.field = __weapon_type
 		data[__weapon_type.tag] = service
 		
-		__weapon_state = PBField.new("weapon_state", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
+		__display_name = PBField.new("display_name", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
-		service.field = __weapon_state
-		data[__weapon_state.tag] = service
+		service.field = __display_name
+		data[__display_name.tag] = service
+		
+		__ammo = PBField.new("ammo", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __ammo
+		data[__ammo.tag] = service
+		
+		__fire_mode = PBField.new("fire_mode", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __fire_mode
+		data[__fire_mode.tag] = service
 		
 	var data = {}
+	
+	var __slot_index: PBField
+	func has_slot_index() -> bool:
+		if __slot_index.value != null:
+			return true
+		return false
+	func get_slot_index() -> int:
+		return __slot_index.value
+	func clear_slot_index() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__slot_index.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_slot_index(value : int) -> void:
+		__slot_index.value = value
 	
 	var __weapon_name: PBField
 	func has_weapon_name() -> bool:
@@ -1842,7 +1897,7 @@ class SwitchWeapon:
 	func get_weapon_name() -> String:
 		return __weapon_name.value
 	func clear_weapon_name() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
+		data[2].state = PB_SERVICE_STATE.UNFILLED
 		__weapon_name.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_weapon_name(value : String) -> void:
 		__weapon_name.value = value
@@ -1855,23 +1910,49 @@ class SwitchWeapon:
 	func get_weapon_type() -> String:
 		return __weapon_type.value
 	func clear_weapon_type() -> void:
-		data[2].state = PB_SERVICE_STATE.UNFILLED
+		data[3].state = PB_SERVICE_STATE.UNFILLED
 		__weapon_type.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
 	func set_weapon_type(value : String) -> void:
 		__weapon_type.value = value
 	
-	var __weapon_state: PBField
-	func has_weapon_state() -> bool:
-		if __weapon_state.value != null:
+	var __display_name: PBField
+	func has_display_name() -> bool:
+		if __display_name.value != null:
 			return true
 		return false
-	func get_weapon_state() -> String:
-		return __weapon_state.value
-	func clear_weapon_state() -> void:
-		data[3].state = PB_SERVICE_STATE.UNFILLED
-		__weapon_state.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
-	func set_weapon_state(value : String) -> void:
-		__weapon_state.value = value
+	func get_display_name() -> String:
+		return __display_name.value
+	func clear_display_name() -> void:
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		__display_name.value = DEFAULT_VALUES_3[PB_DATA_TYPE.STRING]
+	func set_display_name(value : String) -> void:
+		__display_name.value = value
+	
+	var __ammo: PBField
+	func has_ammo() -> bool:
+		if __ammo.value != null:
+			return true
+		return false
+	func get_ammo() -> int:
+		return __ammo.value
+	func clear_ammo() -> void:
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		__ammo.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_ammo(value : int) -> void:
+		__ammo.value = value
+	
+	var __fire_mode: PBField
+	func has_fire_mode() -> bool:
+		if __fire_mode.value != null:
+			return true
+		return false
+	func get_fire_mode() -> int:
+		return __fire_mode.value
+	func clear_fire_mode() -> void:
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		__fire_mode.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_fire_mode(value : int) -> void:
+		__fire_mode.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

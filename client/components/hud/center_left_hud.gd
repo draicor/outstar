@@ -24,20 +24,26 @@ extends Control
 
 
 func _on_weapon_one_button_pressed() -> void:
-	Signals.ui_hud_weapon_slot.emit(0)
+	_handle_weapon_switch(0)
 
 
 func _on_weapon_two_button_pressed() -> void:
-	Signals.ui_hud_weapon_slot.emit(1)
+	_handle_weapon_switch(1)
 
 
 func _on_weapon_three_button_pressed() -> void:
-	Signals.ui_hud_weapon_slot.emit(2)
+	_handle_weapon_switch(2)
 
 
 func _on_weapon_four_button_pressed() -> void:
-	Signals.ui_hud_weapon_slot.emit(3)
+	_handle_weapon_switch(3)
 
 
 func _on_weapon_five_button_pressed() -> void:
-	Signals.ui_hud_weapon_slot.emit(4)
+	_handle_weapon_switch(4)
+
+
+func _handle_weapon_switch(weapon_slot: int) -> void:
+	if GameManager.player_character.my_player_character:
+		if GameManager.player_character.player_equipment.current_slot != weapon_slot:
+			Signals.ui_hud_weapon_slot.emit(weapon_slot, true)

@@ -43,6 +43,14 @@ func get_current_state_name() -> String:
 		return ""
 
 
+# Returns the current state
+func get_current_state() -> BaseState:
+	if current_state:
+		return current_state
+	else:
+		return null
+
+
 func change_state(new_state_name: String) -> void:
 	# If our state machine is not active, abort
 	if not is_active:
@@ -76,8 +84,11 @@ func change_state(new_state_name: String) -> void:
 func set_active(value: bool) -> void:
 	is_active = value
 	set_physics_process(value)
-	set_process(value)
+	
+	# Disable these for remote players 
+	set_process(value and is_local_player)
 	set_process_unhandled_input(value and is_local_player)
+	set_process_input(value and is_local_player)
 
 
 # Each state will handle its on tick

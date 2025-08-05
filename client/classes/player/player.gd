@@ -124,9 +124,11 @@ func _ready() -> void:
 		_register_global_references() # After _setup_local_player_components()
 		player_state_machine.is_local_player = true # To allow input
 	
-	# Initialize state machine
+	# Initialize state machine for all players
 	player_state_machine.set_active(true)
-	# Display our character NOTE replace with a spawn animation?
+	
+	# CAUTION
+	# Displays our character, replace with a spawn animation
 	show()
 
 
@@ -472,12 +474,10 @@ func _create_join_region_request_packet(region_id: int) -> Packets.Packet:
 
 
 # Creates and returns a switch_weapon packet
-func create_switch_weapon_packet(weapon_name: String, weapon_type: String, weapon_state: String) -> Packets.Packet:
+func create_switch_weapon_packet(weapon_slot: int) -> Packets.Packet:
 	var packet: Packets.Packet = Packets.Packet.new()
 	var switch_weapon_packet := packet.new_switch_weapon()
-	switch_weapon_packet.set_weapon_name(weapon_name)
-	switch_weapon_packet.set_weapon_type(weapon_type)
-	switch_weapon_packet.set_weapon_state(weapon_state)
+	switch_weapon_packet.set_slot(weapon_slot)
 	return packet
 
 
@@ -498,8 +498,8 @@ func _handle_signal_ui_update_speed_button(new_move_speed: int) -> void:
 
 
 # Creates and sends a packet to the server to inform we switched our weapon
-func send_switch_weapon_packet(weapon_name: String, weapon_type: String, weapon_state: String) -> void:
-	var packet: Packets.Packet = create_switch_weapon_packet(weapon_name, weapon_type, weapon_state)
+func send_switch_weapon_packet(weapon_slot: int) -> void:
+	var packet: Packets.Packet = create_switch_weapon_packet(weapon_slot)
 	WebSocket.send(packet)
 
 

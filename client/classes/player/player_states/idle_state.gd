@@ -42,15 +42,16 @@ func handle_input(event: InputEvent) -> void:
 		# If we didn't click on anything interactable, then attempt to move to that cell
 		else:
 			player.handle_movement_click(mouse_position)
-	
+
+
 	# Weapon equip
 	elif event.is_action_pressed("weapon_one"): # Unarmed
-		switch_weapon(0)
+		switch_weapon(0, true)
 	elif event.is_action_pressed("weapon_two"):
-		switch_weapon(1)
+		switch_weapon(1, true)
 	elif event.is_action_pressed("weapon_three"):
-		switch_weapon(2)
+		switch_weapon(2, true)
 	elif event.is_action_pressed("weapon_four"):
-		switch_weapon(3)
+		switch_weapon(3, true)
 	elif event.is_action_pressed("weapon_five"):
-		switch_weapon(4)
+		switch_weapon(4, true)

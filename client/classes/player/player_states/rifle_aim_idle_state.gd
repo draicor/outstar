@@ -17,17 +17,23 @@ func enter() -> void:
 	player.set_mouse_cursor("crosshair")
 	# Initialize with current mouse world position
 	is_aim_rotating = true
-	# Reduce the rotation step to minimum when aiming
-	player.camera.ROTATION_STEP = 1.0
 	# Always reset dry_fired to false on state changes
 	dry_fired = false
+	
+	# If this is our local player
+	if player.player_state_machine.is_local_player:
+		# Reduce the rotation step to minimum when aiming
+		player.camera.ROTATION_STEP = 1.0
 
 
 func exit() -> void:
 	player.set_mouse_cursor("default")
 	player.player_movement.is_rotating = false
-	# Restore the camera rotation step to default
-	player.camera.ROTATION_STEP = player.camera.BASE_ROTATION_STEP
+	
+	# If this is our local player
+	if player.player_state_machine.is_local_player:
+		# Restore the camera rotation step to default
+		player.camera.ROTATION_STEP = player.camera.BASE_ROTATION_STEP
 
 
 # Rotates the character on tick to match the mouse position

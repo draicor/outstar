@@ -490,32 +490,7 @@ func (h *Hub) SaveCharacter(client Client) error {
 		return fmt.Errorf("update character data: %w", err)
 	}
 
-	// Delete all weapon slots
-	err = h.queries.DeleteWeaponSlots(ctx, client.GetCharacterId())
-	if err != nil {
-		return fmt.Errorf("delete weapon slots: %w", err)
-	}
-
-	// Insert new slots
-	for slot := 0; slot < 5; slot++ {
-		weapon := character.GetWeaponSlot(uint64(slot))
-		if weapon == nil {
-			continue
-		}
-
-		err = h.queries.InsertWeaponSlot(ctx, db.InsertWeaponSlotParams{
-			CharacterID: client.GetCharacterId(),
-			SlotIndex:   int64(slot),
-			WeaponName:  weapon.WeaponName,
-			WeaponType:  weapon.WeaponType,
-			DisplayName: weapon.DisplayName,
-			Ammo:        int64(weapon.Ammo),
-			FireMode:    int64(weapon.FireMode),
-		})
-		if err != nil {
-			return fmt.Errorf("insert weapon slot %d: %w", slot, err)
-		}
-	}
+	// Update all weapon slots
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {

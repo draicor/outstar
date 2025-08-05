@@ -365,15 +365,23 @@ func (state *Game) HandleChatBubble(payload *packets.ChatBubble) {
 }
 
 func (state *Game) HandleSwitchWeapon(payload *packets.SwitchWeapon) {
-	// Update player state
-	//state.player.SetWeapon(payload.WeaponName, payload.WeaponType)
-	//state.player.SetWeaponState(payload.WeaponState)
+	slot := payload.GetSlot()
+	// Validate slot (don't trust the client)
+	if slot > 5 {
+		return // Invalid slot
+	}
 
-	// Broadcast update to everyone in the region
-	//state.client.Broadcast(packets.NewSwitchWeapon(
-	//state.player.GetWeaponName(),
-	//state.player.GetWeaponType(),
-	//state.player.GetWeaponState()))
+	// Get the weapon at that slot
+	weapon := state.player.GetWeaponSlot(slot)
+	if weapon == nil || weapon.WeaponName == "" {
+		return // Invalid slot or empty
+	}
+
+	// Update current slot
+	state.player.SetCurrentWeapon(slot)
+
+	// Broadcast weapon switch update to everyone in the region
+	state.client.Broadcast(packets.NewSwitchWeapon(slot))
 }
 
 // Executed automatically when a client leaves the game state

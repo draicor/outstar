@@ -7,6 +7,7 @@ var weapon_slots: Array[Dictionary] = []
 
 # Weapon scene selector
 var weapon_scenes: Dictionary[String, PackedScene] = {
+	"unarmed": null,
 	"m16_rifle": preload("res://objects/weapons/m16_rifle.tscn"),
 	"akm_rifle": preload("res://objects/weapons/akm_rifle.tscn"),
 }
@@ -53,7 +54,7 @@ func _ready() -> void:
 			"weapon_type:": "",
 			"ammo": 0, # In the weapon's itself (magazine)
 			"fire_mode": 0,
-			"display_name": "Empty",
+			"display_name": "",
 		})
 	
 	# Assign default weapons
@@ -131,10 +132,6 @@ func enable_left_hand_ik() -> void:
 
 # Loads a weapon model and append it as a child of our player skeleton
 func equip_weapon(weapon_name: String) -> void:
-	# If we already have this equipped, ignore
-	if equipped_weapon_name == weapon_name:
-		return
-	
 	# Remove our equipped weapon, if any
 	if equipped_weapon:
 		equipped_weapon.queue_free()
@@ -274,8 +271,8 @@ func add_weapon_to_slot(slot: int, weapon_name: String, ammo: int = 0, fire_mode
 	# Set display name
 	match weapon_name:
 		"unarmed": weapon_slots[slot]["display_name"] = "Unarmed"
-		"m16_rifle": weapon_slots[slot]["display_name"] = "M16 Rifle"
 		"akm_rifle": weapon_slots[slot]["display_name"] = "AKM Rifle"
+		"m16_rifle": weapon_slots[slot]["display_name"] = "M16 Rifle"
 		_: weapon_slots[slot]["display_name"] = "Unknown Weapon"
 	
 	# Set initial ammo
@@ -288,16 +285,14 @@ func switch_weapon_by_slot(slot: int) -> void:
 	if is_invalid_weapon_slot(slot):
 		return
 	
-	if equipped_weapon_type != "unarmed":
-		unequip_weapon()
-	
+	unequip_weapon()
 	current_slot = slot
 	update_equipped_weapon()
 
 
 func update_equipped_weapon() -> void:
 	var weapon_name: String = weapon_slots[current_slot]["weapon_name"]
-	if weapon_name != "" and weapon_name != "unarmed":
+	if weapon_name != "":
 		equip_weapon(weapon_name)
 	else:
 		equipped_weapon_name = "unarmed"
@@ -335,7 +330,7 @@ func get_weapon_state_by_weapon_type(weapon_type: String) -> String:
 
 # Check we didn't pass an invalid slot
 func is_invalid_weapon_slot(slot: int) -> bool:
-	return slot < 0 or slot >= MAX_WEAPON_SLOTS or slot == current_slot
+	return slot < 0 or slot >= MAX_WEAPON_SLOTS
 
 
 func toggle_fire_mode() -> void:

@@ -27,7 +27,7 @@ func handle_input(_event: InputEvent) -> void:
 
 
 # Called from different states (IDLE states) to switch to a different weapon slot
-func switch_weapon(slot: int) -> void:
+func switch_weapon(slot: int, broadcast: bool = false) -> void:
 	var equipment = player.player_equipment
 	var animator = player.player_animator
 	
@@ -55,8 +55,11 @@ func switch_weapon(slot: int) -> void:
 	if weapon_name != "" and weapon_type != "":
 		var weapon_state: String = equipment.get_weapon_state_by_weapon_type(weapon_type)
 		if weapon_state != "":
-			# Report to the server we'll switch weapons
-			player.send_switch_weapon_packet(weapon_name, weapon_type, weapon_state)
+			# If we set it to broadcast and this is our local player
+			if broadcast and is_local_player:
+				# Report to the server we'll switch weapons
+				player.send_switch_weapon_packet(slot)
+			
 			# Switch to the correct weapon state based on weapon type
 			if animator.get_weapon_animation("equip", weapon_type) != {}:
 				await animator.play_weapon_animation_and_await("equip", weapon_type)

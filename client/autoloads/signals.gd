@@ -31,7 +31,7 @@ signal ui_hide_bottom_right_hud
 signal ui_show_bottom_right_hud
 signal ui_update_ammo
 signal ui_controls_menu_toggle
-signal ui_hud_weapon_slot(weapon_slot: int)
+signal ui_hud_weapon_slot(weapon_slot: int, broadcast: bool)
 
 # Chat signals
 signal chat_public_message_sent(text: String)
