@@ -57,6 +57,7 @@ var skeleton: Skeleton3D = null # Our character's skeleton
 @onready var player_animator: PlayerAnimator = $PlayerAnimator
 @onready var player_audio: PlayerAudio = $PlayerAudio
 @onready var player_equipment: PlayerEquipment = $PlayerEquipment
+@onready var player_packets: PlayerPackets = $PlayerPackets
 
 
 # Called each tick to draw debugging tools on screen
@@ -119,7 +120,6 @@ func _ready() -> void:
 	
 	# Do this only for my local character
 	if my_player_character:
-		_connect_signals()
 		_setup_local_player_components()
 		_register_global_references() # After _setup_local_player_components()
 		player_state_machine.is_local_player = true # To allow input
@@ -130,6 +130,10 @@ func _ready() -> void:
 	# CAUTION
 	# Displays our character, replace with a spawn animation
 	show()
+	
+	# Connect packet signals
+	player_packets.packet_processed.connect(_handle_processed_packet)
+	player_packets.packet_failed.connect(_handle_failed_packet)
 
 
 # Helper function for _ready()
@@ -200,12 +204,6 @@ func _setup_chat_bubble_sprite() -> void:
 	else:
 		# Start with the bubble hidden for everyone else
 		chat_bubble_icon.visible = false
-
-
-# Helper function for _ready()
-# Only for our local player character!
-func _connect_signals() -> void:
-	Signals.ui_change_move_speed_button.connect(_handle_signal_ui_update_speed_button)
 
 
 # Helper function for _ready()
@@ -428,7 +426,6 @@ func _draw_circle(center: Vector3, radius: float, color: Color, resolution: int 
 	for i in range(points.size() - 1):
 		DebugDraw3D.draw_line(points[i], points[i + 1], color)
 
-
 ##############
 # CHAT LOGIC #
 ##############
@@ -444,85 +441,66 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 		chat_bubble_icon.visible = is_typing
 
 
-###################
-# PACKET CREATION #
-###################
-
-# Creates and returns a player_destination_packet
-func create_player_destination_packet(grid_pos: Vector2i) -> Packets.Packet:
-	var packet: Packets.Packet = Packets.Packet.new()
-	var player_destination_packet := packet.new_player_destination()
-	player_destination_packet.set_x(grid_pos.x)
-	player_destination_packet.set_z(grid_pos.y)
-	return packet
+#####################
+# PACKET PROCESSING #
+#####################
 
 
-# Creates and returns an update_speed packet
-func _create_update_speed_packet(new_speed: int) -> Packets.Packet:
-	var packet: Packets.Packet = Packets.Packet.new()
-	var update_speed_packet := packet.new_update_speed()
-	update_speed_packet.set_speed(new_speed)
-	return packet
+func _handle_processed_packet(packet: Variant) -> void:
+	if packet is Packets.UpdatePlayer:
+		_process_update_player_packet(packet)
+	elif packet is Packets.UpdateSpeed:
+		_process_update_speed_packet(packet)
+	elif packet is Packets.SwitchWeapon:
+		_process_switch_weapon_packet(packet)
 
 
-# Creates and returns a join_region_request packet
-func _create_join_region_request_packet(region_id: int) -> Packets.Packet:
-	var packet: Packets.Packet = Packets.Packet.new()
-	var join_region_request_packet := packet.new_join_region_request()
-	join_region_request_packet.set_region_id(region_id)
-	return packet
+# Update packets that SHOULD be re-processed here
+func _handle_failed_packet(packet: Variant) -> void:
+	print("Packet processing failed: ", packet)
+	player_packets.complete_packet()
 
 
-# Creates and returns a switch_weapon packet
-func create_switch_weapon_packet(weapon_slot: int) -> Packets.Packet:
-	var packet: Packets.Packet = Packets.Packet.new()
-	var switch_weapon_packet := packet.new_switch_weapon()
-	switch_weapon_packet.set_slot(weapon_slot)
-	return packet
-
-
-################
-# PACKETS SENT #
-################
-
-# Creates and sends a packet to the server requesting to switch regions/maps
-func request_switch_region(new_region: int) -> void:
-	var packet: Packets.Packet = _create_join_region_request_packet(new_region)
-	WebSocket.send(packet)
-
-
-# Request the server to change the movement speed of my player
-func _handle_signal_ui_update_speed_button(new_move_speed: int) -> void:
-	var packet: Packets.Packet = _create_update_speed_packet(new_move_speed)
-	WebSocket.send(packet)
-
-
-# Creates and sends a packet to the server to inform we switched our weapon
-func send_switch_weapon_packet(weapon_slot: int) -> void:
-	var packet: Packets.Packet = create_switch_weapon_packet(weapon_slot)
-	WebSocket.send(packet)
-
-
-####################
-# PACKETS RECEIVED #
-####################
 
 # Updates the player's server grid position
-func update_destination(new_server_position: Vector2i) -> void:
+func _process_update_player_packet(packet: Packets.UpdatePlayer) -> void:
+	var server_position: Vector2i = Vector2i(
+		packet.get_position().get_x(),
+		packet.get_position().get_z()
+	)
+	
 	# Only do the reconciliation for my player, not the other players
 	if my_player_character and player_movement.is_predicting:
-		player_movement.handle_server_reconciliation(new_server_position)
+		player_movement.handle_server_reconciliation(server_position)
 	# Remote players are always in sync with the server
 	else:
-		player_movement.handle_remote_player_movement(new_server_position)
+		player_movement.handle_remote_player_movement(server_position)
 	
 	# Update our server grid position locally
-	player_movement.server_grid_position = new_server_position
+	player_movement.server_grid_position = server_position
+	player_packets.complete_packet()
 
 
 # Updates the player's move speed to match the server's
-func update_player_speed(new_speed: int) -> void:
+func _process_update_speed_packet(packet: Packets.UpdateSpeed) -> void:
+	var new_speed: int = packet.get_speed()
+	
 	# Only allow speed changes when not moving
 	if not player_movement.in_motion:
 		# Clamp speed to 1-3 range
 		player_speed = clamp(new_speed, 1, 3)
+	
+	player_packets.complete_packet()
+
+
+func _process_switch_weapon_packet(packet: Packets.SwitchWeapon) -> void:
+	var slot = packet.get_slot()
+	var current_state: BaseState = player_state_machine.get_current_state()
+	
+	if current_state:
+		# Call without broadcast since this came from server
+		current_state.switch_weapon(slot, false)
+		# Completion will be handled by the state machine
+	else:
+		# Fail if no state available
+		player_packets.packet_failed.emit()

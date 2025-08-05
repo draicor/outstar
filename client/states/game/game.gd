@@ -68,6 +68,7 @@ func _on_websocket_connection_closed() -> void:
 func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()
 	
+	# IMMEDIATE PACKETS DON'T GO INTO PACKET QUEUE
 	if packet.has_public_message():
 		_handle_public_message_packet(sender_id, packet.get_public_message())
 	elif packet.has_heartbeat():
@@ -78,16 +79,18 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_handle_client_left_packet(packet.get_client_left())
 	elif packet.has_request_denied():
 		_handle_request_denied_packet(packet.get_request_denied().get_reason())
-	elif packet.has_update_player():
-		_handle_update_player_packet(packet.get_update_player())
-	elif packet.has_update_speed():
-		_handle_update_speed_packet(sender_id, packet.get_update_speed())
-	elif packet.has_region_data():
-		_handle_region_data_packet(packet.get_region_data())
 	elif packet.has_chat_bubble():
 		_handle_chat_bubble_packet(sender_id, packet.get_chat_bubble())
+	elif packet.has_region_data():
+		_handle_region_data_packet(packet.get_region_data())
+	# PACKETS THAT ARE BOTH? FIX THIS
+	elif packet.has_update_player():
+		_handle_update_player_packet(packet.get_update_player())
+	# PACKETS THAT SHOULD BE QUEUED
+	elif packet.has_update_speed():
+		_route_update_speed_packet(sender_id, packet.get_update_speed())
 	elif packet.has_switch_weapon():
-		_handle_switch_weapon_packet(sender_id, packet.get_switch_weapon())
+		_route_switch_weapon_packet(sender_id, packet.get_switch_weapon())
 
 # Print the message into our chat window and update that player's chat bubble
 func _handle_public_message_packet(sender_id: int, packet_public_message: Packets.PublicMessage) -> void:
@@ -272,18 +275,14 @@ func _handle_update_player_packet(update_player_packet: Packets.UpdatePlayer) ->
 		# Add the player to the new position in my local grid
 		RegionManager.set_object(server_position, player)
 		
-		# Update this player's movement
-		player.update_destination(server_position)
+		# Send this movement packet to the queue of this player
+		player.player_packets.add_packet(update_player_packet, PlayerPackets.Priority.NORMAL)
 
 
-func _handle_update_speed_packet(sender_id: int, update_speed_packet: Packets.UpdateSpeed) -> void:
+func _route_update_speed_packet(sender_id: int, update_speed_packet: Packets.UpdateSpeed) -> void:
 	# If the id is on our players dictionary
 	if sender_id in _players:
-		# Attempt to retrieve the player character object
-		var player: Player = _players[sender_id]
-		# If its valid
-		if player:
-			player.update_player_speed(update_speed_packet.get_speed())
+		_players[sender_id].player_packets.add_packet(update_speed_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _handle_region_data_packet(region_data_packet: Packets.RegionData) -> void:
@@ -350,15 +349,7 @@ func _handle_chat_bubble_packet(sender_id: int, chat_bubble_packet: Packets.Chat
 
 
 # Used to switch the weapon of this character
-func _handle_switch_weapon_packet(sender_id: int, switch_weapon_packet: Packets.SwitchWeapon) -> void:
+func _route_switch_weapon_packet(sender_id: int, switch_weapon_packet: Packets.SwitchWeapon) -> void:
 	# If the id is on our players dictionary
 	if sender_id in _players:
-		# Attempt to retrieve the player character object
-		var player: Player = _players[sender_id]
-		# If its valid
-		if player:
-			# Get this player's current state
-			var current_state: BaseState = player.player_state_machine.get_current_state()
-			if current_state:
-				# Call the switch weapon method
-				current_state.switch_weapon(switch_weapon_packet.get_slot(), false)
+		_players[sender_id].player_packets.add_packet(switch_weapon_packet, PlayerPackets.Priority.NORMAL)

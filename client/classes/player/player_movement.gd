@@ -70,8 +70,10 @@ func setup_movement_data_at_spawn() -> void:
 	player.position = interpolated_position # Has to be set after the player scene has been created
 	# Convert our model's y-rotation (radians) to a forward direction vector
 	forward_direction = Vector3(sin(player.spawn_rotation), 0, cos(player.spawn_rotation))
+	
+	# CAUTION remove below if it worked
 	# Update our player's movement tick at spawn
-	player.update_player_speed(player.player_speed)
+	#player.update_player_speed(player.player_speed)
 
 
 ##################
@@ -213,7 +215,7 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 		grid_destination = target_position
 		
 		# We need to send the packet here ONCE, when movement starts only
-		var packet: Packets.Packet = player.create_player_destination_packet(immediate_grid_destination)
+		var packet: Packets.Packet = player.player_packets.create_player_destination_packet(immediate_grid_destination)
 		WebSocket.send(packet)
 
 
@@ -425,6 +427,8 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 	if current_path.size() > 0:
 		setup_movement_step(current_path)
 		_interpolate_position(delta)
+		return # Abort here since we still have to move this tick
+		
 	# If our current path has no more cells but our next path does
 	elif next_path.size() > 0:
 		# Get the first cells from our next tick path (based on our speed)
@@ -446,14 +450,18 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 			# Only send a packet if we are not correcting our position
 			if not autopilot_active:
 				# Create a new packet to report our new immediate destination to the server
-				var packet: Packets.Packet = player.create_player_destination_packet(immediate_grid_destination)
+				var packet: Packets.Packet = player.player_packets.create_player_destination_packet(immediate_grid_destination)
 				WebSocket.send(packet)
 		else:
 			player.player_animator.update_locomotion_animation(cells_to_move_this_tick)
-			
-		
+	
+	# If we don't have any more cells to traverse
 	else:
 		_complete_movement()
+	
+	# Signal packet completion
+	if player.player_packets.is_processing_packet():
+		player.player_packets.complete_packet()
 
 
 # Snap the player's position to the grid after movement ends,
@@ -482,10 +490,12 @@ func _finalize_movement() -> void:
 		_handle_autopilot()
 		return
 	# After movement, check if we have a pending interaction and deal with it
-	elif player.pending_interaction: player.handle_pending_interaction()
+	elif player.pending_interaction:
+		player.handle_pending_interaction()
 	# If we don't have to server sync or interact with anything,
 	# then we are done moving, so we go into idle state
-	else: player.player_state_machine.change_state(player.player_animator.get_idle_state_name())
+	else:
+		player.player_state_machine.change_state(player.player_animator.get_idle_state_name())
 
 
 # Called when we have to sync with the server position
