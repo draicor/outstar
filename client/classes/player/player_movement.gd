@@ -174,6 +174,7 @@ func _calculate_path_overlap(current_path: Array[Vector2i], new_path: Array[Vect
 func start_movement_towards(start_position: Vector2i, target_position: Vector2i, target: Interactable = null) -> void:
 	# Don't start movement if player is busy
 	if player.is_busy:
+		print("start_movement_towards early exit because player is busy?")
 		return
 	
 	# Predict a path towards our target

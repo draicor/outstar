@@ -452,6 +452,8 @@ func _handle_packet_started(packet: Variant) -> void:
 		_process_update_speed_packet(packet)
 	elif packet is Packets.SwitchWeapon:
 		_process_switch_weapon_packet(packet)
+	else:
+		player_packets.complete_packet() # Unknown packet
 
 
 # Updates the player's server grid position
