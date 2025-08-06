@@ -16,6 +16,19 @@ enum Priority {
 var _queue: Array = []
 var _current_packet: Variant = null
 var _is_processing: bool = false
+var _retry_count: int = 0
+const MAX_RETRIES: int = 60 # Prevent infinite loops (60 ticks = 30 seconds)
+var _retry_timer: Timer
+
+const MOVEMENT_STATES: Array[String] = [
+	"move",
+	"idle",
+	"rifle_down_idle",
+]
+const IDLE_STATES: Array[String] = [
+	"idle",
+	"rifle_down_idle",
+]
 
 
 func _ready() -> void:
@@ -23,9 +36,21 @@ func _ready() -> void:
 	await get_parent().ready
 	player = get_parent()
 	
+	# Create retry timer
+	_retry_timer = Timer.new()
+	_retry_timer.wait_time = 0.5 # 500ms
+	_retry_timer.one_shot = true
+	_retry_timer.timeout.connect(_on_retry_timeout)
+	add_child(_retry_timer)
+	
 	# Do this only for my local player
 	if player.my_player_character:
 		Signals.ui_change_move_speed_button.connect(handle_signal_ui_update_speed_button)
+
+
+func _on_retry_timeout() -> void:
+	_retry_count = 0
+	_try_process_next()
 
 
 # Adds packet to queue with specified priority
@@ -36,8 +61,8 @@ func add_packet(packet: Variant, priority: int = Priority.NORMAL) -> void:
 		_:
 			_queue.push_back(packet)
 	
-	# If we are not processing and the queue only has one packet
-	if not _is_processing:
+	# If we are not processing a packet and our player is NOT busy
+	if not _is_processing and not player.is_busy:
 		_try_process_next()
 
 
@@ -46,9 +71,30 @@ func _try_process_next() -> void:
 	if _is_processing or _queue.is_empty():
 		return
 	
+	# Get the next packet
 	_current_packet = _queue.pop_front()
 	_is_processing = true
-	packet_started.emit(_current_packet)
+	
+	# Check if we can process this packet now
+	if can_process_packet():
+		_retry_count = 0
+		_retry_timer.stop()
+		packet_started.emit(_current_packet)
+	else:
+		# Can't process now, put it back and try next
+		_queue.push_front(_current_packet)
+		_current_packet = null
+		_is_processing = false
+		
+		# Only retry if we haven't exceeded max retries
+		if _retry_count < MAX_RETRIES:
+			_retry_count += 1
+			_retry_timer.start()
+		else:
+			# Reset after max retries
+			_retry_count = 0
+			push_warning("Max retries reached for packet processing, dropping packet")
+			complete_packet()
 
 
 # Called when current packet action completes
@@ -59,6 +105,7 @@ func complete_packet() -> void:
 	_current_packet = null
 	_is_processing = false
 	
+	# Try to process next packet immediately after completing
 	_try_process_next()
 
 
@@ -77,6 +124,30 @@ func clear() -> void:
 # Get method for the current_packet
 func get_current_packet() -> Variant:
 	return _current_packet
+
+
+# Determines if the current packet can be processed right away
+func can_process_packet() -> bool:
+	# Don't process packets if player is busy or autopilot is active
+	if player.is_busy or player.player_movement.autopilot_active:
+		return false
+	
+	# Get current state name
+	var current_state_name: String = player.player_state_machine.get_current_state_name()
+	
+	# Only process these packets in their valid states
+	if _current_packet is Packets.UpdatePlayer:
+		return current_state_name in MOVEMENT_STATES
+	
+	if _current_packet is Packets.SwitchWeapon:
+		return current_state_name in IDLE_STATES
+	
+	if _current_packet is Packets.UpdateSpeed:
+		return current_state_name in IDLE_STATES
+	
+	# Allow other packets by default
+	return true
+
 
 ###################
 # PACKET CREATION #
