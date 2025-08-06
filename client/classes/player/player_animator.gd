@@ -188,9 +188,6 @@ func _setup_animation_blend_time() -> void:
 # Plays and awaits until the animation ends, if found
 func play_animation_and_await(animation_name: String, play_rate: float = 1.0) -> void:
 	if animation_player.has_animation(animation_name):
-		# Make our player busy so he can't do anything else while doing this
-		player.is_busy = true
-		
 		animation_player.play(animation_name)
 		animation_player.speed_scale = play_rate
 		# Wait for the animation to finish before proceding
@@ -198,7 +195,6 @@ func play_animation_and_await(animation_name: String, play_rate: float = 1.0) ->
 		# awaiting play_animation_and_await() too for it to work
 		await animation_player.animation_finished
 		
-		player.is_busy = false
 	else:
 		print(animation_name, " animation not found.")
 

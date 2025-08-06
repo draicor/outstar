@@ -14,6 +14,7 @@ const ANGLE_THRESHOLD: float = 0.01 # Radians threshold for considering rotation
 
 # Signals
 signal rotation_completed
+signal movement_completed
 
 # Tick related data
 var movement_tick: float = SERVER_TICK # Defaults to server_tick
@@ -432,7 +433,7 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		setup_movement_step(current_path)
 		_interpolate_position(delta)
 		return # Abort here since we still have to move this tick
-		
+	
 	# If our current path has no more cells but our next path does
 	elif next_path.size() > 0:
 		# Get the first cells from our next tick path (based on our speed)
@@ -475,6 +476,7 @@ func _complete_movement() -> void:
 			return # Stop here to prevent movement reset
 	
 	_finalize_movement()
+	movement_completed.emit()
 	
 	# Signal packet completion
 	if player.player_packets.is_processing_packet():

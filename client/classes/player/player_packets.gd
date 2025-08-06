@@ -16,7 +16,6 @@ enum Priority {
 var _queue: Array = []
 var _current_packet: Variant = null
 var _is_processing: bool = false
-var _pending_completion: bool = false
 
 
 func _ready() -> void:
@@ -37,21 +36,18 @@ func add_packet(packet: Variant, priority: int = Priority.NORMAL) -> void:
 		_:
 			_queue.push_back(packet)
 	
-	# Always try to process next, but only if not currently processing
+	# If we are not processing and the queue only has one packet
 	if not _is_processing:
 		_try_process_next()
 
 
 # Process next packet if available
 func _try_process_next() -> void:
-	if _is_processing or _pending_completion or _queue.is_empty():
+	if _is_processing or _queue.is_empty():
 		return
-	
-	print("%s: processing new packet" % player.player_name)
 	
 	_current_packet = _queue.pop_front()
 	_is_processing = true
-	_pending_completion = true
 	packet_started.emit(_current_packet)
 
 
@@ -62,7 +58,7 @@ func complete_packet() -> void:
 	
 	_current_packet = null
 	_is_processing = false
-	_pending_completion = false
+	
 	_try_process_next()
 
 
@@ -76,7 +72,6 @@ func clear() -> void:
 	_queue.clear()
 	_current_packet = null
 	_is_processing = false
-	_pending_completion = false
 
 
 # Get method for the current_packet

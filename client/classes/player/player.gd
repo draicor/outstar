@@ -494,5 +494,5 @@ func _process_switch_weapon_packet(packet: Packets.SwitchWeapon) -> void:
 		current_state.switch_weapon(slot, false)
 		# Completion will be handled by the state machine
 	else:
-		# Fail if no state available
-		player_packets.packet_failed.emit()
+		# If no state available, complete immediately
+		player_packets.packet_completed.emit()
