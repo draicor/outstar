@@ -171,6 +171,10 @@ func _calculate_path_overlap(current_path: Array[Vector2i], new_path: Array[Vect
 
 # Helper function to handle common movement initiation logic
 func start_movement_towards(start_position: Vector2i, target_position: Vector2i, target: Interactable = null) -> void:
+	# Don't start movement if player is busy
+	if player.is_busy:
+		return
+	
 	# Predict a path towards our target
 	var prediction: Array[Vector2i] = predict_path(start_position, target_position)
 	if prediction.is_empty():
@@ -458,10 +462,6 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 	# If we don't have any more cells to traverse
 	else:
 		_complete_movement()
-	
-	# Signal packet completion
-	if player.player_packets.is_processing_packet():
-		player.player_packets.complete_packet()
 
 
 # Snap the player's position to the grid after movement ends,
@@ -475,6 +475,10 @@ func _complete_movement() -> void:
 			return # Stop here to prevent movement reset
 	
 	_finalize_movement()
+	
+	# Signal packet completion
+	if player.player_packets.is_processing_packet():
+		player.player_packets.complete_packet()
 
 
 # Movement cleanup and executes the post movement logic
@@ -567,6 +571,10 @@ func teleport_to_position(new_grid_position: Vector2i) -> void:
 # Attempts to predict a path towards that cell to move our character,
 # but only if the cell is reachable and available
 func click_to_move(new_destination: Vector2i) -> void:
+	# Don't start movement if player is busy
+	if player.is_busy:
+		return
+	
 	if not _validate_move_position(new_destination):
 		return
 	

@@ -65,7 +65,7 @@ func switch_weapon(slot: int, broadcast: bool = false) -> void:
 				await animator.play_weapon_animation_and_await("equip", weapon_type)
 				equipment.update_hud_ammo()
 			player.player_state_machine.change_state(weapon_state)
-	
+			
 	# Signal packet completion
 	if player.player_packets.is_processing_packet():
 		player.player_packets.complete_packet()

@@ -132,8 +132,7 @@ func _ready() -> void:
 	show()
 	
 	# Connect packet signals
-	player_packets.packet_processed.connect(_handle_processed_packet)
-	player_packets.packet_failed.connect(_handle_failed_packet)
+	player_packets.packet_started.connect(_handle_packet_started)
 
 
 # Helper function for _ready()
@@ -446,20 +445,13 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 #####################
 
 
-func _handle_processed_packet(packet: Variant) -> void:
+func _handle_packet_started(packet: Variant) -> void:
 	if packet is Packets.UpdatePlayer:
 		_process_update_player_packet(packet)
 	elif packet is Packets.UpdateSpeed:
 		_process_update_speed_packet(packet)
 	elif packet is Packets.SwitchWeapon:
 		_process_switch_weapon_packet(packet)
-
-
-# Update packets that SHOULD be re-processed here
-func _handle_failed_packet(packet: Variant) -> void:
-	print("Packet processing failed: ", packet)
-	player_packets.complete_packet()
-
 
 
 # Updates the player's server grid position

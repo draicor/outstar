@@ -1,15 +1,14 @@
 extends Node
 class_name PlayerPackets
 
-signal packet_processed(packet: Variant)
-signal packet_failed(packet: Variant)
+signal packet_started(packet: Variant)
+signal packet_completed(packet: Variant)
 
 const Packets: GDScript = preload("res://packets.gd")
 
 var player: Player = null # Our parent node
 
 enum Priority {
-	IMMEDIATE, # Bypass queue
 	HIGH,      # Add to front
 	NORMAL     # Add to back
 }
@@ -33,20 +32,14 @@ func _ready() -> void:
 # Adds packet to queue with specified priority
 func add_packet(packet: Variant, priority: int = Priority.NORMAL) -> void:
 	match priority:
-		Priority.IMMEDIATE:
-			_process_immediately(packet)
 		Priority.HIGH:
 			_queue.push_front(packet)
 		_:
 			_queue.push_back(packet)
 	
-	# Try to process a packet as soon as its added
-	_try_process_next()
-
-
-# Bypass the packet queue and process this immediately
-func _process_immediately(packet: Variant) -> void:
-	packet_processed.emit(packet)
+	# Always try to process next, but only if not currently processing
+	if not _is_processing:
+		_try_process_next()
 
 
 # Process next packet if available
@@ -54,10 +47,12 @@ func _try_process_next() -> void:
 	if _is_processing or _pending_completion or _queue.is_empty():
 		return
 	
+	print("%s: processing new packet" % player.player_name)
+	
 	_current_packet = _queue.pop_front()
 	_is_processing = true
 	_pending_completion = true
-	packet_processed.emit(_current_packet)
+	packet_started.emit(_current_packet)
 
 
 # Called when current packet action completes
@@ -83,6 +78,10 @@ func clear() -> void:
 	_is_processing = false
 	_pending_completion = false
 
+
+# Get method for the current_packet
+func get_current_packet() -> Variant:
+	return _current_packet
 
 ###################
 # PACKET CREATION #
