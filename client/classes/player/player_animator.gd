@@ -232,7 +232,6 @@ func update_locomotion_animation(cells_to_move: int) -> void:
 func get_idle_state_name() -> String:
 	match locomotion:
 		rifle_down_locomotion: return "rifle_down_idle"
-		rifle_aim_locomotion: return "rifle_aim_idle"
 		_: return "idle"
 
 

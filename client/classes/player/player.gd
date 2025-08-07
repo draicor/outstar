@@ -30,6 +30,8 @@ var spawn_position: Vector2i
 var spawn_rotation: float
 var tooltip: String
 var my_player_character: bool # Used to differentiate my character from remote players
+var spawn_weapon_slot: int = 0
+var spawn_weapon_slots: Array[Dictionary] = []
 
 # Logic variables
 var is_busy: bool = false # Blocks input during interactions
@@ -81,7 +83,9 @@ static func instantiate(
 	character_speed: int,
 	server_spawn_position: Vector2i,
 	server_spawn_rotation: float, # Used to update our model.rotation.y
-	is_my_player_character: bool
+	is_my_player_character: bool,
+	server_weapon_slot: int,
+	server_weapon_slots: Array[Dictionary]
 ) -> Player:
 	# Instantiate a new empty player character
 	var player: Player = player_scene.instantiate()
@@ -94,6 +98,9 @@ static func instantiate(
 	player.spawn_rotation = server_spawn_rotation
 	player.my_player_character = is_my_player_character
 	player.tooltip = nickname
+	# Weapon data
+	player.spawn_weapon_slot = server_weapon_slot
+	player.spawn_weapon_slots = server_weapon_slots
 	
 	return player
 
@@ -171,7 +178,7 @@ func load_character(character_type: String) -> void:
 
 
 # Used to create the attachments in our character's skeleton
-func _setup_bone_attachments() -> void:	
+func _setup_bone_attachments() -> void:
 	# Create head bone attachment for our chat bubble
 	var head_attachment: BoneAttachment3D = BoneAttachment3D.new()
 	# Assign a bone to this attachment

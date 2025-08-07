@@ -476,15 +476,16 @@ func (h *Hub) SaveCharacter(client Client) error {
 
 	// Save character data
 	err = h.queries.UpdateFullCharacterData(ctx, db.UpdateFullCharacterDataParams{
-		RegionID:  int64(character.GetRegionId()),
-		MapID:     int64(character.GetMapId()),
-		X:         int64(character.GetGridPosition().X),
-		Z:         int64(character.GetGridPosition().Z),
-		Hp:        int64(100), // TO FIX Create character.GetHealth()
-		MaxHp:     int64(100), // TO FIX Create character.GetMaxHealth()
-		Speed:     int64(character.GetSpeed()),
-		RotationY: float64(character.GetRotation()),
-		ID:        client.GetCharacterId(), // Character ID to find it in the DB
+		RegionID:   int64(character.GetRegionId()),
+		MapID:      int64(character.GetMapId()),
+		X:          int64(character.GetGridPosition().X),
+		Z:          int64(character.GetGridPosition().Z),
+		Hp:         int64(100), // TO FIX Create character.GetHealth()
+		MaxHp:      int64(100), // TO FIX Create character.GetMaxHealth()
+		Speed:      int64(character.GetSpeed()),
+		RotationY:  float64(character.GetRotation()),
+		WeaponSlot: int64(character.GetCurrentWeapon()),
+		ID:         client.GetCharacterId(), // Character ID to find it in the DB
 	})
 	if err != nil {
 		return fmt.Errorf("update character data: %w", err)
@@ -500,6 +501,7 @@ func (h *Hub) SaveCharacter(client Client) error {
 	return nil
 }
 
+// Used to get this character's region, map and position
 func (h *Hub) LoadCharacterPosition(client Client) (*db.GetCharacterPositionRow, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()

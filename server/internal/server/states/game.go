@@ -305,6 +305,7 @@ func (state *Game) HandleJoinRegionRequest(payload *packets.JoinRegionRequest) {
 	// Restore rotation after switch
 	state.player.RotationY = currentRotation
 
+	// TO FIX, make this a spawn player packet instead
 	// Create an update packet to be sent to everyone in this region
 	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
 

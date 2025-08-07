@@ -47,23 +47,10 @@ func _ready() -> void:
 	# Create and add our IK nodes
 	_setup_left_hand_ik()
 	
-	# Initialize all weapon slots to empty at spawn
-	for i in range(MAX_WEAPON_SLOTS):
-		weapon_slots.append({
-			"weapon_name": "",
-			"weapon_type:": "",
-			"ammo": 0, # In the weapon's itself (magazine)
-			"fire_mode": 0,
-			"display_name": "",
-		})
-	
-	# Assign default weapons
-	# CAUTION (replace with pickup logic later)
-	add_weapon_to_slot(0, "unarmed")
-	add_weapon_to_slot(1, "akm_rifle", 30)
-	add_weapon_to_slot(2, "m16_rifle", 30)
-	add_weapon_to_slot(3, "unarmed")
-	add_weapon_to_slot(4, "unarmed")
+	# Initialize weapon slots from player's spawn data
+	weapon_slots = player.spawn_weapon_slots
+	# Equip the weapon slot from the server packet
+	current_slot = player.spawn_weapon_slot
 
 
 # Creates and configurates a left hand IK 3D node, then adds it to our skeleton
@@ -249,6 +236,7 @@ func calculate_weapon_direction(target_position: Vector3) -> void:
 		)
 
 
+# CAUTION this should be replaced with a packet from the server to assign a weapon to this slot
 # CAUTION this will override existent weapons in that slot,
 # fix this after having drop mechanics?
 # It doesn't check against slot already being in use!

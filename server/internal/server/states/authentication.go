@@ -180,7 +180,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 		uint64(character.Speed),
 		character.RotationY,
 		// Weapon Data
-		0, // FIX THIS SHIT TO LOAD from somewhere the current weapon index?
+		uint64(character.WeaponSlot),
 		*weapons,
 		// Stats
 		level, experience,

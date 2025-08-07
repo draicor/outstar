@@ -44,7 +44,7 @@ type Player struct {
 	// Attributes
 	speed uint64 // Cells per tick
 	// Weapon state
-	currentWeapon uint64
+	currentWeapon uint64        // Current weapon slot
 	weapons       []*WeaponSlot // Array of weapon slots
 }
 

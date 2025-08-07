@@ -239,6 +239,19 @@ func _handle_update_player_packet(update_player_packet: Packets.UpdatePlayer) ->
 		
 		# Get the spawn position from the packet
 		var spawn_position: Vector2i = Vector2i(update_player_packet.get_position().get_x(), update_player_packet.get_position().get_z())
+		var weapon_slots: Array[Dictionary] = []
+		# Get the spawn weapons from the packet
+		var spawn_weapons = update_player_packet.get_weapons()
+		# Extract weapon slots from the packet
+		for i in range(spawn_weapons.size()):
+			var weapon_slot = spawn_weapons[i]
+			weapon_slots.insert(weapon_slot.get_slot_index(), {
+				"weapon_name": weapon_slot.get_weapon_name(),
+				"weapon_type": weapon_slot.get_weapon_type(),
+				"display_name": weapon_slot.get_display_name(),
+				"ammo": weapon_slot.get_ammo(),
+				"fire_mode": weapon_slot.get_fire_mode()
+			})
 		
 		# Grab all of the data from the server and use it to create this player character
 		var player: Player = Player.instantiate(
@@ -248,7 +261,9 @@ func _handle_update_player_packet(update_player_packet: Packets.UpdatePlayer) ->
 			update_player_packet.get_speed(),
 			spawn_position,
 			update_player_packet.get_rotation_y(),
-			is_my_player_character
+			is_my_player_character,
+			update_player_packet.get_current_weapon(),
+			weapon_slots
 		)
 		# Add this player to our list of players
 		_players[player_id] = player

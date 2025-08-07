@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS characters (
   max_hp INTEGER NOT NULL DEFAULT 100,
   speed INTEGER NOT NULL DEFAULT 1 CHECK (speed BETWEEN 1 and 3), -- Clamp speed
   rotation_y REAL NOT NULL DEFAULT 0.0,
+  weapon_slot INTEGER NOT NULL DEFAULT 0 CHECK (weapon_slot BETWEEN 0 and 4), -- Clamp weapon slot
   FOREIGN KEY (user_id) REFERENCES users(id) -- 1:1 relationship (only one character per user)
 );
 
@@ -30,7 +31,6 @@ CREATE TABLE IF NOT EXISTS character_weapons (
   slot_index INTEGER NOT NULL CHECK (slot_index BETWEEN 0 AND 4), -- 0 to 4 (5 slots)
   weapon_name TEXT NOT NULL DEFAULT 'unarmed',
   weapon_type TEXT NOT NULL DEFAULT 'unarmed',
-  weapon_state TEXT NOT NULL DEFAULT 'idle',
   ammo INTEGER NOT NULL DEFAULT 0,
   fire_mode INTEGER NOT NULL DEFAULT 0, -- 0: semi, 1: auto
   display_name TEXT NOT NULL DEFAULT 'Empty',
