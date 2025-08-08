@@ -187,6 +187,8 @@ func _setup_animation_blend_time() -> void:
 
 # Plays and awaits until the animation ends, if found
 func play_animation_and_await(animation_name: String, play_rate: float = 1.0) -> void:
+	player.is_busy = true
+	
 	if animation_player.has_animation(animation_name):
 		animation_player.play(animation_name)
 		animation_player.speed_scale = play_rate
@@ -194,9 +196,10 @@ func play_animation_and_await(animation_name: String, play_rate: float = 1.0) ->
 		# NOTE this requires checking against player.is_busy and
 		# awaiting play_animation_and_await() too for it to work
 		await animation_player.animation_finished
-		
 	else:
 		print(animation_name, " animation not found.")
+	
+	player.is_busy = false
 
 
 # Used to switch the current animation state
@@ -234,6 +237,14 @@ func get_idle_state_name() -> String:
 		rifle_down_locomotion: return "rifle_down_idle"
 		_: return "idle"
 
+
+# Returns the appropiate animation library based on weapon type and gender
+func get_animation_library(weapon_type: String, gender: String) -> String:
+	match weapon_type:
+		"rifle":
+			return "rifle_down"
+		_:
+			return gender # Fallback to gender animation
 
 # Helper function to update our locomotion dictionary based on equipped items or gender
 func switch_animation_library(animation_library: String) -> void:

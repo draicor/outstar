@@ -140,6 +140,27 @@ func _ready() -> void:
 	
 	# Connect packet signals
 	player_packets.packet_started.connect(_handle_packet_started)
+	
+	call_deferred("_post_ready_initialization")
+
+# Called a frame later to let the child components catch up
+func _post_ready_initialization() -> void:
+	# Await an extra frame otherwise it won't work
+	await get_tree().process_frame
+	
+	# Initialize equipment (spawn weapon)
+	player_equipment.update_weapon_at_spawn()
+	# Set the correct state based on equipped weapon
+	var weapon_type: String = player_equipment.equipped_weapon_type
+	var weapon_state: String = player_equipment.get_weapon_state_by_weapon_type(weapon_type)
+	
+	if weapon_state != "":
+		# Only change state if we are not already in it
+		if player_state_machine.get_current_state_name() != weapon_state:
+			player_state_machine.change_state(weapon_state)
+	else:
+		# Unarmed
+		player_state_machine.change_state("idle")
 
 
 # Helper function for _ready()
@@ -160,6 +181,9 @@ func _initialize_character() -> void:
 	
 	# Wait until next frame to ensure nodes are ready
 	call_deferred("_setup_bone_attachments")
+
+
+
 
 
 # Used to load a character model and append it as a child of our model node

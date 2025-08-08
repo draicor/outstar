@@ -6,7 +6,6 @@ signal player_state_changed(previous_state, new_state)
 var states_map: Dictionary = {}
 var current_state: BaseState = null
 var previous_state: BaseState = null
-var initial_state: String = "idle"
 var is_active: bool = true : set = set_active
 var is_local_player: bool = false # set to true for local player
 
@@ -28,11 +27,6 @@ func _ready() -> void:
 			child.player_state_machine = self
 			child.player = player
 			child.is_local_player = is_local_player
-	
-	if states_map.has(initial_state):
-		change_state(initial_state)
-	else:
-		push_error("Initial state '%s' not found in state machine" % initial_state)
 
 
 # Returns the current state name
@@ -67,7 +61,7 @@ func change_state(new_state_name: String) -> void:
 		if current_state == new_state:
 			return
 		
-		# Exit current state	
+		# Exit current state
 		current_state.exit()
 		previous_state = current_state
 	

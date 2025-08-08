@@ -37,14 +37,13 @@ func switch_weapon(slot: int, broadcast: bool = false) -> void:
 		packets.complete_packet()
 		return
 	
+	# Block input
+	player.is_busy = true
+	
 	# If we set it to broadcast and this is our local player
 	if broadcast and is_local_player:
 		# Report to the server we'll switch weapons
 		packets.send_switch_weapon_packet(slot)
-	
-	# Local player: block input
-	if is_local_player:
-		player.is_busy = true
 	
 	# Unequip
 	if equipment.equipped_weapon:
@@ -53,6 +52,7 @@ func switch_weapon(slot: int, broadcast: bool = false) -> void:
 		if animator.get_weapon_animation("unequip", current_type) != {}:
 			equipment.hide_weapon_hud()
 			await animator.play_weapon_animation_and_await("unequip", current_type)
+			player.is_busy = true # Block input again because animator released it
 	
 	equipment.switch_weapon_by_slot(slot) # <-- Calls unequip and equip weapon
 	
@@ -63,11 +63,11 @@ func switch_weapon(slot: int, broadcast: bool = false) -> void:
 		# Switch to the correct weapon state based on weapon type
 		if animator.get_weapon_animation("equip", weapon_type) != {}:
 			await animator.play_weapon_animation_and_await("equip", weapon_type)
+			player.is_busy = true # Block input again because animator released it
 			equipment.update_hud_ammo()
 		player.player_state_machine.change_state(weapon_state)
 	
-	# Local player: release input
-	if is_local_player:
-		player.is_busy = false
+	# Release input
+	player.is_busy = false
 	
 	packets.complete_packet()

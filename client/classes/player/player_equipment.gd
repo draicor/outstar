@@ -349,3 +349,16 @@ func show_weapon_hud() -> void:
 		# We update our ammo counter and then we display it
 		Signals.ui_update_ammo.emit()
 		Signals.ui_show_bottom_right_hud.emit()
+
+
+# Calls update_equipped weapon to spawn weapons and update the animation library
+func update_weapon_at_spawn() -> void:
+	# Equip the weapon for the current slot
+	update_equipped_weapon()
+	
+	# Update animation library based on equipped weapon type and gender
+	var anim_library: String = player.player_animator.get_animation_library(
+		equipped_weapon_type,
+		player.gender
+	)
+	player.player_animator.switch_animation_library(anim_library)
