@@ -218,6 +218,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_SwitchWeapon:
 			state.HandleSwitchWeapon(casted_payload.SwitchWeapon)
 
+		// RELOAD WEAPON
+		case *packets.Packet_ReloadWeapon:
+			state.HandleReloadWeapon(casted_payload.ReloadWeapon)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -380,6 +384,32 @@ func (state *Game) HandleSwitchWeapon(payload *packets.SwitchWeapon) {
 
 	// Broadcast weapon switch update to everyone in the region
 	state.client.Broadcast(packets.NewSwitchWeapon(slot))
+}
+
+func (state *Game) HandleReloadWeapon(payload *packets.ReloadWeapon) {
+	slot := payload.GetSlot()
+	// Validate slot (don't trust the client)
+	if slot > 5 {
+		return // Invalid slot
+	}
+
+	// Get the weapon at that slot
+	weapon := state.player.GetWeaponSlot(slot)
+	if weapon == nil || weapon.WeaponName == "" {
+		return // Invalid slot or empty
+	}
+
+	amount := payload.GetAmount()
+
+	// TO FIX
+	// Add a check here for the amount to reload
+	// Create a way to check in the server for the max amount to reload for each weapon name
+
+	// Update ammo for this weapon
+	state.player.SetCurrentWeaponAmmo(amount) // <-- Trusting the client here, fix this
+
+	// Broadcast weapon reload to everyone in the region
+	state.client.Broadcast(packets.NewReloadWeapon(slot, amount))
 }
 
 // Executed automatically when a client leaves the game state

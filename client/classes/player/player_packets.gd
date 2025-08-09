@@ -29,6 +29,10 @@ const IDLE_STATES: Array[String] = [
 	"idle",
 	"rifle_down_idle",
 ]
+const RELOAD_STATES: Array[String] = [
+	"rifle_down_idle",
+	"rifle_aim_idle",
+]
 
 
 func _ready() -> void:
@@ -139,11 +143,14 @@ func can_process_packet() -> bool:
 	if _current_packet is Packets.MoveCharacter:
 		return current_state_name in MOVEMENT_STATES
 	
+	if _current_packet is Packets.UpdateSpeed:
+		return current_state_name in IDLE_STATES
+	
 	if _current_packet is Packets.SwitchWeapon:
 		return current_state_name in IDLE_STATES
 	
-	if _current_packet is Packets.UpdateSpeed:
-		return current_state_name in IDLE_STATES
+	if _current_packet is Packets.ReloadWeapon:
+		return current_state_name in RELOAD_STATES
 	
 	# Allow other packets by default
 	return true
@@ -186,9 +193,18 @@ func create_switch_weapon_packet(weapon_slot: int) -> Packets.Packet:
 	return packet
 
 
-################
-# PACKETS SENT #
-################
+# Creates and returns a reload_weapon packet
+func create_reload_weapon_packet(weapon_slot: int, amount: int) -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	var reload_weapon_packet := packet.new_reload_weapon()
+	reload_weapon_packet.set_slot(weapon_slot)
+	reload_weapon_packet.set_amount(amount)
+	return packet
+
+
+##################
+# PACKET SENDING #
+##################
 
 # Creates and sends a packet to the server requesting to switch regions/maps
 func request_switch_region(new_region: int) -> void:
@@ -205,4 +221,10 @@ func handle_signal_ui_update_speed_button(new_move_speed: int) -> void:
 # Creates and sends a packet to the server to inform we switched our weapon
 func send_switch_weapon_packet(weapon_slot: int) -> void:
 	var packet: Packets.Packet = create_switch_weapon_packet(weapon_slot)
+	WebSocket.send(packet)
+
+
+# Creates and sends a packet to the server to inform we reloaded our weapon
+func send_reload_weapon_packet(weapon_slot: int, amount: int) -> void:
+	var packet: Packets.Packet = create_reload_weapon_packet(weapon_slot, amount)
 	WebSocket.send(packet)

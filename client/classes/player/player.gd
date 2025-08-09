@@ -483,6 +483,8 @@ func _handle_packet_started(packet: Variant) -> void:
 		_process_update_speed_packet(packet)
 	elif packet is Packets.SwitchWeapon:
 		_process_switch_weapon_packet(packet)
+	elif packet is Packets.ReloadWeapon:
+		_process_reload_weapon_packet(packet)
 	else:
 		player_packets.complete_packet() # Unknown packet
 
@@ -530,6 +532,20 @@ func _process_switch_weapon_packet(packet: Packets.SwitchWeapon) -> void:
 	if current_state:
 		# Call without broadcast since this came from server
 		current_state.switch_weapon(slot, false)
+		# Completion will be handled by the state machine
+	else:
+		# If no state available, complete immediately
+		player_packets.packet_completed.emit()
+
+
+func _process_reload_weapon_packet(packet: Packets.ReloadWeapon) -> void:
+	var slot = packet.get_slot()
+	var amount = packet.get_amount()
+	var current_state: BaseState = player_state_machine.get_current_state()
+	
+	if current_state:
+		# Call without broadcast since this came from server
+		current_state.reload_weapon_and_await(slot, amount, false)
 		# Completion will be handled by the state machine
 	else:
 		# If no state available, complete immediately

@@ -71,3 +71,41 @@ func switch_weapon(slot: int, broadcast: bool = false) -> void:
 	player.is_busy = false
 	
 	packets.complete_packet()
+
+
+# Called from different weapon states to reload
+func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
+	var equipment = player.player_equipment
+	var animator = player.player_animator
+	var packets = player.player_packets
+	
+	# Check that we have the right weapon equipped
+	if slot != equipment.current_slot:
+		packets.complete_packet()
+		return
+	
+	# Block input
+	player.is_busy = true
+	
+	# Get current weapon type and reload animation
+	var weapon_type: String = equipment.get_current_weapon_type()
+	
+	# If we set it to broadcast and this is our local player
+	if broadcast and is_local_player:
+		# Report to the server we'll switch weapons
+		packets.send_reload_weapon_packet(equipment.current_slot, amount)
+	
+	# Play the reload animation
+	await animator.play_weapon_animation_and_await(
+		"reload",
+		weapon_type
+	)
+	player.is_busy = true # Block input again because animator released it
+	
+	# Update the ammo locally
+	equipment.reload_equipped_weapon(amount)
+	
+	# Release input
+	player.is_busy = false
+	
+	packets.complete_packet()

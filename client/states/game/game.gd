@@ -95,6 +95,8 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_route_update_speed_packet(sender_id, packet.get_update_speed())
 	elif packet.has_switch_weapon():
 		_route_switch_weapon_packet(sender_id, packet.get_switch_weapon())
+	elif packet.has_reload_weapon():
+		_route_reload_weapon_packet(sender_id, packet.get_reload_weapon())
 
 # Print the message into our chat window and update that player's chat bubble
 func _handle_public_message_packet(sender_id: int, packet_public_message: Packets.PublicMessage) -> void:
@@ -279,12 +281,6 @@ func _handle_spawn_character_packet(spawn_character_packet: Packets.SpawnCharact
 		_current_map_scene.add_child(player)
 
 
-func _route_update_speed_packet(sender_id: int, update_speed_packet: Packets.UpdateSpeed) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
-		_players[sender_id].player_packets.add_packet(update_speed_packet, PlayerPackets.Priority.NORMAL)
-
-
 func _handle_region_data_packet(region_data_packet: Packets.RegionData) -> void:
 	var region_id: int = region_data_packet.get_region_id()
 	
@@ -348,6 +344,19 @@ func _handle_chat_bubble_packet(sender_id: int, chat_bubble_packet: Packets.Chat
 			player.toggle_chat_bubble_icon(chat_bubble_packet.get_is_active())
 
 
+func _route_move_character_packet(sender_id: int, move_character_packet: Packets.MoveCharacter) -> void:
+	# If the id is on our players dictionary
+	if sender_id in _players:
+		# Send this packet to the queue of this player
+		_players[sender_id].player_packets.add_packet(move_character_packet, PlayerPackets.Priority.NORMAL)
+
+
+func _route_update_speed_packet(sender_id: int, update_speed_packet: Packets.UpdateSpeed) -> void:
+	# If the id is on our players dictionary
+	if sender_id in _players:
+		_players[sender_id].player_packets.add_packet(update_speed_packet, PlayerPackets.Priority.NORMAL)
+
+
 # Used to switch the weapon of this character
 func _route_switch_weapon_packet(sender_id: int, switch_weapon_packet: Packets.SwitchWeapon) -> void:
 	# If the id is on our players dictionary
@@ -355,11 +364,8 @@ func _route_switch_weapon_packet(sender_id: int, switch_weapon_packet: Packets.S
 		_players[sender_id].player_packets.add_packet(switch_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
-func _route_move_character_packet(sender_id: int, move_character_packet: Packets.MoveCharacter) -> void:
+func _route_reload_weapon_packet(sender_id: int, reload_weapon_packet: Packets.ReloadWeapon) -> void:
 	# If the id is on our players dictionary
 	if sender_id in _players:
-		# Fetch the player from our list of players
-		var player: Player = _players[sender_id]
-		
-		# Send this movement packet to the queue of this player
-		player.player_packets.add_packet(move_character_packet, PlayerPackets.Priority.NORMAL)
+		# Send this packet to the queue of this player
+		_players[sender_id].player_packets.add_packet(reload_weapon_packet, PlayerPackets.Priority.NORMAL)

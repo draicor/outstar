@@ -175,3 +175,13 @@ func NewSwitchWeapon(slot uint64) Payload {
 		},
 	}
 }
+
+// Sent by both client and server to broadcast reload weapon
+func NewReloadWeapon(slot, amount uint64) Payload {
+	return &Packet_ReloadWeapon{
+		ReloadWeapon: &ReloadWeapon{
+			Slot:   slot,
+			Amount: amount,
+		},
+	}
+}

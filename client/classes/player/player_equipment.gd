@@ -168,16 +168,6 @@ func unequip_weapon() -> void:
 	equipped_weapon_type = "unarmed"
 
 
-# Reloads our ammo based on our weapon type (for now)
-func reload_equipped_weapon() -> void:
-	var weapon_name = weapon_slots[current_slot]["weapon_name"]
-	match weapon_name:
-		"m16_rifle", "akm_rifle":
-			set_current_ammo(30)
-		_:
-			return
-
-
 # Decreases the amount of ammo in our equipped weapon
 func decrement_ammo(amount: int = 1) -> bool:
 	if get_current_ammo() >= amount:
@@ -362,3 +352,22 @@ func update_weapon_at_spawn() -> void:
 		player.gender
 	)
 	player.player_animator.switch_animation_library(anim_library)
+
+
+# Reloads our ammo based on our weapon type (for now)
+func reload_equipped_weapon(amount: int) -> void:
+	var weapon_name = weapon_slots[current_slot]["weapon_name"]
+	match weapon_name:
+		"m16_rifle", "akm_rifle":
+			set_current_ammo(amount)
+		_:
+			return
+
+
+func get_current_weapon_max_ammo() -> int:
+	var weapon_name = weapon_slots[current_slot]["weapon_name"]
+	match weapon_name:
+		"m16_rifle", "akm_rifle":
+			return 30
+		_:
+			return 0

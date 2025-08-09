@@ -140,7 +140,14 @@ func (player *Player) GetWeapons() *[]*WeaponSlot {
 }
 func (player *Player) SetWeapons(newWeapons []*WeaponSlot) {
 	player.weapons = newWeapons
+}
 
+// Current weapon ammo get/set
+func (player *Player) GetCurrentWeaponAmmo() uint64 {
+	return player.weapons[player.currentWeapon].Ammo
+}
+func (player *Player) SetCurrentWeaponAmmo(amount uint64) {
+	player.weapons[player.currentWeapon].Ammo = amount
 }
 
 // Static function to create a new player

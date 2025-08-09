@@ -68,7 +68,11 @@ message WeaponSlot {
   uint64 ammo = 5;
   uint64 fire_mode = 6;
 }
-
+// Reload weapon slot
+message ReloadWeapon {
+  uint64 slot = 1; // Weapon slot being reloaded
+  uint64 amount = 2; // Amount of ammo to reload
+}
 
 // Main Packet container
 message Packet {
@@ -101,5 +105,6 @@ message Packet {
     ChatBubble chat_bubble = 20; // Both
     // Character Equipped Weapon Data
     SwitchWeapon switch_weapon = 21; // Both
+    ReloadWeapon reload_weapon = 22; // Both
   }
 }
