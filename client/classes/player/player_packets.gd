@@ -136,7 +136,7 @@ func can_process_packet() -> bool:
 	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
 	# Only process these packets in their valid states
-	if _current_packet is Packets.SpawnCharacter:
+	if _current_packet is Packets.MoveCharacter:
 		return current_state_name in MOVEMENT_STATES
 	
 	if _current_packet is Packets.SwitchWeapon:

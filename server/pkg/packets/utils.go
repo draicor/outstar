@@ -97,16 +97,6 @@ func NewRegionData(regionId uint64, gridWidth uint64, gridHeight uint64) Payload
 	}
 }
 
-// Used internaly by the server to generate a path of positions
-func NewPosition(x, z uint64) Payload {
-	return &Packet_Position{
-		Position: &Position{
-			X: x,
-			Z: z,
-		},
-	}
-}
-
 // Convert weapon slots to protobuf format
 func convertWeaponsToProto(weapons []*objects.WeaponSlot) []*WeaponSlot {
 	var pbSlots []*WeaponSlot
@@ -146,7 +136,22 @@ func NewSpawnCharacter(id uint64, player *objects.Player) Payload {
 	}
 }
 
-// Sent by both client and server to update a player character's movement speed
+// Sent by the server to update a character's grid position
+func NewMoveCharacter(id uint64, player *objects.Player) Payload {
+	position := player.GetGridPosition()
+
+	return &Packet_MoveCharacter{
+		MoveCharacter: &MoveCharacter{
+			Id: id,
+			Position: &Position{
+				X: position.X,
+				Z: position.Z,
+			},
+		},
+	}
+}
+
+// Sent by both client and server to update a character's movement speed
 func NewUpdateSpeed(newSpeed uint64) Payload {
 	return &Packet_UpdateSpeed{
 		UpdateSpeed: &UpdateSpeed{

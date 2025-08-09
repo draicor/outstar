@@ -695,7 +695,7 @@ func (x *RegionData) GetGridHeight() uint64 {
 	return 0
 }
 
-// Player
+// Character
 type Position struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -850,6 +850,60 @@ func (x *SpawnCharacter) GetWeapons() []*WeaponSlot {
 	return nil
 }
 
+// Character movement
+type MoveCharacter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id       uint64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Position *Position `protobuf:"bytes,2,opt,name=position,proto3" json:"position,omitempty"`
+}
+
+func (x *MoveCharacter) Reset() {
+	*x = MoveCharacter{}
+	mi := &file_packets_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MoveCharacter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoveCharacter) ProtoMessage() {}
+
+func (x *MoveCharacter) ProtoReflect() protoreflect.Message {
+	mi := &file_packets_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoveCharacter.ProtoReflect.Descriptor instead.
+func (*MoveCharacter) Descriptor() ([]byte, []int) {
+	return file_packets_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *MoveCharacter) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *MoveCharacter) GetPosition() *Position {
+	if x != nil {
+		return x.Position
+	}
+	return nil
+}
+
 // Target Destination sent by the client (Ignores Y axis (vertical))
 type Destination struct {
 	state         protoimpl.MessageState
@@ -862,7 +916,7 @@ type Destination struct {
 
 func (x *Destination) Reset() {
 	*x = Destination{}
-	mi := &file_packets_proto_msgTypes[16]
+	mi := &file_packets_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -874,7 +928,7 @@ func (x *Destination) String() string {
 func (*Destination) ProtoMessage() {}
 
 func (x *Destination) ProtoReflect() protoreflect.Message {
-	mi := &file_packets_proto_msgTypes[16]
+	mi := &file_packets_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -887,7 +941,7 @@ func (x *Destination) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Destination.ProtoReflect.Descriptor instead.
 func (*Destination) Descriptor() ([]byte, []int) {
-	return file_packets_proto_rawDescGZIP(), []int{16}
+	return file_packets_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Destination) GetX() uint64 {
@@ -914,7 +968,7 @@ type UpdateSpeed struct {
 
 func (x *UpdateSpeed) Reset() {
 	*x = UpdateSpeed{}
-	mi := &file_packets_proto_msgTypes[17]
+	mi := &file_packets_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -926,7 +980,7 @@ func (x *UpdateSpeed) String() string {
 func (*UpdateSpeed) ProtoMessage() {}
 
 func (x *UpdateSpeed) ProtoReflect() protoreflect.Message {
-	mi := &file_packets_proto_msgTypes[17]
+	mi := &file_packets_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -939,7 +993,7 @@ func (x *UpdateSpeed) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSpeed.ProtoReflect.Descriptor instead.
 func (*UpdateSpeed) Descriptor() ([]byte, []int) {
-	return file_packets_proto_rawDescGZIP(), []int{17}
+	return file_packets_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *UpdateSpeed) GetSpeed() uint64 {
@@ -959,7 +1013,7 @@ type ChatBubble struct {
 
 func (x *ChatBubble) Reset() {
 	*x = ChatBubble{}
-	mi := &file_packets_proto_msgTypes[18]
+	mi := &file_packets_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -971,7 +1025,7 @@ func (x *ChatBubble) String() string {
 func (*ChatBubble) ProtoMessage() {}
 
 func (x *ChatBubble) ProtoReflect() protoreflect.Message {
-	mi := &file_packets_proto_msgTypes[18]
+	mi := &file_packets_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -984,7 +1038,7 @@ func (x *ChatBubble) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatBubble.ProtoReflect.Descriptor instead.
 func (*ChatBubble) Descriptor() ([]byte, []int) {
-	return file_packets_proto_rawDescGZIP(), []int{18}
+	return file_packets_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ChatBubble) GetIsActive() bool {
@@ -994,7 +1048,7 @@ func (x *ChatBubble) GetIsActive() bool {
 	return false
 }
 
-// Player Equipped Weapon Data
+// Character Equipped Weapon Data
 type SwitchWeapon struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1005,7 +1059,7 @@ type SwitchWeapon struct {
 
 func (x *SwitchWeapon) Reset() {
 	*x = SwitchWeapon{}
-	mi := &file_packets_proto_msgTypes[19]
+	mi := &file_packets_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1017,7 +1071,7 @@ func (x *SwitchWeapon) String() string {
 func (*SwitchWeapon) ProtoMessage() {}
 
 func (x *SwitchWeapon) ProtoReflect() protoreflect.Message {
-	mi := &file_packets_proto_msgTypes[19]
+	mi := &file_packets_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1030,7 +1084,7 @@ func (x *SwitchWeapon) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SwitchWeapon.ProtoReflect.Descriptor instead.
 func (*SwitchWeapon) Descriptor() ([]byte, []int) {
-	return file_packets_proto_rawDescGZIP(), []int{19}
+	return file_packets_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *SwitchWeapon) GetSlot() uint64 {
@@ -1056,7 +1110,7 @@ type WeaponSlot struct {
 
 func (x *WeaponSlot) Reset() {
 	*x = WeaponSlot{}
-	mi := &file_packets_proto_msgTypes[20]
+	mi := &file_packets_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1068,7 +1122,7 @@ func (x *WeaponSlot) String() string {
 func (*WeaponSlot) ProtoMessage() {}
 
 func (x *WeaponSlot) ProtoReflect() protoreflect.Message {
-	mi := &file_packets_proto_msgTypes[20]
+	mi := &file_packets_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1081,7 +1135,7 @@ func (x *WeaponSlot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WeaponSlot.ProtoReflect.Descriptor instead.
 func (*WeaponSlot) Descriptor() ([]byte, []int) {
-	return file_packets_proto_rawDescGZIP(), []int{20}
+	return file_packets_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *WeaponSlot) GetSlotIndex() uint64 {
@@ -1149,8 +1203,8 @@ type Packet struct {
 	//	*Packet_ClientLeft
 	//	*Packet_JoinRegionRequest
 	//	*Packet_RegionData
-	//	*Packet_Position
 	//	*Packet_SpawnCharacter
+	//	*Packet_MoveCharacter
 	//	*Packet_Destination
 	//	*Packet_UpdateSpeed
 	//	*Packet_ChatBubble
@@ -1160,7 +1214,7 @@ type Packet struct {
 
 func (x *Packet) Reset() {
 	*x = Packet{}
-	mi := &file_packets_proto_msgTypes[21]
+	mi := &file_packets_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1172,7 +1226,7 @@ func (x *Packet) String() string {
 func (*Packet) ProtoMessage() {}
 
 func (x *Packet) ProtoReflect() protoreflect.Message {
-	mi := &file_packets_proto_msgTypes[21]
+	mi := &file_packets_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1185,7 +1239,7 @@ func (x *Packet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Packet.ProtoReflect.Descriptor instead.
 func (*Packet) Descriptor() ([]byte, []int) {
-	return file_packets_proto_rawDescGZIP(), []int{21}
+	return file_packets_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *Packet) GetSenderId() uint64 {
@@ -1300,16 +1354,16 @@ func (x *Packet) GetRegionData() *RegionData {
 	return nil
 }
 
-func (x *Packet) GetPosition() *Position {
-	if x, ok := x.GetPayload().(*Packet_Position); ok {
-		return x.Position
+func (x *Packet) GetSpawnCharacter() *SpawnCharacter {
+	if x, ok := x.GetPayload().(*Packet_SpawnCharacter); ok {
+		return x.SpawnCharacter
 	}
 	return nil
 }
 
-func (x *Packet) GetSpawnCharacter() *SpawnCharacter {
-	if x, ok := x.GetPayload().(*Packet_SpawnCharacter); ok {
-		return x.SpawnCharacter
+func (x *Packet) GetMoveCharacter() *MoveCharacter {
+	if x, ok := x.GetPayload().(*Packet_MoveCharacter); ok {
+		return x.MoveCharacter
 	}
 	return nil
 }
@@ -1407,13 +1461,13 @@ type Packet_RegionData struct {
 	RegionData *RegionData `protobuf:"bytes,15,opt,name=region_data,json=regionData,proto3,oneof"` // Server
 }
 
-type Packet_Position struct {
+type Packet_SpawnCharacter struct {
 	// Character
-	Position *Position `protobuf:"bytes,16,opt,name=position,proto3,oneof"`
+	SpawnCharacter *SpawnCharacter `protobuf:"bytes,16,opt,name=spawn_character,json=spawnCharacter,proto3,oneof"` // Server
 }
 
-type Packet_SpawnCharacter struct {
-	SpawnCharacter *SpawnCharacter `protobuf:"bytes,17,opt,name=spawn_character,json=spawnCharacter,proto3,oneof"` // Server
+type Packet_MoveCharacter struct {
+	MoveCharacter *MoveCharacter `protobuf:"bytes,17,opt,name=move_character,json=moveCharacter,proto3,oneof"` /// Server
 }
 
 type Packet_Destination struct {
@@ -1461,9 +1515,9 @@ func (*Packet_JoinRegionRequest) isPacket_Payload() {}
 
 func (*Packet_RegionData) isPacket_Payload() {}
 
-func (*Packet_Position) isPacket_Payload() {}
-
 func (*Packet_SpawnCharacter) isPacket_Payload() {}
+
+func (*Packet_MoveCharacter) isPacket_Payload() {}
 
 func (*Packet_Destination) isPacket_Payload() {}
 
@@ -1543,7 +1597,12 @@ var file_packets_proto_rawDesc = []byte{
 	0x72, 0x65, 0x6e, 0x74, 0x57, 0x65, 0x61, 0x70, 0x6f, 0x6e, 0x12, 0x2d, 0x0a, 0x07, 0x77, 0x65,
 	0x61, 0x70, 0x6f, 0x6e, 0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x70, 0x61,
 	0x63, 0x6b, 0x65, 0x74, 0x73, 0x2e, 0x57, 0x65, 0x61, 0x70, 0x6f, 0x6e, 0x53, 0x6c, 0x6f, 0x74,
-	0x52, 0x07, 0x77, 0x65, 0x61, 0x70, 0x6f, 0x6e, 0x73, 0x22, 0x29, 0x0a, 0x0b, 0x44, 0x65, 0x73,
+	0x52, 0x07, 0x77, 0x65, 0x61, 0x70, 0x6f, 0x6e, 0x73, 0x22, 0x4e, 0x0a, 0x0d, 0x4d, 0x6f, 0x76,
+	0x65, 0x43, 0x68, 0x61, 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69, 0x64, 0x12, 0x2d, 0x0a, 0x08, 0x70, 0x6f,
+	0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x11, 0x2e, 0x70,
+	0x61, 0x63, 0x6b, 0x65, 0x74, 0x73, 0x2e, 0x50, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52,
+	0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x29, 0x0a, 0x0b, 0x44, 0x65, 0x73,
 	0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x0c, 0x0a, 0x01, 0x78, 0x18, 0x01, 0x20,
 	0x01, 0x28, 0x04, 0x52, 0x01, 0x78, 0x12, 0x0c, 0x0a, 0x01, 0x7a, 0x18, 0x02, 0x20, 0x01, 0x28,
 	0x04, 0x52, 0x01, 0x7a, 0x22, 0x23, 0x0a, 0x0b, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53, 0x70,
@@ -1565,7 +1624,7 @@ var file_packets_proto_rawDesc = []byte{
 	0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x61,
 	0x6d, 0x6d, 0x6f, 0x18, 0x05, 0x20, 0x01, 0x28, 0x04, 0x52, 0x04, 0x61, 0x6d, 0x6d, 0x6f, 0x12,
 	0x1b, 0x0a, 0x09, 0x66, 0x69, 0x72, 0x65, 0x5f, 0x6d, 0x6f, 0x64, 0x65, 0x18, 0x06, 0x20, 0x01,
-	0x28, 0x04, 0x52, 0x08, 0x66, 0x69, 0x72, 0x65, 0x4d, 0x6f, 0x64, 0x65, 0x22, 0x82, 0x0a, 0x0a,
+	0x28, 0x04, 0x52, 0x08, 0x66, 0x69, 0x72, 0x65, 0x4d, 0x6f, 0x64, 0x65, 0x22, 0x92, 0x0a, 0x0a,
 	0x06, 0x50, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x65, 0x6e, 0x64, 0x65,
 	0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x73, 0x65, 0x6e, 0x64,
 	0x65, 0x72, 0x49, 0x64, 0x12, 0x3f, 0x0a, 0x0e, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x5f, 0x6d,
@@ -1623,14 +1682,15 @@ var file_packets_proto_rawDesc = []byte{
 	0x0a, 0x0b, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x5f, 0x64, 0x61, 0x74, 0x61, 0x18, 0x0f, 0x20,
 	0x01, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x73, 0x2e, 0x52, 0x65,
 	0x67, 0x69, 0x6f, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x48, 0x00, 0x52, 0x0a, 0x72, 0x65, 0x67, 0x69,
-	0x6f, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x12, 0x2f, 0x0a, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69,
-	0x6f, 0x6e, 0x18, 0x10, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x11, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x65,
-	0x74, 0x73, 0x2e, 0x50, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x48, 0x00, 0x52, 0x08, 0x70,
-	0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x42, 0x0a, 0x0f, 0x73, 0x70, 0x61, 0x77, 0x6e,
-	0x5f, 0x63, 0x68, 0x61, 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x18, 0x11, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x17, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x73, 0x2e, 0x53, 0x70, 0x61, 0x77, 0x6e,
-	0x43, 0x68, 0x61, 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x48, 0x00, 0x52, 0x0e, 0x73, 0x70, 0x61,
-	0x77, 0x6e, 0x43, 0x68, 0x61, 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x12, 0x38, 0x0a, 0x0b, 0x64,
+	0x6f, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x12, 0x42, 0x0a, 0x0f, 0x73, 0x70, 0x61, 0x77, 0x6e, 0x5f,
+	0x63, 0x68, 0x61, 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x18, 0x10, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x17, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x73, 0x2e, 0x53, 0x70, 0x61, 0x77, 0x6e, 0x43,
+	0x68, 0x61, 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x48, 0x00, 0x52, 0x0e, 0x73, 0x70, 0x61, 0x77,
+	0x6e, 0x43, 0x68, 0x61, 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x12, 0x3f, 0x0a, 0x0e, 0x6d, 0x6f,
+	0x76, 0x65, 0x5f, 0x63, 0x68, 0x61, 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x18, 0x11, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x16, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x73, 0x2e, 0x4d, 0x6f, 0x76,
+	0x65, 0x43, 0x68, 0x61, 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x48, 0x00, 0x52, 0x0d, 0x6d, 0x6f,
+	0x76, 0x65, 0x43, 0x68, 0x61, 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x12, 0x38, 0x0a, 0x0b, 0x64,
 	0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x12, 0x20, 0x01, 0x28, 0x0b,
 	0x32, 0x14, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x73, 0x2e, 0x44, 0x65, 0x73, 0x74, 0x69,
 	0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x48, 0x00, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e,
@@ -1662,7 +1722,7 @@ func file_packets_proto_rawDescGZIP() []byte {
 	return file_packets_proto_rawDescData
 }
 
-var file_packets_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_packets_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_packets_proto_goTypes = []any{
 	(*PublicMessage)(nil),     // 0: packets.PublicMessage
 	(*Handshake)(nil),         // 1: packets.Handshake
@@ -1680,41 +1740,43 @@ var file_packets_proto_goTypes = []any{
 	(*RegionData)(nil),        // 13: packets.RegionData
 	(*Position)(nil),          // 14: packets.Position
 	(*SpawnCharacter)(nil),    // 15: packets.SpawnCharacter
-	(*Destination)(nil),       // 16: packets.Destination
-	(*UpdateSpeed)(nil),       // 17: packets.UpdateSpeed
-	(*ChatBubble)(nil),        // 18: packets.ChatBubble
-	(*SwitchWeapon)(nil),      // 19: packets.SwitchWeapon
-	(*WeaponSlot)(nil),        // 20: packets.WeaponSlot
-	(*Packet)(nil),            // 21: packets.Packet
+	(*MoveCharacter)(nil),     // 16: packets.MoveCharacter
+	(*Destination)(nil),       // 17: packets.Destination
+	(*UpdateSpeed)(nil),       // 18: packets.UpdateSpeed
+	(*ChatBubble)(nil),        // 19: packets.ChatBubble
+	(*SwitchWeapon)(nil),      // 20: packets.SwitchWeapon
+	(*WeaponSlot)(nil),        // 21: packets.WeaponSlot
+	(*Packet)(nil),            // 22: packets.Packet
 }
 var file_packets_proto_depIdxs = []int32{
 	14, // 0: packets.SpawnCharacter.position:type_name -> packets.Position
-	20, // 1: packets.SpawnCharacter.weapons:type_name -> packets.WeaponSlot
-	0,  // 2: packets.Packet.public_message:type_name -> packets.PublicMessage
-	1,  // 3: packets.Packet.handshake:type_name -> packets.Handshake
-	2,  // 4: packets.Packet.heartbeat:type_name -> packets.Heartbeat
-	3,  // 5: packets.Packet.server_metrics:type_name -> packets.ServerMetrics
-	4,  // 6: packets.Packet.request_granted:type_name -> packets.RequestGranted
-	5,  // 7: packets.Packet.request_denied:type_name -> packets.RequestDenied
-	6,  // 8: packets.Packet.login_request:type_name -> packets.LoginRequest
-	7,  // 9: packets.Packet.register_request:type_name -> packets.RegisterRequest
-	8,  // 10: packets.Packet.login_success:type_name -> packets.LoginSuccess
-	9,  // 11: packets.Packet.logout_request:type_name -> packets.LogoutRequest
-	10, // 12: packets.Packet.client_entered:type_name -> packets.ClientEntered
-	11, // 13: packets.Packet.client_left:type_name -> packets.ClientLeft
-	12, // 14: packets.Packet.join_region_request:type_name -> packets.JoinRegionRequest
-	13, // 15: packets.Packet.region_data:type_name -> packets.RegionData
-	14, // 16: packets.Packet.position:type_name -> packets.Position
+	21, // 1: packets.SpawnCharacter.weapons:type_name -> packets.WeaponSlot
+	14, // 2: packets.MoveCharacter.position:type_name -> packets.Position
+	0,  // 3: packets.Packet.public_message:type_name -> packets.PublicMessage
+	1,  // 4: packets.Packet.handshake:type_name -> packets.Handshake
+	2,  // 5: packets.Packet.heartbeat:type_name -> packets.Heartbeat
+	3,  // 6: packets.Packet.server_metrics:type_name -> packets.ServerMetrics
+	4,  // 7: packets.Packet.request_granted:type_name -> packets.RequestGranted
+	5,  // 8: packets.Packet.request_denied:type_name -> packets.RequestDenied
+	6,  // 9: packets.Packet.login_request:type_name -> packets.LoginRequest
+	7,  // 10: packets.Packet.register_request:type_name -> packets.RegisterRequest
+	8,  // 11: packets.Packet.login_success:type_name -> packets.LoginSuccess
+	9,  // 12: packets.Packet.logout_request:type_name -> packets.LogoutRequest
+	10, // 13: packets.Packet.client_entered:type_name -> packets.ClientEntered
+	11, // 14: packets.Packet.client_left:type_name -> packets.ClientLeft
+	12, // 15: packets.Packet.join_region_request:type_name -> packets.JoinRegionRequest
+	13, // 16: packets.Packet.region_data:type_name -> packets.RegionData
 	15, // 17: packets.Packet.spawn_character:type_name -> packets.SpawnCharacter
-	16, // 18: packets.Packet.destination:type_name -> packets.Destination
-	17, // 19: packets.Packet.update_speed:type_name -> packets.UpdateSpeed
-	18, // 20: packets.Packet.chat_bubble:type_name -> packets.ChatBubble
-	19, // 21: packets.Packet.switch_weapon:type_name -> packets.SwitchWeapon
-	22, // [22:22] is the sub-list for method output_type
-	22, // [22:22] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	16, // 18: packets.Packet.move_character:type_name -> packets.MoveCharacter
+	17, // 19: packets.Packet.destination:type_name -> packets.Destination
+	18, // 20: packets.Packet.update_speed:type_name -> packets.UpdateSpeed
+	19, // 21: packets.Packet.chat_bubble:type_name -> packets.ChatBubble
+	20, // 22: packets.Packet.switch_weapon:type_name -> packets.SwitchWeapon
+	23, // [23:23] is the sub-list for method output_type
+	23, // [23:23] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_packets_proto_init() }
@@ -1722,7 +1784,7 @@ func file_packets_proto_init() {
 	if File_packets_proto != nil {
 		return
 	}
-	file_packets_proto_msgTypes[21].OneofWrappers = []any{
+	file_packets_proto_msgTypes[22].OneofWrappers = []any{
 		(*Packet_PublicMessage)(nil),
 		(*Packet_Handshake)(nil),
 		(*Packet_Heartbeat)(nil),
@@ -1737,8 +1799,8 @@ func file_packets_proto_init() {
 		(*Packet_ClientLeft)(nil),
 		(*Packet_JoinRegionRequest)(nil),
 		(*Packet_RegionData)(nil),
-		(*Packet_Position)(nil),
 		(*Packet_SpawnCharacter)(nil),
+		(*Packet_MoveCharacter)(nil),
 		(*Packet_Destination)(nil),
 		(*Packet_UpdateSpeed)(nil),
 		(*Packet_ChatBubble)(nil),
@@ -1750,7 +1812,7 @@ func file_packets_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_packets_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -477,8 +477,8 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 
 
 func _handle_packet_started(packet: Variant) -> void:
-	if packet is Packets.SpawnCharacter:
-		_process_spawn_character_packet(packet)
+	if packet is Packets.MoveCharacter:
+		_process_move_character_packet(packet)
 	elif packet is Packets.UpdateSpeed:
 		_process_update_speed_packet(packet)
 	elif packet is Packets.SwitchWeapon:
@@ -487,8 +487,8 @@ func _handle_packet_started(packet: Variant) -> void:
 		player_packets.complete_packet() # Unknown packet
 
 
-# Spawns the character's server grid position
-func _process_spawn_character_packet(packet: Packets.SpawnCharacter) -> void:
+# Updates the character's server grid position
+func _process_move_character_packet(packet: Packets.MoveCharacter) -> void:
 	var server_position: Vector2i = Vector2i(
 		packet.get_position().get_x(),
 		packet.get_position().get_z()

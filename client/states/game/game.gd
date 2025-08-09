@@ -85,8 +85,9 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_handle_region_data_packet(packet.get_region_data())
 	elif packet.has_spawn_character():
 		_handle_spawn_character_packet(packet.get_spawn_character())
-	
 	# PACKETS THAT SHOULD BE QUEUED
+	elif packet.has_move_character():
+		_route_move_character_packet(sender_id, packet.get_move_character())
 	elif packet.has_update_speed():
 		_route_update_speed_packet(sender_id, packet.get_update_speed())
 	elif packet.has_switch_weapon():
@@ -275,23 +276,6 @@ func _handle_spawn_character_packet(spawn_character_packet: Packets.SpawnCharact
 		
 		# Spawn the player
 		_current_map_scene.add_child(player)
-	
-	# If the player is already in our local list of players
-	# Then we just need to update it
-	else:
-		# Fetch the player from our list of players
-		var player: Player = _players[player_id]
-		
-		# Get the server position from the packet
-		var server_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
-		
-		# Remove the player from the grid position it was
-		RegionManager.remove_object(player.player_movement.server_grid_position, player)
-		# Add the player to the new position in my local grid
-		RegionManager.set_object(server_position, player)
-		
-		# Send this movement packet to the queue of this player
-		player.player_packets.add_packet(spawn_character_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_update_speed_packet(sender_id: int, update_speed_packet: Packets.UpdateSpeed) -> void:
@@ -370,4 +354,19 @@ func _route_switch_weapon_packet(sender_id: int, switch_weapon_packet: Packets.S
 		_players[sender_id].player_packets.add_packet(switch_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
-# func _handle_
+func _route_move_character_packet(sender_id: int, move_character_packet: Packets.MoveCharacter) -> void:
+	# If the id is on our players dictionary
+	if sender_id in _players:
+		# Fetch the player from our list of players
+		var player: Player = _players[sender_id]
+		
+		# Get the server position from the packet
+		var server_position: Vector2i = Vector2i(move_character_packet.get_position().get_x(), move_character_packet.get_position().get_z())
+		
+		# Remove the player from the grid position it was
+		RegionManager.remove_object(player.player_movement.server_grid_position, player)
+		# Add the player to the new position in my local grid
+		RegionManager.set_object(server_position, player)
+		
+		# Send this movement packet to the queue of this player
+		player.player_packets.add_packet(move_character_packet, PlayerPackets.Priority.NORMAL)

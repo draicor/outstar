@@ -153,18 +153,18 @@ func (state *Game) updateCharacter() {
 		}
 
 		// Create a packet and broadcast it to everyone to update the character's position
-		updatePlayerPacket := packets.NewSpawnCharacter(state.client.GetId(), state.player)
+		moveCharacterPacket := packets.NewMoveCharacter(state.client.GetId(), state.player)
 
 		// Only if we moved
 		if steps > 0 {
-			// Broadcast the new player position to everyone else
-			state.client.Broadcast(updatePlayerPacket)
+			// Broadcast the new position to everyone else
+			state.client.Broadcast(moveCharacterPacket)
 		}
 
 		// Send the update to the client that owns this character,
 		// so they can ensure they are in sync with the server.
 		// We are sending this in a goroutine so we don't block our game loop
-		go state.client.SendPacket(updatePlayerPacket)
+		go state.client.SendPacket(moveCharacterPacket)
 	}
 }
 
