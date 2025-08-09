@@ -30,7 +30,11 @@ func update(_delta: float) -> void:
 	
 	# Handle raise weapon
 	if Input.is_action_pressed("right_click") and not player.is_busy and not player.is_mouse_over_ui:
-		await player.player_animator.play_animation_and_await("rifle/rifle_down_to_aim", 2.5)
+		# Play the raise weapon animation
+		await player.player_animator.play_weapon_animation_and_await(
+			"down_to_aim",
+			"rifle"
+		)
 		player.player_state_machine.change_state("rifle_aim_idle")
 
 
@@ -68,7 +72,11 @@ func handle_input(event: InputEvent) -> void:
 			player.player_state_machine.change_state("rifle_aim_idle")
 		# If we are NOT holding right click, lower the rifle and loop the rifle aim idle animation
 		else:
-			await player.player_animator.play_animation_and_await("rifle/rifle_aim_to_down", 3.5)
+			# Play the lower weapon animation
+			await player.player_animator.play_weapon_animation_and_await(
+				"aim_to_down",
+				"rifle"
+			)
 			player.player_animator.switch_animation("idle")
 	
 	# Toggle weapon fire mode

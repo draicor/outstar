@@ -96,7 +96,7 @@ func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
 		packets.send_reload_weapon_packet(equipment.current_slot, amount)
 	
 	# Check if we are in the weapon_down_idle_state before reloading
-	if is_weapon_down_idle_state:
+	if is_weapon_down_idle_state():
 		# Play the down to aim animation
 		await animator.play_weapon_animation_and_await(
 			"down_to_aim",

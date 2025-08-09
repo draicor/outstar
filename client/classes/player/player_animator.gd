@@ -85,7 +85,7 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 			play_rate = 2.5
 		},
 		"aim_to_down": {
-			animation = "rifle/rifle_down_to_aim",
+			animation = "rifle/rifle_aim_to_down",
 			play_rate = 3.5
 		}
 	},

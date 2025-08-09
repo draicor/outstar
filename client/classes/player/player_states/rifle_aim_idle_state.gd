@@ -71,7 +71,11 @@ func update(_delta: float) -> void:
 	# Handle lower weapon
 	if not Input.is_action_pressed("right_click") and not player.is_busy:
 		is_aim_rotating = false
-		await player.player_animator.play_animation_and_await("rifle/rifle_aim_to_down", 3.5)
+		# Play the lower weapon animation
+		await player.player_animator.play_weapon_animation_and_await(
+			"aim_to_down",
+			"rifle"
+		)
 		player.player_state_machine.change_state("rifle_down_idle")
 		return
 	
