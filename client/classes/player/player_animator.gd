@@ -79,6 +79,14 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 		"reload": {
 			animation = "rifle/rifle_aim_reload_fast",
 			play_rate = 1.2
+		},
+		"down_to_aim": {
+			animation = "rifle/rifle_down_to_aim",
+			play_rate = 2.5
+		},
+		"aim_to_down": {
+			animation = "rifle/rifle_down_to_aim",
+			play_rate = 3.5
 		}
 	},
 	# Add more weapon types here

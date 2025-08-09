@@ -95,6 +95,14 @@ func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
 		# Report to the server we'll switch weapons
 		packets.send_reload_weapon_packet(equipment.current_slot, amount)
 	
+	# Check if we are in the weapon_down_idle_state before reloading
+	if is_weapon_down_idle_state:
+		# Play the down to aim animation
+		await animator.play_weapon_animation_and_await(
+			"down_to_aim",
+			weapon_type
+		)
+	
 	# Play the reload animation
 	await animator.play_weapon_animation_and_await(
 		"reload",
@@ -109,3 +117,13 @@ func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
 	player.is_busy = false
 	
 	packets.complete_packet()
+
+
+# Returns true if this character has its weapon down
+func is_weapon_down_idle_state() -> bool:
+	var current_state: String = player.player_state_machine.get_current_state_name()
+	match current_state:
+		"rifle_down_idle":
+			return true
+		_:
+			return false

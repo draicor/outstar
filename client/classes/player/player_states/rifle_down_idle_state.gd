@@ -57,7 +57,6 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):
-		await player.player_animator.play_animation_and_await("rifle/rifle_down_to_aim", 2.5)
 		await reload_weapon_and_await(
 			player.player_equipment.current_slot,
 			player.player_equipment.get_current_weapon_max_ammo(),
