@@ -221,7 +221,7 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 		grid_destination = target_position
 		
 		# We need to send the packet here ONCE, when movement starts only
-		var packet: Packets.Packet = player.player_packets.create_player_destination_packet(immediate_grid_destination)
+		var packet: Packets.Packet = player.player_packets.create_destination_packet(immediate_grid_destination)
 		WebSocket.send(packet)
 
 
@@ -456,7 +456,7 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 			# Only send a packet if we are not correcting our position
 			if not autopilot_active:
 				# Create a new packet to report our new immediate destination to the server
-				var packet: Packets.Packet = player.player_packets.create_player_destination_packet(immediate_grid_destination)
+				var packet: Packets.Packet = player.player_packets.create_destination_packet(immediate_grid_destination)
 				WebSocket.send(packet)
 		else:
 			player.player_animator.update_locomotion_animation(cells_to_move_this_tick)

@@ -1469,7 +1469,7 @@ class Position:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
-class UpdatePlayer:
+class SpawnCharacter:
 	func _init():
 		var service
 		
@@ -1642,7 +1642,7 @@ class UpdatePlayer:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
-class PlayerDestination:
+class Destination:
 	func _init():
 		var service
 		
@@ -2074,17 +2074,17 @@ class Packet:
 		service.func_ref = Callable(self, "new_position")
 		data[__position.tag] = service
 		
-		__update_player = PBField.new("update_player", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 17, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__spawn_character = PBField.new("spawn_character", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 17, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = __update_player
-		service.func_ref = Callable(self, "new_update_player")
-		data[__update_player.tag] = service
+		service.field = __spawn_character
+		service.func_ref = Callable(self, "new_spawn_character")
+		data[__spawn_character.tag] = service
 		
-		__player_destination = PBField.new("player_destination", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 18, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		__destination = PBField.new("destination", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 18, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
-		service.field = __player_destination
-		service.func_ref = Callable(self, "new_player_destination")
-		data[__player_destination.tag] = service
+		service.field = __destination
+		service.func_ref = Callable(self, "new_destination")
+		data[__destination.tag] = service
 		
 		__update_speed = PBField.new("update_speed", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 19, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
@@ -2159,9 +2159,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2212,9 +2212,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2265,9 +2265,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2318,9 +2318,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2371,9 +2371,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2424,9 +2424,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2477,9 +2477,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2530,9 +2530,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2583,9 +2583,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2636,9 +2636,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2689,9 +2689,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2742,9 +2742,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2795,9 +2795,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2848,9 +2848,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.FILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2901,9 +2901,9 @@ class Packet:
 		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		data[16].state = PB_SERVICE_STATE.FILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2914,17 +2914,17 @@ class Packet:
 		__position.value = Position.new()
 		return __position.value
 	
-	var __update_player: PBField
-	func has_update_player() -> bool:
-		if __update_player.value != null:
+	var __spawn_character: PBField
+	func has_spawn_character() -> bool:
+		if __spawn_character.value != null:
 			return true
 		return false
-	func get_update_player() -> UpdatePlayer:
-		return __update_player.value
-	func clear_update_player() -> void:
+	func get_spawn_character() -> SpawnCharacter:
+		return __spawn_character.value
+	func clear_spawn_character() -> void:
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_update_player() -> UpdatePlayer:
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_spawn_character() -> SpawnCharacter:
 		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -2956,7 +2956,7 @@ class Packet:
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
 		data[17].state = PB_SERVICE_STATE.FILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -2964,20 +2964,20 @@ class Packet:
 		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[21].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = UpdatePlayer.new()
-		return __update_player.value
+		__spawn_character.value = SpawnCharacter.new()
+		return __spawn_character.value
 	
-	var __player_destination: PBField
-	func has_player_destination() -> bool:
-		if __player_destination.value != null:
+	var __destination: PBField
+	func has_destination() -> bool:
+		if __destination.value != null:
 			return true
 		return false
-	func get_player_destination() -> PlayerDestination:
-		return __player_destination.value
-	func clear_player_destination() -> void:
+	func get_destination() -> Destination:
+		return __destination.value
+	func clear_destination() -> void:
 		data[18].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
-	func new_player_destination() -> PlayerDestination:
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_destination() -> Destination:
 		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[2].state = PB_SERVICE_STATE.UNFILLED
 		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -3008,7 +3008,7 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
 		data[18].state = PB_SERVICE_STATE.FILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -3017,8 +3017,8 @@ class Packet:
 		data[20].state = PB_SERVICE_STATE.UNFILLED
 		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[21].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = PlayerDestination.new()
-		return __player_destination.value
+		__destination.value = Destination.new()
+		return __destination.value
 	
 	var __update_speed: PBField
 	func has_update_speed() -> bool:
@@ -3061,9 +3061,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		data[19].state = PB_SERVICE_STATE.FILLED
 		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
@@ -3114,9 +3114,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED
@@ -3167,9 +3167,9 @@ class Packet:
 		data[15].state = PB_SERVICE_STATE.UNFILLED
 		__position.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[16].state = PB_SERVICE_STATE.UNFILLED
-		__update_player.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[17].state = PB_SERVICE_STATE.UNFILLED
-		__player_destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[18].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[19].state = PB_SERVICE_STATE.UNFILLED

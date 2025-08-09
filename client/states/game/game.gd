@@ -83,9 +83,9 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_handle_chat_bubble_packet(sender_id, packet.get_chat_bubble())
 	elif packet.has_region_data():
 		_handle_region_data_packet(packet.get_region_data())
-	# PACKETS THAT ARE BOTH? FIX THIS
-	elif packet.has_update_player():
-		_handle_update_player_packet(packet.get_update_player())
+	elif packet.has_spawn_character():
+		_handle_spawn_character_packet(packet.get_spawn_character())
+	
 	# PACKETS THAT SHOULD BE QUEUED
 	elif packet.has_update_speed():
 		_route_update_speed_packet(sender_id, packet.get_update_speed())
@@ -228,8 +228,8 @@ func _handle_request_denied_packet(reason: String) -> void:
 	# have a packet type for every type of request unless we have to!
 
 
-func _handle_update_player_packet(update_player_packet: Packets.UpdatePlayer) -> void:
-	var player_id := update_player_packet.get_id()
+func _handle_spawn_character_packet(spawn_character_packet: Packets.SpawnCharacter) -> void:
+	var player_id := spawn_character_packet.get_id()
 
 	# If this player is NOT in our list of players
 	# then is a new player so we need to spawn it
@@ -238,10 +238,10 @@ func _handle_update_player_packet(update_player_packet: Packets.UpdatePlayer) ->
 		var is_my_player_character := player_id == GameManager.client_id
 		
 		# Get the spawn position from the packet
-		var spawn_position: Vector2i = Vector2i(update_player_packet.get_position().get_x(), update_player_packet.get_position().get_z())
+		var spawn_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
 		var weapon_slots: Array[Dictionary] = []
 		# Get the spawn weapons from the packet
-		var spawn_weapons = update_player_packet.get_weapons()
+		var spawn_weapons = spawn_character_packet.get_weapons()
 		# Extract weapon slots from the packet
 		for i in range(spawn_weapons.size()):
 			var weapon_slot = spawn_weapons[i]
@@ -256,13 +256,13 @@ func _handle_update_player_packet(update_player_packet: Packets.UpdatePlayer) ->
 		# Grab all of the data from the server and use it to create this player character
 		var player: Player = Player.instantiate(
 			player_id,
-			update_player_packet.get_name(),
-			update_player_packet.get_gender(),
-			update_player_packet.get_speed(),
+			spawn_character_packet.get_name(),
+			spawn_character_packet.get_gender(),
+			spawn_character_packet.get_speed(),
 			spawn_position,
-			update_player_packet.get_rotation_y(),
+			spawn_character_packet.get_rotation_y(),
 			is_my_player_character,
-			update_player_packet.get_current_weapon(),
+			spawn_character_packet.get_current_weapon(),
 			weapon_slots
 		)
 		# Add this player to our list of players
@@ -283,7 +283,7 @@ func _handle_update_player_packet(update_player_packet: Packets.UpdatePlayer) ->
 		var player: Player = _players[player_id]
 		
 		# Get the server position from the packet
-		var server_position: Vector2i = Vector2i(update_player_packet.get_position().get_x(), update_player_packet.get_position().get_z())
+		var server_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
 		
 		# Remove the player from the grid position it was
 		RegionManager.remove_object(player.player_movement.server_grid_position, player)
@@ -291,7 +291,7 @@ func _handle_update_player_packet(update_player_packet: Packets.UpdatePlayer) ->
 		RegionManager.set_object(server_position, player)
 		
 		# Send this movement packet to the queue of this player
-		player.player_packets.add_packet(update_player_packet, PlayerPackets.Priority.NORMAL)
+		player.player_packets.add_packet(spawn_character_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_update_speed_packet(sender_id: int, update_speed_packet: Packets.UpdateSpeed) -> void:
@@ -368,3 +368,6 @@ func _route_switch_weapon_packet(sender_id: int, switch_weapon_packet: Packets.S
 	# If the id is on our players dictionary
 	if sender_id in _players:
 		_players[sender_id].player_packets.add_packet(switch_weapon_packet, PlayerPackets.Priority.NORMAL)
+
+
+# func _handle_

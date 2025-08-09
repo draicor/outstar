@@ -37,7 +37,7 @@ message RegionData { // Sent by the server as metadata (grid data, static obstac
 }
 // Player
 message Position { uint64 x = 1; uint64 z = 2; } // Used to broadcast positions in a region
-message UpdatePlayer { // Sent by the server to update a player character (Used to spawn as well)
+message SpawnCharacter { // Sent by the server to update spawn a character
   uint64 id = 1;
   string name = 2;
   Position position = 3;
@@ -48,7 +48,7 @@ message UpdatePlayer { // Sent by the server to update a player character (Used 
   repeated WeaponSlot weapons = 8; // All weapon slots
 }
 // Target Destination sent by the client (Ignores Y axis (vertical))
-message PlayerDestination { uint64 x = 1; uint64 z = 2; }
+message Destination { uint64 x = 1; uint64 z = 2; }
 message UpdateSpeed { uint64 speed = 1; }
 message ChatBubble { bool is_active = 1; }
 // Player Equipped Weapon Data
@@ -88,13 +88,13 @@ message Packet {
     // Region
     JoinRegionRequest join_region_request = 14; // Client
     RegionData region_data = 15; // Server
-    // Player
+    // Character
     Position position = 16;
-    UpdatePlayer update_player = 17; // Server
-    PlayerDestination player_destination = 18; // Both
+    SpawnCharacter spawn_character = 17; // Server
+    Destination destination = 18; // Both
     UpdateSpeed update_speed = 19; // Both
     ChatBubble chat_bubble = 20; // Both
-    // Player Equipped Weapon Data
+    // Character Equipped Weapon Data
     SwitchWeapon switch_weapon = 21; // Both
   }
 }

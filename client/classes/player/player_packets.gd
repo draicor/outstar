@@ -136,7 +136,7 @@ func can_process_packet() -> bool:
 	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
 	# Only process these packets in their valid states
-	if _current_packet is Packets.UpdatePlayer:
+	if _current_packet is Packets.SpawnCharacter:
 		return current_state_name in MOVEMENT_STATES
 	
 	if _current_packet is Packets.SwitchWeapon:
@@ -153,12 +153,12 @@ func can_process_packet() -> bool:
 # PACKET CREATION #
 ###################
 
-# Creates and returns a player_destination_packet
-func create_player_destination_packet(grid_pos: Vector2i) -> Packets.Packet:
+# Creates and returns a destination_packet
+func create_destination_packet(grid_pos: Vector2i) -> Packets.Packet:
 	var packet: Packets.Packet = Packets.Packet.new()
-	var player_destination_packet := packet.new_player_destination()
-	player_destination_packet.set_x(grid_pos.x)
-	player_destination_packet.set_z(grid_pos.y)
+	var destination_packet := packet.new_destination()
+	destination_packet.set_x(grid_pos.x)
+	destination_packet.set_z(grid_pos.y)
 	return packet
 
 

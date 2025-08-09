@@ -107,13 +107,10 @@ func NewPosition(x, z uint64) Payload {
 	}
 }
 
-// Sent by the server to update a player character
-func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
-	position := player.GetGridPosition()
-
-	// Convert weapon slots to protobuf format
+// Convert weapon slots to protobuf format
+func convertWeaponsToProto(weapons []*objects.WeaponSlot) []*WeaponSlot {
 	var pbSlots []*WeaponSlot
-	for slotIndex, weapon := range *player.GetWeapons() {
+	for slotIndex, weapon := range weapons {
 		if weapon != nil {
 			pbSlots = append(pbSlots, &WeaponSlot{
 				SlotIndex:   uint64(slotIndex),
@@ -125,9 +122,15 @@ func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
 			})
 		}
 	}
+	return pbSlots
+}
 
-	return &Packet_UpdatePlayer{
-		UpdatePlayer: &UpdatePlayer{
+// Sent by the server to spawn a character
+func NewSpawnCharacter(id uint64, player *objects.Player) Payload {
+	position := player.GetGridPosition()
+
+	return &Packet_SpawnCharacter{
+		SpawnCharacter: &SpawnCharacter{
 			Id:   id,
 			Name: player.Name,
 			Position: &Position{
@@ -138,7 +141,7 @@ func NewUpdatePlayer(id uint64, player *objects.Player) Payload {
 			Gender:        player.GetGender(),
 			Speed:         player.GetSpeed(),
 			CurrentWeapon: player.GetCurrentWeapon(),
-			Weapons:       pbSlots,
+			Weapons:       convertWeaponsToProto(*player.GetWeapons()),
 		},
 	}
 }

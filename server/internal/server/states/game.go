@@ -48,8 +48,8 @@ func (state *Game) OnEnter() {
 
 	state.logger.Printf("%s added to region %d", state.player.Name, state.player.GetRegionId())
 
-	// Create an update packet to be sent to everyone in this region
-	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
+	// Create a spawn packet to be sent to everyone in this region
+	updatePlayerPacket := packets.NewSpawnCharacter(state.client.GetId(), state.player)
 
 	// Spawn our own character in our client first
 	state.client.SendPacket(updatePlayerPacket)
@@ -58,8 +58,8 @@ func (state *Game) OnEnter() {
 
 	// Loop over all of the clients in this region
 	state.client.GetRegion().Clients.ForEach(func(id uint64, client server.Client) {
-		// Create an update packet to be sent to our new client
-		updatePlayerPacket := packets.NewUpdatePlayer(id, client.GetPlayerCharacter())
+		// Create a spawn packet to be sent to our new client
+		updatePlayerPacket := packets.NewSpawnCharacter(id, client.GetPlayerCharacter())
 		state.client.SendPacket(updatePlayerPacket)
 	})
 
@@ -68,6 +68,21 @@ func (state *Game) OnEnter() {
 		ctx, cancel := context.WithCancel(context.Background())
 		state.cancelPlayerUpdateLoop = cancel
 		go state.playerUpdateLoop(ctx)
+	}
+}
+
+// Runs in a loop updating the player
+func (state *Game) playerUpdateLoop(ctx context.Context) {
+	ticker := time.NewTicker(time.Duration(PlayerMoveTick*1000) * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			state.updateCharacter()
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
@@ -138,7 +153,7 @@ func (state *Game) updateCharacter() {
 		}
 
 		// Create a packet and broadcast it to everyone to update the character's position
-		updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
+		updatePlayerPacket := packets.NewSpawnCharacter(state.client.GetId(), state.player)
 
 		// Only if we moved
 		if steps > 0 {
@@ -150,21 +165,6 @@ func (state *Game) updateCharacter() {
 		// so they can ensure they are in sync with the server.
 		// We are sending this in a goroutine so we don't block our game loop
 		go state.client.SendPacket(updatePlayerPacket)
-	}
-}
-
-// Runs in a loop updating the player
-func (state *Game) playerUpdateLoop(ctx context.Context) {
-	ticker := time.NewTicker(time.Duration(PlayerMoveTick*1000) * time.Millisecond)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			state.updateCharacter()
-		case <-ctx.Done():
-			return
-		}
 	}
 }
 
@@ -194,9 +194,9 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_ClientLeft:
 			state.HandleClientLeft(state.client.GetId(), state.client.GetPlayerCharacter().Name)
 
-		// PLAYER DESTINATION
-		case *packets.Packet_PlayerDestination:
-			state.HandlePlayerDestination(casted_payload.PlayerDestination)
+		// DESTINATION
+		case *packets.Packet_Destination:
+			state.HandleDestination(casted_payload.Destination)
 
 		// UPDATE SPEED
 		case *packets.Packet_UpdateSpeed:
@@ -250,9 +250,7 @@ func (state *Game) HandleClientLeft(id uint64, nickname string) {
 }
 
 // Sent from the client to the server to request setting a new destination for their player character
-func (state *Game) HandlePlayerDestination(payload *packets.PlayerDestination) {
-	// time.Sleep(500 * time.Millisecond) // Simulate 500ms delay
-
+func (state *Game) HandleDestination(payload *packets.Destination) {
 	// Get the grid from this region
 	grid := state.client.GetRegion().GetGrid()
 	// Get the cell the player wants to access
@@ -305,20 +303,19 @@ func (state *Game) HandleJoinRegionRequest(payload *packets.JoinRegionRequest) {
 	// Restore rotation after switch
 	state.player.RotationY = currentRotation
 
-	// TO FIX, make this a spawn player packet instead
-	// Create an update packet to be sent to everyone in this region
-	updatePlayerPacket := packets.NewUpdatePlayer(state.client.GetId(), state.player)
+	// Create a spawn packet to be sent to everyone in this region
+	spawnCharacterPacket := packets.NewSpawnCharacter(state.client.GetId(), state.player)
 
 	// Spawn our own character in our client first
-	state.client.SendPacket(updatePlayerPacket)
+	state.client.SendPacket(spawnCharacterPacket)
 	// Tell everyone else to spawn our character too
-	state.client.Broadcast(updatePlayerPacket)
+	state.client.Broadcast(spawnCharacterPacket)
 
 	// Loop over all of the clients in this region
 	state.client.GetRegion().Clients.ForEach(func(id uint64, client server.Client) {
-		// Create an update packet to be sent to our new client
-		updatePlayerPacket := packets.NewUpdatePlayer(id, client.GetPlayerCharacter())
-		state.client.SendPacket(updatePlayerPacket)
+		// Create a spawn packet to be sent to our new client
+		spawnCharacterPacket := packets.NewSpawnCharacter(id, client.GetPlayerCharacter())
+		state.client.SendPacket(spawnCharacterPacket)
 	})
 }
 
