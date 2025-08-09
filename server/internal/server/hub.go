@@ -307,7 +307,7 @@ func (h *Hub) SwitchRegion(username string, regionId uint64, mapId uint64) {
 			// Check if the client's previous region was valid
 			if client.GetRegion() != nil {
 				// Broadcast to everyone that this client left this region!
-				client.Broadcast(packets.NewClientLeft(client.GetId(), player.Name))
+				client.Broadcast(packets.NewClientLeft(player.Name))
 				// Unregister the client from that region
 				client.GetRegion().RemoveClientChannel <- client
 				time.Sleep(50 * time.Millisecond) // Brieft pause

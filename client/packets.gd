@@ -1221,30 +1221,12 @@ class ClientLeft:
 	func _init():
 		var service
 		
-		__id = PBField.new("id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
-		service = PBServiceField.new()
-		service.field = __id
-		data[__id.tag] = service
-		
 		__nickname = PBField.new("nickname", PB_DATA_TYPE.STRING, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.STRING])
 		service = PBServiceField.new()
 		service.field = __nickname
 		data[__nickname.tag] = service
 		
 	var data = {}
-	
-	var __id: PBField
-	func has_id() -> bool:
-		if __id.value != null:
-			return true
-		return false
-	func get_id() -> int:
-		return __id.value
-	func clear_id() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
-		__id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_id(value : int) -> void:
-		__id.value = value
 	
 	var __nickname: PBField
 	func has_nickname() -> bool:
@@ -1646,11 +1628,6 @@ class MoveCharacter:
 	func _init():
 		var service
 		
-		__id = PBField.new("id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
-		service = PBServiceField.new()
-		service.field = __id
-		data[__id.tag] = service
-		
 		__position = PBField.new("position", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
 		service = PBServiceField.new()
 		service.field = __position
@@ -1658,19 +1635,6 @@ class MoveCharacter:
 		data[__position.tag] = service
 		
 	var data = {}
-	
-	var __id: PBField
-	func has_id() -> bool:
-		if __id.value != null:
-			return true
-		return false
-	func get_id() -> int:
-		return __id.value
-	func clear_id() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
-		__id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_id(value : int) -> void:
-		__id.value = value
 	
 	var __position: PBField
 	func has_position() -> bool:

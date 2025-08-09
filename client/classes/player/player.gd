@@ -494,6 +494,11 @@ func _process_move_character_packet(packet: Packets.MoveCharacter) -> void:
 		packet.get_position().get_z()
 	)
 	
+	# Remove the player from the grid position it was
+	RegionManager.remove_object(player_movement.server_grid_position, self)
+	# Add the player to the new position in my local grid
+	RegionManager.set_object(server_position, self)
+	
 	# Only do the reconciliation for my player, not the other players
 	if my_player_character and player_movement.is_predicting:
 		player_movement.handle_server_reconciliation(server_position)

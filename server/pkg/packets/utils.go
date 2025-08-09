@@ -77,10 +77,9 @@ func NewClientEntered(nickname string) Payload {
 }
 
 // Sent by the client once he leaves, broadcasted to everyone
-func NewClientLeft(id uint64, nickname string) Payload {
+func NewClientLeft(nickname string) Payload {
 	return &Packet_ClientLeft{
 		ClientLeft: &ClientLeft{
-			Id:       id,
 			Nickname: nickname,
 		},
 	}
@@ -137,12 +136,11 @@ func NewSpawnCharacter(id uint64, player *objects.Player) Payload {
 }
 
 // Sent by the server to update a character's grid position
-func NewMoveCharacter(id uint64, player *objects.Player) Payload {
+func NewMoveCharacter(player *objects.Player) Payload {
 	position := player.GetGridPosition()
 
 	return &Packet_MoveCharacter{
 		MoveCharacter: &MoveCharacter{
-			Id: id,
 			Position: &Position{
 				X: position.X,
 				Z: position.Z,

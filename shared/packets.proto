@@ -27,7 +27,7 @@ message LoginSuccess { string nickname = 1; } // Sent by the server after succes
 message LogoutRequest {} // Sent by client
 // Notifies
 message ClientEntered { string nickname = 1; } // Sent by the client once his client is ready, broadcasted to everyone
-message ClientLeft { uint64 id = 1; string nickname = 2; } // Broadcast by the server if a client leaves
+message ClientLeft { string nickname = 2; } // Broadcast by the server if a client leaves
 // Region
 message JoinRegionRequest { uint64 region_id = 1; } // Sent by the client to request joining a new region
 message RegionData { // Sent by the server as metadata (grid data, static obstacles, gates)
@@ -36,9 +36,9 @@ message RegionData { // Sent by the server as metadata (grid data, static obstac
   uint64 grid_height = 3;
 }
 // Character
-message Position { uint64 x = 1; uint64 z = 2; } // Used to broadcast positions in a region
+message Position { uint64 x = 1; uint64 z = 2; } // Used by other packets
 message SpawnCharacter { // Sent by the server to spawn a character
-  uint64 id = 1;
+  uint64 id = 1; // We need the client_id here so it matches on the client
   string name = 2;
   Position position = 3;
   double rotation_y = 4;
@@ -49,7 +49,6 @@ message SpawnCharacter { // Sent by the server to spawn a character
 }
 // Character movement
 message MoveCharacter { // Sent by the server to move remote characters
-  uint64 id = 1;
   Position position = 2;
 }
 // Target Destination sent by the client (Ignores Y axis (vertical))

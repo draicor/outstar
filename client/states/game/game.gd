@@ -69,23 +69,26 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()
 	
 	# IMMEDIATE PACKETS DON'T GO INTO PACKET QUEUE
-	if packet.has_public_message():
-		_handle_public_message_packet(sender_id, packet.get_public_message())
-	elif packet.has_heartbeat():
-		Signals.heartbeat_received.emit()
-	elif packet.has_client_entered():
-		_handle_client_entered_packet(packet.get_client_entered().get_nickname())
-	elif packet.has_client_left():
-		_handle_client_left_packet(packet.get_client_left())
-	elif packet.has_request_denied():
-		_handle_request_denied_packet(packet.get_request_denied().get_reason())
-	elif packet.has_chat_bubble():
-		_handle_chat_bubble_packet(sender_id, packet.get_chat_bubble())
+	# PACKETS THAT NEED CLIENT_ID INSIDE THE PACKET
+	if packet.has_spawn_character():
+		_handle_spawn_character_packet(packet.get_spawn_character())
 	elif packet.has_region_data():
 		_handle_region_data_packet(packet.get_region_data())
-	elif packet.has_spawn_character():
-		_handle_spawn_character_packet(packet.get_spawn_character())
-	# PACKETS THAT SHOULD BE QUEUED
+	elif packet.has_heartbeat():
+		Signals.heartbeat_received.emit()
+	elif packet.has_client_entered(): # CAUTION not doing anything yet
+		_handle_client_entered_packet(packet.get_client_entered().get_nickname())
+	elif packet.has_request_denied(): # CAUTION not doing anything yet
+		_handle_request_denied_packet(packet.get_request_denied().get_reason())
+	# PACKETS THAT USE SENDER_ID
+	elif packet.has_public_message():
+		_handle_public_message_packet(sender_id, packet.get_public_message())
+	elif packet.has_chat_bubble():
+		_handle_chat_bubble_packet(sender_id, packet.get_chat_bubble())
+	elif packet.has_client_left():
+		_handle_client_left_packet(sender_id, packet.get_client_left())
+	
+	# PACKETS THAT GET QUEUED
 	elif packet.has_move_character():
 		_route_move_character_packet(sender_id, packet.get_move_character())
 	elif packet.has_update_speed():
@@ -130,19 +133,17 @@ func _handle_client_entered_packet(_nickname: String) -> void:
 
 # When a client leaves, print the message into our chat window
 # If that client was on our player list, we destroy his character to free resources
-func _handle_client_left_packet(client_left_packet: Packets.ClientLeft) -> void:
-	# Get the player id from the packet
-	var player_id := client_left_packet.get_id()
+func _handle_client_left_packet(sender_id: int, client_left_packet: Packets.ClientLeft) -> void:
 	# If the id is on our players dictionary
-	if player_id in _players:
+	if sender_id in _players:
 		# Attempt to retrieve the player character object
-		var player: Player = _players[player_id]
+		var player: Player = _players[sender_id]
 		# If its valid
 		if player:
 			# Remove this player from our grid
 			RegionManager.remove_object(player.player_movement.server_grid_position, player)
 			# Remove this player from our array of players
-			_players.erase(player_id)
+			_players.erase(sender_id)
 			# Destroy it
 			player.queue_free()
 	
@@ -359,14 +360,6 @@ func _route_move_character_packet(sender_id: int, move_character_packet: Packets
 	if sender_id in _players:
 		# Fetch the player from our list of players
 		var player: Player = _players[sender_id]
-		
-		# Get the server position from the packet
-		var server_position: Vector2i = Vector2i(move_character_packet.get_position().get_x(), move_character_packet.get_position().get_z())
-		
-		# Remove the player from the grid position it was
-		RegionManager.remove_object(player.player_movement.server_grid_position, player)
-		# Add the player to the new position in my local grid
-		RegionManager.set_object(server_position, player)
 		
 		# Send this movement packet to the queue of this player
 		player.player_packets.add_packet(move_character_packet, PlayerPackets.Priority.NORMAL)

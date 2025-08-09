@@ -153,7 +153,7 @@ func (state *Game) updateCharacter() {
 		}
 
 		// Create a packet and broadcast it to everyone to update the character's position
-		moveCharacterPacket := packets.NewMoveCharacter(state.client.GetId(), state.player)
+		moveCharacterPacket := packets.NewMoveCharacter(state.player)
 
 		// Only if we moved
 		if steps > 0 {
@@ -246,7 +246,7 @@ func (state *Game) HandleClientEntered(nickname string) {
 // We send this message to everybody
 func (state *Game) HandleClientLeft(id uint64, nickname string) {
 	// Tell everybody we disconnected
-	state.client.Broadcast(packets.NewClientLeft(id, nickname))
+	state.client.Broadcast(packets.NewClientLeft(nickname))
 }
 
 // Sent from the client to the server to request setting a new destination for their player character
@@ -333,7 +333,7 @@ func (state *Game) HandleLogoutRequest() {
 		}
 
 		// Broadcast to everyone that this client left before we remove it from the hub/region
-		state.client.Broadcast(packets.NewClientLeft(state.client.GetId(), character.Name))
+		state.client.Broadcast(packets.NewClientLeft(character.Name))
 	}
 
 	// If we are connected to a region, remove the client from this region
