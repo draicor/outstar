@@ -463,13 +463,16 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 	
 	# If we don't have any more cells to traverse
 	else:
-		_complete_movement()
+		complete_movement()
 
 
 # Snap the player's position to the grid after movement ends,
 # so its always exactly at the center of the cell in the grid,
 # stops movement and switches the character back to idle animation
-func _complete_movement() -> void:
+func complete_movement() -> void:
+	if not in_motion:
+		return
+	
 	# Check for interactions first
 	if player.interaction_target:
 		if is_in_interaction_range(player.interaction_target):
@@ -496,6 +499,7 @@ func _finalize_movement() -> void:
 		player.pending_interaction = null
 		_handle_autopilot()
 		return
+	
 	# After movement, check if we have a pending interaction and deal with it
 	elif player.pending_interaction:
 		player.handle_pending_interaction()
@@ -547,13 +551,15 @@ func _handle_autopilot() -> void:
 # Helper function to immediately move a character without traversing the grid
 # Used to reset our player position to sync with the server
 func teleport_to_position(new_grid_position: Vector2i) -> void:
-	# Reset all position-related variables
+	# Update all position references
 	grid_position = new_grid_position
+	grid_destination = new_grid_position
+	immediate_grid_destination = new_grid_position
+	
+	# Update visual position
 	interpolated_position = Utils.map_to_local(new_grid_position)
 	player.position = interpolated_position
 	next_cell = interpolated_position
-	grid_destination = new_grid_position
-	immediate_grid_destination = new_grid_position
 	
 	# Reset movement state
 	in_motion = false
@@ -567,8 +573,10 @@ func teleport_to_position(new_grid_position: Vector2i) -> void:
 	
 	# Exit autopilot mode
 	autopilot_active = false
-	# Go into idle state
-	player.player_state_machine.change_state(player.player_animator.get_idle_state_name())
+	
+	# Force state update if needed
+	if player.player_state_machine.get_current_state_name() == "move":
+		player.player_state_machine.change_state(player.player_animator.get_idle_state_name())
 
 
 # Attempts to predict a path towards that cell to move our character,

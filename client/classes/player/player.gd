@@ -479,7 +479,7 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 func _handle_packet_started(packet: Variant) -> void:
 	if packet is Packets.MoveCharacter:
 		_process_move_character_packet(packet)
-	elif packet is Packets.UpdateSpeed:
+	if packet is Packets.UpdateSpeed:
 		_process_update_speed_packet(packet)
 	elif packet is Packets.SwitchWeapon:
 		_process_switch_weapon_packet(packet)
@@ -496,8 +496,11 @@ func _process_move_character_packet(packet: Packets.MoveCharacter) -> void:
 		packet.get_position().get_z()
 	)
 	
+	# Store the previous position before updating anything
+	var previous_position: Vector2i = player_movement.server_grid_position
+	
 	# Remove the player from the grid position it was
-	RegionManager.remove_object(player_movement.server_grid_position, self)
+	RegionManager.remove_object(previous_position, self)
 	# Add the player to the new position in my local grid
 	RegionManager.set_object(server_position, self)
 	
@@ -508,7 +511,7 @@ func _process_move_character_packet(packet: Packets.MoveCharacter) -> void:
 	else:
 		player_movement.handle_remote_player_movement(server_position)
 	
-	# Update our server grid position locally
+	# Update our server grid position AFTER moving
 	player_movement.server_grid_position = server_position
 	player_packets.complete_packet()
 

@@ -20,11 +20,6 @@ var _retry_count: int = 0
 const MAX_RETRIES: int = 60 # Prevent infinite loops (60 ticks = 30 seconds)
 var _retry_timer: Timer
 
-const MOVEMENT_STATES: Array[String] = [
-	"move",
-	"idle",
-	"rifle_down_idle",
-]
 const IDLE_STATES: Array[String] = [
 	"idle",
 	"rifle_down_idle",
@@ -140,9 +135,6 @@ func can_process_packet() -> bool:
 	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
 	# Only process these packets in their valid states
-	if _current_packet is Packets.MoveCharacter:
-		return current_state_name in MOVEMENT_STATES
-	
 	if _current_packet is Packets.UpdateSpeed:
 		return current_state_name in IDLE_STATES
 	

@@ -8,6 +8,7 @@ var current_state: BaseState = null
 var previous_state: BaseState = null
 var is_active: bool = true : set = set_active
 var is_local_player: bool = false # set to true for local player
+var player: Player = null
 
 
 func _ready() -> void:
@@ -16,7 +17,7 @@ func _ready() -> void:
 	# Wait a single frame to allow time for the player_animator to initialize
 	await get_tree().process_frame
 	
-	var player: Player = get_parent()
+	player = get_parent()
 	if player.my_player_character:
 		is_local_player = true
 	
@@ -60,6 +61,9 @@ func change_state(new_state_name: String) -> void:
 		# If we are already in this state, ignore
 		if current_state == new_state:
 			return
+		
+		# Force process any pending packets when leaving this state
+		player.player_packets._try_process_next()
 		
 		# Exit current state
 		current_state.exit()
