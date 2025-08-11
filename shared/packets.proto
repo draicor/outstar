@@ -73,6 +73,8 @@ message ReloadWeapon {
   uint64 slot = 1; // Weapon slot being reloaded
   uint64 amount = 2; // Amount of ammo to reload
 }
+message RaiseWeapon {}
+message LowerWeapon {}
 
 // Main Packet container
 message Packet {
@@ -106,5 +108,7 @@ message Packet {
     // Character Equipped Weapon Data
     SwitchWeapon switch_weapon = 21; // Both
     ReloadWeapon reload_weapon = 22; // Both
+    RaiseWeapon raise_weapon = 23; // Both
+    LowerWeapon lower_weapon = 24; // Both
   }
 }

@@ -2,7 +2,6 @@ extends Node
 class_name PlayerPackets
 
 signal packet_started(packet: Variant)
-signal packet_completed(packet: Variant)
 
 const Packets: GDScript = preload("res://packets.gd")
 
@@ -24,8 +23,20 @@ const IDLE_STATES: Array[String] = [
 	"idle",
 	"rifle_down_idle",
 ]
+const MOVE_STATES: Array[String] = [
+	"idle",
+	"move",
+	"rifle_down_idle",
+	"rifle_aim_idle",
+]
 const RELOAD_STATES: Array[String] = [
 	"rifle_down_idle",
+	"rifle_aim_idle",
+]
+const WEAPON_DOWN_STATES: Array[String] = [
+	"rifle_down_idle",
+]
+const WEAPON_AIM_STATES: Array[String] = [
 	"rifle_aim_idle",
 ]
 
@@ -135,17 +146,26 @@ func can_process_packet() -> bool:
 	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
 	# Only process these packets in their valid states
+	if _current_packet is Packets.MoveCharacter:
+		# If this is our player character, process move packets right away
+		if player.my_player_character:
+			return true
+		# If this is a remote character, check if it can move
+		else:
+			return current_state_name in MOVE_STATES
 	if _current_packet is Packets.UpdateSpeed:
 		return current_state_name in IDLE_STATES
-	
-	if _current_packet is Packets.SwitchWeapon:
+	elif _current_packet is Packets.SwitchWeapon:
 		return current_state_name in IDLE_STATES
-	
-	if _current_packet is Packets.ReloadWeapon:
+	elif _current_packet is Packets.ReloadWeapon:
 		return current_state_name in RELOAD_STATES
-	
+	elif _current_packet is Packets.RaiseWeapon:
+		return current_state_name in WEAPON_DOWN_STATES
+	elif _current_packet is Packets.LowerWeapon:
+		return current_state_name in WEAPON_AIM_STATES
 	# Allow other packets by default
-	return true
+	else:
+		return true
 
 
 ###################
@@ -194,6 +214,20 @@ func create_reload_weapon_packet(weapon_slot: int, amount: int) -> Packets.Packe
 	return packet
 
 
+# Creates and returns a raise_weapon packet
+func create_raise_weapon_packet() -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	packet.new_raise_weapon()
+	return packet
+
+
+# Creates and returns a lower_weapon packet
+func create_lower_weapon_packet() -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	packet.new_lower_weapon()
+	return packet
+
+
 ##################
 # PACKET SENDING #
 ##################
@@ -219,4 +253,16 @@ func send_switch_weapon_packet(weapon_slot: int) -> void:
 # Creates and sends a packet to the server to inform we reloaded our weapon
 func send_reload_weapon_packet(weapon_slot: int, amount: int) -> void:
 	var packet: Packets.Packet = create_reload_weapon_packet(weapon_slot, amount)
+	WebSocket.send(packet)
+
+
+# Creates and sends a packet to the server to inform we raised our weapon
+func send_raise_weapon_packet() -> void:
+	var packet: Packets.Packet = create_raise_weapon_packet()
+	WebSocket.send(packet)
+
+
+# Creates and sends a packet to the server to inform we lowered our weapon
+func send_lower_weapon_packet() -> void:
+	var packet: Packets.Packet = create_lower_weapon_packet()
 	WebSocket.send(packet)

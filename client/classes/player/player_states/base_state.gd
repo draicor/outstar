@@ -73,6 +73,16 @@ func switch_weapon(slot: int, broadcast: bool = false) -> void:
 	packets.complete_packet()
 
 
+# Returns true if this character has its weapon down
+func is_weapon_down_idle_state() -> bool:
+	var current_state: String = player.player_state_machine.get_current_state_name()
+	match current_state:
+		"rifle_down_idle":
+			return true
+		_:
+			return false
+
+
 # Called from different weapon states to reload
 func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
 	var equipment = player.player_equipment
@@ -90,18 +100,22 @@ func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
 	# Get current weapon type and reload animation
 	var weapon_type: String = equipment.get_current_weapon_type()
 	
+	# Check if we are in the weapon_down_idle_state before reloading
+	if is_weapon_down_idle_state():
+		# If we set it to broadcast and this is our local player
+		if broadcast and is_local_player:
+			await raise_weapon_and_await(true)
+		else:
+			await raise_weapon_and_await(false)
+	
+	# Disable aim rotation while reloading
+	if player_state_machine.get_current_state_name() == weapon_type + "_aim_idle":
+		player_state_machine.get_current_state().is_aim_rotating = false
+	
 	# If we set it to broadcast and this is our local player
 	if broadcast and is_local_player:
 		# Report to the server we'll switch weapons
 		packets.send_reload_weapon_packet(equipment.current_slot, amount)
-	
-	# Check if we are in the weapon_down_idle_state before reloading
-	if is_weapon_down_idle_state():
-		# Play the down to aim animation
-		await animator.play_weapon_animation_and_await(
-			"down_to_aim",
-			weapon_type
-		)
 	
 	# Play the reload animation
 	await animator.play_weapon_animation_and_await(
@@ -116,14 +130,64 @@ func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
 	# Release input
 	player.is_busy = false
 	
+	# Enable aim rotation after reload
+	if player_state_machine.get_current_state_name() == weapon_type + "_aim_idle":
+		player_state_machine.get_current_state().is_aim_rotating = true
+	
 	packets.complete_packet()
 
 
-# Returns true if this character has its weapon down
-func is_weapon_down_idle_state() -> bool:
-	var current_state: String = player.player_state_machine.get_current_state_name()
-	match current_state:
-		"rifle_down_idle":
-			return true
-		_:
-			return false
+# Called to raise the current weapon
+func raise_weapon_and_await(broadcast: bool) -> void:
+	# Get current weapon type
+	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	
+	# If we set it to broadcast and this is our local player
+	if broadcast and is_local_player:
+		# Report to the server we are raising our weapon
+		player.player_packets.send_raise_weapon_packet()
+	
+	# Block input
+	player.is_busy = true
+	
+	# Play the raise weapon animation
+	await player.player_animator.play_weapon_animation_and_await(
+		"down_to_aim",
+		weapon_type
+	)
+	player.is_busy = true # Block input again because animator released it
+	
+	# Transition to the aim state for this weapon
+	player.player_state_machine.change_state(weapon_type + "_aim_idle")
+	
+	# Release input
+	player.is_busy = false
+	player.player_packets.complete_packet()
+
+
+# Called to lower the current weapon
+func lower_weapon_and_await(broadcast: bool) -> void:
+	# Get current weapon type
+	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	
+	# If we set it to broadcast and this is our local player
+	if broadcast and is_local_player:
+		# Report to the server we are lowering our weapon
+		player.player_packets.send_lower_weapon_packet()
+	
+	# Block input
+	player.is_busy = true
+	
+	# Play the lower weapon animation
+	await player.player_animator.play_weapon_animation_and_await(
+		"aim_to_down",
+		weapon_type
+	)
+	player.is_busy = true # Block input again because animator released it
+	
+	# Transition to the down state for this weapon
+	player.player_state_machine.change_state(weapon_type + "_down_idle")
+	
+	# Release input
+	player.is_busy = false
+	player.player_packets.complete_packet()

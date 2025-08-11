@@ -14,7 +14,6 @@ func _init() -> void:
 func enter() -> void:
 	player.player_animator.switch_animation_library("rifle_aim")
 	player.player_animator.switch_animation("idle")
-	player.set_mouse_cursor("crosshair")
 	# Initialize with current mouse world position
 	is_aim_rotating = true
 	# Always reset dry_fired to false on state changes
@@ -22,16 +21,17 @@ func enter() -> void:
 	
 	# If this is our local player
 	if player.player_state_machine.is_local_player:
+		player.set_mouse_cursor("crosshair")
 		# Reduce the rotation step to minimum when aiming
 		player.camera.ROTATION_STEP = 1.0
 
 
 func exit() -> void:
-	player.set_mouse_cursor("default")
 	player.player_movement.is_rotating = false
 	
 	# If this is our local player
 	if player.player_state_machine.is_local_player:
+		player.set_mouse_cursor("default")
 		# Restore the camera rotation step to default
 		player.camera.ROTATION_STEP = player.camera.BASE_ROTATION_STEP
 
@@ -70,18 +70,14 @@ func update(_delta: float) -> void:
 	
 	# Handle lower weapon
 	if not Input.is_action_pressed("right_click") and not player.is_busy:
-		is_aim_rotating = false
-		# Play the lower weapon animation
-		await player.player_animator.play_weapon_animation_and_await(
-			"aim_to_down",
-			"rifle"
-		)
-		player.player_state_machine.change_state("rifle_down_idle")
+		is_aim_rotating = false # Prevent rotation
+		await lower_weapon_and_await(true)
 		return
 	
 	# Fire rifle if mouse isn't over the UI
 	if Input.is_action_pressed("left_click") and not player.is_mouse_over_ui:
 		handle_firing()
+		return
 
 
 # One-time inputs
@@ -102,7 +98,6 @@ func handle_input(event: InputEvent) -> void:
 			player.player_equipment.get_current_weapon_max_ammo(),
 			true
 		)
-		
 		# If we are still holding right click, play the rifle aim idle animation
 		if Input.is_action_pressed("right_click"):
 			player.player_animator.switch_animation("idle")

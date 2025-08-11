@@ -97,6 +97,10 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_route_switch_weapon_packet(sender_id, packet.get_switch_weapon())
 	elif packet.has_reload_weapon():
 		_route_reload_weapon_packet(sender_id, packet.get_reload_weapon())
+	elif packet.has_raise_weapon():
+		_route_raise_weapon_packet(sender_id, packet.get_raise_weapon())
+	elif packet.has_lower_weapon():
+		_route_lower_weapon_packet(sender_id, packet.get_lower_weapon())
 
 # Print the message into our chat window and update that player's chat bubble
 func _handle_public_message_packet(sender_id: int, packet_public_message: Packets.PublicMessage) -> void:
@@ -369,3 +373,17 @@ func _route_reload_weapon_packet(sender_id: int, reload_weapon_packet: Packets.R
 	if sender_id in _players:
 		# Send this packet to the queue of this player
 		_players[sender_id].player_packets.add_packet(reload_weapon_packet, PlayerPackets.Priority.NORMAL)
+
+
+func _route_raise_weapon_packet(sender_id: int, raise_weapon_packet: Packets.RaiseWeapon) -> void:
+	# If the id is on our players dictionary
+	if sender_id in _players:
+		# Send this packet to the queue of this player
+		_players[sender_id].player_packets.add_packet(raise_weapon_packet, PlayerPackets.Priority.NORMAL)
+
+
+func _route_lower_weapon_packet(sender_id: int, lower_weapon_packet: Packets.LowerWeapon) -> void:
+	# If the id is on our players dictionary
+	if sender_id in _players:
+		# Send this packet to the queue of this player
+		_players[sender_id].player_packets.add_packet(lower_weapon_packet, PlayerPackets.Priority.NORMAL)

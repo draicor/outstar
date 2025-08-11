@@ -479,12 +479,16 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 func _handle_packet_started(packet: Variant) -> void:
 	if packet is Packets.MoveCharacter:
 		_process_move_character_packet(packet)
-	if packet is Packets.UpdateSpeed:
+	elif packet is Packets.UpdateSpeed:
 		_process_update_speed_packet(packet)
 	elif packet is Packets.SwitchWeapon:
 		_process_switch_weapon_packet(packet)
 	elif packet is Packets.ReloadWeapon:
 		_process_reload_weapon_packet(packet)
+	elif packet is Packets.RaiseWeapon:
+		_process_raise_weapon_packet()
+	elif packet is Packets.LowerWeapon:
+		_process_lower_weapon_packet()
 	else:
 		player_packets.complete_packet() # Unknown packet
 
@@ -538,7 +542,7 @@ func _process_switch_weapon_packet(packet: Packets.SwitchWeapon) -> void:
 		# Completion will be handled by the state machine
 	else:
 		# If no state available, complete immediately
-		player_packets.packet_completed.emit()
+		player_packets.complete_packet()
 
 
 func _process_reload_weapon_packet(packet: Packets.ReloadWeapon) -> void:
@@ -552,4 +556,28 @@ func _process_reload_weapon_packet(packet: Packets.ReloadWeapon) -> void:
 		# Completion will be handled by the state machine
 	else:
 		# If no state available, complete immediately
-		player_packets.packet_completed.emit()
+		player_packets.complete_packet()
+
+
+func _process_raise_weapon_packet() -> void:
+	var current_state: BaseState = player_state_machine.get_current_state()
+	
+	if current_state:
+		# Call without broadcast since this came from server
+		current_state.raise_weapon_and_await(false)
+		# Completion will be handled by the state machine
+	else:
+		# If no state available, complete immediately
+		player_packets.complete_packet()
+
+
+func _process_lower_weapon_packet() -> void:
+	var current_state: BaseState = player_state_machine.get_current_state()
+	
+	if current_state:
+		# Call without broadcast since this came from server
+		current_state.lower_weapon_and_await(false)
+		# Completion will be handled by the state machine
+	else:
+		# If no state available, complete immediately
+		player_packets.complete_packet()

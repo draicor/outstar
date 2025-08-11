@@ -185,3 +185,17 @@ func NewReloadWeapon(slot, amount uint64) Payload {
 		},
 	}
 }
+
+// Sent by client to raise the currently equipped weapon
+func NewRaiseWeapon() Payload {
+	return &Packet_RaiseWeapon{
+		RaiseWeapon: &RaiseWeapon{},
+	}
+}
+
+// Sent by client to lower the currently equipped weapon
+func NewLowerWeapon() Payload {
+	return &Packet_LowerWeapon{
+		LowerWeapon: &LowerWeapon{},
+	}
+}

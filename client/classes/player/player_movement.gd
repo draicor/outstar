@@ -506,7 +506,10 @@ func _finalize_movement() -> void:
 	# If we don't have to server sync or interact with anything,
 	# then we are done moving, so we go into idle state
 	else:
-		player.player_state_machine.change_state(player.player_animator.get_idle_state_name())
+		if player.player_state_machine.get_current_state_name().ends_with("idle"):
+			player.player_state_machine.change_state(player.player_animator.get_idle_state_name())
+		else:
+			player.player_state_machine.change_state(player.player_animator.get_aim_state_name())
 
 
 # Called when we have to sync with the server position

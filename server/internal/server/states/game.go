@@ -222,6 +222,14 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_ReloadWeapon:
 			state.HandleReloadWeapon(casted_payload.ReloadWeapon)
 
+		// RAISE WEAPON
+		case *packets.Packet_RaiseWeapon:
+			state.HandleRaiseWeapon()
+
+		// LOWER WEAPON
+		case *packets.Packet_LowerWeapon:
+			state.HandleLowerWeapon()
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -410,6 +418,16 @@ func (state *Game) HandleReloadWeapon(payload *packets.ReloadWeapon) {
 
 	// Broadcast weapon reload to everyone in the region
 	state.client.Broadcast(packets.NewReloadWeapon(slot, amount))
+}
+
+func (state *Game) HandleRaiseWeapon() {
+	// Broadcast to everyone in the region
+	state.client.Broadcast(packets.NewRaiseWeapon())
+}
+
+func (state *Game) HandleLowerWeapon() {
+	// Broadcast to everyone in the region
+	state.client.Broadcast(packets.NewLowerWeapon())
 }
 
 // Executed automatically when a client leaves the game state

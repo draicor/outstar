@@ -55,7 +55,7 @@ var animation_events: Dictionary[String, Array] = {
 		{"time": 0.2, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
 		{"time": 0.7, "method": "_call_player_audio_method", "args": ["play_weapon_remove_magazine"]},
 		{"time": 1.6, "method": "_call_player_audio_method", "args": ["play_weapon_insert_magazine"]},
-		{"time": 2.1, "method": "_call_player_audio_method", "args": ["play_weapon_charging_handle"]},
+		{"time": 2.2, "method": "_call_player_audio_method", "args": ["play_weapon_charging_handle"]},
 		{"time": 2.5, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
 	],
 	"rifle/rifle_equip": [
@@ -248,6 +248,13 @@ func get_idle_state_name() -> String:
 	match locomotion:
 		rifle_down_locomotion: return "rifle_down_idle"
 		_: return "idle"
+
+
+# Returns the aim state name
+func get_aim_state_name() -> String:
+	match locomotion:
+		rifle_aim_locomotion: return "rifle_aim_idle"
+		_: return get_idle_state_name()
 
 
 # Returns the appropiate animation library based on weapon type and gender
