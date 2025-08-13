@@ -5,8 +5,10 @@ class_name PlayerMovement
 const Packets: GDScript = preload("res://packets.gd")
 const Pathfinding: GDScript = preload("res://classes/pathfinding/pathfinding.gd")
 
-# EXPORTED VARIABLES
-@export var ROTATION_SPEED: float = 13.0 # Radians per second
+# EXPORTED VARIABLES (always positive numbers)
+@export var ROTATION_SPEED: float = 40.0 # Radians per second 
+@export var ROTATION_ACCEL: float = 30.0
+@export var ROTATION_DECEL: float = 20.0
 
 # CONSTANTS
 const SERVER_TICK: float = 0.5 # Controls local player move speed
@@ -43,9 +45,9 @@ var next_cell: Vector3 # Used in _process, its the next cell our player should m
 
 # Rotation state
 var forward_direction: Vector3 # Used to keep track of our current forward direction
-var is_rotating: bool = false # To prevent movement before rotation ends 
+var is_rotating: bool = false # To prevent movement before rotation ends
 var rotation_target: float = 0.0 # Rotation target in radians
-var tick_rotation_speed: float = 0.0 # How much to rotate this tick
+var rotation_speed: float = 0.0
 
 # Client prediction
 var is_predicting: bool = false # Whether we are predicting or the server is moving us
@@ -71,15 +73,16 @@ func setup_movement_data_at_spawn() -> void:
 	player.position = interpolated_position # Has to be set after the player scene has been created
 	# Convert our model's y-rotation (radians) to a forward direction vector
 	forward_direction = Vector3(sin(player.spawn_rotation), 0, cos(player.spawn_rotation))
-	
-	# CAUTION remove below if it worked
-	# Update our player's movement tick at spawn
-	#player.update_player_speed(player.player_speed)
 
 
 ##################
 # ROTATION LOGIC #
 ##################
+
+
+func _update_forward_direction() -> void:
+	var yaw: float = player.model.rotation.y
+	forward_direction = Vector3(sin(yaw), 0, cos(yaw))
 
 
 # Since our movement system snaps the character into the correct rotation pretty quickly,
@@ -94,11 +97,25 @@ func handle_rotation(delta: float) -> void:
 	# Calculate the shortest angular difference with wrapping
 	var diff = wrapf(target - current, -PI, PI)
 	
+	# CAUTION remove this line after further testing the new method
 	# Calculate rotation step with direction
-	var rotation_amount = sign(diff) * min(tick_rotation_speed * delta, abs(diff))
+	#var rotation_amount = sign(diff) * min(ROTATION_SPEED * delta, abs(diff))
+	
+	# Calculate desired rotation speed based on difference
+	var target_speed = clamp(diff * 8, -ROTATION_SPEED, ROTATION_SPEED)
+	
+	# Smoothly adjust current rotation speed
+	if abs(target_speed) > abs(rotation_speed):
+		# Accelerate toward target speed
+		rotation_speed = lerp(rotation_speed, target_speed, ROTATION_ACCEL * delta)
+	else:
+		# Decelerate when approaching target
+		rotation_speed = lerp(rotation_speed, target_speed, ROTATION_DECEL * delta)
 	
 	# Apply the rotation
-	player.model.rotation.y += rotation_amount
+	player.model.rotation.y += rotation_speed * delta
+	
+	_update_forward_direction()
 	
 	# Calculate new difference after rotation
 	var new_diff = wrapf(target - player.model.rotation.y, -PI, PI)
@@ -107,6 +124,7 @@ func handle_rotation(delta: float) -> void:
 	if abs(new_diff) <= ANGLE_THRESHOLD:
 		player.model.rotation.y = target
 		is_rotating = false
+		_update_forward_direction()
 		rotation_completed.emit()
 
 
@@ -121,11 +139,8 @@ func await_rotation(direction: Vector3) -> void:
 func rotate_towards_direction(direction: Vector3) -> bool:
 	# Remove vertical component and normalize
 	var horizontal_direction: Vector3 = direction.normalized()
-	# Calculate target yaw directly from world direction (flip the sign to match Godot's system)
+	# Calculate target yaw directly from world direction
 	var new_yaw: float = atan2(horizontal_direction.x, horizontal_direction.z)
-	
-	# Update forward direction immediately to target rotation
-	forward_direction = Vector3(sin(new_yaw), 0, cos(new_yaw))
 	
 	# Calculate shortest angle difference
 	var current_yaw: float = player.model.rotation.y
@@ -137,7 +152,6 @@ func rotate_towards_direction(direction: Vector3) -> bool:
 	
 	# Set rotation target
 	rotation_target = new_yaw
-	tick_rotation_speed = ROTATION_SPEED # Should always be positive
 	is_rotating = true
 	return true
 

@@ -230,6 +230,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_LowerWeapon:
 			state.HandleLowerWeapon()
 
+		// ROTATE CHARACTER
+		case *packets.Packet_RotateCharacter:
+			state.HandleRotateCharacter(casted_payload.RotateCharacter)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -428,6 +432,15 @@ func (state *Game) HandleRaiseWeapon() {
 func (state *Game) HandleLowerWeapon() {
 	// Broadcast to everyone in the region
 	state.client.Broadcast(packets.NewLowerWeapon())
+}
+
+func (state *Game) HandleRotateCharacter(payload *packets.RotateCharacter) {
+	// Get the rotation from the packet
+	newRotation := payload.GetRotationY()
+	// Overwrite this character's rotation
+	state.player.SetRotation(newRotation)
+	// Broadcast to everyone in the region
+	state.client.Broadcast(packets.NewRotateCharacter(newRotation))
 }
 
 // Executed automatically when a client leaves the game state

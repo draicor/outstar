@@ -8,6 +8,11 @@ var player: Player = null
 var state_name: String = "unnamed_state"
 var is_local_player: bool = false # set to true for local player
 var signals_connected: bool = false # to only do this once
+# Rotation broadcast logic
+var rotation_sync_timer: float = 0.0
+var last_sent_rotation: float = 0.0
+const ROTATION_SYNC_INTERVAL: float = 0.5 # seconds
+const ROTATION_CHANGE_THRESHOLD: float = 0.05 # radians
 
 
 func enter() -> void:
@@ -191,3 +196,12 @@ func lower_weapon_and_await(broadcast: bool) -> void:
 	# Release input
 	player.is_busy = false
 	player.player_packets.complete_packet()
+
+
+# Called on physics_update to check if we need to broadcast the rotation update
+func broadcast_rotation_if_changed():
+	# Check if the rotation changed significantly
+	var current_rotation: float = player.model.rotation.y
+	if abs(current_rotation - last_sent_rotation) >= ROTATION_CHANGE_THRESHOLD:
+		last_sent_rotation = current_rotation
+		player.player_packets.send_rotate_character_packet(current_rotation)

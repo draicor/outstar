@@ -228,6 +228,14 @@ func create_lower_weapon_packet() -> Packets.Packet:
 	return packet
 
 
+# Creates and returns a rotate_character packet
+func create_rotate_character_packet(rotation_y: float) -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	var rotate_character_packet := packet.new_rotate_character()
+	rotate_character_packet.set_rotation_y(rotation_y)
+	return packet
+
+
 ##################
 # PACKET SENDING #
 ##################
@@ -265,4 +273,10 @@ func send_raise_weapon_packet() -> void:
 # Creates and sends a packet to the server to inform we lowered our weapon
 func send_lower_weapon_packet() -> void:
 	var packet: Packets.Packet = create_lower_weapon_packet()
+	WebSocket.send(packet)
+
+
+# Creates and sends a packet to the server we rotated
+func send_rotate_character_packet(rotation_y: float) -> void:
+	var packet: Packets.Packet = create_rotate_character_packet(rotation_y)
 	WebSocket.send(packet)

@@ -489,6 +489,8 @@ func _handle_packet_started(packet: Variant) -> void:
 		_process_raise_weapon_packet()
 	elif packet is Packets.LowerWeapon:
 		_process_lower_weapon_packet()
+	elif packet is Packets.RotateCharacter:
+		_process_rotate_character_packet(packet)
 	else:
 		player_packets.complete_packet() # Unknown packet
 
@@ -581,3 +583,11 @@ func _process_lower_weapon_packet() -> void:
 	else:
 		# If no state available, complete immediately
 		player_packets.complete_packet()
+
+
+func _process_rotate_character_packet(packet: Packets.RotateCharacter) -> void:
+	var new_rotation: float = packet.get_rotation_y()
+	player_movement.rotation_target = new_rotation
+	player_movement.is_rotating = true
+	# Complete the packet right away
+	player_packets.complete_packet()

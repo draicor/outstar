@@ -24,16 +24,20 @@ func enter() -> void:
 		player.set_mouse_cursor("crosshair")
 		# Reduce the rotation step to minimum when aiming
 		player.camera.ROTATION_STEP = 1.0
+		# Store our model's Y rotation upon entering this state
+		last_sent_rotation = player.model.rotation.y
 
 
 func exit() -> void:
-	player.player_movement.is_rotating = false
-	
 	# If this is our local player
 	if player.player_state_machine.is_local_player:
+		broadcast_rotation_if_changed()
 		player.set_mouse_cursor("default")
 		# Restore the camera rotation step to default
 		player.camera.ROTATION_STEP = player.camera.BASE_ROTATION_STEP
+	
+	# For local and remote players
+	player.player_movement.is_rotating = false
 
 
 # Rotates the character on tick to match the mouse position
@@ -42,24 +46,33 @@ func physics_update(delta: float) -> void:
 	if not is_aim_rotating:
 		return
 	
-	var target_point: Vector3 = player.get_mouse_world_position()
-	
-	# Only update if we have a valid target
-	if target_point != Vector3.ZERO:
-		# Calculate direction to target
-		var direction: Vector3 = (target_point - player.global_position).normalized()
-		# Remove the vertical rotation
-		direction.y = 0
+	if is_local_player:
+		# Update the rotation sync timer
+		rotation_sync_timer += delta
 		
-		# Only update if direction is valid
-		if direction.length_squared() > 0.01:
-			# Update rotation target if it changed significantly
-			if last_target_point.distance_to(target_point) > 0.01:
-				player.player_movement.rotate_towards_direction(direction)
-				last_target_point = target_point
+		# If it's time to send an update to the server
+		if rotation_sync_timer > ROTATION_SYNC_INTERVAL:
+			rotation_sync_timer = 0.0
+			broadcast_rotation_if_changed()
+	
+		var target_point: Vector3 = player.get_mouse_world_position()
+		
+		# Only update if we have a valid target
+		if target_point != Vector3.ZERO:
+			# Calculate direction to target
+			var direction: Vector3 = (target_point - player.global_position).normalized()
+			# Remove the vertical rotation
+			direction.y = 0
 			
-			# We tick handle_rotation here so we can rotate towards our target
-			player.player_movement.handle_rotation(delta)
+			# Only update if direction is valid
+			if direction.length_squared() > 0.01:
+				# Update rotation target if it changed significantly
+				if last_target_point.distance_to(target_point) > 0.01:
+					player.player_movement.rotate_towards_direction(direction)
+					last_target_point = target_point
+	
+	# We tick both local and remote characters here so we can rotate towards our target
+	player.player_movement.handle_rotation(delta)
 
 
 # Held inputs

@@ -149,6 +149,15 @@ func NewMoveCharacter(player *objects.Player) Payload {
 	}
 }
 
+// Sent by both server and client to update a character's model.y rotation
+func NewRotateCharacter(rotationY float64) Payload {
+	return &Packet_RotateCharacter{
+		RotateCharacter: &RotateCharacter{
+			RotationY: rotationY,
+		},
+	}
+}
+
 // Sent by both client and server to update a character's movement speed
 func NewUpdateSpeed(newSpeed uint64) Payload {
 	return &Packet_UpdateSpeed{

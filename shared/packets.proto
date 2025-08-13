@@ -49,7 +49,10 @@ message SpawnCharacter { // Sent by the server to spawn a character
 }
 // Character movement
 message MoveCharacter { // Sent by the server to move remote characters
-  Position position = 2;
+  Position position = 1;
+}
+message RotateCharacter { // Sent by the server to rotate remote characters
+  double rotation_y = 1;
 }
 // Target Destination sent by the client (Ignores Y axis (vertical))
 message Destination { uint64 x = 1; uint64 z = 2; }
@@ -102,13 +105,14 @@ message Packet {
     // Character
     SpawnCharacter spawn_character = 16; // Server
     MoveCharacter move_character = 17; /// Server
-    Destination destination = 18; // Both
-    UpdateSpeed update_speed = 19; // Both
-    ChatBubble chat_bubble = 20; // Both
+    RotateCharacter rotate_character = 18; // Both
+    Destination destination = 19; // Both
+    UpdateSpeed update_speed = 20; // Both
+    ChatBubble chat_bubble = 21; // Both
     // Character Equipped Weapon Data
-    SwitchWeapon switch_weapon = 21; // Both
-    ReloadWeapon reload_weapon = 22; // Both
-    RaiseWeapon raise_weapon = 23; // Both
-    LowerWeapon lower_weapon = 24; // Both
+    SwitchWeapon switch_weapon = 22; // Both
+    ReloadWeapon reload_weapon = 23; // Both
+    RaiseWeapon raise_weapon = 24; // Both
+    LowerWeapon lower_weapon = 25; // Both
   }
 }
