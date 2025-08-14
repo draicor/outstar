@@ -491,6 +491,8 @@ func _handle_packet_started(packet: Variant) -> void:
 		_process_lower_weapon_packet()
 	elif packet is Packets.RotateCharacter:
 		_process_rotate_character_packet(packet)
+	elif packet is Packets.FireWeapon:
+		_process_fire_weapon_packet(packet)
 	else:
 		player_packets.complete_packet() # Unknown packet
 
@@ -591,3 +593,17 @@ func _process_rotate_character_packet(packet: Packets.RotateCharacter) -> void:
 	player_movement.is_rotating = true
 	# Complete the packet right away
 	player_packets.complete_packet()
+
+
+func _process_fire_weapon_packet(packet: Packets.FireWeapon) -> void:
+	# Extract target position from the packet
+	var target: Vector3 = Vector3(packet.get_x(), packet.get_y(), packet.get_z())
+	var current_state: BaseState = player_state_machine.get_current_state()
+	
+	if current_state:
+		# Call without broadcast since this came from server
+		current_state.handle_firing(target, false)
+		# Completion will be handled by the state machine
+	else:
+		# If no state available, complete immediately
+		player_packets.complete_packet()

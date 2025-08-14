@@ -7,6 +7,8 @@ package packets;
 option go_package = "pkg/packets";
 
 // PACKET TYPES
+// Building blocks
+message Position { uint64 x = 1; uint64 z = 2; } // Used by other packets
 // Chat
 message PublicMessage { string nickname = 1; string text = 2; } // Sent by client to communicate with other clients in the area
 // Connection
@@ -36,7 +38,6 @@ message RegionData { // Sent by the server as metadata (grid data, static obstac
   uint64 grid_height = 3;
 }
 // Character
-message Position { uint64 x = 1; uint64 z = 2; } // Used by other packets
 message SpawnCharacter { // Sent by the server to spawn a character
   uint64 id = 1; // We need the client_id here so it matches on the client
   string name = 2;
@@ -78,6 +79,11 @@ message ReloadWeapon {
 }
 message RaiseWeapon {}
 message LowerWeapon {}
+message FireWeapon { // We pass the target position
+  float x = 1;
+  float y = 2;
+  float z = 3; 
+}
 
 // Main Packet container
 message Packet {
@@ -114,5 +120,6 @@ message Packet {
     ReloadWeapon reload_weapon = 23; // Both
     RaiseWeapon raise_weapon = 24; // Both
     LowerWeapon lower_weapon = 25; // Both
+    FireWeapon fire_weapon = 26; // Both
   }
 }

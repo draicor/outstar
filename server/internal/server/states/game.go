@@ -39,6 +39,21 @@ func (state *Game) SetClient(client server.Client) {
 	state.logger = log.New(log.Writer(), prefix, log.LstdFlags)
 }
 
+// Executed automatically when a client leaves the game state
+func (state *Game) OnExit() {
+	// We broadcast the client leaving in websocket.go close()
+	// We save the client's data in the database in websocket.go close()
+	// We remove the player from the grid in region.go
+
+	// We stop the player update loop
+	if state.cancelPlayerUpdateLoop != nil {
+		state.cancelPlayerUpdateLoop()
+	}
+
+	// Remove this player from the list of players from the Hub
+	state.client.GetHub().SharedObjects.Players.Remove(state.client.GetId())
+}
+
 func (state *Game) OnEnter() {
 	// Add this client's character to the player map of the hub with the same ID as its client ID
 	go state.client.GetHub().SharedObjects.Players.Add(state.player, state.client.GetId())
@@ -233,6 +248,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		// ROTATE CHARACTER
 		case *packets.Packet_RotateCharacter:
 			state.HandleRotateCharacter(casted_payload.RotateCharacter)
+
+		// FIRE WEAPON
+		case *packets.Packet_FireWeapon:
+			state.HandleFireWeapon(casted_payload.FireWeapon)
 
 		case nil:
 			// Ignore packet if not a valid payload type
@@ -443,17 +462,7 @@ func (state *Game) HandleRotateCharacter(payload *packets.RotateCharacter) {
 	state.client.Broadcast(packets.NewRotateCharacter(newRotation))
 }
 
-// Executed automatically when a client leaves the game state
-func (state *Game) OnExit() {
-	// We broadcast the client leaving in websocket.go close()
-	// We save the client's data in the database in websocket.go close()
-	// We remove the player from the grid in region.go
-
-	// We stop the player update loop
-	if state.cancelPlayerUpdateLoop != nil {
-		state.cancelPlayerUpdateLoop()
-	}
-
-	// Remove this player from the list of players from the Hub
-	state.client.GetHub().SharedObjects.Players.Remove(state.client.GetId())
+func (state *Game) HandleFireWeapon(payload *packets.FireWeapon) {
+	// Get the target position from the packet and broadcast to everyone in the region
+	state.client.Broadcast(packets.NewFireWeapon(payload.GetX(), payload.GetY(), payload.GetZ()))
 }

@@ -686,6 +686,69 @@ class PBPacker:
 ############### USER DATA BEGIN ################
 
 
+class Position:
+	func _init():
+		var service
+		
+		__x = PBField.new("x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __x
+		data[__x.tag] = service
+		
+		__z = PBField.new("z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __z
+		data[__z.tag] = service
+		
+	var data = {}
+	
+	var __x: PBField
+	func has_x() -> bool:
+		if __x.value != null:
+			return true
+		return false
+	func get_x() -> int:
+		return __x.value
+	func clear_x() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_x(value : int) -> void:
+		__x.value = value
+	
+	var __z: PBField
+	func has_z() -> bool:
+		if __z.value != null:
+			return true
+		return false
+	func get_z() -> int:
+		return __z.value
+	func clear_z() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_z(value : int) -> void:
+		__z.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
 class PublicMessage:
 	func _init():
 		var service
@@ -1366,69 +1429,6 @@ class RegionData:
 		__grid_height.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_grid_height(value : int) -> void:
 		__grid_height.value = value
-	
-	func _to_string() -> String:
-		return PBPacker.message_to_string(data)
-		
-	func to_bytes() -> PackedByteArray:
-		return PBPacker.pack_message(data)
-		
-	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
-		var cur_limit = bytes.size()
-		if limit != -1:
-			cur_limit = limit
-		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
-		if result == cur_limit:
-			if PBPacker.check_required(data):
-				if limit == -1:
-					return PB_ERR.NO_ERRORS
-			else:
-				return PB_ERR.REQUIRED_FIELDS
-		elif limit == -1 && result > 0:
-			return PB_ERR.PARSE_INCOMPLETE
-		return result
-	
-class Position:
-	func _init():
-		var service
-		
-		__x = PBField.new("x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
-		service = PBServiceField.new()
-		service.field = __x
-		data[__x.tag] = service
-		
-		__z = PBField.new("z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
-		service = PBServiceField.new()
-		service.field = __z
-		data[__z.tag] = service
-		
-	var data = {}
-	
-	var __x: PBField
-	func has_x() -> bool:
-		if __x.value != null:
-			return true
-		return false
-	func get_x() -> int:
-		return __x.value
-	func clear_x() -> void:
-		data[1].state = PB_SERVICE_STATE.UNFILLED
-		__x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_x(value : int) -> void:
-		__x.value = value
-	
-	var __z: PBField
-	func has_z() -> bool:
-		if __z.value != null:
-			return true
-		return false
-	func get_z() -> int:
-		return __z.value
-	func clear_z() -> void:
-		data[2].state = PB_SERVICE_STATE.UNFILLED
-		__z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_z(value : int) -> void:
-		__z.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2166,6 +2166,87 @@ class LowerWeapon:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
+class FireWeapon:
+	func _init():
+		var service
+		
+		__x = PBField.new("x", PB_DATA_TYPE.FLOAT, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.FLOAT])
+		service = PBServiceField.new()
+		service.field = __x
+		data[__x.tag] = service
+		
+		__y = PBField.new("y", PB_DATA_TYPE.FLOAT, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.FLOAT])
+		service = PBServiceField.new()
+		service.field = __y
+		data[__y.tag] = service
+		
+		__z = PBField.new("z", PB_DATA_TYPE.FLOAT, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.FLOAT])
+		service = PBServiceField.new()
+		service.field = __z
+		data[__z.tag] = service
+		
+	var data = {}
+	
+	var __x: PBField
+	func has_x() -> bool:
+		if __x.value != null:
+			return true
+		return false
+	func get_x() -> float:
+		return __x.value
+	func clear_x() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.FLOAT]
+	func set_x(value : float) -> void:
+		__x.value = value
+	
+	var __y: PBField
+	func has_y() -> bool:
+		if __y.value != null:
+			return true
+		return false
+	func get_y() -> float:
+		return __y.value
+	func clear_y() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.FLOAT]
+	func set_y(value : float) -> void:
+		__y.value = value
+	
+	var __z: PBField
+	func has_z() -> bool:
+		if __z.value != null:
+			return true
+		return false
+	func get_z() -> float:
+		return __z.value
+	func clear_z() -> void:
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.FLOAT]
+	func set_z(value : float) -> void:
+		__z.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
 class Packet:
 	func _init():
 		var service
@@ -2319,6 +2400,12 @@ class Packet:
 		service.func_ref = Callable(self, "new_lower_weapon")
 		data[__lower_weapon.tag] = service
 		
+		__fire_weapon = PBField.new("fire_weapon", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 26, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = __fire_weapon
+		service.func_ref = Callable(self, "new_fire_weapon")
+		data[__fire_weapon.tag] = service
+		
 	var data = {}
 	
 	var __sender_id: PBField
@@ -2392,6 +2479,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__public_message.value = PublicMessage.new()
 		return __public_message.value
 	
@@ -2453,6 +2542,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__handshake.value = Handshake.new()
 		return __handshake.value
 	
@@ -2514,6 +2605,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__heartbeat.value = Heartbeat.new()
 		return __heartbeat.value
 	
@@ -2575,6 +2668,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__server_metrics.value = ServerMetrics.new()
 		return __server_metrics.value
 	
@@ -2636,6 +2731,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__request_granted.value = RequestGranted.new()
 		return __request_granted.value
 	
@@ -2697,6 +2794,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__request_denied.value = RequestDenied.new()
 		return __request_denied.value
 	
@@ -2758,6 +2857,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__login_request.value = LoginRequest.new()
 		return __login_request.value
 	
@@ -2819,6 +2920,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__register_request.value = RegisterRequest.new()
 		return __register_request.value
 	
@@ -2880,6 +2983,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__login_success.value = LoginSuccess.new()
 		return __login_success.value
 	
@@ -2941,6 +3046,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__logout_request.value = LogoutRequest.new()
 		return __logout_request.value
 	
@@ -3002,6 +3109,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__client_entered.value = ClientEntered.new()
 		return __client_entered.value
 	
@@ -3063,6 +3172,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__client_left.value = ClientLeft.new()
 		return __client_left.value
 	
@@ -3124,6 +3235,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = JoinRegionRequest.new()
 		return __join_region_request.value
 	
@@ -3185,6 +3298,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__region_data.value = RegionData.new()
 		return __region_data.value
 	
@@ -3246,6 +3361,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__spawn_character.value = SpawnCharacter.new()
 		return __spawn_character.value
 	
@@ -3307,6 +3424,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__move_character.value = MoveCharacter.new()
 		return __move_character.value
 	
@@ -3368,6 +3487,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__rotate_character.value = RotateCharacter.new()
 		return __rotate_character.value
 	
@@ -3429,6 +3550,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__destination.value = Destination.new()
 		return __destination.value
 	
@@ -3490,6 +3613,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = UpdateSpeed.new()
 		return __update_speed.value
 	
@@ -3551,6 +3676,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = ChatBubble.new()
 		return __chat_bubble.value
 	
@@ -3612,6 +3739,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__switch_weapon.value = SwitchWeapon.new()
 		return __switch_weapon.value
 	
@@ -3673,6 +3802,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__reload_weapon.value = ReloadWeapon.new()
 		return __reload_weapon.value
 	
@@ -3734,6 +3865,8 @@ class Packet:
 		data[24].state = PB_SERVICE_STATE.FILLED
 		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__raise_weapon.value = RaiseWeapon.new()
 		return __raise_weapon.value
 	
@@ -3795,8 +3928,73 @@ class Packet:
 		__raise_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[24].state = PB_SERVICE_STATE.UNFILLED
 		data[25].state = PB_SERVICE_STATE.FILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = LowerWeapon.new()
 		return __lower_weapon.value
+	
+	var __fire_weapon: PBField
+	func has_fire_weapon() -> bool:
+		if __fire_weapon.value != null:
+			return true
+		return false
+	func get_fire_weapon() -> FireWeapon:
+		return __fire_weapon.value
+	func clear_fire_weapon() -> void:
+		data[26].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_fire_weapon() -> FireWeapon:
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		__server_metrics.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		__logout_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		__move_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__rotate_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[22].state = PB_SERVICE_STATE.UNFILLED
+		__reload_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[23].state = PB_SERVICE_STATE.UNFILLED
+		__raise_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[24].state = PB_SERVICE_STATE.UNFILLED
+		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[25].state = PB_SERVICE_STATE.UNFILLED
+		data[26].state = PB_SERVICE_STATE.FILLED
+		__fire_weapon.value = FireWeapon.new()
+		return __fire_weapon.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

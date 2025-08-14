@@ -13,6 +13,8 @@ var rotation_sync_timer: float = 0.0
 var last_sent_rotation: float = 0.0
 const ROTATION_SYNC_INTERVAL: float = 0.5 # seconds
 const ROTATION_CHANGE_THRESHOLD: float = 0.05 # radians
+# Weapon firing
+var dry_fired: bool = false
 
 
 func enter() -> void:
@@ -29,6 +31,15 @@ func update(_delta: float) -> void:
 
 func handle_input(_event: InputEvent) -> void:
 	pass
+
+
+# Called on physics_update to check if we need to broadcast the rotation update
+func broadcast_rotation_if_changed():
+	# Check if the rotation changed significantly
+	var current_rotation: float = player.model.rotation.y
+	if abs(current_rotation - last_sent_rotation) >= ROTATION_CHANGE_THRESHOLD:
+		last_sent_rotation = current_rotation
+		player.player_packets.send_rotate_character_packet(current_rotation)
 
 
 # Called from different idle states to switch to another weapon
@@ -75,7 +86,8 @@ func switch_weapon(slot: int, broadcast: bool = false) -> void:
 	# Release input
 	player.is_busy = false
 	
-	packets.complete_packet()
+	if not is_local_player:
+		player.player_packets.complete_packet()
 
 
 # Returns true if this character has its weapon down
@@ -139,7 +151,8 @@ func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
 	if player_state_machine.get_current_state_name() == weapon_type + "_aim_idle":
 		player_state_machine.get_current_state().is_aim_rotating = true
 	
-	packets.complete_packet()
+	if not is_local_player:
+		player.player_packets.complete_packet()
 
 
 # Called to raise the current weapon
@@ -167,7 +180,9 @@ func raise_weapon_and_await(broadcast: bool) -> void:
 	
 	# Release input
 	player.is_busy = false
-	player.player_packets.complete_packet()
+	
+	if not is_local_player:
+		player.player_packets.complete_packet()
 
 
 # Called to lower the current weapon
@@ -195,13 +210,55 @@ func lower_weapon_and_await(broadcast: bool) -> void:
 	
 	# Release input
 	player.is_busy = false
-	player.player_packets.complete_packet()
+	
+	if not is_local_player:
+		player.player_packets.complete_packet()
 
 
-# Called on physics_update to check if we need to broadcast the rotation update
-func broadcast_rotation_if_changed():
-	# Check if the rotation changed significantly
-	var current_rotation: float = player.model.rotation.y
-	if abs(current_rotation - last_sent_rotation) >= ROTATION_CHANGE_THRESHOLD:
-		last_sent_rotation = current_rotation
-		player.player_packets.send_rotate_character_packet(current_rotation)
+func handle_firing(target: Vector3, broadcast: bool) -> void:
+	if target == Vector3.ZERO:
+		return
+	
+	player.player_equipment.calculate_weapon_direction(target)
+	# Get the weapon data from the player equipment system
+	var weapon = player.player_equipment.equipped_weapon
+	var anim_name: String = weapon.get_animation()
+	var play_rate: float = weapon.get_animation_play_rate()
+	
+	# Check for an empty gun
+	if not player.player_equipment.can_fire_weapon():
+		if not dry_fired:
+			dry_fired = true
+			# Override play rate for dry fire (always use semi-auto speed)
+			await player.player_animator.play_animation_and_await(anim_name, weapon.semi_fire_rate)
+			if is_local_player:
+				# If we set it to broadcast and this is our local player
+				if broadcast:
+				# Sync the rotation right before sending the fire weapon packet
+					rotation_sync_timer = 0.0
+					broadcast_rotation_if_changed()
+					player.player_packets.send_fire_weapon_packet(target)
+				# If after the animation ends our trigger is not pressed
+				if not Input.is_action_pressed("left_click"):
+					dry_fired = false
+			else: # remote player
+				dry_fired = false
+				player.player_packets.complete_packet()
+				return
+		# Abort here preventing shooting another round
+		return
+	
+	# Play normal firing logic
+	await player.player_animator.play_animation_and_await(anim_name, play_rate)
+	if is_local_player:
+		# If we set it to broadcast and this is our local player
+		if broadcast:
+			# Sync the rotation right before sending the fire weapon packet
+			rotation_sync_timer = 0.0
+			broadcast_rotation_if_changed()
+			player.player_packets.send_fire_weapon_packet(target)
+		# If after the animation ends our trigger is not pressed
+		if not Input.is_action_pressed("left_click"):
+			dry_fired = false
+	else: # remote player
+		player.player_packets.complete_packet()

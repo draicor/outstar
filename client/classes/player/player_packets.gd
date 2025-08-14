@@ -163,6 +163,8 @@ func can_process_packet() -> bool:
 		return current_state_name in WEAPON_DOWN_STATES
 	elif _current_packet is Packets.LowerWeapon:
 		return current_state_name in WEAPON_AIM_STATES
+	elif _current_packet is Packets.FireWeapon:
+		return current_state_name in WEAPON_AIM_STATES
 	# Allow other packets by default
 	else:
 		return true
@@ -236,6 +238,16 @@ func create_rotate_character_packet(rotation_y: float) -> Packets.Packet:
 	return packet
 
 
+# Creates and returns a fire_weapon packet
+func create_fire_weapon_packet(target: Vector3) -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	var fire_weapon_packet := packet.new_fire_weapon()
+	fire_weapon_packet.set_x(target.x)
+	fire_weapon_packet.set_y(target.y)
+	fire_weapon_packet.set_z(target.z)
+	return packet
+
+
 ##################
 # PACKET SENDING #
 ##################
@@ -276,7 +288,13 @@ func send_lower_weapon_packet() -> void:
 	WebSocket.send(packet)
 
 
-# Creates and sends a packet to the server we rotated
+# Creates and sends a packet to the server to inform we rotated
 func send_rotate_character_packet(rotation_y: float) -> void:
 	var packet: Packets.Packet = create_rotate_character_packet(rotation_y)
+	WebSocket.send(packet)
+
+
+# Creates and sends a packet to the server to inform we fired our weapon
+func send_fire_weapon_packet(target: Vector3) -> void:
+	var packet: Packets.Packet = create_fire_weapon_packet(target)
 	WebSocket.send(packet)
