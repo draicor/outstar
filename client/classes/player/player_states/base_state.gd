@@ -249,12 +249,14 @@ func handle_firing(target: Vector3, broadcast: bool) -> void:
 	
 	# Play normal firing logic
 	await player.player_animator.play_animation_and_await(anim_name, play_rate)
+	
 	if is_local_player:
 		# If we set it to broadcast and this is our local player
 		if broadcast:
 			# Sync the rotation right before sending the fire weapon packet
 			rotation_sync_timer = 0.0
 			player.player_packets.send_fire_weapon_packet(target, player.player_movement.rotation_target)
+
 		# If after the animation ends our trigger is not pressed
 		if not Input.is_action_pressed("left_click"):
 			dry_fired = false

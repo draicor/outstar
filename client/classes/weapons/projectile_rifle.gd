@@ -100,7 +100,7 @@ func fire() -> Vector3:
 	var hit: Dictionary = weapon_raycast(muzzle_position, direction)
 	var hit_position: Vector3 = hit.position if hit else muzzle_position + direction * weapon_max_distance
 	
-	# We check if we can fire before, in player_equipment.weapon_fire()
+	# We already checked if we can fire in player_equipment.weapon_fire()
 	projectile_muzzle_flash.restart()
 	# Add the bullet tracer
 	var tracer := BULLET_TRACER.instantiate()

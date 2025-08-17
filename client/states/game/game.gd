@@ -68,6 +68,27 @@ func _on_websocket_connection_closed() -> void:
 func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()
 	
+	# HIGHER PRIORITY PACKETS THAT GET QUEUED
+	if packet.has_fire_weapon():
+		_route_fire_weapon_packet(sender_id, packet.get_fire_weapon())
+	elif packet.has_rotate_character():
+		_route_rotate_character_packet(sender_id, packet.get_rotate_character())
+	elif packet.has_raise_weapon():
+		_route_raise_weapon_packet(sender_id, packet.get_raise_weapon())
+	elif packet.has_lower_weapon():
+		_route_lower_weapon_packet(sender_id, packet.get_lower_weapon())
+	# LOWER PRIORITY PACKETS THAT GET QUEUED
+	elif packet.has_move_character():
+		_route_move_character_packet(sender_id, packet.get_move_character())
+	elif packet.has_update_speed():
+		_route_update_speed_packet(sender_id, packet.get_update_speed())
+	elif packet.has_switch_weapon():
+		_route_switch_weapon_packet(sender_id, packet.get_switch_weapon())
+	elif packet.has_reload_weapon():
+		_route_reload_weapon_packet(sender_id, packet.get_reload_weapon())
+	elif packet.has_toggle_fire_mode():
+		_route_toggle_fire_mode_packet(sender_id, packet.get_toggle_fire_mode())
+	
 	# IMMEDIATE PACKETS DON'T GO INTO PACKET QUEUE
 	# PACKETS THAT NEED CLIENT_ID INSIDE THE PACKET
 	if packet.has_spawn_character():
@@ -87,26 +108,6 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_handle_chat_bubble_packet(sender_id, packet.get_chat_bubble())
 	elif packet.has_client_left():
 		_handle_client_left_packet(sender_id, packet.get_client_left())
-	
-	# PACKETS THAT GET QUEUED
-	elif packet.has_move_character():
-		_route_move_character_packet(sender_id, packet.get_move_character())
-	elif packet.has_update_speed():
-		_route_update_speed_packet(sender_id, packet.get_update_speed())
-	elif packet.has_switch_weapon():
-		_route_switch_weapon_packet(sender_id, packet.get_switch_weapon())
-	elif packet.has_reload_weapon():
-		_route_reload_weapon_packet(sender_id, packet.get_reload_weapon())
-	elif packet.has_raise_weapon():
-		_route_raise_weapon_packet(sender_id, packet.get_raise_weapon())
-	elif packet.has_lower_weapon():
-		_route_lower_weapon_packet(sender_id, packet.get_lower_weapon())
-	elif packet.has_rotate_character():
-		_route_rotate_character_packet(sender_id, packet.get_rotate_character())
-	elif packet.has_fire_weapon():
-		_route_fire_weapon_packet(sender_id, packet.get_fire_weapon())
-	elif packet.has_toggle_fire_mode():
-		_route_toggle_fire_mode_packet(sender_id, packet.get_toggle_fire_mode())
 
 
 # Print the message into our chat window and update that player's chat bubble

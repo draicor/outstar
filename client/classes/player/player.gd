@@ -183,9 +183,6 @@ func _initialize_character() -> void:
 	call_deferred("_setup_bone_attachments")
 
 
-
-
-
 # Used to load a character model and append it as a child of our model node
 func load_character(character_type: String) -> void:
 	# Remove existing character if any
@@ -477,7 +474,17 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 
 
 func _handle_packet_started(packet: Variant) -> void:
-	if packet is Packets.MoveCharacter:
+	# HIGH PRIORITY PACKETS AT THE TOP
+	if packet is Packets.FireWeapon:
+		_process_fire_weapon_packet(packet)
+	elif packet is Packets.RotateCharacter:
+		_process_rotate_character_packet(packet)
+	elif packet is Packets.RaiseWeapon:
+		_process_raise_weapon_packet()
+	elif packet is Packets.LowerWeapon:
+		_process_lower_weapon_packet()
+	# LOWER PRIORITY PACKETS
+	elif packet is Packets.MoveCharacter:
 		_process_move_character_packet(packet)
 	elif packet is Packets.UpdateSpeed:
 		_process_update_speed_packet(packet)
@@ -485,14 +492,6 @@ func _handle_packet_started(packet: Variant) -> void:
 		_process_switch_weapon_packet(packet)
 	elif packet is Packets.ReloadWeapon:
 		_process_reload_weapon_packet(packet)
-	elif packet is Packets.RaiseWeapon:
-		_process_raise_weapon_packet()
-	elif packet is Packets.LowerWeapon:
-		_process_lower_weapon_packet()
-	elif packet is Packets.RotateCharacter:
-		_process_rotate_character_packet(packet)
-	elif packet is Packets.FireWeapon:
-		_process_fire_weapon_packet(packet)
 	elif packet is Packets.ToggleFireMode:
 		_process_toggle_fire_mode_packet()
 	else:
@@ -598,15 +597,16 @@ func _process_rotate_character_packet(packet: Packets.RotateCharacter) -> void:
 
 
 func _process_fire_weapon_packet(packet: Packets.FireWeapon) -> void:
-	# Extract target position and shooter's rotation from the packet
-	var target: Vector3 = Vector3(packet.get_x(), packet.get_y(), packet.get_z())
-	var rotation_y: float = packet.get_rotation_y()
 	var current_state: BaseState = player_state_machine.get_current_state()
 	
 	if current_state:
+		# Extract shooter's rotation from the packet
+		var rotation_y: float = packet.get_rotation_y()
 		# Update rotation before shooting
 		player_movement.rotation_target = rotation_y
 		player_movement.is_rotating = true
+		# Extract target position
+		var target: Vector3 = Vector3(packet.get_x(), packet.get_y(), packet.get_z())
 		# Call without broadcast since this came from server
 		current_state.handle_firing(target, false)
 		# Completion will be handled by the state machine
