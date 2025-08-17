@@ -2185,6 +2185,11 @@ class FireWeapon:
 		service.field = __z
 		data[__z.tag] = service
 		
+		__rotation_y = PBField.new("rotation_y", PB_DATA_TYPE.DOUBLE, PB_RULE.OPTIONAL, 4, true, DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE])
+		service = PBServiceField.new()
+		service.field = __rotation_y
+		data[__rotation_y.tag] = service
+		
 	var data = {}
 	
 	var __x: PBField
@@ -2225,6 +2230,19 @@ class FireWeapon:
 		__z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.FLOAT]
 	func set_z(value : float) -> void:
 		__z.value = value
+	
+	var __rotation_y: PBField
+	func has_rotation_y() -> bool:
+		if __rotation_y.value != null:
+			return true
+		return false
+	func get_rotation_y() -> float:
+		return __rotation_y.value
+	func clear_rotation_y() -> void:
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		__rotation_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
+	func set_rotation_y(value : float) -> void:
+		__rotation_y.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

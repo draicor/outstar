@@ -236,8 +236,7 @@ func handle_firing(target: Vector3, broadcast: bool) -> void:
 				if broadcast:
 				# Sync the rotation right before sending the fire weapon packet
 					rotation_sync_timer = 0.0
-					broadcast_rotation_if_changed()
-					player.player_packets.send_fire_weapon_packet(target)
+					player.player_packets.send_fire_weapon_packet(target, player.player_movement.rotation_target)
 				# If after the animation ends our trigger is not pressed
 				if not Input.is_action_pressed("left_click"):
 					dry_fired = false
@@ -255,8 +254,7 @@ func handle_firing(target: Vector3, broadcast: bool) -> void:
 		if broadcast:
 			# Sync the rotation right before sending the fire weapon packet
 			rotation_sync_timer = 0.0
-			broadcast_rotation_if_changed()
-			player.player_packets.send_fire_weapon_packet(target)
+			player.player_packets.send_fire_weapon_packet(target, player.player_movement.rotation_target)
 		# If after the animation ends our trigger is not pressed
 		if not Input.is_action_pressed("left_click"):
 			dry_fired = false

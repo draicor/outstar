@@ -210,12 +210,13 @@ func NewLowerWeapon() Payload {
 }
 
 // Sent by the client to fire the equipped weapon towards the direction specified
-func NewFireWeapon(dirX, dirY, dirZ float32) Payload {
+func NewFireWeapon(dirX, dirY, dirZ float32, rotationY float64) Payload {
 	return &Packet_FireWeapon{
 		FireWeapon: &FireWeapon{
-			X: dirX,
-			Y: dirY,
-			Z: dirZ,
+			X:         dirX,
+			Y:         dirY,
+			Z:         dirZ,
+			RotationY: rotationY,
 		},
 	}
 }

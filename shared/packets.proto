@@ -79,10 +79,11 @@ message ReloadWeapon {
 }
 message RaiseWeapon {}
 message LowerWeapon {}
-message FireWeapon { // We pass the target position
+message FireWeapon { // We pass the target position and the shooter's rotation
   float x = 1;
   float y = 2;
-  float z = 3; 
+  float z = 3;
+  double rotation_y = 4;
 }
 message ToggleFireMode {}
 

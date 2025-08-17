@@ -100,8 +100,7 @@ func fire() -> Vector3:
 	var hit: Dictionary = weapon_raycast(muzzle_position, direction)
 	var hit_position: Vector3 = hit.position if hit else muzzle_position + direction * weapon_max_distance
 	
-	# CAUTION
-	# Check if we CAN fire first (can_shoot is valid, etc)
+	# We check if we can fire before, in player_equipment.weapon_fire()
 	projectile_muzzle_flash.restart()
 	# Add the bullet tracer
 	var tracer := BULLET_TRACER.instantiate()
@@ -169,7 +168,7 @@ func get_animation_play_rate() -> float:
 	return fire_rates[current_fire_mode]["play_rate"]
 
 
-# Handle SFXs and ¿maybe impact sounds here?
+# Handle SFXs and impact sounds here
 func _process_hit(hit: Dictionary) -> void:
 	var collider = hit.get("collider")
 	

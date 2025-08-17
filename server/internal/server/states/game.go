@@ -468,7 +468,7 @@ func (state *Game) HandleRotateCharacter(payload *packets.RotateCharacter) {
 
 func (state *Game) HandleFireWeapon(payload *packets.FireWeapon) {
 	// Get the target position from the packet and broadcast to everyone in the region
-	state.client.Broadcast(packets.NewFireWeapon(payload.GetX(), payload.GetY(), payload.GetZ()))
+	state.client.Broadcast(packets.NewFireWeapon(payload.GetX(), payload.GetY(), payload.GetZ(), payload.GetRotationY()))
 }
 
 func (state *Game) HandleToggleFireMode(payload *packets.ToggleFireMode) {

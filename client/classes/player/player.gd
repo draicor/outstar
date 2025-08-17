@@ -598,11 +598,15 @@ func _process_rotate_character_packet(packet: Packets.RotateCharacter) -> void:
 
 
 func _process_fire_weapon_packet(packet: Packets.FireWeapon) -> void:
-	# Extract target position from the packet
+	# Extract target position and shooter's rotation from the packet
 	var target: Vector3 = Vector3(packet.get_x(), packet.get_y(), packet.get_z())
+	var rotation_y: float = packet.get_rotation_y()
 	var current_state: BaseState = player_state_machine.get_current_state()
 	
 	if current_state:
+		# Update rotation before shooting
+		player_movement.rotation_target = rotation_y
+		player_movement.is_rotating = true
 		# Call without broadcast since this came from server
 		current_state.handle_firing(target, false)
 		# Completion will be handled by the state machine

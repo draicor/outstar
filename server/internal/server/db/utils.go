@@ -7,6 +7,13 @@ import (
 	"server/internal/server/objects"
 )
 
+// This requires creading an index on the database itself:
+/*
+ CREATE UNIQUE INDEX idx_character_weapons_unique ON character_weapons (
+	character_id,
+	slot_index
+);
+*/
 func BulkUpsertWeaponSlots(ctx context.Context, tx *sql.Tx, characterID int64, slots []*objects.WeaponSlot) error {
 	// Ensure we have exactly 5 slots
 	if len(slots) != 5 {

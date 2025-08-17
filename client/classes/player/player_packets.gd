@@ -241,12 +241,15 @@ func create_rotate_character_packet(rotation_y: float) -> Packets.Packet:
 
 
 # Creates and returns a fire_weapon packet
-func create_fire_weapon_packet(target: Vector3) -> Packets.Packet:
+func create_fire_weapon_packet(target: Vector3, rotation_y: float) -> Packets.Packet:
 	var packet: Packets.Packet = Packets.Packet.new()
 	var fire_weapon_packet := packet.new_fire_weapon()
+	# Set target
 	fire_weapon_packet.set_x(target.x)
 	fire_weapon_packet.set_y(target.y)
 	fire_weapon_packet.set_z(target.z)
+	# Set shooter's rotation
+	fire_weapon_packet.set_rotation_y(rotation_y)
 	return packet
 
 
@@ -304,8 +307,8 @@ func send_rotate_character_packet(rotation_y: float) -> void:
 
 
 # Creates and sends a packet to the server to inform we fired our weapon
-func send_fire_weapon_packet(target: Vector3) -> void:
-	var packet: Packets.Packet = create_fire_weapon_packet(target)
+func send_fire_weapon_packet(target: Vector3, rotation_y: float) -> void:
+	var packet: Packets.Packet = create_fire_weapon_packet(target, rotation_y)
 	WebSocket.send(packet)
 
 

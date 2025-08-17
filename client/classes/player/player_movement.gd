@@ -97,10 +97,6 @@ func handle_rotation(delta: float) -> void:
 	# Calculate the shortest angular difference with wrapping
 	var diff = wrapf(target - current, -PI, PI)
 	
-	# CAUTION remove this line after further testing the new method
-	# Calculate rotation step with direction
-	#var rotation_amount = sign(diff) * min(ROTATION_SPEED * delta, abs(diff))
-	
 	# Calculate desired rotation speed based on difference
 	var target_speed = clamp(diff * 8, -ROTATION_SPEED, ROTATION_SPEED)
 	

@@ -188,8 +188,8 @@ func weapon_fire() -> void:
 	if not equipped_weapon or not can_fire_weapon():
 		return
 	
-	equipped_weapon.fire()
-	decrement_ammo()
+	equipped_weapon.fire() # NOTE this returns the hit_position but we are not using it yet
+	decrement_ammo() # locally
 
 
 # Returns the muzzle position for firearms
