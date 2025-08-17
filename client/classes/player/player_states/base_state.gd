@@ -262,3 +262,16 @@ func handle_firing(target: Vector3, broadcast: bool) -> void:
 			dry_fired = false
 	else: # remote player
 		player.player_packets.complete_packet()
+
+
+func toggle_fire_mode(broadcast: bool) -> void:
+	# If we set it to broadcast and this is our local player
+	if is_local_player and broadcast:
+		player.player_packets.send_toggle_fire_mode_packet()
+	
+	player.player_audio.play_weapon_fire_mode_selector()
+	player.player_equipment.toggle_fire_mode()
+	
+	# If remote player
+	if not is_local_player:
+		player.player_packets.complete_packet()

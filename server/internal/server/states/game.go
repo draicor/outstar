@@ -253,6 +253,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_FireWeapon:
 			state.HandleFireWeapon(casted_payload.FireWeapon)
 
+		// TOGGLE FIRE MODE
+		case *packets.Packet_ToggleFireMode:
+			state.HandleToggleFireMode(casted_payload.ToggleFireMode)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -465,4 +469,11 @@ func (state *Game) HandleRotateCharacter(payload *packets.RotateCharacter) {
 func (state *Game) HandleFireWeapon(payload *packets.FireWeapon) {
 	// Get the target position from the packet and broadcast to everyone in the region
 	state.client.Broadcast(packets.NewFireWeapon(payload.GetX(), payload.GetY(), payload.GetZ()))
+}
+
+func (state *Game) HandleToggleFireMode(payload *packets.ToggleFireMode) {
+	// Overwrite this character's fire mode
+	state.player.ToggleCurrentWeaponFireMode()
+	// Broadcast to everyone in the region
+	state.client.Broadcast(packets.NewToggleFireMode())
 }

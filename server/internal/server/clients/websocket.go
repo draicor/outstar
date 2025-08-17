@@ -61,7 +61,7 @@ func NewWebSocketClient(hub *server.Hub, writer http.ResponseWriter, request *ht
 		region:            nil,                             // Before login, the client's region is nil
 		connection:        conn,                            // Underlying WebSocket connection
 		sendChannel:       make(chan *packets.Packet, 128), // Buffered channel of 128 packets, drops packets if full
-		processingChannel: make(chan *packets.Packet, 32),  // Buffered channel of 32 packets, drops packets if full
+		processingChannel: make(chan *packets.Packet, 64),  // Buffered channel of 64 packets, drops packets if full
 		logger:            log.New(log.Writer(), "", log.LstdFlags),
 	}
 

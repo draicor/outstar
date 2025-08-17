@@ -150,6 +150,26 @@ func (player *Player) SetCurrentWeaponAmmo(amount uint64) {
 	player.weapons[player.currentWeapon].Ammo = amount
 }
 
+// Current weapon fire mode get/set
+func (player *Player) GetCurrentWeaponFireMode() uint64 {
+	return player.weapons[player.currentWeapon].FireMode
+}
+func (player *Player) SetCurrentWeaponFireMode(newFireMode uint64) {
+	// TO FIX
+	// I'm not checking if the new fire mode number is valid here
+	player.weapons[player.currentWeapon].FireMode = newFireMode
+}
+func (player *Player) ToggleCurrentWeaponFireMode() {
+	// If we are in semi-auto, switch to full-auto
+	if player.GetCurrentWeaponFireMode() == 0 {
+		player.SetCurrentWeaponFireMode(1)
+	} else {
+		// Switch to semi-auto
+		player.SetCurrentWeaponFireMode(0)
+	}
+
+}
+
 // Static function to create a new player
 func CreatePlayer(
 	name string,

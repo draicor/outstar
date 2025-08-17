@@ -84,6 +84,7 @@ message FireWeapon { // We pass the target position
   float y = 2;
   float z = 3; 
 }
+message ToggleFireMode {}
 
 // Main Packet container
 message Packet {
@@ -121,5 +122,6 @@ message Packet {
     RaiseWeapon raise_weapon = 24; // Both
     LowerWeapon lower_weapon = 25; // Both
     FireWeapon fire_weapon = 26; // Both
+    ToggleFireMode toggle_fire_mode = 27; // Both
   }
 }

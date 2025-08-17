@@ -429,8 +429,8 @@ func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.Us
 		{WeaponName: "unarmed", WeaponType: "unarmed", DisplayName: "Empty", Ammo: 0, FireMode: 0},
 	}
 
-	// Step 5: Execute bulk insert using helper function
-	if err := db.BulkInsertWeaponSlots(ctx, tx, character.ID, defaultSlots); err != nil {
+	// Step 5: Execute bulk upsert using helper function
+	if err := db.BulkUpsertWeaponSlots(ctx, tx, character.ID, defaultSlots); err != nil {
 		return db.User{}, fmt.Errorf("bulk insert weapon slots: %w", err)
 	}
 
@@ -492,6 +492,10 @@ func (h *Hub) SaveCharacter(client Client) error {
 	}
 
 	// Update all weapon slots
+	// Execute bulk upsert using helper function
+	if err := db.BulkUpsertWeaponSlots(ctx, tx, client.GetCharacterId(), *character.GetWeapons()); err != nil {
+		return fmt.Errorf("bulk insert weapon slots: %w", err)
+	}
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {

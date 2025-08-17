@@ -105,6 +105,9 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_route_rotate_character_packet(sender_id, packet.get_rotate_character())
 	elif packet.has_fire_weapon():
 		_route_fire_weapon_packet(sender_id, packet.get_fire_weapon())
+	elif packet.has_toggle_fire_mode():
+		_route_toggle_fire_mode_packet(sender_id, packet.get_toggle_fire_mode())
+
 
 # Print the message into our chat window and update that player's chat bubble
 func _handle_public_message_packet(sender_id: int, packet_public_message: Packets.PublicMessage) -> void:
@@ -405,3 +408,10 @@ func _route_fire_weapon_packet(sender_id: int, fire_weapon_packet: Packets.FireW
 	if sender_id in _players:
 		# Send this packet to the queue of this player
 		_players[sender_id].player_packets.add_packet(fire_weapon_packet, PlayerPackets.Priority.NORMAL)
+
+
+func _route_toggle_fire_mode_packet(sender_id: int, toggle_fire_mode_packet: Packets.ToggleFireMode) -> void:
+	# If the id is on our players dictionary
+	if sender_id in _players:
+		# Send this packet to the queue of this player
+		_players[sender_id].player_packets.add_packet(toggle_fire_mode_packet, PlayerPackets.Priority.NORMAL)

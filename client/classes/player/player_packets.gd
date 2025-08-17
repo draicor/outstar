@@ -165,6 +165,8 @@ func can_process_packet() -> bool:
 		return current_state_name in WEAPON_AIM_STATES
 	elif _current_packet is Packets.FireWeapon:
 		return current_state_name in WEAPON_AIM_STATES
+	elif _current_packet is Packets.ToggleFireMode:
+		return current_state_name in RELOAD_STATES
 	# Allow other packets by default
 	else:
 		return true
@@ -248,6 +250,13 @@ func create_fire_weapon_packet(target: Vector3) -> Packets.Packet:
 	return packet
 
 
+# Creates and returns a toggle_fire_mode packet
+func create_toggle_fire_mode_packet() -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	packet.new_toggle_fire_mode()
+	return packet
+
+
 ##################
 # PACKET SENDING #
 ##################
@@ -297,4 +306,10 @@ func send_rotate_character_packet(rotation_y: float) -> void:
 # Creates and sends a packet to the server to inform we fired our weapon
 func send_fire_weapon_packet(target: Vector3) -> void:
 	var packet: Packets.Packet = create_fire_weapon_packet(target)
+	WebSocket.send(packet)
+
+
+# Creates and sends a packet to the server to inform we switched our fire mode
+func send_toggle_fire_mode_packet() -> void:
+	var packet: Packets.Packet = create_toggle_fire_mode_packet()
 	WebSocket.send(packet)

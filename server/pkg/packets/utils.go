@@ -219,3 +219,10 @@ func NewFireWeapon(dirX, dirY, dirZ float32) Payload {
 		},
 	}
 }
+
+// Sent by the client to toggle the fire_mode of the equipped weapon
+func NewToggleFireMode() Payload {
+	return &Packet_ToggleFireMode{
+		ToggleFireMode: &ToggleFireMode{},
+	}
+}

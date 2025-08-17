@@ -68,8 +68,7 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Toggle weapon fire mode
 	elif event.is_action_pressed("weapon_mode"):
-		player.player_audio.play_weapon_fire_mode_selector()
-		player.player_equipment.toggle_fire_mode()
+		toggle_fire_mode(true)
 	
 	# Unequip rifle
 	elif event.is_action_pressed("weapon_unequip"):

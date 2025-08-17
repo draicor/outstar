@@ -3,10 +3,16 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"server/internal/server/objects"
 )
 
-func BulkInsertWeaponSlots(ctx context.Context, tx *sql.Tx, characterID int64, slots []*objects.WeaponSlot) error {
+func BulkUpsertWeaponSlots(ctx context.Context, tx *sql.Tx, characterID int64, slots []*objects.WeaponSlot) error {
+	// Ensure we have exactly 5 slots
+	if len(slots) != 5 {
+		return errors.New("exactly 5 weapon slots must be provided")
+	}
+
 	query := `
 		INSERT INTO character_weapons 
 		(character_id, slot_index, weapon_name, weapon_type, display_name, ammo, fire_mode)
@@ -15,7 +21,13 @@ func BulkInsertWeaponSlots(ctx context.Context, tx *sql.Tx, characterID int64, s
 		(?, ?, ?, ?, ?, ?, ?),
 		(?, ?, ?, ?, ?, ?, ?),
 		(?, ?, ?, ?, ?, ?, ?),
-		(?, ?, ?, ?, ?, ?, ?);
+		(?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT (character_id, slot_index) DO UPDATE SET
+		weapon_name = excluded.weapon_name,
+		weapon_type = excluded.weapon_type,
+		display_name = excluded.display_name,
+		ammo = excluded.ammo,
+		fire_mode = excluded.fire_mode;
 	`
 
 	args := []interface{}{
