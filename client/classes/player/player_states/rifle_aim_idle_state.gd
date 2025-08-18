@@ -25,12 +25,6 @@ func enter() -> void:
 		player.camera.ROTATION_STEP = 1.0
 		# Store our model's Y rotation upon entering this state
 		last_sent_rotation = player.model.rotation.y
-		# Create rotation update timer
-		firing_rotation_update_timer = Timer.new()
-		firing_rotation_update_timer.wait_time = FIRING_ROTATION_UPDATE_INTERVAL
-		firing_rotation_update_timer.autostart = true
-		firing_rotation_update_timer.timeout.connect(broadcast_rotation_if_changed)
-		add_child(firing_rotation_update_timer)
 
 
 func exit() -> void:
@@ -40,10 +34,6 @@ func exit() -> void:
 		player.set_mouse_cursor("default")
 		# Restore the camera rotation step to default
 		player.camera.ROTATION_STEP = player.camera.BASE_ROTATION_STEP
-		
-		# Destroy the timer if exists
-		if firing_rotation_update_timer:
-			firing_rotation_update_timer.queue_free()
 	
 	# For local and remote players
 	player.player_movement.is_rotating = false
@@ -60,7 +50,7 @@ func physics_update(delta: float) -> void:
 		rotation_sync_timer += delta
 		
 		# If it's time to send an update to the server
-		if rotation_sync_timer > ROTATION_SYNC_INTERVAL:
+		if rotation_sync_timer > rotation_timer_interval:
 			rotation_sync_timer = 0.0
 			broadcast_rotation_if_changed()
 	
@@ -96,22 +86,17 @@ func update(_delta: float) -> void:
 		await lower_weapon_and_await(true)
 		return
 	
-	# If we were auto firing and we released the click
-	if is_auto_firing and not Input.is_action_pressed("left_click"):
-		stop_automatic_firing(true)
-		return
-	
 	# Fire rifle if mouse isn't over the UI
 	if Input.is_action_pressed("left_click") and not player.is_mouse_over_ui:
-		# If we are still auto firing, keep firing
+		# If we are still auto firing, prevent restarting it
 		if is_auto_firing:
-			handle_automatic_firing()
-		else:
-			if player.player_equipment.get_fire_mode() == 1: # Automatic mode
-				start_automatic_firing(true)
-			else: # Single fire mode
-				var target: Vector3 = player.get_mouse_world_position()
-				handle_firing(target, true)
+			return
+		
+		if player.player_equipment.get_fire_mode() == 1: # Automatic mode
+			start_automatic_firing(true)
+		else: # Single fire mode
+			var target: Vector3 = player.get_mouse_world_position()
+			single_fire(target, true)
 		return
 
 
@@ -123,6 +108,7 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Track trigger release
 	if event.is_action_released("left_click"):
+		stop_automatic_firing(true)
 		dry_fired = false
 	
 	# Reload rifle

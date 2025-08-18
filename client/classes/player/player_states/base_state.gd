@@ -9,15 +9,17 @@ var state_name: String = "unnamed_state"
 var is_local_player: bool = false # set to true for local player
 var signals_connected: bool = false # to only do this once
 # Rotation broadcast logic
+# 0.5 seconds for idle aim and 0.25 seconds for automatic firing
+const AIM_ROTATION_INTERVAL: float = 0.5
+const FIRING_ROTATION_INTERVAL: float = 0.25
 var rotation_sync_timer: float = 0.0
 var last_sent_rotation: float = 0.0
-const ROTATION_SYNC_INTERVAL: float = 0.5 # seconds
+var rotation_timer_interval: float = AIM_ROTATION_INTERVAL
 const ROTATION_CHANGE_THRESHOLD: float = 0.05 # radians
 # Weapon firing
 var dry_fired: bool = false
+# Firearm automatic firing
 var is_auto_firing: bool = false
-var firing_rotation_update_timer: Timer
-const FIRING_ROTATION_UPDATE_INTERVAL: float = 0.5 # 500ms
 
 
 func enter() -> void:
@@ -146,6 +148,8 @@ func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
 	
 	# Update the ammo locally
 	equipment.reload_equipped_weapon(amount)
+	# Reset the dry fired variable because we added ammo
+	dry_fired = false
 	
 	# Release input
 	player.is_busy = false
@@ -218,7 +222,8 @@ func lower_weapon_and_await(broadcast: bool) -> void:
 		player.player_packets.complete_packet()
 
 
-func handle_firing(target: Vector3, broadcast: bool) -> void:
+# Handles single fire of firearms
+func single_fire(target: Vector3, broadcast: bool) -> void:
 	if target == Vector3.ZERO:
 		return
 	
@@ -283,13 +288,11 @@ func toggle_fire_mode(broadcast: bool) -> void:
 func start_automatic_firing(broadcast: bool) -> void:
 	if is_local_player and broadcast:
 		player.player_packets.send_start_firing_weapon_packet(player.player_movement.rotation_target)
-		if firing_rotation_update_timer:
-			firing_rotation_update_timer.start(FIRING_ROTATION_UPDATE_INTERVAL)
+		# Reduce the rotation timer interval by half because we want accurate aiming
+		rotation_timer_interval = FIRING_ROTATION_INTERVAL
 	
 	is_auto_firing = true
-	
-	# Fire first shot immediately
-	handle_automatic_firing()
+	next_automatic_fire() # Fire immediately
 	
 	# If remote player
 	if not is_local_player:
@@ -299,8 +302,8 @@ func start_automatic_firing(broadcast: bool) -> void:
 func stop_automatic_firing(broadcast: bool) -> void:
 	if is_local_player and broadcast:
 		player.player_packets.send_stop_firing_weapon_packet(player.player_movement.rotation_target)
-		if firing_rotation_update_timer:
-			firing_rotation_update_timer.stop()
+		# Increase the rotation update interval since we are no longer firing
+		rotation_timer_interval = AIM_ROTATION_INTERVAL
 	
 	is_auto_firing = false
 	
@@ -309,7 +312,9 @@ func stop_automatic_firing(broadcast: bool) -> void:
 		player.player_packets.complete_packet()
 
 
-func handle_automatic_firing() -> void:
+# Tries to fire the next round (live or dry fire) in automatic fire mode,
+# It also processes the next packet in the packet queue after firing, uses recursion
+func next_automatic_fire() -> void:
 	# If we are not firing anymore, abort
 	if not is_auto_firing:
 		return
@@ -325,28 +330,45 @@ func handle_automatic_firing() -> void:
 	
 	# Check for an empty gun
 	if not player.player_equipment.can_fire_weapon():
+		# If we haven't dry fired yet, then this shot will be our ONLY dry fire shot
 		if not dry_fired:
 			dry_fired = true
 			# Override play rate for dry fire (always use semi-auto speed)
 			await player.player_animator.play_animation_and_await(anim_name, weapon.semi_fire_rate)
-			
-			# If after the animation ends our trigger is not pressed
-			if not Input.is_action_pressed("left_click"):
+			# After dry firing once, automatically stop trying to fire
+			if is_local_player:
+				# Check for trigger release during the animation
+				if not Input.is_action_pressed("left_click"):
+					stop_automatic_firing(true)
+					dry_fired = false
+			# Remote players
+			else:
+				is_auto_firing = false
 				dry_fired = false
-			else: # remote player
-				dry_fired = false
-				return
-		# Abort here preventing shooting another round
+		
+		# Return here to prevent shooting a live round after the dry fire
 		return
 	
 	# Play normal firing logic
 	await player.player_animator.play_animation_and_await(anim_name, play_rate)
 	
 	if is_local_player:
-		# If after the animation ends our trigger is not pressed
-		if not Input.is_action_pressed("left_click"):
+		# If we are still holding the left click, continue firing
+		if Input.is_action_pressed("left_click"):
+			next_automatic_fire()
+		# Check for trigger release during the animation
+		else:
+			stop_automatic_firing(true)
 			dry_fired = false
-	else: # remote players
-		if is_auto_firing:
-			handle_automatic_firing()
+	
+	# For remote players
+	else:
+		# Try to process next packet after animation ends
+		player.player_packets.try_process_next()
 		
+		# If after processing the packet, we still want to keep shooting
+		if is_auto_firing:
+			next_automatic_fire()
+		else:
+			# NOTE I don't really know if this below is doing anything
+			player.player_packets.complete_packet()

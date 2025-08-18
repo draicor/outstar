@@ -47,7 +47,6 @@ var fire_rates: Dictionary = {}
 var current_fire_mode: FireModes = FireModes.SEMI
 
 
-
 func _ready() -> void:
 	calculate_recoil()
 	_initialize_fire_rates()

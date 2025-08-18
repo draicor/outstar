@@ -612,7 +612,7 @@ func _process_fire_weapon_packet(packet: Packets.FireWeapon) -> void:
 		# Extract target position
 		var target: Vector3 = Vector3(packet.get_x(), packet.get_y(), packet.get_z())
 		# Call without broadcast since this came from server
-		current_state.handle_firing(target, false)
+		current_state.single_fire(target, false)
 		# Completion will be handled by the state machine
 	else:
 		# If no state available, complete immediately

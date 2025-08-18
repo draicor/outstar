@@ -60,7 +60,7 @@ func _ready() -> void:
 
 func _on_retry_timeout() -> void:
 	_retry_count = 0
-	_try_process_next()
+	try_process_next()
 
 
 # Adds packet to queue with specified priority
@@ -73,11 +73,11 @@ func add_packet(packet: Variant, priority: int = Priority.NORMAL) -> void:
 	
 	# If we are not processing a packet and our player is NOT busy
 	if not _is_processing and not player.is_busy:
-		_try_process_next()
+		try_process_next()
 
 
 # Process next packet if available
-func _try_process_next() -> void:
+func try_process_next() -> void:
 	if _is_processing or _queue.is_empty():
 		return
 	
@@ -116,7 +116,7 @@ func complete_packet() -> void:
 	_is_processing = false
 	
 	# Try to process next packet immediately after completing
-	_try_process_next()
+	try_process_next()
 
 
 # Get current processing state
