@@ -477,6 +477,10 @@ func _handle_packet_started(packet: Variant) -> void:
 	# HIGH PRIORITY PACKETS AT THE TOP
 	if packet is Packets.FireWeapon:
 		_process_fire_weapon_packet(packet)
+	elif packet is Packets.StartFiringWeapon:
+		_process_start_firing_weapon_packet(packet)
+	elif packet is Packets.StopFiringWeapon:
+		_process_stop_firing_weapon_packet(packet)
 	elif packet is Packets.RotateCharacter:
 		_process_rotate_character_packet(packet)
 	elif packet is Packets.RaiseWeapon:
@@ -621,6 +625,40 @@ func _process_toggle_fire_mode_packet() -> void:
 	if current_state:
 		# Call without broadcast since this came from server
 		current_state.toggle_fire_mode(false)
+		# Completion will be handled by the state machine
+	else:
+		# If no state available, complete immediately
+		player_packets.complete_packet()
+
+
+func _process_start_firing_weapon_packet(packet: Packets.StartFiringWeapon) -> void:
+	var current_state: BaseState = player_state_machine.get_current_state()
+	
+	if current_state:
+		# Extract shooter's rotation from the packet
+		var rotation_y: float = packet.get_rotation_y()
+		# Update rotation before shooting
+		player_movement.rotation_target = rotation_y
+		player_movement.is_rotating = true
+		# Call without broadcast since this came from server
+		current_state.start_automatic_firing(false)
+		# Completion will be handled by the state machine
+	else:
+		# If no state available, complete immediately
+		player_packets.complete_packet()
+
+
+func _process_stop_firing_weapon_packet(packet: Packets.StopFiringWeapon) -> void:
+	var current_state: BaseState = player_state_machine.get_current_state()
+	
+	if current_state:
+		# Extract shooter's rotation from the packet
+		var rotation_y: float = packet.get_rotation_y()
+		# Update rotation before shooting
+		player_movement.rotation_target = rotation_y
+		player_movement.is_rotating = true
+		# Call without broadcast since this came from server
+		current_state.stop_automatic_firing(false)
 		# Completion will be handled by the state machine
 	else:
 		# If no state available, complete immediately

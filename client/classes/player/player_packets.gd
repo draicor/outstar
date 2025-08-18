@@ -163,10 +163,14 @@ func can_process_packet() -> bool:
 		return current_state_name in WEAPON_DOWN_STATES
 	elif _current_packet is Packets.LowerWeapon:
 		return current_state_name in WEAPON_AIM_STATES
-	elif _current_packet is Packets.FireWeapon:
+	elif _current_packet is Packets.FireWeapon: # CAUTION move this upwards and sort by priority too!
 		return current_state_name in WEAPON_AIM_STATES
 	elif _current_packet is Packets.ToggleFireMode:
 		return current_state_name in RELOAD_STATES
+	elif _current_packet is Packets.StartFiringWeapon:
+		return current_state_name in WEAPON_AIM_STATES
+	elif _current_packet is Packets.StopFiringWeapon:
+		return current_state_name in WEAPON_AIM_STATES
 	# Allow other packets by default
 	else:
 		return true
@@ -260,6 +264,22 @@ func create_toggle_fire_mode_packet() -> Packets.Packet:
 	return packet
 
 
+# Creates and returns a start_firing_weapon packet
+func create_start_firing_weapon_packet(rotation_y: float) -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	var start_firing_weapon_packet := packet.new_start_firing_weapon()
+	start_firing_weapon_packet.set_rotation_y(rotation_y)
+	return packet
+
+
+# Creates and returns a stop_firing_weapon packet
+func create_stop_firing_weapon_packet(rotation_y: float) -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	var stop_firing_weapon_packet := packet.new_stop_firing_weapon()
+	stop_firing_weapon_packet.set_rotation_y(rotation_y)
+	return packet
+
+
 ##################
 # PACKET SENDING #
 ##################
@@ -315,4 +335,16 @@ func send_fire_weapon_packet(target: Vector3, rotation_y: float) -> void:
 # Creates and sends a packet to the server to inform we switched our fire mode
 func send_toggle_fire_mode_packet() -> void:
 	var packet: Packets.Packet = create_toggle_fire_mode_packet()
+	WebSocket.send(packet)
+
+
+# Creates and sends a packet to the server to inform we started firing
+func send_start_firing_weapon_packet(rotation_y: float) -> void:
+	var packet: Packets.Packet = create_start_firing_weapon_packet(rotation_y)
+	WebSocket.send(packet)
+
+
+# Creates and sends a packet to the server to inform we stopped firing
+func send_stop_firing_weapon_packet(rotation_y: float) -> void:
+	var packet: Packets.Packet = create_stop_firing_weapon_packet(rotation_y)
 	WebSocket.send(packet)

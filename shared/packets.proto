@@ -86,6 +86,12 @@ message FireWeapon { // We pass the target position and the shooter's rotation
   double rotation_y = 4;
 }
 message ToggleFireMode {}
+message StartFiringWeapon {
+  double rotation_y = 1;
+}
+message StopFiringWeapon {
+  double rotation_y = 1;
+}
 
 // Main Packet container
 message Packet {
@@ -124,5 +130,8 @@ message Packet {
     LowerWeapon lower_weapon = 25; // Both
     FireWeapon fire_weapon = 26; // Both
     ToggleFireMode toggle_fire_mode = 27; // Both
+    // Full automatic weapon firing mode
+    StartFiringWeapon start_firing_weapon = 28; // Both
+    StopFiringWeapon stop_firing_weapon = 29; // Both
   }
 }

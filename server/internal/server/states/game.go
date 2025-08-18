@@ -257,6 +257,14 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_ToggleFireMode:
 			state.HandleToggleFireMode(casted_payload.ToggleFireMode)
 
+		// START FIRING WEAPON
+		case *packets.Packet_StartFiringWeapon:
+			state.HandleStartFiringWeapon(casted_payload.StartFiringWeapon)
+
+		// STOP FIRING WEAPON
+		case *packets.Packet_StopFiringWeapon:
+			state.HandleStopFiringWeapon(casted_payload.StopFiringWeapon)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -467,7 +475,7 @@ func (state *Game) HandleRotateCharacter(payload *packets.RotateCharacter) {
 }
 
 func (state *Game) HandleFireWeapon(payload *packets.FireWeapon) {
-	// Get the target position from the packet and broadcast to everyone in the region
+	// Get the target position and attacker's rotation from the packet and broadcast to everyone in the region
 	state.client.Broadcast(packets.NewFireWeapon(payload.GetX(), payload.GetY(), payload.GetZ(), payload.GetRotationY()))
 }
 
@@ -476,4 +484,14 @@ func (state *Game) HandleToggleFireMode(payload *packets.ToggleFireMode) {
 	state.player.ToggleCurrentWeaponFireMode()
 	// Broadcast to everyone in the region
 	state.client.Broadcast(packets.NewToggleFireMode())
+}
+
+func (state *Game) HandleStartFiringWeapon(payload *packets.StartFiringWeapon) {
+	// Get the attacker's rotation from the packet and broadcast to everyone in the region
+	state.client.Broadcast(packets.NewStartFiringWeapon(payload.GetRotationY()))
+}
+
+func (state *Game) HandleStopFiringWeapon(payload *packets.StopFiringWeapon) {
+	// Get the attacker's rotation from the packet and broadcast to everyone in the region
+	state.client.Broadcast(packets.NewStopFiringWeapon(payload.GetRotationY()))
 }

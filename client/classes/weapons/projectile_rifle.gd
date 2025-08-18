@@ -85,20 +85,20 @@ func _initialize_fire_rates() -> void:
 	}
 
 
-func fire() -> Vector3:
+func fire(direction: Vector3 = Vector3.ZERO) -> Vector3:
 	# Get weapon muzzle position
 	var muzzle_position: Vector3 = muzzle_marker_3d.global_position
 	
 	# If we forgot to set this, at least it will fire in the same direction
-	if not target_direction:
+	if direction == Vector3.ZERO:
 		# Create horizontal direction (ignoring weapon's vertical angle)
 		target_direction = -muzzle_marker_3d.global_transform.basis.z
 		
-	var direction: Vector3 = _apply_recoil(target_direction)
+	var target: Vector3 = _apply_recoil(target_direction)
 
 	# Perform raycast
-	var hit: Dictionary = weapon_raycast(muzzle_position, direction)
-	var hit_position: Vector3 = hit.position if hit else muzzle_position + direction * weapon_max_distance
+	var hit: Dictionary = weapon_raycast(muzzle_position, target)
+	var hit_position: Vector3 = hit.position if hit else muzzle_position + target * weapon_max_distance
 	
 	# We already checked if we can fire in player_equipment.weapon_fire()
 	projectile_muzzle_flash.restart()

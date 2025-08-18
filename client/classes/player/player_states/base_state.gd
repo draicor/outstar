@@ -15,6 +15,9 @@ const ROTATION_SYNC_INTERVAL: float = 0.5 # seconds
 const ROTATION_CHANGE_THRESHOLD: float = 0.05 # radians
 # Weapon firing
 var dry_fired: bool = false
+var is_auto_firing: bool = false
+var firing_rotation_update_timer: Timer
+const FIRING_ROTATION_UPDATE_INTERVAL: float = 0.5 # 500ms
 
 
 func enter() -> void:
@@ -275,3 +278,75 @@ func toggle_fire_mode(broadcast: bool) -> void:
 	# If remote player
 	if not is_local_player:
 		player.player_packets.complete_packet()
+
+
+func start_automatic_firing(broadcast: bool) -> void:
+	if is_local_player and broadcast:
+		player.player_packets.send_start_firing_weapon_packet(player.player_movement.rotation_target)
+		if firing_rotation_update_timer:
+			firing_rotation_update_timer.start(FIRING_ROTATION_UPDATE_INTERVAL)
+	
+	is_auto_firing = true
+	
+	# Fire first shot immediately
+	handle_automatic_firing()
+	
+	# If remote player
+	if not is_local_player:
+		player.player_packets.complete_packet()
+
+
+func stop_automatic_firing(broadcast: bool) -> void:
+	if is_local_player and broadcast:
+		player.player_packets.send_stop_firing_weapon_packet(player.player_movement.rotation_target)
+		if firing_rotation_update_timer:
+			firing_rotation_update_timer.stop()
+	
+	is_auto_firing = false
+	
+	# If remote player
+	if not is_local_player:
+		player.player_packets.complete_packet()
+
+
+func handle_automatic_firing() -> void:
+	# If we are not firing anymore, abort
+	if not is_auto_firing:
+		return
+	
+	# If not in automatic fire mode, abort
+	if player.player_equipment.get_fire_mode() != 1:
+		return
+	
+	# Get the weapon data from the player equipment system
+	var weapon = player.player_equipment.equipped_weapon
+	var anim_name: String = weapon.get_animation()
+	var play_rate: float = weapon.get_animation_play_rate()
+	
+	# Check for an empty gun
+	if not player.player_equipment.can_fire_weapon():
+		if not dry_fired:
+			dry_fired = true
+			# Override play rate for dry fire (always use semi-auto speed)
+			await player.player_animator.play_animation_and_await(anim_name, weapon.semi_fire_rate)
+			
+			# If after the animation ends our trigger is not pressed
+			if not Input.is_action_pressed("left_click"):
+				dry_fired = false
+			else: # remote player
+				dry_fired = false
+				return
+		# Abort here preventing shooting another round
+		return
+	
+	# Play normal firing logic
+	await player.player_animator.play_animation_and_await(anim_name, play_rate)
+	
+	if is_local_player:
+		# If after the animation ends our trigger is not pressed
+		if not Input.is_action_pressed("left_click"):
+			dry_fired = false
+	else: # remote players
+		if is_auto_firing:
+			handle_automatic_firing()
+		
