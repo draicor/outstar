@@ -7,6 +7,7 @@ func _init() -> void:
 
 
 func enter() -> void:
+	player.player_movement.in_motion = false
 	# Switch our locomotion depending on our player's gender
 	player.player_animator.switch_animation_library(player.gender)
 	player.player_animator.switch_animation("idle")

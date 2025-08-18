@@ -64,7 +64,7 @@ func change_state(new_state_name: String) -> void:
 		
 		# Force process any pending packets when leaving this state
 		# Use call_deferred to ensure safe execution
-		player.player_packets.call_deferred("try_process_next")
+		player.player_packets.call_deferred("try_process_next_packet")
 		
 		# Exit current state
 		current_state.exit()

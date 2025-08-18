@@ -1,0 +1,84 @@
+[gd_scene load_steps=15 format=3 uid="uid://xgut27qtlpbd"]
+
+[ext_resource type="Script" uid="uid://bflh4x8wu5ha6" path="res://classes/player/player.gd" id="1_jpa1g"]
+[ext_resource type="PackedScene" uid="uid://2gtaxxvwtitn" path="res://components/chat_bubble/chat_bubble_manager.tscn" id="2_634de"]
+[ext_resource type="Script" uid="uid://pj5y64im6vua" path="res://classes/player/player_movement.gd" id="3_45urx"]
+[ext_resource type="Script" uid="uid://ckjkgvmrct0fl" path="res://classes/player/player_state_machine.gd" id="3_iula3"]
+[ext_resource type="Script" uid="uid://dvxu1h32y12r4" path="res://classes/player/player_states/idle_state.gd" id="4_s60wy"]
+[ext_resource type="Script" uid="uid://ib2ghq7y4gdb" path="res://classes/player/player_states/move_state.gd" id="5_td0ib"]
+[ext_resource type="Script" uid="uid://dcb11p82v1h66" path="res://classes/player/player_states/interact_state.gd" id="6_6725j"]
+[ext_resource type="Script" uid="uid://bhb23oshl2yxq" path="res://classes/player/player_states/rifle_down_idle_state.gd" id="7_6725j"]
+[ext_resource type="Script" uid="uid://dweks61qqwx50" path="res://classes/player/player_animator.gd" id="7_td0ib"]
+[ext_resource type="Script" uid="uid://dnyl6g0hdrkme" path="res://classes/player/player_states/rifle_aim_idle_state.gd" id="8_4ka5w"]
+[ext_resource type="Script" uid="uid://dr0x30oqyyfjk" path="res://classes/player/player_audio.gd" id="10_jm32w"]
+[ext_resource type="Script" uid="uid://cyqk3p6o7qlpf" path="res://classes/player/player_equipment.gd" id="11_psowp"]
+[ext_resource type="Script" uid="uid://bj3ahj1d4q5pq" path="res://classes/player/player_packets.gd" id="13_c34wb"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_634de"]
+radius = 0.2
+height = 1.8
+
+[node name="Player" type="CharacterBody3D" groups=["flesh_material"]]
+collision_layer = 2
+script = ExtResource("1_jpa1g")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_634de")
+debug_color = Color(0, 0.6, 0.701961, 1)
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="CameraPivot" type="Node3D" parent="."]
+
+[node name="CameraRig" type="Node3D" parent="CameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 0.819151, 0.573576, 0, -0.573576, 0.819151, 0, 4, 4)
+
+[node name="ChatBubbleOrigin" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
+
+[node name="ChatBubbleManager" parent="ChatBubbleOrigin" instance=ExtResource("2_634de")]
+
+[node name="PlayerMovement" type="Node" parent="."]
+script = ExtResource("3_45urx")
+metadata/_custom_type_script = "uid://pj5y64im6vua"
+
+[node name="PlayerStateMachine" type="Node" parent="."]
+script = ExtResource("3_iula3")
+metadata/_custom_type_script = "uid://ckjkgvmrct0fl"
+
+[node name="IdleState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("4_s60wy")
+metadata/_custom_type_script = "uid://dvxu1h32y12r4"
+
+[node name="MoveState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("5_td0ib")
+metadata/_custom_type_script = "uid://ib2ghq7y4gdb"
+
+[node name="InteractState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("6_6725j")
+metadata/_custom_type_script = "uid://dcb11p82v1h66"
+
+[node name="RifleDownIdleState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("7_6725j")
+metadata/_custom_type_script = "uid://bhb23oshl2yxq"
+
+[node name="RifleAimIdleState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("8_4ka5w")
+metadata/_custom_type_script = "uid://dnyl6g0hdrkme"
+
+[node name="PlayerAnimator" type="Node" parent="."]
+script = ExtResource("7_td0ib")
+metadata/_custom_type_script = "uid://dweks61qqwx50"
+
+[node name="PlayerAudio" type="Node3D" parent="."]
+script = ExtResource("10_jm32w")
+metadata/_custom_type_script = "uid://dr0x30oqyyfjk"
+
+[node name="PlayerEquipment" type="Node" parent="."]
+script = ExtResource("11_psowp")
+metadata/_custom_type_script = "uid://cyqk3p6o7qlpf"
+
+[node name="PlayerPackets" type="Node" parent="."]
+script = ExtResource("13_c34wb")
+metadata/_custom_type_script = "uid://bj3ahj1d4q5pq"

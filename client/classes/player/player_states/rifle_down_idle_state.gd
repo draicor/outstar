@@ -7,6 +7,7 @@ func _init() -> void:
 
 
 func enter() -> void:
+	player.player_movement.in_motion = false
 	player.player_animator.switch_animation_library("rifle_down")
 	player.player_animator.switch_animation("idle")
 	

@@ -20,6 +20,9 @@ const ROTATION_CHANGE_THRESHOLD: float = 0.05 # radians
 var dry_fired: bool = false
 # Firearm automatic firing
 var is_auto_firing: bool = false
+var is_trying_to_syncronize: bool = false
+var shots_fired: int = 0
+var server_shots_fired: int = 0
 
 
 func enter() -> void:
@@ -287,7 +290,8 @@ func toggle_fire_mode(broadcast: bool) -> void:
 
 func start_automatic_firing(broadcast: bool) -> void:
 	if is_local_player and broadcast:
-		player.player_packets.send_start_firing_weapon_packet(player.player_movement.rotation_target)
+		# Send our current rotation and also our remaining ammo on the currently equipped weapon
+		player.player_packets.send_start_firing_weapon_packet(player.player_movement.rotation_target, player.player_equipment.get_current_ammo())
 		# Reduce the rotation timer interval by half because we want accurate aiming
 		rotation_timer_interval = FIRING_ROTATION_INTERVAL
 	
@@ -301,15 +305,41 @@ func start_automatic_firing(broadcast: bool) -> void:
 
 func stop_automatic_firing(broadcast: bool) -> void:
 	if is_local_player and broadcast:
-		player.player_packets.send_stop_firing_weapon_packet(player.player_movement.rotation_target)
+		player.player_packets.send_stop_firing_weapon_packet(player.player_movement.rotation_target, shots_fired)
+		shots_fired = 0 # Reset the local shots_fired variable after sending the packet
 		# Increase the rotation update interval since we are no longer firing
 		rotation_timer_interval = AIM_ROTATION_INTERVAL
-	
-	is_auto_firing = false
+		is_auto_firing = false
 	
 	# If remote player
 	if not is_local_player:
-		player.player_packets.complete_packet()
+		# If we predicted the same amount of bullets the player fired, then stop firing
+		if shots_fired == server_shots_fired:
+			# Reset all variables and stop firing
+			is_auto_firing = false
+			is_trying_to_syncronize = false
+			shots_fired = 0
+			server_shots_fired = 0
+			player.player_packets.complete_packet()
+		# If we fired more rounds than we were supposed to (predicting failed),
+		# reimburse the ammo difference to this remote player in my own local session
+		# CAUTION this might not be neccesary now since we are sending our ammo in the start fire
+		elif shots_fired > server_shots_fired:
+			# Stop firing immediately
+			is_auto_firing = false
+			is_trying_to_syncronize = false
+			var ammo_difference: int = shots_fired - server_shots_fired
+			var ammo_to_reimburse: int = player.player_equipment.get_current_ammo() + ammo_difference
+			# Reset all variables
+			shots_fired = 0
+			server_shots_fired = 0
+			player.player_equipment.set_current_ammo(ammo_to_reimburse)
+			player.player_packets.complete_packet()
+		# If local shots fired is less than the shots the server says we need to take,
+		# keep firing until we are in sync
+		elif shots_fired < server_shots_fired:
+			is_trying_to_syncronize = true
+			next_automatic_fire()
 
 
 # Tries to fire the next round (live or dry fire) in automatic fire mode,
@@ -351,6 +381,8 @@ func next_automatic_fire() -> void:
 	
 	# Play normal firing logic
 	await player.player_animator.play_animation_and_await(anim_name, play_rate)
+	# Increase our local firing counter to keep track of how many bullets we have fired
+	shots_fired += 1
 	
 	if is_local_player:
 		# If we are still holding the left click, continue firing
@@ -363,8 +395,20 @@ func next_automatic_fire() -> void:
 	
 	# For remote players
 	else:
+		# If we are lagging behind the server and we are trying to catch up
+		if is_trying_to_syncronize:
+			# If we still haven't reached the amount of shots we fired according to the server
+			if shots_fired < server_shots_fired:
+				# Try to keep processing the stop_firing_packet we previously got
+				player.player_packets.try_process_current_packet()
+				return
+			else:
+				is_trying_to_syncronize = false
+				player.player_packets.try_process_current_packet()
+				return
+		
 		# Try to process next packet after animation ends
-		player.player_packets.try_process_next()
+		player.player_packets.try_process_next_packet()
 		
 		# If after processing the packet, we still want to keep shooting
 		if is_auto_firing:

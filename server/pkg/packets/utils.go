@@ -229,19 +229,21 @@ func NewToggleFireMode() Payload {
 }
 
 // Sent by the client to initiate full auto weapon fire
-func NewStartFiringWeapon(rotationY float64) Payload {
+func NewStartFiringWeapon(rotationY float64, ammo uint64) Payload {
 	return &Packet_StartFiringWeapon{
 		StartFiringWeapon: &StartFiringWeapon{
 			RotationY: rotationY,
+			Ammo:      ammo,
 		},
 	}
 }
 
 // Sent by the client to cease full auto weapon fire
-func NewStopFiringWeapon(rotationY float64) Payload {
+func NewStopFiringWeapon(rotationY float64, shotsFired uint64) Payload {
 	return &Packet_StopFiringWeapon{
 		StopFiringWeapon: &StopFiringWeapon{
-			RotationY: rotationY,
+			RotationY:  rotationY,
+			ShotsFired: shotsFired,
 		},
 	}
 }

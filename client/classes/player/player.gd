@@ -475,7 +475,9 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 
 func _handle_packet_started(packet: Variant) -> void:
 	# HIGH PRIORITY PACKETS AT THE TOP
-	if packet is Packets.FireWeapon:
+	if packet is Packets.MoveCharacter:
+		_process_move_character_packet(packet)
+	elif packet is Packets.FireWeapon:
 		_process_fire_weapon_packet(packet)
 	elif packet is Packets.StartFiringWeapon:
 		_process_start_firing_weapon_packet(packet)
@@ -488,8 +490,6 @@ func _handle_packet_started(packet: Variant) -> void:
 	elif packet is Packets.LowerWeapon:
 		_process_lower_weapon_packet()
 	# LOWER PRIORITY PACKETS
-	elif packet is Packets.MoveCharacter:
-		_process_move_character_packet(packet)
 	elif packet is Packets.UpdateSpeed:
 		_process_update_speed_packet(packet)
 	elif packet is Packets.SwitchWeapon:
@@ -640,6 +640,8 @@ func _process_start_firing_weapon_packet(packet: Packets.StartFiringWeapon) -> v
 		# Update rotation before shooting
 		player_movement.rotation_target = rotation_y
 		player_movement.is_rotating = true
+		# Extract the shooter's current ammo from the packet
+		player_equipment.set_current_ammo(packet.get_ammo())
 		# Call without broadcast since this came from server
 		current_state.start_automatic_firing(false)
 		# Completion will be handled by the state machine
@@ -657,6 +659,9 @@ func _process_stop_firing_weapon_packet(packet: Packets.StopFiringWeapon) -> voi
 		# Update rotation before shooting
 		player_movement.rotation_target = rotation_y
 		player_movement.is_rotating = true
+		# Extract the amount of shots taken until we stopped to keep remote players synced
+		var server_shots_fired: int = packet.get_shots_fired()
+		current_state.server_shots_fired = server_shots_fired
 		# Call without broadcast since this came from server
 		current_state.stop_automatic_firing(false)
 		# Completion will be handled by the state machine

@@ -2301,6 +2301,11 @@ class StartFiringWeapon:
 		service.field = __rotation_y
 		data[__rotation_y.tag] = service
 		
+		__ammo = PBField.new("ammo", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __ammo
+		data[__ammo.tag] = service
+		
 	var data = {}
 	
 	var __rotation_y: PBField
@@ -2315,6 +2320,19 @@ class StartFiringWeapon:
 		__rotation_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_rotation_y(value : float) -> void:
 		__rotation_y.value = value
+	
+	var __ammo: PBField
+	func has_ammo() -> bool:
+		if __ammo.value != null:
+			return true
+		return false
+	func get_ammo() -> int:
+		return __ammo.value
+	func clear_ammo() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__ammo.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_ammo(value : int) -> void:
+		__ammo.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2346,6 +2364,11 @@ class StopFiringWeapon:
 		service.field = __rotation_y
 		data[__rotation_y.tag] = service
 		
+		__shots_fired = PBField.new("shots_fired", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __shots_fired
+		data[__shots_fired.tag] = service
+		
 	var data = {}
 	
 	var __rotation_y: PBField
@@ -2360,6 +2383,19 @@ class StopFiringWeapon:
 		__rotation_y.value = DEFAULT_VALUES_3[PB_DATA_TYPE.DOUBLE]
 	func set_rotation_y(value : float) -> void:
 		__rotation_y.value = value
+	
+	var __shots_fired: PBField
+	func has_shots_fired() -> bool:
+		if __shots_fired.value != null:
+			return true
+		return false
+	func get_shots_fired() -> int:
+		return __shots_fired.value
+	func clear_shots_fired() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__shots_fired.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_shots_fired(value : int) -> void:
+		__shots_fired.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

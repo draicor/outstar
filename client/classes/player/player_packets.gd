@@ -16,7 +16,7 @@ var _queue: Array = []
 var _current_packet: Variant = null
 var _is_processing: bool = false
 var _retry_count: int = 0
-const MAX_RETRIES: int = 60 # Prevent infinite loops (60 ticks = 30 seconds)
+const MAX_RETRIES: int = 10 # Prevent infinite loops (10 ticks = 5 seconds)
 var _retry_timer: Timer
 
 const IDLE_STATES: Array[String] = [
@@ -60,7 +60,7 @@ func _ready() -> void:
 
 func _on_retry_timeout() -> void:
 	_retry_count = 0
-	try_process_next()
+	try_process_next_packet()
 
 
 # Adds packet to queue with specified priority
@@ -73,11 +73,11 @@ func add_packet(packet: Variant, priority: int = Priority.NORMAL) -> void:
 	
 	# If we are not processing a packet and our player is NOT busy
 	if not _is_processing and not player.is_busy:
-		try_process_next()
+		try_process_next_packet()
 
 
 # Process next packet if available
-func try_process_next() -> void:
+func try_process_next_packet() -> void:
 	if _is_processing or _queue.is_empty():
 		return
 	
@@ -89,7 +89,7 @@ func try_process_next() -> void:
 	if can_process_packet():
 		_retry_count = 0
 		_retry_timer.stop()
-		packet_started.emit(_current_packet)
+		try_process_current_packet()
 	else:
 		# Can't process now, put it back and try next
 		_queue.push_front(_current_packet)
@@ -107,6 +107,14 @@ func try_process_next() -> void:
 			complete_packet()
 
 
+func try_process_current_packet() -> void:
+	if _current_packet:
+		packet_started.emit(_current_packet)
+	# If our current packet is not valid, then try to process the next one
+	else:
+		try_process_next_packet()
+
+
 # Called when current packet action completes
 func complete_packet() -> void:
 	if not _is_processing:
@@ -116,7 +124,7 @@ func complete_packet() -> void:
 	_is_processing = false
 	
 	# Try to process next packet immediately after completing
-	try_process_next()
+	try_process_next_packet()
 
 
 # Get current processing state
@@ -153,24 +161,26 @@ func can_process_packet() -> bool:
 		# If this is a remote character, check if it can move
 		else:
 			return current_state_name in MOVE_STATES
-	if _current_packet is Packets.UpdateSpeed:
+	elif _current_packet is Packets.FireWeapon:
+		return current_state_name in WEAPON_AIM_STATES
+	elif _current_packet is Packets.StartFiringWeapon:
+		return current_state_name in WEAPON_AIM_STATES
+	elif _current_packet is Packets.StopFiringWeapon:
+		return current_state_name in WEAPON_AIM_STATES
+	elif _current_packet is Packets.RaiseWeapon:
+		return current_state_name in WEAPON_DOWN_STATES
+	elif _current_packet is Packets.LowerWeapon:
+		return current_state_name in WEAPON_AIM_STATES
+	# Lower priority packets
+	elif _current_packet is Packets.UpdateSpeed:
 		return current_state_name in IDLE_STATES
 	elif _current_packet is Packets.SwitchWeapon:
 		return current_state_name in IDLE_STATES
 	elif _current_packet is Packets.ReloadWeapon:
 		return current_state_name in RELOAD_STATES
-	elif _current_packet is Packets.RaiseWeapon:
-		return current_state_name in WEAPON_DOWN_STATES
-	elif _current_packet is Packets.LowerWeapon:
-		return current_state_name in WEAPON_AIM_STATES
-	elif _current_packet is Packets.FireWeapon: # CAUTION move this upwards and sort by priority too!
-		return current_state_name in WEAPON_AIM_STATES
 	elif _current_packet is Packets.ToggleFireMode:
 		return current_state_name in RELOAD_STATES
-	elif _current_packet is Packets.StartFiringWeapon:
-		return current_state_name in WEAPON_AIM_STATES
-	elif _current_packet is Packets.StopFiringWeapon:
-		return current_state_name in WEAPON_AIM_STATES
+
 	# Allow other packets by default
 	else:
 		return true
@@ -265,18 +275,20 @@ func create_toggle_fire_mode_packet() -> Packets.Packet:
 
 
 # Creates and returns a start_firing_weapon packet
-func create_start_firing_weapon_packet(rotation_y: float) -> Packets.Packet:
+func create_start_firing_weapon_packet(rotation_y: float, ammo: int) -> Packets.Packet:
 	var packet: Packets.Packet = Packets.Packet.new()
 	var start_firing_weapon_packet := packet.new_start_firing_weapon()
 	start_firing_weapon_packet.set_rotation_y(rotation_y)
+	start_firing_weapon_packet.set_ammo(ammo)
 	return packet
 
 
 # Creates and returns a stop_firing_weapon packet
-func create_stop_firing_weapon_packet(rotation_y: float) -> Packets.Packet:
+func create_stop_firing_weapon_packet(rotation_y: float, shots_fired: int) -> Packets.Packet:
 	var packet: Packets.Packet = Packets.Packet.new()
 	var stop_firing_weapon_packet := packet.new_stop_firing_weapon()
 	stop_firing_weapon_packet.set_rotation_y(rotation_y)
+	stop_firing_weapon_packet.set_shots_fired(shots_fired)
 	return packet
 
 
@@ -339,12 +351,12 @@ func send_toggle_fire_mode_packet() -> void:
 
 
 # Creates and sends a packet to the server to inform we started firing
-func send_start_firing_weapon_packet(rotation_y: float) -> void:
-	var packet: Packets.Packet = create_start_firing_weapon_packet(rotation_y)
+func send_start_firing_weapon_packet(rotation_y: float, ammo: int) -> void:
+	var packet: Packets.Packet = create_start_firing_weapon_packet(rotation_y, ammo)
 	WebSocket.send(packet)
 
 
 # Creates and sends a packet to the server to inform we stopped firing
-func send_stop_firing_weapon_packet(rotation_y: float) -> void:
-	var packet: Packets.Packet = create_stop_firing_weapon_packet(rotation_y)
+func send_stop_firing_weapon_packet(rotation_y: float, shots_fired: int) -> void:
+	var packet: Packets.Packet = create_stop_firing_weapon_packet(rotation_y, shots_fired)
 	WebSocket.send(packet)

@@ -69,7 +69,9 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 	var sender_id := packet.get_sender_id()
 	
 	# HIGHER PRIORITY PACKETS THAT GET QUEUED
-	if packet.has_fire_weapon():
+	if packet.has_move_character():
+		_route_move_character_packet(sender_id, packet.get_move_character())
+	elif packet.has_fire_weapon():
 		_route_fire_weapon_packet(sender_id, packet.get_fire_weapon())
 	elif packet.has_start_firing_weapon():
 		_route_start_firing_weapon_packet(sender_id, packet.get_start_firing_weapon())
@@ -82,8 +84,6 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 	elif packet.has_lower_weapon():
 		_route_lower_weapon_packet(sender_id, packet.get_lower_weapon())
 	# LOWER PRIORITY PACKETS THAT GET QUEUED
-	elif packet.has_move_character():
-		_route_move_character_packet(sender_id, packet.get_move_character())
 	elif packet.has_update_speed():
 		_route_update_speed_packet(sender_id, packet.get_update_speed())
 	elif packet.has_switch_weapon():

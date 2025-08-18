@@ -487,11 +487,11 @@ func (state *Game) HandleToggleFireMode(payload *packets.ToggleFireMode) {
 }
 
 func (state *Game) HandleStartFiringWeapon(payload *packets.StartFiringWeapon) {
-	// Get the attacker's rotation from the packet and broadcast to everyone in the region
-	state.client.Broadcast(packets.NewStartFiringWeapon(payload.GetRotationY()))
+	// Get the attacker's rotation and available ammo from the packet and broadcast to everyone in the region
+	state.client.Broadcast(packets.NewStartFiringWeapon(payload.GetRotationY(), payload.GetAmmo()))
 }
 
 func (state *Game) HandleStopFiringWeapon(payload *packets.StopFiringWeapon) {
-	// Get the attacker's rotation from the packet and broadcast to everyone in the region
-	state.client.Broadcast(packets.NewStopFiringWeapon(payload.GetRotationY()))
+	// Get the attacker's rotation and how many shots were fired from the packet and broadcast to everyone in the region
+	state.client.Broadcast(packets.NewStopFiringWeapon(payload.GetRotationY(), payload.GetShotsFired()))
 }

@@ -184,7 +184,6 @@ func _calculate_path_overlap(current_path: Array[Vector2i], new_path: Array[Vect
 func start_movement_towards(start_position: Vector2i, target_position: Vector2i, target: Interactable = null) -> void:
 	# Don't start movement if player is busy
 	if player.is_busy:
-		print("start_movement_towards early exit because player is busy?")
 		return
 	
 	# Predict a path towards our target
@@ -386,8 +385,14 @@ func handle_remote_player_movement(new_server_position: Vector2i) -> void:
 		
 		# If we are idling
 		else:
+			# CAUTION
+			# Add a check here to make sure we are at the position the server says we are
+			# If we are not in the same position as the server in our local representation,
+			# Then pathfind from our current position to the first server position.
+			
 			# Take the first segment based on player's speed and remove overlap
 			server_path = Utils.pop_multiple_front(next_path, player.player_speed + 1)
+			print("local_grid_position: ", grid_position, " server_starting_position: ", server_path[0])
 			cells_to_move_this_tick = server_path.size()-1
 			immediate_grid_destination = server_path.back() if server_path.size() > 0 else server_grid_position
 			
@@ -396,6 +401,7 @@ func handle_remote_player_movement(new_server_position: Vector2i) -> void:
 			
 			# If we have cells to move
 			if server_path.size() > 0:
+				print("from idle, cells to move ", server_path.size())
 				setup_movement_step(server_path) # This starts movement
 				player.player_state_machine.change_state("move")
 
@@ -500,7 +506,6 @@ func complete_movement() -> void:
 # Movement cleanup and executes the post movement logic
 func _finalize_movement() -> void:
 	player.position = next_cell
-	in_motion = false
 	
 	# If we have to sync with the server
 	if autopilot_active:

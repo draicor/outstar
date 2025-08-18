@@ -11,6 +11,10 @@ func _init() -> void:
 	state_name = "move"
 
 
+func enter() -> void:
+	player.player_movement.in_motion = true
+
+
 # _physics_process runs at a fixed timestep
 # Movement should be handled here because this runs before _process
 func physics_update(delta: float) -> void:

@@ -88,9 +88,11 @@ message FireWeapon { // We pass the target position and the shooter's rotation
 message ToggleFireMode {}
 message StartFiringWeapon {
   double rotation_y = 1;
+  uint64 ammo = 2;
 }
 message StopFiringWeapon {
   double rotation_y = 1;
+  uint64 shots_fired = 2; // Amount of shots fired
 }
 
 // Main Packet container
