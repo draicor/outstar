@@ -5,8 +5,6 @@ class_name PlayerAnimator
 # Internal variables
 var player: Player = null # Our parent node
 var animation_player: AnimationPlayer # Our player's AnimationPlayer
-var player_audio: PlayerAudio # Used to call functions directly from the audio class
-var player_equipment: PlayerEquipment # Used to call functions directly from equipment class
 
 # Character locomotion
 var locomotion: Dictionary[String, Dictionary] # Depends on the gender of this character
@@ -96,17 +94,9 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 func _ready() -> void:
 	# Wait for parent to be ready, then store a reference to it
 	await get_parent().ready
+	# Wait a single frame to allow time for the other player components to load
+	await get_tree().process_frame
 	player = get_parent()
-	
-	# Fetch the PlayerAudio from our parent
-	player_audio = player.find_child("PlayerAudio", true, false)
-	if not player_audio:
-		push_error("Player Audio not available")
-	
-	# Fetch the PlayerEquiment from our parent
-	player_equipment = player.find_child("PlayerEquipment", true, false)
-	if not player_equipment:
-		push_error("Player Equipment not available")
 	
 	# Switch our locomotion depending on our player's gender
 	switch_animation_library(player.gender)
@@ -216,17 +206,22 @@ func play_animation_and_await(animation_name: String, play_rate: float = 1.0) ->
 
 # Used to switch the current animation state
 func switch_animation(anim_state: String) -> void:
+	# If this state is not valid, ignore
 	if not locomotion.has(anim_state):
 		return
 	
 	var settings = locomotion[anim_state]
 	var anim_name = settings.animation
 	
+	# If we are already playing this animation, ignore
+	if animation_player.current_animation == anim_name:
+		return
+	
 	if animation_player.has_animation(anim_name):
 		animation_player.play(anim_name)
 		animation_player.speed_scale = settings.play_rate
 	
-		# Only emit this signal for my own character
+		# Only emit this signal for my own character (I don't remember why)
 		if player.my_player_character:
 			Signals.player_locomotion_changed.emit(anim_state)
 
@@ -277,14 +272,14 @@ func switch_animation_library(animation_library: String) -> void:
 
 # Connects to the player audio class and uses it to call a function in it
 func _call_player_audio_method(method_name: String) -> void:
-	if player_audio and player_audio.has_method(method_name):
-		player_audio.call(method_name)
+	if player.player_audio and player.player_audio.has_method(method_name):
+		player.player_audio.call(method_name)
 
 
 # Connects to the player equipment class and uses it to call a function in it
 func _call_player_equipment_method(method_name: String) -> void:
-	if player_equipment and player_equipment.has_method(method_name):
-		player_equipment.call(method_name)
+	if player.player_equipment and player.player_equipment.has_method(method_name):
+		player.player_equipment.call(method_name)
 
 
 # Connected to the animation player signal

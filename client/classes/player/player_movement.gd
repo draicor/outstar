@@ -63,6 +63,8 @@ var unconfirmed_path: Array[Vector2i] = [] # Holds every vector2i coordinate the
 func _ready() -> void:
 	# Wait for parent to be ready, then store a reference to it
 	await get_parent().ready
+	# Wait a single frame to allow time for the other player components to load
+	await get_tree().process_frame
 	player = get_parent()
 	
 	setup_movement_data_at_spawn()

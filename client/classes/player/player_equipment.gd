@@ -37,6 +37,8 @@ var max_correction_angle: float = deg_to_rad(5.0) # 5 degrees deviation
 func _ready() -> void:
 	# Wait for parent to be ready, then store a reference to it
 	await get_parent().ready
+	# Wait a single frame to allow time for the other player components to load
+	await get_tree().process_frame
 	player = get_parent()
 	
 	# Create right hand bone attachment for our weapon

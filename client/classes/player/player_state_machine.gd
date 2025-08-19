@@ -14,10 +14,10 @@ var player: Player = null
 func _ready() -> void:
 	# Wait for parent to be ready
 	await get_parent().ready
-	# Wait a single frame to allow time for the player_animator to initialize
+	# Wait a single frame to allow time for the other player components to load
 	await get_tree().process_frame
-	
 	player = get_parent()
+	
 	if player.my_player_character:
 		is_local_player = true
 	
