@@ -215,6 +215,8 @@ func switch_animation(anim_state: String) -> void:
 	
 	# If we are already playing this animation, ignore
 	if animation_player.current_animation == anim_name:
+		# Update speed if it changed (like running to job state using the same anim)
+		animation_player.speed_scale = settings.play_rate
 		return
 	
 	if animation_player.has_animation(anim_name):
