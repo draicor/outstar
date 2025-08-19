@@ -29,7 +29,7 @@ const MOVE_STATES: Array[String] = [
 	"rifle_down_idle",
 	"rifle_aim_idle",
 ]
-const RELOAD_STATES: Array[String] = [
+const WEAPON_STATES: Array[String] = [
 	"rifle_down_idle",
 	"rifle_aim_idle",
 ]
@@ -170,16 +170,16 @@ func can_process_packet() -> bool:
 	elif _current_packet is Packets.RaiseWeapon:
 		return current_state_name in WEAPON_DOWN_STATES
 	elif _current_packet is Packets.LowerWeapon:
-		return current_state_name in WEAPON_AIM_STATES
+		return current_state_name in WEAPON_STATES
 	# Lower priority packets
 	elif _current_packet is Packets.UpdateSpeed:
 		return current_state_name in IDLE_STATES
 	elif _current_packet is Packets.SwitchWeapon:
 		return current_state_name in IDLE_STATES
 	elif _current_packet is Packets.ReloadWeapon:
-		return current_state_name in RELOAD_STATES
+		return current_state_name in WEAPON_STATES
 	elif _current_packet is Packets.ToggleFireMode:
-		return current_state_name in RELOAD_STATES
+		return current_state_name in WEAPON_STATES
 
 	# Allow other packets by default
 	else:

@@ -385,23 +385,30 @@ func handle_remote_player_movement(new_server_position: Vector2i) -> void:
 		
 		# If we are idling
 		else:
-			# CAUTION
-			# Add a check here to make sure we are at the position the server says we are
-			# If we are not in the same position as the server in our local representation,
-			# Then pathfind from our current position to the first server position.
+			# If we are not in the same position as the server,
+			# pathfind from our current position to the first server position,
+			# and append the rest of the path we moved in for next tick
+			if grid_position != next_path[0]:
+				var sync_path: Array[Vector2i] = predict_path(grid_position, next_path[0])
+				# Take the first segment based on player's speed and remove overlap
+				server_path = Utils.pop_multiple_front(sync_path, player.player_speed + 1)
+				# Save the rest of the path for next tick
+				next_tick_server_path.append_array(sync_path)
+				next_tick_server_path.append_array(next_path.slice(1))
 			
-			# Take the first segment based on player's speed and remove overlap
-			server_path = Utils.pop_multiple_front(next_path, player.player_speed + 1)
-			print("local_grid_position: ", grid_position, " server_starting_position: ", server_path[0])
+			# If we are in sync with the server
+			else:
+				# Take the first segment based on player's speed and remove overlap
+				server_path = Utils.pop_multiple_front(next_path, player.player_speed + 1)
+				# Set the remaining path for next ticks
+				next_tick_server_path = next_path
+			
+			
 			cells_to_move_this_tick = server_path.size()-1
 			immediate_grid_destination = server_path.back() if server_path.size() > 0 else server_grid_position
 			
-			# Set the remaining path for next ticks
-			next_tick_server_path = next_path
-			
 			# If we have cells to move
 			if server_path.size() > 0:
-				print("from idle, cells to move ", server_path.size())
 				setup_movement_step(server_path) # This starts movement
 				player.player_state_machine.change_state("move")
 
@@ -506,6 +513,7 @@ func complete_movement() -> void:
 # Movement cleanup and executes the post movement logic
 func _finalize_movement() -> void:
 	player.position = next_cell
+	in_motion = false
 	
 	# If we have to sync with the server
 	if autopilot_active:
@@ -531,6 +539,7 @@ func _finalize_movement() -> void:
 func _handle_autopilot() -> void:
 	# If we are at the same position as in the server
 	if grid_position == server_grid_position and immediate_grid_destination == server_grid_position:
+		in_motion = false
 		autopilot_active = false
 		grid_destination = grid_position
 		# Go into idle state
