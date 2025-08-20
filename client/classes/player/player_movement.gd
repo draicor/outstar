@@ -531,10 +531,10 @@ func _finalize_movement() -> void:
 	# If we don't have to server sync or interact with anything,
 	# then we are done moving, so we go into idle state
 	else:
-		if player.player_state_machine.get_current_state_name().ends_with("idle"):
-			player.player_state_machine.change_state(player.player_animator.get_idle_state_name())
-		else:
-			player.player_state_machine.change_state(player.player_animator.get_aim_state_name())
+		# Choose our idle state based on the equipped weapon
+		var equipped_weapon_type: String = player.player_equipment.equipped_weapon_type
+		var equipped_weapon_idle_state: String = player.player_equipment.get_weapon_state_by_weapon_type(equipped_weapon_type)
+		player.player_state_machine.change_state(equipped_weapon_idle_state)
 
 
 # Called when we have to sync with the server position
@@ -580,6 +580,8 @@ func _handle_autopilot() -> void:
 # Helper function to immediately move a character without traversing the grid
 # Used to reset our player position to sync with the server
 func teleport_to_position(new_grid_position: Vector2i) -> void:
+	push_error("forcing teleport_to_position")
+	
 	# Update all position references
 	grid_position = new_grid_position
 	grid_destination = new_grid_position

@@ -225,6 +225,28 @@ func lower_weapon_and_await(broadcast: bool) -> void:
 		player.player_packets.complete_packet()
 
 
+# Transition to the aim state for this weapon immediately (used for remote players)
+func raise_weapon_immediate() -> void:
+	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	var target_state: String = weapon_type + "_aim_idle"
+	# Update animation library
+	player.player_animator.switch_animation_library(weapon_type + "_aim")
+	player.player_animator.switch_animation("idle")
+	# Change state
+	player.player_state_machine.change_state(target_state)
+
+
+# Transition to the down state for this weapon immediately (used for remote players)
+func lower_weapon_immediate() -> void:
+	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	var target_state: String = weapon_type + "_down_idle"
+	# Update animation library
+	player.player_animator.switch_animation_library(weapon_type + "_down")
+	player.player_animator.switch_animation("idle")
+	# Change state
+	player.player_state_machine.change_state(target_state)
+
+
 # Handles single fire of firearms
 func single_fire(target: Vector3, broadcast: bool) -> void:
 	if target == Vector3.ZERO:

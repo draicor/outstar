@@ -307,6 +307,8 @@ func get_current_weapon_name() -> String:
 func get_weapon_state_by_weapon_type(weapon_type: String) -> String:
 	if weapon_states.has(weapon_type):
 		return weapon_states[weapon_type]
+	
+	push_error("Error in get_weapon_state_by_weapon_type, invalid weapon type: ", weapon_type)
 	return ""
 
 

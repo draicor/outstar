@@ -392,7 +392,7 @@ func execute_interaction() -> void:
 	
 	# Attempt to play the interaction animation
 	var animation_name: String = interaction_target.get_interaction_animation()
-	player_animator.play_animation_and_await(animation_name)
+	await player_animator.play_animation_and_await(animation_name)
 	
 	# Perform the interaction itself
 	interaction_target.interact(self)
@@ -561,7 +561,7 @@ func _process_reload_weapon_packet(packet: Packets.ReloadWeapon) -> void:
 	
 	if current_state:
 		# Call without broadcast since this came from server
-		current_state.reload_weapon_and_await(slot, amount, false)
+		await current_state.reload_weapon_and_await(slot, amount, false)
 		# Completion will be handled by the state machine
 	else:
 		# If no state available, complete immediately
@@ -573,7 +573,7 @@ func _process_raise_weapon_packet() -> void:
 	
 	if current_state:
 		# Call without broadcast since this came from server
-		current_state.raise_weapon_and_await(false)
+		await current_state.raise_weapon_and_await(false)
 		# Completion will be handled by the state machine
 	else:
 		# If no state available, complete immediately
@@ -585,7 +585,7 @@ func _process_lower_weapon_packet() -> void:
 	
 	if current_state:
 		# Call without broadcast since this came from server
-		current_state.lower_weapon_and_await(false)
+		await current_state.lower_weapon_and_await(false)
 		# Completion will be handled by the state machine
 	else:
 		# If no state available, complete immediately

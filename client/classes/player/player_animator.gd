@@ -244,14 +244,21 @@ func update_locomotion_animation(cells_to_move: int) -> void:
 func get_idle_state_name() -> String:
 	match locomotion:
 		rifle_down_locomotion: return "rifle_down_idle"
-		_: return "idle"
+		rifle_aim_locomotion:
+			push_error("Error in get_idle_state_name, requesting idle state when in rifle aim locomotion.")
+			return "rifle_down_idle"
+		_:
+			push_error("Error in get_idle_state_name, can't find ", locomotion)
+			return "idle"
 
 
 # Returns the aim state name
 func get_aim_state_name() -> String:
 	match locomotion:
 		rifle_aim_locomotion: return "rifle_aim_idle"
-		_: return get_idle_state_name()
+		_:
+			push_error("Error in get_aim_state_name, can't find ", locomotion)
+			return get_idle_state_name()
 
 
 # Returns the appropiate animation library based on weapon type and gender
