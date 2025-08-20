@@ -194,6 +194,7 @@ func play_animation_and_await(animation_name: String, play_rate: float = 1.0) ->
 	if animation_player.has_animation(animation_name):
 		animation_player.play(animation_name)
 		animation_player.speed_scale = play_rate
+		
 		# Wait for the animation to finish before proceding
 		# NOTE this requires checking against player.is_busy and
 		# awaiting play_animation_and_await() too for it to work
@@ -268,6 +269,7 @@ func get_animation_library(weapon_type: String, gender: String) -> String:
 			return "rifle_down"
 		_:
 			return gender # Fallback to gender animation
+
 
 # Helper function to update our locomotion dictionary based on equipped items or gender
 func switch_animation_library(animation_library: String) -> void:

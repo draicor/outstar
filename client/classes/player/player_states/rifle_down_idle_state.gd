@@ -63,9 +63,6 @@ func handle_input(event: InputEvent) -> void:
 			player.player_equipment.get_current_weapon_max_ammo(),
 			true
 		)
-		# If we are holding right click here, switch states
-		if Input.is_action_pressed("right_click"):
-			player.player_state_machine.change_state("rifle_aim_idle")
 	
 	# Toggle weapon fire mode
 	elif event.is_action_pressed("weapon_mode"):

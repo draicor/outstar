@@ -21,7 +21,7 @@ const MAX_RETRIES: int = 10 # Prevent infinite loops (20 ticks = 10 seconds)
 var _retry_timer: Timer
 # Prevent the packet queue from hanging due to uncaught errors
 var _packet_process_timeout: float = 0.0
-const MAX_PACKET_PROCESSING_TIMEOUT: float = 3.0 # 3 second timeout
+const MAX_PACKET_PROCESSING_TIMEOUT: float = 5.0 # 5 second timeout
 
 
 const IDLE_STATES: Array[String] = [
@@ -98,20 +98,20 @@ func try_process_next_packet() -> void:
 	if _retry_count > MAX_RETRIES:
 		push_error("Max retries reached, dropping packet")
 		if _current_packet:
-			print(player.player_name, ": " ,_current_packet)
-			print("state: ", player.player_state_machine.get_current_state_name())
+			push_error(player.player_name, ": " ,_current_packet)
+			push_error("state: ", player.player_state_machine.get_current_state_name())
 		_retry_count = 0
-		complete_packet()
+		clear()
 		return
 	
 	# Check for packet processing timeout
 	if _packet_process_timeout > MAX_PACKET_PROCESSING_TIMEOUT:
 		push_error("Packet processing timeout, dropping packet")
 		if _current_packet:
-			print(player.player_name, ": " ,_current_packet)
-			print("state: ", player.player_state_machine.get_current_state_name())
+			push_error(player.player_name, ": " ,_current_packet)
+			push_error("state: ", player.player_state_machine.get_current_state_name())
 		_packet_process_timeout = 0.0
-		complete_packet()
+		clear()
 		return
 	
 	# Get the next packet
@@ -119,7 +119,7 @@ func try_process_next_packet() -> void:
 	_is_processing = true
 	
 	# Check if we can process this packet now
-	if await can_process_packet():
+	if can_process_packet():
 		_retry_count = 0
 		_retry_timer.stop()
 		try_process_current_packet()
@@ -139,6 +139,7 @@ func try_process_current_packet() -> void:
 		packet_started.emit(_current_packet)
 	# If our current packet is not valid, then try to process the next one
 	else:
+		push_error("try_process_current_packet not valid, processing next_packet instead")
 		try_process_next_packet()
 
 
@@ -180,72 +181,32 @@ func can_process_packet() -> bool:
 	# Get current state name
 	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
-	# If remote player
-	if not player.my_player_character:
-		print("Current state: ", current_state_name)
-		print("Current packet: ", _current_packet)
-		print("Queue size: ", _queue.size())
-		print("Retry count: ", _retry_count)
+	# DEBUG for remote player
+	#if not player.my_player_character:
+		#print("Current state: ", current_state_name)
+		#print("Current packet: ", _current_packet)
+		#print("Queue size: ", _queue.size())
+		#print("Retry count: ", _retry_count)
 	
 	# Only process these packets in their valid states
+	
 	# MOVE CHARACTER
 	if _current_packet is Packets.MoveCharacter:
-		# If this is our player character, process move packets right away
 		if player.my_player_character:
+			# Process my own movement packets right away
 			return true
 		# If this is a remote character
 		else:
-			# If we are in an weapon aim state, transition into a weapon down state
-			if current_state_name in WEAPON_AIM_STATES:
-				# Force lower weapon before processing movement
-				force_remote_lower_weapon()
-				
-				# Verify state changed
-				await get_tree().process_frame
-				var new_state: String = player.player_state_machine.get_current_state_name()
-				if new_state not in MOVE_STATES:
-					push_error("Failed to transition to move state, dropping packet")
-					return false
-				return true
-			
 			# Can only move if in an allowed movement state
 			return current_state_name in MOVE_STATES
 	
 	# SINGLE FIRE WEAPON
 	elif _current_packet is Packets.FireWeapon:
-		if current_state_name in WEAPON_AIM_STATES:
-			return true
-		elif current_state_name in WEAPON_DOWN_STATES:
-			# Force raise weapon before processing single fire
-			force_remote_raise_weapon()
-			
-			# Verify state changed
-			await get_tree().process_frame
-			var new_state: String = player.player_state_machine.get_current_state_name()
-			if new_state not in WEAPON_AIM_STATES:
-				push_error("Failed to transition to aim state, dropping packet")
-				return false
-			return true
-		else:
-			return false
+		return current_state_name in WEAPON_AIM_STATES
 	
 	# START AUTOMATIC FIRE WEAPON
 	elif _current_packet is Packets.StartFiringWeapon:
-		if current_state_name in WEAPON_AIM_STATES:
-			return true
-		elif current_state_name in WEAPON_DOWN_STATES:
-			# Force raise weapon before processing start firing
-			force_remote_raise_weapon()
-			
-			# Verify state changed
-			await get_tree().process_frame
-			var new_state: String = player.player_state_machine.get_current_state_name()
-			if new_state not in WEAPON_AIM_STATES:
-				push_error("Failed to transition to aim state, dropping packet")
-				return false
-			return true
-		else:
-			return false
+		return current_state_name in WEAPON_AIM_STATES
 	
 	# RAISE WEAPON
 	elif _current_packet is Packets.RaiseWeapon:
@@ -254,6 +215,7 @@ func can_process_packet() -> bool:
 	# LOWER WEAPON
 	elif _current_packet is Packets.LowerWeapon:
 		return current_state_name in WEAPON_AIM_STATES
+	
 	# Lower priority packets
 	elif _current_packet is Packets.UpdateSpeed:
 		return current_state_name in IDLE_STATES
@@ -267,30 +229,6 @@ func can_process_packet() -> bool:
 	# Allow other packets by default
 	else:
 		return true
-
-
-# Forces remote players to lower their weapon
-func force_remote_lower_weapon() -> void:
-	if player.my_player_character:
-		return
-	
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	if current_state and current_state.has_method("lower_weapon_immediate"):
-		current_state.lower_weapon_immediate()
-	else:
-		push_error("Error in force_remote_lower_weapon, lower_weapon_immediate not available")
-
-
-# Forces remote players to raise their weapon
-func force_remote_raise_weapon() -> void:
-	if player.my_player_character:
-		return
-	
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	if current_state and current_state.has_method("raise_weapon_immediate"):
-		current_state.raise_weapon_immediate()
-	else:
-		push_error("Error in force_remote_raise_weapon, raise_weapon_immediate not available")
 
 
 ###################

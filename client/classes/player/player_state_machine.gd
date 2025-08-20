@@ -49,6 +49,7 @@ func get_current_state() -> BaseState:
 func change_state(new_state_name: String) -> void:
 	# If our state machine is not active, abort
 	if not is_active:
+		push_error("Player state machine not active for ", player.player_name)
 		return
 	# If the state doesn't exists, abort
 	if not states_map.has(new_state_name):
@@ -60,6 +61,7 @@ func change_state(new_state_name: String) -> void:
 	if current_state:
 		# If we are already in this state, ignore
 		if current_state == new_state:
+			push_error("Trying to switch to same state", current_state)
 			return
 		
 		# Force process any pending packets when leaving this state

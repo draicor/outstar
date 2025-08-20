@@ -89,7 +89,10 @@ func switch_weapon(slot: int, broadcast: bool = false) -> void:
 			await animator.play_weapon_animation_and_await("equip", weapon_type)
 			player.is_busy = true # Block input again because animator released it
 			equipment.update_hud_ammo()
-		player.player_state_machine.change_state(weapon_state)
+		
+		# If we are not already in the same state, try to change to it
+		if player.player_state_machine.get_current_state_name() != weapon_state:
+			player.player_state_machine.change_state(weapon_state)
 	
 	# Release input
 	player.is_busy = false
@@ -170,11 +173,6 @@ func raise_weapon_and_await(broadcast: bool) -> void:
 	# Get current weapon type
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
 	
-	# If we set it to broadcast and this is our local player
-	if broadcast and is_local_player:
-		# Report to the server we are raising our weapon
-		player.player_packets.send_raise_weapon_packet()
-	
 	# Block input
 	player.is_busy = true
 	
@@ -191,6 +189,11 @@ func raise_weapon_and_await(broadcast: bool) -> void:
 	# Release input
 	player.is_busy = false
 	
+	# If we set it to broadcast and this is our local player
+	if broadcast and is_local_player:
+		# Report to the server we are raising our weapon
+		player.player_packets.send_raise_weapon_packet()
+	
 	if not is_local_player:
 		player.player_packets.complete_packet()
 
@@ -199,11 +202,6 @@ func raise_weapon_and_await(broadcast: bool) -> void:
 func lower_weapon_and_await(broadcast: bool) -> void:
 	# Get current weapon type
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
-	
-	# If we set it to broadcast and this is our local player
-	if broadcast and is_local_player:
-		# Report to the server we are lowering our weapon
-		player.player_packets.send_lower_weapon_packet()
 	
 	# Block input
 	player.is_busy = true
@@ -221,30 +219,13 @@ func lower_weapon_and_await(broadcast: bool) -> void:
 	# Release input
 	player.is_busy = false
 	
+	# If we set it to broadcast and this is our local player
+	if broadcast and is_local_player:
+		# Report to the server we are lowering our weapon
+		player.player_packets.send_lower_weapon_packet()
+	
 	if not is_local_player:
 		player.player_packets.complete_packet()
-
-
-# Transition to the aim state for this weapon immediately (used for remote players)
-func raise_weapon_immediate() -> void:
-	var weapon_type: String = player.player_equipment.get_current_weapon_type()
-	var target_state: String = weapon_type + "_aim_idle"
-	# Update animation library
-	player.player_animator.switch_animation_library(weapon_type + "_aim")
-	player.player_animator.switch_animation("idle")
-	# Change state
-	player.player_state_machine.change_state(target_state)
-
-
-# Transition to the down state for this weapon immediately (used for remote players)
-func lower_weapon_immediate() -> void:
-	var weapon_type: String = player.player_equipment.get_current_weapon_type()
-	var target_state: String = weapon_type + "_down_idle"
-	# Update animation library
-	player.player_animator.switch_animation_library(weapon_type + "_down")
-	player.player_animator.switch_animation("idle")
-	# Change state
-	player.player_state_machine.change_state(target_state)
 
 
 # Handles single fire of firearms
@@ -298,12 +279,12 @@ func single_fire(target: Vector3, broadcast: bool) -> void:
 
 
 func toggle_fire_mode(broadcast: bool) -> void:
+	player.player_audio.play_weapon_fire_mode_selector()
+	player.player_equipment.toggle_fire_mode()
+	
 	# If we set it to broadcast and this is our local player
 	if is_local_player and broadcast:
 		player.player_packets.send_toggle_fire_mode_packet()
-	
-	player.player_audio.play_weapon_fire_mode_selector()
-	player.player_equipment.toggle_fire_mode()
 	
 	# If remote player
 	if not is_local_player:
@@ -345,7 +326,6 @@ func stop_automatic_firing(broadcast: bool) -> void:
 			player.player_packets.complete_packet()
 		# If we fired more rounds than we were supposed to (predicting failed),
 		# reimburse the ammo difference to this remote player in my own local session
-		# CAUTION this might not be neccesary now since we are sending our ammo in the start fire
 		elif shots_fired > server_shots_fired:
 			# Stop firing immediately
 			is_auto_firing = false

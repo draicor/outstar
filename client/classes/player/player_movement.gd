@@ -629,7 +629,9 @@ func click_to_move(new_destination: Vector2i) -> void:
 	else:
 		_start_new_movement(new_destination)
 	
-	player.player_state_machine.change_state("move")
+	# If we are not already in the move state, try to change to it
+	if player.player_state_machine.get_current_state_name() != "move":
+		player.player_state_machine.change_state("move")
 
 
 # Helper function to check if player is in interaction range
