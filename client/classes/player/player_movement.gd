@@ -208,9 +208,12 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 		# instead of moving towards it, we check if we are in range to activate
 		if predicted_path.size() < 2:
 			# If we are in range, we activate it, either way we return early
+			# If we are not already in the interact state, try to change to it
 			if target and is_in_interaction_range(player.interaction_target):
-				player.player_state_machine.change_state("interact")
-			return
+				# If we are not already in the state, try to change to it
+				if player.player_state_machine.get_current_state_name() != "interact":
+					player.player_state_machine.change_state("interact")
+					return
 		
 		# Get our immediate grid destination (this tick)
 		immediate_grid_destination = predicted_path.back()
@@ -373,7 +376,9 @@ func handle_server_reconciliation(new_server_position: Vector2i) -> void:
 		var correction_path: Array[Vector2i] = predict_path(immediate_grid_destination, new_server_position)
 		if correction_path.size() > 0:
 			_apply_path_correction(correction_path)
-			player.player_state_machine.change_state("move")
+			# If we are not already in the move state, try to change to it
+			if player.player_state_machine.get_current_state_name() != "move":
+				player.player_state_machine.change_state("move")
 
 
 # Called when we receive a new position packet to move remote players (always in sync)
@@ -412,7 +417,9 @@ func handle_remote_player_movement(new_server_position: Vector2i) -> void:
 			# If we have cells to move
 			if server_path.size() > 0:
 				setup_movement_step(server_path) # This starts movement
-				player.player_state_machine.change_state("move")
+				# If we are not already in the move state, try to change to it
+				if player.player_state_machine.get_current_state_name() != "move":
+					player.player_state_machine.change_state("move")
 
 
 # Called on tick from the _process function
@@ -501,8 +508,10 @@ func complete_movement() -> void:
 	# Check for interactions first
 	if player.interaction_target:
 		if is_in_interaction_range(player.interaction_target):
-			player.player_state_machine.change_state("interact")
-			return # Stop here to prevent movement reset
+			# If we are not already in the state, try to change to it
+			if player.player_state_machine.get_current_state_name() != "interact":
+				player.player_state_machine.change_state("interact")
+				return # Stop here to prevent movement reset
 	
 	_finalize_movement()
 	movement_completed.emit()
@@ -534,7 +543,9 @@ func _finalize_movement() -> void:
 		# Choose our idle state based on the equipped weapon
 		var equipped_weapon_type: String = player.player_equipment.equipped_weapon_type
 		var equipped_weapon_idle_state: String = player.player_equipment.get_weapon_state_by_weapon_type(equipped_weapon_type)
-		player.player_state_machine.change_state(equipped_weapon_idle_state)
+		# If we are not already in the state, try to change to it
+		if player.player_state_machine.get_current_state_name() != equipped_weapon_idle_state:
+			player.player_state_machine.change_state(equipped_weapon_idle_state)
 
 
 # Called when we have to sync with the server position
@@ -544,8 +555,9 @@ func _handle_autopilot() -> void:
 		in_motion = false
 		autopilot_active = false
 		grid_destination = grid_position
-		# Go into idle state
-		player.player_state_machine.change_state(player.player_animator.get_idle_state_name())
+		# If we are not already in the state, try to change to it
+		if player.player_state_machine.get_current_state_name() != player.player_animator.get_idle_state_name():
+			player.player_state_machine.change_state(player.player_animator.get_idle_state_name())
 		
 	# If our position is not synced
 	else: 

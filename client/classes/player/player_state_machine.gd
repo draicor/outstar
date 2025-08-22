@@ -64,10 +64,6 @@ func change_state(new_state_name: String) -> void:
 			push_error("Trying to switch to same state", current_state)
 			return
 		
-		# Force process any pending packets when leaving this state
-		# Use call_deferred to ensure safe execution
-		player.player_packets.call_deferred("try_process_next_packet")
-		
 		# Exit current state
 		current_state.exit()
 		previous_state = current_state
@@ -75,6 +71,10 @@ func change_state(new_state_name: String) -> void:
 	# Enter new state
 	current_state = new_state
 	current_state.enter()
+	
+	# Force process any pending packets after state change
+	# Use call_deferred to ensure safe execution
+	player.player_packets.call_deferred("try_process_next_packet")
 	
 	emit_signal("player_state_changed",
 		previous_state.state_name if previous_state else "",

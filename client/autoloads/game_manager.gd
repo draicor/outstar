@@ -24,6 +24,8 @@ var player_character: Player
 var is_player_typing: bool = false
 # Prevents game world tooltip to display over menus
 var ui_menu_active: bool = false
+# Keep track of packet loss
+var packets_lost: int = 0
 
 # Internal variables
 var _current_scene_root: Node
