@@ -1,6 +1,7 @@
 extends Node3D
 class_name PlayerAudio
 
+# WEAPONS #
 # M16 rifle sounds
 const M16_RIFLE_CHARGING_HANDLE = preload("res://assets/sounds/sfx/rifle/m16_rifle/m16_rifle_charging_handle.wav")
 const M16_RIFLE_DRY_FIRE_SINGLE = preload("res://assets/sounds/sfx/rifle/m16_rifle/m16_rifle_dry_fire_single.wav")
@@ -15,7 +16,6 @@ const AKM_RIFLE_FIRE_MODE_SELECTOR = preload("res://assets/sounds/sfx/rifle/akm_
 const AKM_RIFLE_FIRE_SINGLE = preload("res://assets/sounds/sfx/rifle/akm_rifle/akm_rifle_fire_single.wav")
 const AKM_RIFLE_INSERT_MAGAZINE = preload("res://assets/sounds/sfx/rifle/akm_rifle/akm_rifle_insert_magazine.wav")
 const AKM_RIFLE_REMOVE_MAGAZINE = preload("res://assets/sounds/sfx/rifle/akm_rifle/akm_rifle_remove_magazine.wav")
-
 
 # Internal variables
 var player: Player = null # Our parent node

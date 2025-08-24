@@ -167,14 +167,17 @@ func get_animation_play_rate() -> float:
 	return fire_rates[current_fire_mode]["play_rate"]
 
 
-# Handle SFXs and impact sounds here
+# Handle SFXs and Impact sounds here
 func _process_hit(hit: Dictionary) -> void:
 	var collider = hit.get("collider")
 	
-	if collider and collider.is_in_group("flesh_material"):
-		SfxManager.spawn_projectile_impact_flesh(hit.position, hit.normal)
+	if collider and collider.is_in_group("body_material"):
+		SfxManager.spawn_projectile_impact_body(hit.position, hit.normal)
+		AudioManager.play_bullet_impact_body(hit.position)
 	elif collider and collider.is_in_group("headshot_material"):
 		SfxManager.spawn_projectile_impact_headshot(hit.position, hit.normal)
+		AudioManager.play_bullet_impact_headshot(hit.position)
 	elif collider and collider.is_in_group("concrete_material"):
 		SfxManager.spawn_projectile_impact_decal(hit.position, hit.normal, collider, "concrete_material")
 		SfxManager.spawn_projectile_impact_concrete(hit.position, hit.normal)
+		AudioManager.play_bullet_impact_concrete(hit.position)

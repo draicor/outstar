@@ -1,6 +1,6 @@
 [gd_scene load_steps=10 format=3 uid="uid://7et5m8gspynn"]
 
-[ext_resource type="Script" uid="uid://be4dykb1p5sbh" path="res://classes/sfx/disposable_gpu_particles_3d.gd" id="2_warbm"]
+[ext_resource type="Script" uid="uid://be4dykb1p5sbh" path="res://classes/sfx/disposable_gpu_particles_3d.gd" id="1_dsteo"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_golva"]
 load_path = "res://.godot/imported/blood_splatter_01.png-1c58f6164001d38f5edb4d74d78a2071.s3tc.ctex"
@@ -69,7 +69,7 @@ particles_anim_loop = false
 material = SubResource("StandardMaterial3D_etn6b")
 size = Vector2(0.2, 0.2)
 
-[node name="ProjectileImpactFlesh" type="GPUParticles3D"]
+[node name="ProjectileImpactBody" type="GPUParticles3D"]
 material_override = SubResource("StandardMaterial3D_ouc5p")
 cast_shadow = 0
 emitting = false
@@ -81,4 +81,4 @@ randomness = 1.0
 fixed_fps = 60
 process_material = SubResource("ParticleProcessMaterial_uw502")
 draw_pass_1 = SubResource("QuadMesh_q6qud")
-script = ExtResource("2_warbm")
+script = ExtResource("1_dsteo")

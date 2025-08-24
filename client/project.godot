@@ -28,6 +28,7 @@ Utils="*res://autoloads/utils.gd"
 RegionManager="*res://autoloads/region_manager.gd"
 TooltipManager="*res://autoloads/tooltip_manager.gd"
 SfxManager="*res://autoloads/sfx_manager.gd"
+AudioManager="*res://autoloads/audio_manager.gd"
 
 [debug]
 
@@ -45,8 +46,8 @@ enabled=PackedStringArray("res://addons/protobuf/plugin.cfg")
 [global_group]
 
 concrete_material=""
-flesh_material="Any player controller character (local or remote)"
 headshot_material=""
+body_material="Any player controller character (local or remote)"
 
 [gui]
 

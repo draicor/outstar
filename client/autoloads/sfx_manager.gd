@@ -2,7 +2,7 @@ extends Node
 
 
 # Preloading scenes
-const PROJECTILE_IMPACT_FLESH = preload("res://sfx/projectile/projectile_impact_flesh.tscn")
+const PROJECTILE_IMPACT_BODY = preload("res://sfx/projectile/projectile_impact_body.tscn")
 const PROJECTILE_IMPACT_HEADSHOT = preload("res://sfx/projectile/projectile_impact_headshot.tscn")
 const PROJECTILE_IMPACT_CONCRETE = preload("res://sfx/projectile/projectile_impact_concrete.tscn")
 # Decals
@@ -21,8 +21,8 @@ const CONCRETE_DECALS = [
 const MAX_DECALS_PER_MESH: int = 64 # Forward+ renderer limitation
 
 
-func spawn_projectile_impact_flesh(spawn_position: Vector3, spawn_normal: Vector3) -> void:
-	_spawn_impact_effect(PROJECTILE_IMPACT_FLESH, spawn_position, spawn_normal)
+func spawn_projectile_impact_body(spawn_position: Vector3, spawn_normal: Vector3) -> void:
+	_spawn_impact_effect(PROJECTILE_IMPACT_BODY, spawn_position, spawn_normal)
 
 
 func spawn_projectile_impact_headshot(spawn_position: Vector3, spawn_normal: Vector3) -> void:

@@ -1,3 +1,4 @@
+CollisionShape3D
 PlayerPackets
 Button
 TextureRect
@@ -5,11 +6,9 @@ VBoxContainer
 MarginContainer
 Label
 Node3D
-CollisionShape3D
 StaticBody3D
 MeshInstance3D
 GPUParticles3D
 Decal
 GPUParticlesAttractorSphere3D
 Marker3D
-PlayerMovement

@@ -19,7 +19,7 @@ tooltip = "Target Dummy"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.615, 0.13)
 shape = SubResource("BoxShape3D_g6upv")
 
-[node name="BodyCollision" type="StaticBody3D" parent="." index="2" groups=["flesh_material"]]
+[node name="BodyCollision" type="StaticBody3D" parent="." index="2" groups=["body_material"]]
 script = ExtResource("2_salog")
 tooltip = "Target Dummy"
 

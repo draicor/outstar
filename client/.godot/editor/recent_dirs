@@ -1,3 +1,4 @@
+res://autoloads
 C:/Users/Draicor/Documents/Draicor/mmo/client/bin/windows
 C:/Users/Draicor/Documents/Draicor/mmo/client/bin/linux
 res://classes/weapons
@@ -6,7 +7,6 @@ res://objects/destructible
 res://sfx
 res://assets/shaders
 res://classes/sfx
-res://autoloads
 res://
 res://assets/animations
 res://components/chat_bubble
