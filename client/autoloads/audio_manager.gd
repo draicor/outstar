@@ -41,8 +41,14 @@ var audio_player_pool: Array[AudioStreamPlayer3D] = []
 const AUDIO_POOL_SIZE: int = 32
 var audio_pool_index: int = 0
 # Audio settings
-const BULLET_IMPACT_VOLUME: float = -5.0
-const BULLET_IMPACT_MAX_DISTANCE: float = 40.0
+@export var BULLET_IMPACT_CONCRETE_VOLUME: float = -6.0
+@export var BULLET_IMPACT_BODY_VOLUME: float = -12.0
+@export var BULLET_IMPACT_HEADSHOT_VOLUME: float = -10.0
+# Max sound distance in meters
+@export var SOUND_DISTANCE_VERY_HIGH: float = 100.0
+@export var SOUND_DISTANCE_HIGH: float = 50.0
+@export var SOUND_DISTANCE_MID: float = 30.0
+@export var SOUND_DISTANCE_LOW: float = 15.0 # Any lower than this won't be heard by player when zoomed out
 
 
 func _ready() -> void:
@@ -82,14 +88,14 @@ func play_sound_3d_at_location(stream: AudioStream, position: Vector3, volume_db
 
 func play_bullet_impact_concrete(position: Vector3) -> void:
 	var sound_to_play = BULLET_IMPACT_CONCRETE_SOUNDS[randi() % BULLET_IMPACT_CONCRETE_SOUNDS.size()]
-	play_sound_3d_at_location(sound_to_play, position, BULLET_IMPACT_VOLUME, BULLET_IMPACT_MAX_DISTANCE)
+	play_sound_3d_at_location(sound_to_play, position, BULLET_IMPACT_CONCRETE_VOLUME, SOUND_DISTANCE_MID)
 
 
 func play_bullet_impact_body(position: Vector3) -> void:
 	var sound_to_play = BULLET_IMPACT_BODY_SOUNDS[randi() % BULLET_IMPACT_BODY_SOUNDS.size()]
-	play_sound_3d_at_location(sound_to_play, position, BULLET_IMPACT_VOLUME, BULLET_IMPACT_MAX_DISTANCE)
+	play_sound_3d_at_location(sound_to_play, position, BULLET_IMPACT_BODY_VOLUME, SOUND_DISTANCE_MID)
 
 
 func play_bullet_impact_headshot(position: Vector3) -> void:
 	var sound_to_play = BULLET_IMPACT_HEADSHOT_SOUNDS[randi() % BULLET_IMPACT_HEADSHOT_SOUNDS.size()]
-	play_sound_3d_at_location(sound_to_play, position, BULLET_IMPACT_VOLUME, BULLET_IMPACT_MAX_DISTANCE)
+	play_sound_3d_at_location(sound_to_play, position, BULLET_IMPACT_HEADSHOT_VOLUME, SOUND_DISTANCE_MID)

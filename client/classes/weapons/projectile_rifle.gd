@@ -123,6 +123,11 @@ func weapon_raycast(origin: Vector3, direction: Vector3) -> Dictionary:
 		origin + direction * weapon_max_distance
 	)
 	ray_query.collision_mask = 3 # Mask 1+2
+	ray_query.hit_from_inside = true
+	ray_query.exclude = [] # Nothing gets excluded
+	
+	ray_query.collide_with_areas = true
+	ray_query.collide_with_bodies = true
 	
 	return get_world_3d().direct_space_state.intersect_ray(ray_query)
 

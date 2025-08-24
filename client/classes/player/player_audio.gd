@@ -31,17 +31,22 @@ var remove_magazine_audio_player_3d: AudioStreamPlayer3D
 var insert_magazine_audio_player_3d: AudioStreamPlayer3D
 var charging_handle_audio_player_3d: AudioStreamPlayer3D
 # AudioStreamPlayer mode selector audio player
-var fire_mode_selector_audio_player: AudioStreamPlayer
+var fire_mode_selector_audio_player: AudioStreamPlayer3D
 
 
 # General Setup
-const MAX_DISTANCE: float = 80.0 # Max sound distance in meters
+# Max sound distance in meters
+@export var SOUND_DISTANCE_VERY_HIGH: float = 100.0
+@export var SOUND_DISTANCE_HIGH: float = 50.0
+@export var SOUND_DISTANCE_MID: float = 30.0
+@export var SOUND_DISTANCE_LOW: float = 15.0 # Any lower than this won't be heard by player when zoomed out
+
 const POOL_SIZE: int = 5 # Number of overlapping sounds
 # M16 RIFLE Setup
 const M16_RIFLE_FIRE_VOLUME: float = -5.0 # Base volume in DB
 const M16_RIFLE_DRY_FIRE_VOLUME: float = -9.0 # Base volume in DB
 # AKM RIFLE Setup
-const AKM_RIFLE_FIRE_VOLUME: float = -5.0 # Base volume in DB
+const AKM_RIFLE_FIRE_VOLUME: float = -6.0 # Base volume in DB
 const AKM_RIFLE_DRY_FIRE_VOLUME: float = -13.0 # Base volume in DB
 
 
@@ -74,7 +79,7 @@ func _initialize_m16_weapon_audio_players() -> void:
 		var weapon_fire_single_audio_player: AudioStreamPlayer3D = create_single_audio_player_3d(
 			M16_RIFLE_FIRE_SINGLE,
 			M16_RIFLE_FIRE_VOLUME,
-			MAX_DISTANCE,
+			SOUND_DISTANCE_VERY_HIGH,
 			"SFX"
 		)
 		current_weapon_fire_single_audio_pool.append(weapon_fire_single_audio_player)
@@ -83,17 +88,17 @@ func _initialize_m16_weapon_audio_players() -> void:
 		var weapon_dry_fire_single_audio_player: AudioStreamPlayer3D = create_single_audio_player_3d(
 			M16_RIFLE_DRY_FIRE_SINGLE,
 			M16_RIFLE_DRY_FIRE_VOLUME,
-			MAX_DISTANCE,
+			SOUND_DISTANCE_HIGH,
 			"SFX"
 		)
 		current_weapon_dry_fire_single_audio_pool.append(weapon_dry_fire_single_audio_player)
 	
 	# Create reload audio players
-	remove_magazine_audio_player_3d = create_single_audio_player_3d(M16_RIFLE_REMOVE_MAGAZINE, 8.0, 20.0, "SFX")
-	insert_magazine_audio_player_3d = create_single_audio_player_3d(M16_RIFLE_INSERT_MAGAZINE, 8.0, 20.0, "SFX")
-	charging_handle_audio_player_3d = create_single_audio_player_3d(M16_RIFLE_CHARGING_HANDLE, 15.0, 20.0, "SFX")
+	remove_magazine_audio_player_3d = create_single_audio_player_3d(M16_RIFLE_REMOVE_MAGAZINE, 8.0, SOUND_DISTANCE_LOW, "SFX")
+	insert_magazine_audio_player_3d = create_single_audio_player_3d(M16_RIFLE_INSERT_MAGAZINE, 8.0, SOUND_DISTANCE_LOW, "SFX")
+	charging_handle_audio_player_3d = create_single_audio_player_3d(M16_RIFLE_CHARGING_HANDLE, 15.0, SOUND_DISTANCE_LOW, "SFX")
 	# Create fire mode selector audio player
-	fire_mode_selector_audio_player = create_single_audio_player(M16_RIFLE_FIRE_MODE_SELECTOR, -1.0, "SFX")
+	fire_mode_selector_audio_player = create_single_audio_player_3d(M16_RIFLE_FIRE_MODE_SELECTOR, -1.0, SOUND_DISTANCE_LOW, "SFX")
 	# Reset indexes
 	current_weapon_fire_single_index = 0
 	current_weapon_dry_fire_single_index = 0
@@ -110,7 +115,7 @@ func _initialize_akm_weapon_audio_players() -> void:
 		var weapon_fire_single_audio_player: AudioStreamPlayer3D = create_single_audio_player_3d(
 			AKM_RIFLE_FIRE_SINGLE,
 			AKM_RIFLE_FIRE_VOLUME,
-			MAX_DISTANCE,
+			SOUND_DISTANCE_VERY_HIGH,
 			"SFX"
 		)
 		current_weapon_fire_single_audio_pool.append(weapon_fire_single_audio_player)
@@ -119,17 +124,17 @@ func _initialize_akm_weapon_audio_players() -> void:
 		var weapon_dry_fire_single_audio_player: AudioStreamPlayer3D = create_single_audio_player_3d(
 			AKM_RIFLE_DRY_FIRE_SINGLE,
 			AKM_RIFLE_DRY_FIRE_VOLUME,
-			MAX_DISTANCE,
+			SOUND_DISTANCE_HIGH,
 			"SFX"
 		)
 		current_weapon_dry_fire_single_audio_pool.append(weapon_dry_fire_single_audio_player)
 	
 	# Create reload audio players
-	remove_magazine_audio_player_3d = create_single_audio_player_3d(AKM_RIFLE_REMOVE_MAGAZINE, 8.0, 20.0, "SFX")
-	insert_magazine_audio_player_3d = create_single_audio_player_3d(AKM_RIFLE_INSERT_MAGAZINE, 8.0, 20.0, "SFX")
-	charging_handle_audio_player_3d = create_single_audio_player_3d(AKM_RIFLE_CHARGING_HANDLE, 15.0, 20.0, "SFX")
+	remove_magazine_audio_player_3d = create_single_audio_player_3d(AKM_RIFLE_REMOVE_MAGAZINE, 8.0, SOUND_DISTANCE_LOW, "SFX")
+	insert_magazine_audio_player_3d = create_single_audio_player_3d(AKM_RIFLE_INSERT_MAGAZINE, 8.0, SOUND_DISTANCE_LOW, "SFX")
+	charging_handle_audio_player_3d = create_single_audio_player_3d(AKM_RIFLE_CHARGING_HANDLE, 15.0, SOUND_DISTANCE_LOW, "SFX")
 	# Create fire mode selector audio player
-	fire_mode_selector_audio_player = create_single_audio_player(AKM_RIFLE_FIRE_MODE_SELECTOR, -3.0, "SFX")
+	fire_mode_selector_audio_player = create_single_audio_player_3d(AKM_RIFLE_FIRE_MODE_SELECTOR, -3.0, SOUND_DISTANCE_LOW, "SFX")
 	# Reset indexes
 	current_weapon_fire_single_index = 0
 	current_weapon_dry_fire_single_index = 0

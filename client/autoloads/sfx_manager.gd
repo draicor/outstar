@@ -63,10 +63,21 @@ func _spawn_impact_effect(effect_scene: PackedScene, spawn_position: Vector3, sp
 	
 	# Position and orient sfx
 	effect.global_position = spawn_position
-	# Use the reverse of the normal for bullet impacts (position - normal)
-	var target_position = spawn_position - spawn_normal
-	var safe_up = get_safe_up_vector(-spawn_normal)
-	effect.look_at(target_position, safe_up)
+	
+	# Handle the case where normal is zero or very small
+	if spawn_normal.length() < 0.001:
+		# Use a default upward orientation
+		effect.global_rotation = Vector3.ZERO
+	else:
+		# Use the reverse of the normal for bullet impacts (position - normal)
+		var target_position = spawn_position - spawn_normal
+		# Ensure we have a minimum distance to avoid look_at errors
+		if spawn_position.distance_to(target_position) < 0.001:
+			# If positions are too close, use a default orientation based on the normal
+			effect.look_at(spawn_position + Vector3.UP, Vector3.UP)
+		else:
+			var safe_up = get_safe_up_vector(-spawn_normal)
+			effect.look_at(target_position, safe_up)
 
 
 # Get all decals on a specific mesh

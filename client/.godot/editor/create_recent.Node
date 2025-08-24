@@ -1,4 +1,5 @@
 CollisionShape3D
+Area3D
 PlayerPackets
 Button
 TextureRect
@@ -11,4 +12,3 @@ MeshInstance3D
 GPUParticles3D
 Decal
 GPUParticlesAttractorSphere3D
-Marker3D
