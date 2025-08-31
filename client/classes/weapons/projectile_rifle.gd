@@ -179,9 +179,17 @@ func _process_hit(hit: Dictionary) -> void:
 	if collider and collider.is_in_group("body_material"):
 		SfxManager.spawn_projectile_impact_body(hit.position, hit.normal)
 		AudioManager.play_bullet_impact_body(hit.position)
+		# CAUTION
+		# This should be received from the server from a packet, so we should send the hit.position
+		var damage: int = randi_range(1, 4)
+		SfxManager.spawn_damage_number(damage, hit.position)
 	elif collider and collider.is_in_group("headshot_material"):
 		SfxManager.spawn_projectile_impact_headshot(hit.position, hit.normal)
 		AudioManager.play_bullet_impact_headshot(hit.position)
+		# CAUTION
+		# This should be received from the server from a packet, so we should send the hit.position
+		var damage: int = randi_range(3, 12)
+		SfxManager.spawn_damage_number(damage, hit.position, true)
 	elif collider and collider.is_in_group("concrete_material"):
 		SfxManager.spawn_projectile_impact_decal(hit.position, hit.normal, collider, "concrete_material")
 		SfxManager.spawn_projectile_impact_concrete(hit.position, hit.normal)

@@ -1,10 +1,12 @@
 extends Node
 
-
+# Preloading scripts
+const DamageNumber = preload("res://sfx/text/damage_number.gd")
 # Preloading scenes
 const PROJECTILE_IMPACT_BODY = preload("res://sfx/projectile/projectile_impact_body.tscn")
 const PROJECTILE_IMPACT_HEADSHOT = preload("res://sfx/projectile/projectile_impact_headshot.tscn")
 const PROJECTILE_IMPACT_CONCRETE = preload("res://sfx/projectile/projectile_impact_concrete.tscn")
+const DAMAGE_NUMBER = preload("res://sfx/text/damage_number.tscn")
 # Decals
 const CONCRETE_DECALS = [
 	preload("res://decals/impact_concrete_decal_01.tscn"),
@@ -19,6 +21,18 @@ const CONCRETE_DECALS = [
 
 # Constants
 const MAX_DECALS_PER_MESH: int = 64 # Forward+ renderer limitation
+const DAMAGE_NUMBERS_POOL_SIZE: int = 30
+# Internal variables
+var damage_number_pool: Array = []
+
+
+func _ready() -> void:
+	# Initialize damage numbers pool
+	for i in range(DAMAGE_NUMBERS_POOL_SIZE):
+		var number = DAMAGE_NUMBER.instantiate()
+		damage_number_pool.append(number)
+		add_child(number)
+		number.hide()
 
 
 func spawn_projectile_impact_body(spawn_position: Vector3, spawn_normal: Vector3) -> void:
@@ -119,3 +133,34 @@ func _spawn_decal(decal_scene: PackedScene, spawn_position: Vector3, spawn_norma
 	var z_axis: Vector3 = y_axis.cross(x_axis)
 	# Apply the new basis
 	decal.global_transform.basis = Basis(x_axis, y_axis, z_axis)
+
+
+# Helper function to retrieve an available damage number from the pool
+func get_available_damage_number() -> DamageNumber:
+	# Iterate over the pool
+	for number in damage_number_pool:
+		# If a number in the pool is NOT visible, then use that one
+		if not number.visible:
+			return number
+	
+	push_error("damage number not available in get_available_damage_number")
+	return null
+
+
+func spawn_damage_number(value: int, position: Vector3, is_critical: bool = false) -> void:
+	var number: DamageNumber = get_available_damage_number()
+	if number:
+		# Offset slightly above hit point, if critical hit, offset a bit more
+		var offset: Vector3 = Vector3.UP * 0.2 if not is_critical else Vector3.UP * 0.4
+		number.global_position = position + offset
+		number.text = str(value)
+		# Change color if critical hit
+		number.color = Color.WHITE if not is_critical else Color.GOLD
+		# Increase size if critical hit
+		number.size = 10 if not is_critical else 12
+		number.show()
+		
+		# Reset the number's state
+		number.current_time = 0
+		number.velocity = number.initial_velocity
+		number.label_3d.modulate.a = 1.0

@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://bkwuaw37wvf5n"]
+
+[ext_resource type="Script" uid="uid://y14d3j6elsnv" path="res://sfx/text/damage_number.gd" id="1_hbtf1"]
+
+[node name="DamageNumber" type="Node3D"]
+script = ExtResource("1_hbtf1")
+
+[node name="Label3D" type="Label3D" parent="."]
+billboard = 1
+double_sided = false
+fixed_size = true
+font_size = 10
+outline_size = 6
+justification_flags = 0
