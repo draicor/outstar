@@ -94,6 +94,21 @@ message StopFiringWeapon {
   double rotation_y = 1;
   uint64 shots_fired = 2; // Amount of shots fired
 }
+message ReportPlayerDamage {
+  uint64 target_id = 1; // ID of the player that got hit
+  float x = 2; // X position where the hit occurred
+  float y = 3; // Y position where the hit occurred
+  float z = 4; // Z position where the hit occurred
+}
+message ApplyPlayerDamage {
+  uint64 attacker_id = 1; // In case we want to draw a marker with the attacker's direction in the target's screen
+  uint64 target_id = 2; // So everyone can reduce the health of this player on this screens
+  uint64 damage = 3; // The damage number to apply
+  string damage_type = 4; // If we want to draw different damage colors/effects
+  float x = 5; // X position where the hit occurred
+  float y = 6; // Y position where the hit occurred
+  float z = 7; // Z position where the hit occurred
+}
 
 // Main Packet container
 message Packet {
@@ -135,5 +150,8 @@ message Packet {
     // Full automatic weapon firing mode
     StartFiringWeapon start_firing_weapon = 28; // Both
     StopFiringWeapon stop_firing_weapon = 29; // Both
+    // Damage
+    ReportPlayerDamage report_player_damage = 30; // Client
+    ApplyPlayerDamage apply_player_damage = 31; // Server
   }
 }

@@ -265,6 +265,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_StopFiringWeapon:
 			state.HandleStopFiringWeapon(casted_payload.StopFiringWeapon)
 
+		// REPORT PLAYER DAMAGE
+		case *packets.Packet_ReportPlayerDamage:
+			state.HandleReportPlayerDamage(casted_payload.ReportPlayerDamage)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -358,6 +362,8 @@ func (state *Game) HandleJoinRegionRequest(payload *packets.JoinRegionRequest) {
 	// Tell everyone else to spawn our character too
 	state.client.Broadcast(spawnCharacterPacket)
 
+	// Get every client in this region and send our client a packet for each client connected,
+	// so we can also see the players that are already connected.
 	// Loop over all of the clients in this region
 	state.client.GetRegion().Clients.ForEach(func(id uint64, client server.Client) {
 		// Create a spawn packet to be sent to our new client
@@ -494,4 +500,46 @@ func (state *Game) HandleStartFiringWeapon(payload *packets.StartFiringWeapon) {
 func (state *Game) HandleStopFiringWeapon(payload *packets.StopFiringWeapon) {
 	// Get the attacker's rotation and how many shots were fired from the packet and broadcast to everyone in the region
 	state.client.Broadcast(packets.NewStopFiringWeapon(payload.GetRotationY(), payload.GetShotsFired()))
+}
+
+func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage) {
+	// Validate the target exists
+	targetId := payload.GetTargetId()
+	targetClient, exists := state.client.GetRegion().Clients.Get(targetId)
+	if !exists {
+		state.logger.Printf("Invalid target ID %d in damage report packet", targetId)
+		return
+	}
+
+	// Get attacker's weapon information
+	attackerWeapon := state.player.GetWeaponSlot(state.player.GetCurrentWeapon())
+	if attackerWeapon == nil {
+		state.logger.Printf("Attacker has no weapon equipped")
+		return
+	}
+
+	// DEBUG: Print the equipped weapon info
+	state.logger.Printf(attackerWeapon.WeaponType, " ", attackerWeapon.WeaponName)
+
+	// Calculate damage based on weapon type and weapon name?
+	var damage uint64 = 5 // CAUTION placeholder
+
+	// Apply damage to target at server level
+	// CAUTION placeholder
+	state.logger.Printf(targetClient.GetPlayerCharacter().Name, " got attacked!")
+
+	// Create apply damage packet and load it
+	applyDamagePacket := packets.NewApplyPlayerDamage(
+		state.client.GetId(),
+		targetId,
+		damage,
+		"bullet",
+		payload.GetX(),
+		payload.GetY(),
+		payload.GetZ(),
+	)
+
+	// Tell everyone to apply the damage (including the attacker)
+	state.client.SendPacket(applyDamagePacket)
+	state.client.Broadcast(applyDamagePacket)
 }

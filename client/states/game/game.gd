@@ -12,9 +12,6 @@ const GAME_CONTROLS_MENU = preload("res://components/controls_menu/game/game_con
 # Holds our current map node so we can spawn scenes into it
 var _current_map_scene: Node
 
-# Map of all the players in this region, where the key is the player's ID
-var _players: Dictionary[int, Player]
-
 # User Interface Variables
 @onready var ui_canvas: CanvasLayer = $UI
 @onready var chat: Control = $UI/VBoxContainer/Chat
@@ -112,6 +109,8 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_handle_chat_bubble_packet(sender_id, packet.get_chat_bubble())
 	elif packet.has_client_left():
 		_handle_client_left_packet(sender_id, packet.get_client_left())
+	elif packet.has_apply_player_damage():
+		_handle_apply_player_damage_packet(sender_id, packet.get_apply_player_damage())
 
 
 # Print the message into our chat window and update that player's chat bubble
@@ -119,15 +118,12 @@ func _handle_public_message_packet(sender_id: int, packet_public_message: Packet
 	# We print the nickname and then the message contents in local chat
 	chat.public("%s" % packet_public_message.get_nickname(), packet_public_message.get_text(), Color.LIGHT_SEA_GREEN)
 	
-	# If the id is on our players dictionary
-	if sender_id in _players:
-		# Attempt to retrieve the player character object
-		var player: Player = _players[sender_id]
-		# If its valid
-		if player:
-			# Update their chat bubble to reflect the text
-			player.new_chat_bubble(packet_public_message.get_text())
-			player.toggle_chat_bubble_icon(false) # Hide typing bubble
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
+		# Update their chat bubble to reflect the text
+		player.new_chat_bubble(packet_public_message.get_text())
+		player.toggle_chat_bubble_icon(false) # Hide typing bubble
 
 
 # We send a heartbeat packet to the server every time the timer timeouts
@@ -152,18 +148,15 @@ func _handle_client_entered_packet(_nickname: String) -> void:
 # When a client leaves, print the message into our chat window
 # If that client was on our player list, we destroy his character to free resources
 func _handle_client_left_packet(sender_id: int, client_left_packet: Packets.ClientLeft) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
-		# Attempt to retrieve the player character object
-		var player: Player = _players[sender_id]
-		# If its valid
-		if player:
-			# Remove this player from our grid
-			RegionManager.remove_object(player.player_movement.server_grid_position, player)
-			# Remove this player from our array of players
-			_players.erase(sender_id)
-			# Destroy it
-			player.queue_free()
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
+		# Remove this player from our grid
+		RegionManager.remove_object(player.player_movement.server_grid_position, player)
+		# Remove this player from our map of players
+		GameManager.unregister_player(sender_id)
+		# Destroy it
+		player.queue_free()
 	
 	# Displays a message in the chat window
 	chat.info("%s left" % client_left_packet.get_nickname())
@@ -250,10 +243,11 @@ func _handle_request_denied_packet(reason: String) -> void:
 
 func _handle_spawn_character_packet(spawn_character_packet: Packets.SpawnCharacter) -> void:
 	var player_id := spawn_character_packet.get_id()
-
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(player_id)
 	# If this player is NOT in our list of players
 	# then is a new player so we need to spawn it
-	if player_id not in _players:
+	if not player:
 		# Check if our client id is the same as this update player packet sender id
 		var is_my_player_character := player_id == GameManager.client_id
 		
@@ -274,7 +268,7 @@ func _handle_spawn_character_packet(spawn_character_packet: Packets.SpawnCharact
 			})
 		
 		# Grab all of the data from the server and use it to create this player character
-		var player: Player = Player.instantiate(
+		var new_player: Player = Player.instantiate(
 			player_id,
 			spawn_character_packet.get_name(),
 			spawn_character_packet.get_gender(),
@@ -285,16 +279,16 @@ func _handle_spawn_character_packet(spawn_character_packet: Packets.SpawnCharact
 			spawn_character_packet.get_current_weapon(),
 			weapon_slots
 		)
-		# Add this player to our list of players
-		_players[player_id] = player
+		# Add this player to our map of players
+		GameManager.register_player(player_id, new_player)
 		
 		# For remote players
 		if not is_my_player_character:
 			# Add the player to the new position in my local grid
-			RegionManager.set_object(spawn_position, player)
+			RegionManager.set_object(spawn_position, new_player)
 		
 		# Spawn the player
-		_current_map_scene.add_child(player)
+		_current_map_scene.add_child(new_player)
 
 
 func _handle_region_data_packet(region_data_packet: Packets.RegionData) -> void:
@@ -328,16 +322,8 @@ func _load_map(map: RegionManager.Maps) -> void:
 		_current_map_scene.queue_free()
 		# Wait a frame to ensure cleanup
 		await get_tree().process_frame
-		
-		# If our local _players list if not empty
-		if not _players.is_empty():
-			# Attempt to delete each player instance
-			for player_id in _players:
-				var player = _players[player_id]
-				if player:
-					player.queue_free()
-			# Clear our _players list
-			_players.clear()
+		# Clear and free each player we had including our own
+		GameManager.clear_players()
 	
 	# Load new map
 	var map_scene: PackedScene = load(RegionManager.maps_scenes[map])
@@ -350,87 +336,118 @@ func _load_map(map: RegionManager.Maps) -> void:
 
 # Used to toggle the chat bubble of this character
 func _handle_chat_bubble_packet(sender_id: int, chat_bubble_packet: Packets.ChatBubble) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
-		# Attempt to retrieve the player character object
-		var player: Player = _players[sender_id]
-		# If its valid
-		if player:
-			# Toggle the chat bubble for this player
-			player.toggle_chat_bubble_icon(chat_bubble_packet.get_is_active())
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
+		# Toggle the chat bubble for this player
+		player.toggle_chat_bubble_icon(chat_bubble_packet.get_is_active())
 
 
 func _route_move_character_packet(sender_id: int, move_character_packet: Packets.MoveCharacter) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
 		# Send this packet to the queue of this player
-		_players[sender_id].player_packets.add_packet(move_character_packet, PlayerPackets.Priority.NORMAL)
+		player.player_packets.add_packet(move_character_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_update_speed_packet(sender_id: int, update_speed_packet: Packets.UpdateSpeed) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
-		_players[sender_id].player_packets.add_packet(update_speed_packet, PlayerPackets.Priority.NORMAL)
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
+		# Send this packet to the queue of this player
+		player.player_packets.add_packet(update_speed_packet, PlayerPackets.Priority.NORMAL)
 
 
 # Used to switch the weapon of this character
 func _route_switch_weapon_packet(sender_id: int, switch_weapon_packet: Packets.SwitchWeapon) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
-		_players[sender_id].player_packets.add_packet(switch_weapon_packet, PlayerPackets.Priority.NORMAL)
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
+		# Send this packet to the queue of this player
+		player.player_packets.add_packet(switch_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_reload_weapon_packet(sender_id: int, reload_weapon_packet: Packets.ReloadWeapon) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
 		# Send this packet to the queue of this player
-		_players[sender_id].player_packets.add_packet(reload_weapon_packet, PlayerPackets.Priority.NORMAL)
+		player.player_packets.add_packet(reload_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_raise_weapon_packet(sender_id: int, raise_weapon_packet: Packets.RaiseWeapon) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
 		# Send this packet to the queue of this player
-		_players[sender_id].player_packets.add_packet(raise_weapon_packet, PlayerPackets.Priority.NORMAL)
+		player.player_packets.add_packet(raise_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_lower_weapon_packet(sender_id: int, lower_weapon_packet: Packets.LowerWeapon) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
 		# Send this packet to the queue of this player
-		_players[sender_id].player_packets.add_packet(lower_weapon_packet, PlayerPackets.Priority.NORMAL)
+		player.player_packets.add_packet(lower_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_rotate_character_packet(sender_id: int, rotate_character_packet: Packets.RotateCharacter) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
 		# Send this packet to the queue of this player
-		_players[sender_id].player_packets.add_packet(rotate_character_packet, PlayerPackets.Priority.NORMAL)
+		player.player_packets.add_packet(rotate_character_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_fire_weapon_packet(sender_id: int, fire_weapon_packet: Packets.FireWeapon) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
 		# Send this packet to the queue of this player
-		_players[sender_id].player_packets.add_packet(fire_weapon_packet, PlayerPackets.Priority.NORMAL)
+		player.player_packets.add_packet(fire_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_toggle_fire_mode_packet(sender_id: int, toggle_fire_mode_packet: Packets.ToggleFireMode) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
 		# Send this packet to the queue of this player
-		_players[sender_id].player_packets.add_packet(toggle_fire_mode_packet, PlayerPackets.Priority.NORMAL)
+		player.player_packets.add_packet(toggle_fire_mode_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_start_firing_weapon_packet(sender_id: int, start_firing_weapon_packet: Packets.StartFiringWeapon) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
 		# Send this packet to the queue of this player
-		_players[sender_id].player_packets.add_packet(start_firing_weapon_packet, PlayerPackets.Priority.NORMAL)
+		player.player_packets.add_packet(start_firing_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_stop_firing_weapon_packet(sender_id: int, stop_firing_weapon_packet: Packets.StopFiringWeapon) -> void:
-	# If the id is on our players dictionary
-	if sender_id in _players:
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
 		# Send this packet to the queue of this player
-		_players[sender_id].player_packets.add_packet(stop_firing_weapon_packet, PlayerPackets.Priority.NORMAL)
+		player.player_packets.add_packet(stop_firing_weapon_packet, PlayerPackets.Priority.NORMAL)
+
+
+func _handle_apply_player_damage_packet(sender_id: int, apply_damage_packet: Packets.ApplyPlayerDamage) -> void:
+	var attacker_id: int = apply_damage_packet.get_attacker_id()
+	if sender_id != attacker_id:
+		push_error("sender_id is different from attacker_id in apply_player_damage_packet")
+		return
+	
+	var target_id: int = apply_damage_packet.get_target_id()
+	if not GameManager.is_player_valid(target_id):
+		push_error("target_id is not in our map of connected players in apply_player_damage_packet")
+		return
+	
+	# Get the rest of the data from the packet
+	var damage: int = apply_damage_packet.get_damage()
+	# var damage_type: String = apply_damage_packet.get_damage_type()
+	var damage_position: Vector3 = Vector3(apply_damage_packet.get_x(), apply_damage_packet.get_y(), apply_damage_packet.get_z())
+	
+	SfxManager.spawn_damage_number(damage, damage_position)
+	
+	# NOTE Reduce health and stuff here

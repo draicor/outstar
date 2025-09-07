@@ -337,6 +337,17 @@ func create_stop_firing_weapon_packet(rotation_y: float, shots_fired: int) -> Pa
 	return packet
 
 
+# Creates and returns a report_player_damage packet
+func create_report_player_damage_packet(target_id: int, hit_position: Vector3) -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	var report_player_damage_packet := packet.new_report_player_damage()
+	report_player_damage_packet.set_target_id(target_id)
+	report_player_damage_packet.set_x(hit_position.x)
+	report_player_damage_packet.set_y(hit_position.y)
+	report_player_damage_packet.set_z(hit_position.z)
+	return packet
+
+
 ##################
 # PACKET SENDING #
 ##################
@@ -404,4 +415,10 @@ func send_start_firing_weapon_packet(rotation_y: float, ammo: int) -> void:
 # Creates and sends a packet to the server to inform we stopped firing
 func send_stop_firing_weapon_packet(rotation_y: float, shots_fired: int) -> void:
 	var packet: Packets.Packet = create_stop_firing_weapon_packet(rotation_y, shots_fired)
+	WebSocket.send(packet)
+
+
+# Creates and sends a packet to the server to inform we shot a player
+func send_report_player_damage_packet(target_id: int, hit_position: Vector3) -> void:
+	var packet: Packets.Packet = create_report_player_damage_packet(target_id, hit_position)
 	WebSocket.send(packet)

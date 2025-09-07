@@ -15,6 +15,8 @@ var _states_scenes: Dictionary[State, String] = {
 	State.GAME: "res://states/game/game.tscn",
 }
 
+# Keep track of all connected players with a map of all the players in this region
+var _players: Dictionary[int, Player] = {} # key: player_id, value: Player class
 # Expose the client's data globally
 var client_id: int
 var client_nickname: String
@@ -56,3 +58,31 @@ func is_ui_menu_active() -> bool:
 
 func set_ui_menu_active(is_active: bool) -> void:
 	ui_menu_active = is_active
+
+# Adds a Player to the map by id
+func register_player(player_id: int, player: Player) -> void:
+	_players[player_id] = player
+
+# Deletes the player from the map
+func unregister_player(player_id: int) -> void:
+	_players.erase(player_id)
+
+# Returns the Player by id
+func get_player_by_id(player_id: int) -> Player:
+	return _players.get(player_id)
+
+# Used to check if the player is in our map
+func is_player_valid(player_id: int) -> bool:
+	return player_id in _players
+
+# Clears the map of players and frees every resource
+func clear_players() -> void:
+	# If our local _players list if not empty
+	if not _players.is_empty():
+		# Attempt to delete each player instance
+		for player_id in _players:
+			var player = _players[player_id]
+			if player:
+				player.queue_free()
+		# Clear our _players list
+		_players.clear()
