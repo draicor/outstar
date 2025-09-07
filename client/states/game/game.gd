@@ -43,7 +43,11 @@ func _initialize() -> void:
 	Signals.ui_controls_menu_toggle.connect(_handle_signal_ui_controls_menu_toggle)
 	# Chat signals
 	Signals.chat_public_message_sent.connect(_handle_signal_chat_public_message_sent)
-	
+
+
+# When we leave the game state, we clear the map of all players connected
+func _exit_tree() -> void:
+	GameManager.clear_players()
 
 
 func _create_ui_scenes() -> void:
@@ -153,10 +157,13 @@ func _handle_client_left_packet(sender_id: int, client_left_packet: Packets.Clie
 	if player:
 		# Remove this player from our grid
 		RegionManager.remove_object(player.player_movement.server_grid_position, player)
+		
+		# Free memory
+		if is_instance_valid(player):
+			player.queue_free()
+		
 		# Remove this player from our map of players
 		GameManager.unregister_player(sender_id)
-		# Destroy it
-		player.queue_free()
 	
 	# Displays a message in the chat window
 	chat.info("%s left" % client_left_packet.get_nickname())

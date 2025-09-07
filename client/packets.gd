@@ -2442,6 +2442,11 @@ class ReportPlayerDamage:
 		service.field = __z
 		data[__z.tag] = service
 		
+		__is_critical = PBField.new("is_critical", PB_DATA_TYPE.BOOL, PB_RULE.OPTIONAL, 5, true, DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL])
+		service = PBServiceField.new()
+		service.field = __is_critical
+		data[__is_critical.tag] = service
+		
 	var data = {}
 	
 	var __target_id: PBField
@@ -2495,6 +2500,19 @@ class ReportPlayerDamage:
 		__z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.FLOAT]
 	func set_z(value : float) -> void:
 		__z.value = value
+	
+	var __is_critical: PBField
+	func has_is_critical() -> bool:
+		if __is_critical.value != null:
+			return true
+		return false
+	func get_is_critical() -> bool:
+		return __is_critical.value
+	func clear_is_critical() -> void:
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		__is_critical.value = DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL]
+	func set_is_critical(value : bool) -> void:
+		__is_critical.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

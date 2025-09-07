@@ -65,11 +65,15 @@ func register_player(player_id: int, player: Player) -> void:
 
 # Deletes the player from the map
 func unregister_player(player_id: int) -> void:
-	_players.erase(player_id)
+	if is_player_valid(player_id):
+		_players.erase(player_id)
+		
 
 # Returns the Player by id
 func get_player_by_id(player_id: int) -> Player:
-	return _players.get(player_id)
+	if is_player_valid(player_id):
+		return _players.get(player_id)
+	return null
 
 # Used to check if the player is in our map
 func is_player_valid(player_id: int) -> bool:
@@ -82,7 +86,7 @@ func clear_players() -> void:
 		# Attempt to delete each player instance
 		for player_id in _players:
 			var player = _players[player_id]
-			if player:
+			if is_instance_valid(player):
 				player.queue_free()
-		# Clear our _players list
+		# Clear our _players map immediately
 		_players.clear()

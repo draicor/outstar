@@ -518,15 +518,18 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 		return
 	}
 
-	// DEBUG: Print the equipped weapon info
-	state.logger.Printf(attackerWeapon.WeaponType, " ", attackerWeapon.WeaponName)
-
 	// Calculate damage based on weapon type and weapon name?
 	var damage uint64 = 5 // CAUTION placeholder
 
-	// Apply damage to target at server level
-	// CAUTION placeholder
-	state.logger.Printf(targetClient.GetPlayerCharacter().Name, " got attacked!")
+	// If was critical damage, then do double damage
+	if payload.GetIsCritical() {
+		damage = damage * 2
+	}
+
+	// Apply damage to target at server level here
+
+	// DEBUG: Print the equipped weapon info
+	state.logger.Printf("%s got hit with %s (%s)", targetClient.GetPlayerCharacter().Name, attackerWeapon.WeaponType, attackerWeapon.WeaponName)
 
 	// Create apply damage packet and load it
 	applyDamagePacket := packets.NewApplyPlayerDamage(

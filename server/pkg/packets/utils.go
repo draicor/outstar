@@ -248,18 +248,6 @@ func NewStopFiringWeapon(rotationY float64, shotsFired uint64) Payload {
 	}
 }
 
-// Sent by the client to report he hit something
-func NewReportPlayerDamage(targetId uint64, x, y, z float32) Payload {
-	return &Packet_ReportPlayerDamage{
-		ReportPlayerDamage: &ReportPlayerDamage{
-			TargetId: targetId,
-			X:        x,
-			Y:        y,
-			Z:        z,
-		},
-	}
-}
-
 // Sent by the server to report a player got damaged
 func NewApplyPlayerDamage(attackerId, targetId, damage uint64, damage_type string, x, y, z float32) Payload {
 	return &Packet_ApplyPlayerDamage{

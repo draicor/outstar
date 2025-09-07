@@ -172,14 +172,57 @@ func get_animation_play_rate() -> float:
 	return fire_rates[current_fire_mode]["play_rate"]
 
 
-# Handle SFXs and Impact sounds here
+# Traverses up the tree to find the player node
+func get_weapon_owner() -> Player:
+	var node = get_parent()
+	while node:
+		if node is Player:
+			return node
+		node = node.get_parent()
+	return null
+
+
+# Tries to find the player from a collider
+func _get_player_from_collider(collider: Object) -> Player:
+	# Try to get the player directly if it's a Player node
+	if collider is Player:
+		return collider
+	
+	# Otherwise, traverse up the tree to find the Player node
+	var node = collider
+	while node and not (node is Player):
+		node = node.get_parent()
+	
+	return node as Player
+
+
 func _process_hit(hit: Dictionary) -> void:
 	var collider = hit.get("collider")
 	
+	# If we hit a Player
+	if collider and (collider.is_in_group("body_material") or collider.is_in_group("headshot_material")):
+		# Try to find the player node from the collider
+		var hit_player = _get_player_from_collider(collider)
+		if hit_player:
+			# Check if this weapon belongs to the local player
+			var owner_player = get_weapon_owner()
+			if owner_player and owner_player.my_player_character:
+				# We check if this was a headshot or not
+				var is_critical: bool = false
+				if collider.is_in_group("headshot_material"):
+					is_critical = true
+				
+				# Report to server
+				owner_player.player_packets.send_report_player_damage_packet(
+					hit_player.player_id,
+					hit.position,
+					is_critical
+				)
+	
+	# Play impact and sound effects
 	if collider and collider.is_in_group("body_material"):
 		SfxManager.spawn_projectile_impact_body(hit.position, hit.normal)
 		AudioManager.play_bullet_impact_body(hit.position)
-		
 	elif collider and collider.is_in_group("headshot_material"):
 		SfxManager.spawn_projectile_impact_headshot(hit.position, hit.normal)
 		AudioManager.play_bullet_impact_headshot(hit.position)
