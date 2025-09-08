@@ -505,7 +505,9 @@ func (state *Game) HandleStopFiringWeapon(payload *packets.StopFiringWeapon) {
 func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage) {
 	// Validate the target exists
 	targetId := payload.GetTargetId()
-	targetClient, exists := state.client.GetRegion().Clients.Get(targetId)
+
+	// targetClient, exists
+	_, exists := state.client.GetRegion().Clients.Get(targetId)
 	if !exists {
 		state.logger.Printf("Invalid target ID %d in damage report packet", targetId)
 		return
@@ -529,7 +531,7 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 	// Apply damage to target at server level here
 
 	// DEBUG: Print the equipped weapon info
-	state.logger.Printf("%s got hit with %s (%s)", targetClient.GetPlayerCharacter().Name, attackerWeapon.WeaponType, attackerWeapon.WeaponName)
+	// state.logger.Printf("%s got hit with %s (%s)", targetClient.GetPlayerCharacter().Name, attackerWeapon.WeaponType, attackerWeapon.WeaponName)
 
 	// Create apply damage packet and load it
 	applyDamagePacket := packets.NewApplyPlayerDamage(

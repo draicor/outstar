@@ -100,19 +100,37 @@ func try_process_next_packet() -> void:
 		if _current_packet:
 			push_error(player.player_name, ": " ,_current_packet)
 			push_error("state: ", player.player_state_machine.get_current_state_name())
+		# If current packet is not valid, get the packet from the queue
+		else:
+			# Get the same packet we haven't been able to process but
+			# the packet will be dropped without getting processed
+			_current_packet = _queue.pop_front()
+			push_error(player.player_name, ": " ,_current_packet)
+			push_error("state: ", player.player_state_machine.get_current_state_name())
+		
+		_packet_process_timeout = 0.0
 		_retry_count = 0
-		clear()
-		return
+		_retry_timer.stop()
+		# Don't return here, just keep going
 	
 	# Check for packet processing timeout
-	if _packet_process_timeout > MAX_PACKET_PROCESSING_TIMEOUT:
+	elif _packet_process_timeout > MAX_PACKET_PROCESSING_TIMEOUT:
 		push_error("Packet processing timeout, dropping packet")
 		if _current_packet:
 			push_error(player.player_name, ": " ,_current_packet)
 			push_error("state: ", player.player_state_machine.get_current_state_name())
+		# If current packet is not valid, get the packet from the queue
+		else:
+			# Get the same packet we haven't been able to process but
+			# the packet will be dropped without getting processed
+			_current_packet = _queue.pop_front()
+			push_error(player.player_name, ": " ,_current_packet)
+			push_error("state: ", player.player_state_machine.get_current_state_name())
+		
 		_packet_process_timeout = 0.0
-		clear()
-		return
+		_retry_count = 0
+		_retry_timer.stop()
+		# Don't return here, just keep going
 	
 	# Get the next packet
 	_current_packet = _queue.pop_front()
