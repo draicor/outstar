@@ -234,9 +234,8 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 		is_predicting = true
 		grid_destination = target_position
 		
-		# We need to send the packet here ONCE, when movement starts only
-		var packet: Packets.Packet = player.player_packets.create_destination_packet(immediate_grid_destination)
-		WebSocket.send(packet)
+		# We need to send the packet here ONCE, when movement starts
+		player.player_packets.send_destination_packet(immediate_grid_destination)
 
 
 # Helper function to validate and get interaction position
@@ -359,6 +358,9 @@ func setup_movement_step(path: Array[Vector2i]) -> void:
 
 # Called when we receive a new position packet from the server to make sure we are synced locally
 func handle_server_reconciliation(new_server_position: Vector2i) -> void:
+	# Override our server grid position with the server's
+	server_grid_position = new_server_position
+	
 	if _prediction_was_valid(unconfirmed_path.duplicate(), new_server_position):
 		# If the server position is the same as our final destination, clear our path
 		if new_server_position == grid_destination:
@@ -384,6 +386,10 @@ func handle_server_reconciliation(new_server_position: Vector2i) -> void:
 # Called when we receive a new position packet to move remote players (always in sync)
 func handle_remote_player_movement(new_server_position: Vector2i) -> void:
 	var next_path: Array[Vector2i] = predict_path(server_grid_position, new_server_position)
+	
+	# Override our server grid position with the server's AFTER tracing a path towards it
+	server_grid_position = new_server_position
+	
 	# If our next path is valid
 	if next_path.size() > 1:
 		if in_motion:
@@ -474,6 +480,12 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		# Update our immediate grid destination
 		immediate_grid_destination = current_path.back()
 		
+		if player.my_player_character:
+			unconfirmed_path.append(immediate_grid_destination)
+			# Only send a packet if we are not correcting our position
+			if not autopilot_active:
+				player.player_packets.send_destination_packet(immediate_grid_destination)
+		
 		# Update speed only once per path segment
 		cells_to_move_this_tick = current_path.size()
 		setup_movement_step(current_path)
@@ -481,17 +493,6 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		
 		# Trigger this after each segment to update our animation
 		player.player_animator.update_locomotion_animation(cells_to_move_this_tick)
-		
-		if player.my_player_character:
-			unconfirmed_path.append(immediate_grid_destination)
-			
-			# Only send a packet if we are not correcting our position
-			if not autopilot_active:
-				# Create a new packet to report our new immediate destination to the server
-				var packet: Packets.Packet = player.player_packets.create_destination_packet(immediate_grid_destination)
-				WebSocket.send(packet)
-		else:
-			player.player_animator.update_locomotion_animation(cells_to_move_this_tick)
 	
 	# If we don't have any more cells to traverse
 	else:
@@ -514,11 +515,15 @@ func complete_movement() -> void:
 				return # Stop here to prevent movement reset
 	
 	_finalize_movement()
-	movement_completed.emit()
 	
-	# Signal packet completion
-	if player.player_packets.is_processing_packet():
-		player.player_packets.complete_packet()
+	movement_completed.emit() # CAUTION I don't remember where this is being used
+	
+	# If this is a remote player
+	#if not player.my_player_character:
+		#if player.player_packets.is_processing_packet():
+			## If we were processing a MoveCharacter packet, complete it
+			#if player.player_packets._current_packet is Packets.MoveCharacter:
+				#player.player_packets.complete_packet()
 
 
 # Movement cleanup and executes the post movement logic

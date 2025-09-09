@@ -524,9 +524,13 @@ func _process_move_character_packet(packet: Packets.MoveCharacter) -> void:
 	else:
 		player_movement.handle_remote_player_movement(server_position)
 	
-	# Update our server grid position AFTER moving
-	player_movement.server_grid_position = server_position
-	player_packets.complete_packet()
+	# CAUTION Only update our server grid position AFTER moving
+	# player_movement.server_grid_position = server_position
+	
+	if player_packets.is_processing_packet():
+		# If we were processing a MoveCharacter packet, complete it
+			if player_packets._current_packet is Packets.MoveCharacter:
+				player_packets.complete_packet()
 
 
 # Updates the player's move speed to match the server's

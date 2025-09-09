@@ -418,3 +418,9 @@ func send_stop_firing_weapon_packet(rotation_y: float, shots_fired: int) -> void
 func send_report_player_damage_packet(target_id: int, hit_position: Vector3, is_critical: bool) -> void:
 	var packet: Packets.Packet = create_report_player_damage_packet(target_id, hit_position, is_critical)
 	WebSocket.send(packet)
+
+
+# Creates and sends a packet  to the server to report our new immediate destination
+func send_destination_packet(destination: Vector2i) -> void:
+	var packet: Packets.Packet = player.player_packets.create_destination_packet(destination)
+	WebSocket.send(packet)
