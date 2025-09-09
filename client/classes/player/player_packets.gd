@@ -12,16 +12,19 @@ enum Priority {
 	NORMAL     # Add to back
 }
 
+# NOTE
+# We use a dual system that tries to process the next packet in the queue every half a second
+# but also check the packet doesn't timeout (10 second limit).
 var _queue: Array = []
 var _current_packet: Variant = null
 var _is_processing: bool = false
 # Prevent the packet queue to hanging due to infinite retries
 var _retry_count: int = 0
-const MAX_RETRIES: int = 10 # Prevent infinite loops (20 ticks = 10 seconds)
+const MAX_RETRIES: int = 10 # Prevent infinite loops (10 ticks = 5 seconds)
 var _retry_timer: Timer
 # Prevent the packet queue from hanging due to uncaught errors
-var _packet_process_timeout: float = 0.0
-const MAX_PACKET_PROCESSING_TIMEOUT: float = 5.0 # 5 second timeout
+var _packet_process_timeout: float = 0
+const MAX_PACKET_PROCESSING_TIMEOUT: float = 5.0 # 10 second timeout
 
 
 const IDLE_STATES: Array[String] = [
@@ -69,11 +72,7 @@ func _process(delta: float) -> void:
 	if _is_processing:
 		_packet_process_timeout += delta
 	else:
-		_packet_process_timeout = 0.0
-
-
-func _on_retry_timeout() -> void:
-	try_process_next_packet()
+		_packet_process_timeout = 0
 
 
 # Adds packet to queue with specified priority
@@ -94,62 +93,43 @@ func try_process_next_packet() -> void:
 	if _is_processing or _queue.is_empty():
 		return
 	
-	# Safety check to prevent infinite loops
-	if _retry_count > MAX_RETRIES:
-		push_error("Max retries reached, dropping packet")
-		if _current_packet:
-			push_error(player.player_name, ": " ,_current_packet)
-			push_error("state: ", player.player_state_machine.get_current_state_name())
-		# If current packet is not valid, get the packet from the queue
-		else:
-			# Get the same packet we haven't been able to process but
-			# the packet will be dropped without getting processed
-			_current_packet = _queue.pop_front()
-			push_error(player.player_name, ": " ,_current_packet)
-			push_error("state: ", player.player_state_machine.get_current_state_name())
-		
-		_packet_process_timeout = 0.0
-		_retry_count = 0
-		_retry_timer.stop()
-		# Don't return here, just keep going
-	
-	# Check for packet processing timeout
-	elif _packet_process_timeout > MAX_PACKET_PROCESSING_TIMEOUT:
-		push_error("Packet processing timeout, dropping packet")
-		if _current_packet:
-			push_error(player.player_name, ": " ,_current_packet)
-			push_error("state: ", player.player_state_machine.get_current_state_name())
-		# If current packet is not valid, get the packet from the queue
-		else:
-			# Get the same packet we haven't been able to process but
-			# the packet will be dropped without getting processed
-			_current_packet = _queue.pop_front()
-			push_error(player.player_name, ": " ,_current_packet)
-			push_error("state: ", player.player_state_machine.get_current_state_name())
-		
-		_packet_process_timeout = 0.0
-		_retry_count = 0
-		_retry_timer.stop()
-		# Don't return here, just keep going
-	
 	# Get the next packet
 	_current_packet = _queue.pop_front()
 	_is_processing = true
 	
 	# Check if we can process this packet now
 	if can_process_packet():
+		# Reset timeout and max retry variables for packet processing
+		_packet_process_timeout = 0
 		_retry_count = 0
 		_retry_timer.stop()
 		try_process_current_packet()
+	
 	# Can't process the packet now
 	else:
-		# Put it back at the front of the queue and try again in one server tick
-		_queue.push_front(_current_packet)
-		_current_packet = null
-		_is_processing = false
-		# Only increment retry count if we're retrying the same type of packet
-		_retry_count += 1
-		_retry_timer.start()
+		# Check if we hit the retry limit or the packet timeout
+		if _retry_count > MAX_RETRIES or _packet_process_timeout > MAX_PACKET_PROCESSING_TIMEOUT:
+			if _current_packet:
+				push_error("\nDropping packet, current_state: ", player.player_state_machine.get_current_state_name(), "\n",player.player_name, ", Packet:\n" ,_current_packet)
+				# Drop the current packet
+				_current_packet = null
+				_is_processing = false
+				complete_packet() # This tries to process the next packet immediately
+		
+		# If we haven't reach the limit
+		else:
+			# Add the packet to the front of the queue and try again in one server tick
+			_queue.push_front(_current_packet)
+			_current_packet = null
+			_is_processing = false
+			# Increment retry count by 1 tick
+			_retry_count += 1
+			# Restart the timer so we try in 1 server tick again
+			_retry_timer.start()
+
+
+func _on_retry_timeout() -> void:
+	try_process_next_packet()
 
 
 func try_process_current_packet() -> void:
@@ -168,6 +148,11 @@ func complete_packet() -> void:
 	
 	_current_packet = null
 	_is_processing = false
+	
+	# Reset timeout and max retry variables for packet processing
+	_packet_process_timeout = 0
+	_retry_count = 0
+	_retry_timer.stop()
 	
 	# Try to process next packet immediately after completing
 	try_process_next_packet()
@@ -199,15 +184,7 @@ func can_process_packet() -> bool:
 	# Get current state name
 	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
-	# DEBUG for remote player
-	#if not player.my_player_character:
-		#print("Current state: ", current_state_name)
-		#print("Current packet: ", _current_packet)
-		#print("Queue size: ", _queue.size())
-		#print("Retry count: ", _retry_count)
-	
 	# Only process these packets in their valid states
-	
 	# MOVE CHARACTER
 	if _current_packet is Packets.MoveCharacter:
 		if player.my_player_character:

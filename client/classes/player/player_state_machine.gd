@@ -18,6 +18,9 @@ func _ready() -> void:
 	await get_tree().process_frame
 	player = get_parent()
 	
+	# We disable input and only use unhandled_input
+	set_process_input(false)
+	
 	if player.my_player_character:
 		is_local_player = true
 	
@@ -86,10 +89,10 @@ func set_active(value: bool) -> void:
 	is_active = value
 	set_physics_process(value)
 	
-	# Disable these for remote players 
+	# Disable these for remote players (update, unhandled
 	set_process(value and is_local_player)
 	set_process_unhandled_input(value and is_local_player)
-	set_process_input(value and is_local_player)
+
 
 
 # Each state will handle its on tick
