@@ -20,7 +20,7 @@ func _setup_tcp() -> void:
 	# Optimized for real-time small packets
 	socket.inbound_buffer_size = 16384  # 16KB
 	socket.outbound_buffer_size = 8192  # 8KB
-	socket.max_queued_packets = 128
+	socket.max_queued_packets = 256
 
 
 func connect_to_url(url: String, tls_options: TLSOptions = null) -> int:
@@ -34,6 +34,7 @@ func connect_to_url(url: String, tls_options: TLSOptions = null) -> int:
 
 
 func send(packet: packets.Packet) -> int:
+	GameManager.packets_sent += 1
 	# The server already knows the ID of my client, so I just send 0
 	packet.set_sender_id(0)
 	# Serializing data into binary
@@ -52,6 +53,7 @@ func get_packet() -> packets.Packet:
 	if result != OK:
 		printerr("Error forming packet from data %s" % data.get_string_from_utf8())
 	
+	GameManager.packets_received += 1
 	return packet
 
 

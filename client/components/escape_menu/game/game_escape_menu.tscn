@@ -96,6 +96,72 @@ text = "Logout"
 layout_mode = 2
 text = "Quit"
 
+[node name="BottomRightContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -40.0
+offset_top = -40.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="PacketsContainer" type="VBoxContainer" parent="BottomRightContainer"]
+layout_mode = 2
+
+[node name="PacketsLostContainer" type="HBoxContainer" parent="BottomRightContainer/PacketsContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="PacketsLost" type="Label" parent="BottomRightContainer/PacketsContainer/PacketsLostContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(100, 0, 0, 1)
+text = "0"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Label" type="Label" parent="BottomRightContainer/PacketsContainer/PacketsLostContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(100, 0, 0, 1)
+theme_override_font_sizes/font_size = 12
+text = "packets lost"
+
+[node name="PacketsSentContainer" type="HBoxContainer" parent="BottomRightContainer/PacketsContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="PacketsSent" type="Label" parent="BottomRightContainer/PacketsContainer/PacketsSentContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+text = "0"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Label" type="Label" parent="BottomRightContainer/PacketsContainer/PacketsSentContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(100, 100, 0, 1)
+theme_override_font_sizes/font_size = 12
+text = "packets sent"
+
+[node name="PacketsReceivedContainer" type="HBoxContainer" parent="BottomRightContainer/PacketsContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="PacketsReceived" type="Label" parent="BottomRightContainer/PacketsContainer/PacketsReceivedContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 1, 0, 1)
+text = "0"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Label" type="Label" parent="BottomRightContainer/PacketsContainer/PacketsReceivedContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 100, 0, 1)
+theme_override_font_sizes/font_size = 12
+text = "packets received"
+
 [connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/Resume" to="." method="_on_resume_pressed"]
 [connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/Controls" to="." method="_on_controls_pressed"]
 [connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/Logout" to="." method="_on_logout_pressed"]

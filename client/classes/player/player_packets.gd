@@ -83,8 +83,8 @@ func add_packet(packet: Variant, priority: int = Priority.NORMAL) -> void:
 		_:
 			_queue.push_back(packet)
 	
-	# If we are not processing a packet and our player is NOT busy
-	if not _is_processing and not player.is_busy:
+	# If we are not processing a packet
+	if not _is_processing:
 		try_process_next_packet()
 
 
@@ -114,6 +114,7 @@ func try_process_next_packet() -> void:
 				# Drop the current packet
 				_current_packet = null
 				_is_processing = false
+				GameManager.packets_lost += 1
 				complete_packet() # This tries to process the next packet immediately
 		
 		# If we haven't reach the limit

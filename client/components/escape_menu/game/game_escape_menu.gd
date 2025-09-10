@@ -3,6 +3,10 @@ extends Control
 @onready var version: Label = $VBoxContainer/Version
 @onready var latency: Label = $VBoxContainer/Latency
 @onready var renderer: Label = $VBoxContainer/Renderer
+# Packets
+@onready var packets_lost: Label = $BottomRightContainer/PacketsContainer/PacketsLostContainer/PacketsLost
+@onready var packets_sent: Label = $BottomRightContainer/PacketsContainer/PacketsSentContainer/PacketsSent
+@onready var packets_received: Label = $BottomRightContainer/PacketsContainer/PacketsReceivedContainer/PacketsReceived
 
 var is_active : bool = false
 var ping : int = 0
@@ -52,7 +56,9 @@ func toggle() -> void:
 		hide()
 		is_active = false
 		GameManager.set_ui_menu_active(false)
+	# Hide menu
 	else:
+		update_packets_counter()
 		show()
 		is_active = true
 		GameManager.set_ui_menu_active(true)
@@ -60,3 +66,9 @@ func toggle() -> void:
 
 func _on_controls_pressed() -> void:
 	Signals.ui_controls_menu_toggle.emit()
+
+
+func update_packets_counter() -> void:
+	packets_lost.text = str(GameManager.packets_lost)
+	packets_sent.text = str(GameManager.packets_sent)
+	packets_received.text = str(GameManager.packets_received)

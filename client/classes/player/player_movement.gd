@@ -646,7 +646,7 @@ func click_to_move(new_destination: Vector2i) -> void:
 	else:
 		_start_new_movement(new_destination)
 	
-	# If we are not already in the move state, try to change to it
+	# If we are not already in the move state, try to change to it LOCALLY
 	if player.player_state_machine.get_current_state_name() != "move":
 		player.player_state_machine.change_state("move")
 

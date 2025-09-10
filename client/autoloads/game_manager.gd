@@ -26,7 +26,9 @@ var player_character: Player
 var is_player_typing: bool = false
 # Prevents game world tooltip to display over menus
 var ui_menu_active: bool = false
-# Keep track of packet loss
+# Keep track of packets
+var packets_sent: int = 0
+var packets_received: int = 0
 var packets_lost: int = 0
 
 # Internal variables

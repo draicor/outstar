@@ -189,7 +189,9 @@ func _setup_animation_blend_time() -> void:
 
 # Plays and awaits until the animation ends, if found
 func play_animation_and_await(animation_name: String, play_rate: float = 1.0) -> void:
-	player.is_busy = true
+	# Only set for local player since this blocks packet processing
+	if player.my_player_character:
+		player.is_busy = true
 	
 	if animation_player.has_animation(animation_name):
 		animation_player.play(animation_name)
@@ -202,7 +204,8 @@ func play_animation_and_await(animation_name: String, play_rate: float = 1.0) ->
 	else:
 		print(animation_name, " animation not found.")
 	
-	player.is_busy = false
+	if player.my_player_character:
+		player.is_busy = false
 
 
 # Used to switch the current animation state

@@ -1,3 +1,6 @@
+VBoxContainer
+Label
+HBoxContainer
 Label3D
 Node3D
 CollisionShape3D
@@ -5,11 +8,7 @@ Area3D
 PlayerPackets
 Button
 TextureRect
-VBoxContainer
 MarginContainer
-Label
 StaticBody3D
 MeshInstance3D
 GPUParticles3D
-Decal
-GPUParticlesAttractorSphere3D
