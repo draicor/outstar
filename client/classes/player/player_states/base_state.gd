@@ -9,13 +9,13 @@ var state_name: String = "unnamed_state"
 var is_local_player: bool = false # set to true for local player
 var signals_connected: bool = false # to only do this once
 # Rotation broadcast logic
-# 0.5 seconds for idle aim and 0.25 seconds for automatic firing
-const AIM_ROTATION_INTERVAL: float = 0.5
-const FIRING_ROTATION_INTERVAL: float = 0.25
+# 1 second for idle aim and 0.5 seconds for automatic firing
+const AIM_ROTATION_INTERVAL: float = 1.0
+const FIRING_ROTATION_INTERVAL: float = 0.5
 var rotation_sync_timer: float = 0.0
 var last_sent_rotation: float = 0.0
 var rotation_timer_interval: float = AIM_ROTATION_INTERVAL
-const ROTATION_CHANGE_THRESHOLD: float = 0.05 # radians
+const ROTATION_CHANGE_THRESHOLD: float = 0.1 # radians
 # Weapon firing
 var dry_fired: bool = false
 # Firearm automatic firing
@@ -94,9 +94,8 @@ func switch_weapon(slot: int, broadcast: bool = false) -> void:
 		if player.player_state_machine.get_current_state_name() != weapon_state:
 			player.player_state_machine.change_state(weapon_state)
 	
-	# Release input
+	# Release input before completing packet
 	player.is_busy = false
-	
 	if not is_local_player:
 		player.player_packets.complete_packet()
 
@@ -157,13 +156,12 @@ func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
 	# Reset the dry fired variable because we added ammo
 	dry_fired = false
 	
-	# Release input
-	player.is_busy = false
-	
 	# Enable aim rotation after reload
 	if player_state_machine.get_current_state_name() == weapon_type + "_aim_idle":
 		player_state_machine.get_current_state().is_aim_rotating = true
 	
+	# Release input before completing packet
+	player.is_busy = false
 	if not is_local_player:
 		player.player_packets.complete_packet()
 
@@ -172,10 +170,6 @@ func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
 func raise_weapon_and_await(broadcast: bool) -> void:
 	# Block input
 	player.is_busy = true
-	
-	# If we set it to broadcast and this is our local player
-	if broadcast and is_local_player:
-		player.player_packets.send_raise_weapon_packet()
 	
 	# Get current weapon type
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
@@ -190,9 +184,12 @@ func raise_weapon_and_await(broadcast: bool) -> void:
 	# Transition to the aim state for this weapon
 	player.player_state_machine.change_state(weapon_type + "_aim_idle")
 	
-	# Release input
-	player.is_busy = false
+	# If we set it to broadcast and this is our local player
+	if broadcast and is_local_player:
+		player.player_packets.send_raise_weapon_packet()
 	
+	# Release input before completing packet
+	player.is_busy = false
 	if not is_local_player:
 		player.player_packets.complete_packet()
 
@@ -201,10 +198,6 @@ func raise_weapon_and_await(broadcast: bool) -> void:
 func lower_weapon_and_await(broadcast: bool) -> void:
 	# Block input
 	player.is_busy = true
-	
-	# If we set it to broadcast and this is our local player
-	if broadcast and is_local_player:
-		player.player_packets.send_lower_weapon_packet()
 	
 	# Get current weapon type
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
@@ -219,9 +212,12 @@ func lower_weapon_and_await(broadcast: bool) -> void:
 	# Transition to the down state for this weapon
 	player.player_state_machine.change_state(weapon_type + "_down_idle")
 	
-	# Release input
-	player.is_busy = false
+	# If we set it to broadcast and this is our local player
+	if broadcast and is_local_player:
+		player.player_packets.send_lower_weapon_packet()
 	
+	# Release input before completing packet
+	player.is_busy = false
 	if not is_local_player:
 		player.player_packets.complete_packet()
 
@@ -412,16 +408,6 @@ func next_automatic_fire() -> void:
 				# Don't complete the packet here
 				return
 		
-		# If not trying to syncronize
-		# Check if there's a stop firing packet in the queue
-		var stop_firing_packet: Variant = player.player_packets.get_stop_firing_packet_from_queue()
-		# Extract and process this packet immediately
-		if stop_firing_packet:
-			player.player_packets._current_packet = stop_firing_packet
-			player.player_packets._is_processing = true
-			player.process_stop_firing_packet(stop_firing_packet)
-			if is_auto_firing:
-				next_automatic_fire()
-		else:
-			# Continue firing normally
-			next_automatic_fire()
+		# Try to process the next packet and keep shooting
+		player.player_packets.try_process_next_packet()
+		next_automatic_fire()

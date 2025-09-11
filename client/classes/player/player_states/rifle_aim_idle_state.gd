@@ -77,7 +77,10 @@ func physics_update(delta: float) -> void:
 # Held inputs
 func update(_delta: float) -> void:
 	# If we are busy, ignore input
-	if player.is_busy or player.player_movement.autopilot_active:
+	if player.is_busy:
+		return
+	# If we are in autopilot, ignore input
+	if player.player_movement.autopilot_active:
 		return
 	
 	# Handle lower weapon

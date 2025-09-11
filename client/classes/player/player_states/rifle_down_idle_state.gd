@@ -52,9 +52,12 @@ func handle_input(event: InputEvent) -> void:
 				player.start_interaction(target)
 			# Add other types of target classes later
 		
-		# If we didn't click on anything interactable, then attempt to move to that cell
+		# If we didn't click on anything interactable
 		else:
-			player.handle_movement_click(mouse_position)
+			# If we are not busy now
+			if not player.is_busy:
+				# Attempt to move
+				player.handle_movement_click(mouse_position)
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):

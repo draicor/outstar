@@ -203,6 +203,12 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 	else:
 		# player_speed + 1 accounts for current cell
 		predicted_path = Utils.pop_multiple_front(prediction, player.player_speed + 1)
+		# Get our immediate grid destination (this tick)
+		immediate_grid_destination = predicted_path.back()
+		
+		# We need to send the packet here ONCE, when movement starts
+		if player.my_player_character:
+			player.player_packets.send_destination_packet(immediate_grid_destination)
 		
 		# If we are in the same cell as the target cell, our predicted_path will have 1 or 0 cells,
 		# instead of moving towards it, we check if we are in range to activate
@@ -215,8 +221,7 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 					player.player_state_machine.change_state("interact")
 					return
 		
-		# Get our immediate grid destination (this tick)
-		immediate_grid_destination = predicted_path.back()
+		
 		# We add to our local unconfirmed path the next steps we'll take
 		unconfirmed_path.append(immediate_grid_destination)
 		# Remove the first cell from the predicted_path because we are already there
@@ -234,8 +239,9 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 		is_predicting = true
 		grid_destination = target_position
 		
-		# We need to send the packet here ONCE, when movement starts
-		player.player_packets.send_destination_packet(immediate_grid_destination)
+		# If we are not already in the move state, try to change to it
+		if player.player_state_machine.get_current_state_name() != "move":
+			player.player_state_machine.change_state("move")
 
 
 # Helper function to validate and get interaction position
@@ -415,7 +421,6 @@ func handle_remote_player_movement(new_server_position: Vector2i) -> void:
 				server_path = Utils.pop_multiple_front(next_path, player.player_speed + 1)
 				# Set the remaining path for next ticks
 				next_tick_server_path = next_path
-			
 			
 			cells_to_move_this_tick = server_path.size()-1
 			immediate_grid_destination = server_path.back() if server_path.size() > 0 else server_grid_position
@@ -629,15 +634,18 @@ func teleport_to_position(new_grid_position: Vector2i) -> void:
 
 # Attempts to predict a path towards that cell to move our character,
 # but only if the cell is reachable and available
+# THIS FUNCTION ONLY GETS USED IN MY LOCAL PLAYER, NOT FOR REMOTE PLAYERS
 func click_to_move(new_destination: Vector2i) -> void:
-	# Don't start movement if player is busy or autopilot is active
-	if player.is_busy or autopilot_active:
+	# If player is busy, don't move
+	if player.is_busy:
 		return
-	
-	# If we are in a weapon state, don't allow movement
+	# If autopilot is active, don't move
+	if autopilot_active:
+		return
+	# If we are in a weapon state, don't move
 	if player.is_in_weapon_state():
 		return
-	
+	# If the new position is not valid, don't move
 	if not _validate_move_position(new_destination):
 		return
 	
@@ -649,10 +657,6 @@ func click_to_move(new_destination: Vector2i) -> void:
 		_update_existing_movement(new_destination)
 	else:
 		_start_new_movement(new_destination)
-	
-	# If we are not already in the move state, try to change to it LOCALLY
-	if player.player_state_machine.get_current_state_name() != "move":
-		player.player_state_machine.change_state("move")
 
 
 # Helper function to check if player is in interaction range

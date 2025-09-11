@@ -11,7 +11,7 @@ enum Server {
 # Used to switch between local and remote testing
 var ip: Dictionary[Server, String] = {
 	Server.LOCAL: "localhost",
-	Server.REMOTE: "64.223.161.129"
+	Server.REMOTE: "74.75.158.246"
 }
 var port: Dictionary[Server, int] = {
 	Server.LOCAL: 31591,

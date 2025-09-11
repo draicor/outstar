@@ -132,11 +132,6 @@ func try_process_next_packet() -> void:
 	if _is_processing or _queue.is_empty():
 		return
 	
-	# If we are in the middle of a state transition
-	if player.player_state_machine.is_transitioning:
-		_retry_timer.start()
-		return
-	
 	# Get the next packet
 	_current_packet = _queue.pop_front()
 	_is_processing = true
@@ -183,8 +178,8 @@ func _on_retry_timeout() -> void:
 func try_process_current_packet() -> void:
 	if _current_packet:
 		# DEBUG processing packet of remote player
-		if not player.my_player_character:
-			print("[REMOTE] %s -> Processing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
+		#if not player.my_player_character:
+			#print("[REMOTE] %s -> Processing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
 		
 		packet_started.emit(_current_packet)
 	# If our current packet is not valid, then try to process the next one
@@ -204,11 +199,14 @@ func complete_packet() -> void:
 	_retry_count = 0
 	
 	# DEBUG completing packet of remote player
-	if not player.my_player_character:
-		print("[REMOTE] %s -> Completing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
+	#if not player.my_player_character:
+	#	print("[REMOTE] %s -> Completing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
 	
 	_current_packet = null
 	_is_processing = false
+	
+	# Await a frame to let the player state machine to catch up
+	await get_tree().process_frame
 	
 	# Try to process next packet immediately after completing
 	try_process_next_packet()
@@ -233,8 +231,11 @@ func get_current_packet() -> Variant:
 
 # Determines if the current packet can be processed right away
 func can_process_packet() -> bool:
-	# Don't process packets if player is busy or autopilot is active
-	if player.is_busy or player.player_movement.autopilot_active:
+	# Don't process packets if player is busy
+	if player.is_busy:
+		return false
+	# Don't process packets if autopilot is active
+	if player.player_movement.autopilot_active:
 		return false
 	
 	# Get current state name
@@ -479,19 +480,3 @@ func send_report_player_damage_packet(target_id: int, hit_position: Vector3, is_
 func send_destination_packet(destination: Vector2i) -> void:
 	var packet: Packets.Packet = player.player_packets.create_destination_packet(destination)
 	WebSocket.send(packet)
-
-
-#################
-# PACKET SEARCH #
-#################
-
-
-# Looks for and returns if found a stop firing weapon packet
-func get_stop_firing_packet_from_queue() -> Variant:
-	for i in range(_queue.size()):
-		var packet: Variant = _queue[i]
-		if packet is Packets.StopFiringWeapon:
-			_queue.remove_at(i)
-			return packet
-	
-	return null
