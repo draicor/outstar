@@ -75,8 +75,47 @@ func _process(delta: float) -> void:
 		_packet_process_timeout = 0
 
 
+func get_packet_type(packet: Variant) -> String:
+	var packet_type: String = "Unknown"
+	
+	# Higher priority packets
+	if packet is Packets.LowerWeapon:
+		packet_type = "LowerWeapon"
+	elif packet is Packets.RaiseWeapon:
+		packet_type = "RaiseWeapon"
+	elif packet is Packets.MoveCharacter:
+		packet_type = "MoveCharacter"
+	elif packet is Packets.StartFiringWeapon:
+		packet_type = "StartFiringWeapon"
+	elif packet is Packets.StopFiringWeapon:
+		packet_type = "StopFiringWeapon"
+	elif packet is Packets.FireWeapon:
+		packet_type = "FireWeapon"
+	elif packet is Packets.RotateCharacter:
+		packet_type = "RotateCharacter"
+	# Lower priority packets
+	elif packet is Packets.UpdateSpeed:
+		packet_type = "UpdateSpeed"
+	elif packet is Packets.SwitchWeapon:
+		packet_type = "SwitchWeapon"
+	elif packet is Packets.ReloadWeapon:
+		packet_type = "ReloadWeapon"
+	elif packet is Packets.ToggleFireMode:
+		packet_type = "ToggleFireMode"
+	# Packets that get processed in any state
+	elif packet is Packets.ApplyPlayerDamage:
+		packet_type = "ApplyPlayerDamage"
+	
+	return packet_type
+
+
+
 # Adds packet to queue with specified priority
 func add_packet(packet: Variant, priority: int = Priority.NORMAL) -> void:
+	# DEBUG adding packet to remote player
+	if not player.my_player_character:
+		print("[REMOTE] %s -> Adding %s packet to queue, current_state: %s, at: %d" % [player.player_name, get_packet_type(packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
+	
 	match priority:
 		Priority.HIGH:
 			_queue.push_front(packet)
@@ -91,6 +130,11 @@ func add_packet(packet: Variant, priority: int = Priority.NORMAL) -> void:
 # Process next packet if available
 func try_process_next_packet() -> void:
 	if _is_processing or _queue.is_empty():
+		return
+	
+	# If we are in the middle of a state transition
+	if player.player_state_machine.is_transitioning:
+		_retry_timer.start()
 		return
 	
 	# Get the next packet
@@ -110,7 +154,10 @@ func try_process_next_packet() -> void:
 		# Check if we hit the retry limit or the packet timeout
 		if _retry_count > MAX_RETRIES or _packet_process_timeout > MAX_PACKET_PROCESSING_TIMEOUT:
 			if _current_packet:
-				push_error("\nDropping packet, current_state: ", player.player_state_machine.get_current_state_name(), "\n",player.player_name, ", Packet:\n" ,_current_packet)
+				# DEBUG dropping packet of remote player
+				if not player.my_player_character:
+					print("[REMOTE] %s -> Dropping %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
+				
 				# Drop the current packet
 				_current_packet = null
 				_is_processing = false
@@ -135,6 +182,10 @@ func _on_retry_timeout() -> void:
 
 func try_process_current_packet() -> void:
 	if _current_packet:
+		# DEBUG processing packet of remote player
+		if not player.my_player_character:
+			print("[REMOTE] %s -> Processing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
+		
 		packet_started.emit(_current_packet)
 	# If our current packet is not valid, then try to process the next one
 	else:
@@ -147,13 +198,17 @@ func complete_packet() -> void:
 	if not _is_processing:
 		return
 	
-	_current_packet = null
-	_is_processing = false
-	
 	# Reset timeout and max retry variables for packet processing
 	_packet_process_timeout = 0
-	_retry_count = 0
 	_retry_timer.stop()
+	_retry_count = 0
+	
+	# DEBUG completing packet of remote player
+	if not player.my_player_character:
+		print("[REMOTE] %s -> Completing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
+	
+	_current_packet = null
+	_is_processing = false
 	
 	# Try to process next packet immediately after completing
 	try_process_next_packet()
@@ -186,30 +241,30 @@ func can_process_packet() -> bool:
 	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
 	# Only process these packets in their valid states
-	# MOVE CHARACTER
-	if _current_packet is Packets.MoveCharacter:
-		if player.my_player_character:
-			# Process my own movement packets right away
-			return true
-		# If this is a remote character
-		else:
-			# Can only move if in an allowed movement state
-			return current_state_name in MOVE_STATES
-	
-	# SINGLE FIRE WEAPON
-	elif _current_packet is Packets.FireWeapon:
+	# LOWER WEAPON
+	if _current_packet is Packets.LowerWeapon:
+		# Allow lowering weapon only in aim states
 		return current_state_name in WEAPON_AIM_STATES
+	
+	# RAISE WEAPON
+	elif _current_packet is Packets.RaiseWeapon:
+		# Allow raising weapon only in down states
+		return current_state_name in WEAPON_DOWN_STATES
+	
+	# MOVE CHARACTER
+	elif _current_packet is Packets.MoveCharacter:
+		return current_state_name in MOVE_STATES
 	
 	# START AUTOMATIC FIRE WEAPON
 	elif _current_packet is Packets.StartFiringWeapon:
 		return current_state_name in WEAPON_AIM_STATES
 	
-	# RAISE WEAPON
-	elif _current_packet is Packets.RaiseWeapon:
-		return current_state_name in WEAPON_DOWN_STATES
+	# STOP AUTOMATIC FIRE WEAPON
+	elif _current_packet is Packets.StopFiringWeapon:
+		return current_state_name in WEAPON_AIM_STATES
 	
-	# LOWER WEAPON
-	elif _current_packet is Packets.LowerWeapon:
+	# SINGLE FIRE WEAPON
+	elif _current_packet is Packets.FireWeapon:
 		return current_state_name in WEAPON_AIM_STATES
 	
 	# Lower priority packets
@@ -223,8 +278,7 @@ func can_process_packet() -> bool:
 		return current_state_name in WEAPON_STATES
 
 	# Allow other packets by default
-	else:
-		return true
+	return true
 
 
 ###################
@@ -425,3 +479,19 @@ func send_report_player_damage_packet(target_id: int, hit_position: Vector3, is_
 func send_destination_packet(destination: Vector2i) -> void:
 	var packet: Packets.Packet = player.player_packets.create_destination_packet(destination)
 	WebSocket.send(packet)
+
+
+#################
+# PACKET SEARCH #
+#################
+
+
+# Looks for and returns if found a stop firing weapon packet
+func get_stop_firing_packet_from_queue() -> Variant:
+	for i in range(_queue.size()):
+		var packet: Variant = _queue[i]
+		if packet is Packets.StopFiringWeapon:
+			_queue.remove_at(i)
+			return packet
+	
+	return null

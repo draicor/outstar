@@ -475,20 +475,21 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 
 func _handle_packet_started(packet: Variant) -> void:
 	# HIGH PRIORITY PACKETS AT THE TOP
-	if packet is Packets.MoveCharacter:
+	if packet is Packets.LowerWeapon:
+		_process_lower_weapon_packet()
+	elif packet is Packets.RaiseWeapon:
+		_process_raise_weapon_packet()
+	elif packet is Packets.MoveCharacter:
 		_process_move_character_packet(packet)
-	elif packet is Packets.FireWeapon:
-		_process_fire_weapon_packet(packet)
 	elif packet is Packets.StartFiringWeapon:
 		_process_start_firing_weapon_packet(packet)
 	elif packet is Packets.StopFiringWeapon:
-		_process_stop_firing_weapon_packet(packet)
+		process_stop_firing_weapon_packet(packet)
+	elif packet is Packets.FireWeapon:
+		_process_fire_weapon_packet(packet)
 	elif packet is Packets.RotateCharacter:
 		_process_rotate_character_packet(packet)
-	elif packet is Packets.RaiseWeapon:
-		_process_raise_weapon_packet()
-	elif packet is Packets.LowerWeapon:
-		_process_lower_weapon_packet()
+	
 	# LOWER PRIORITY PACKETS
 	elif packet is Packets.UpdateSpeed:
 		_process_update_speed_packet(packet)
@@ -523,9 +524,6 @@ func _process_move_character_packet(packet: Packets.MoveCharacter) -> void:
 	# Remote players are always in sync with the server
 	else:
 		player_movement.handle_remote_player_movement(server_position)
-	
-	# CAUTION Only update our server grid position AFTER moving
-	# player_movement.server_grid_position = server_position
 	
 	if player_packets.is_processing_packet():
 		# If we were processing a MoveCharacter packet, complete it
@@ -654,7 +652,7 @@ func _process_start_firing_weapon_packet(packet: Packets.StartFiringWeapon) -> v
 		player_packets.complete_packet()
 
 
-func _process_stop_firing_weapon_packet(packet: Packets.StopFiringWeapon) -> void:
+func process_stop_firing_weapon_packet(packet: Packets.StopFiringWeapon) -> void:
 	var current_state: BaseState = player_state_machine.get_current_state()
 	
 	if current_state:
@@ -668,7 +666,12 @@ func _process_stop_firing_weapon_packet(packet: Packets.StopFiringWeapon) -> voi
 		current_state.server_shots_fired = server_shots_fired
 		# Call without broadcast since this came from server
 		current_state.stop_automatic_firing(false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		player_packets.complete_packet()
+	
+	# Always complete the packet after processing
+	player_packets.complete_packet()
+
+
+# Helper method to check if we are in a weapon aim state
+func is_in_weapon_state() -> bool:
+	var current_state: String = player_state_machine.get_current_state_name()
+	return current_state in [player_packets.WEAPON_AIM_STATES]

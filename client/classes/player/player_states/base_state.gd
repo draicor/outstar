@@ -170,11 +170,15 @@ func reload_weapon_and_await(slot: int, amount: int, broadcast: bool) -> void:
 
 # Called to raise the current weapon
 func raise_weapon_and_await(broadcast: bool) -> void:
-	# Get current weapon type
-	var weapon_type: String = player.player_equipment.get_current_weapon_type()
-	
 	# Block input
 	player.is_busy = true
+	
+	# If we set it to broadcast and this is our local player
+	if broadcast and is_local_player:
+		player.player_packets.send_raise_weapon_packet()
+	
+	# Get current weapon type
+	var weapon_type: String = player.player_equipment.get_current_weapon_type()
 	
 	# Play the raise weapon animation
 	await player.player_animator.play_weapon_animation_and_await(
@@ -189,22 +193,21 @@ func raise_weapon_and_await(broadcast: bool) -> void:
 	# Release input
 	player.is_busy = false
 	
-	# If we set it to broadcast and this is our local player
-	if broadcast and is_local_player:
-		# Report to the server we are raising our weapon
-		player.player_packets.send_raise_weapon_packet()
-	
 	if not is_local_player:
 		player.player_packets.complete_packet()
 
 
 # Called to lower the current weapon
 func lower_weapon_and_await(broadcast: bool) -> void:
-	# Get current weapon type
-	var weapon_type: String = player.player_equipment.get_current_weapon_type()
-	
 	# Block input
 	player.is_busy = true
+	
+	# If we set it to broadcast and this is our local player
+	if broadcast and is_local_player:
+		player.player_packets.send_lower_weapon_packet()
+	
+	# Get current weapon type
+	var weapon_type: String = player.player_equipment.get_current_weapon_type()
 	
 	# Play the lower weapon animation
 	await player.player_animator.play_weapon_animation_and_await(
@@ -218,11 +221,6 @@ func lower_weapon_and_await(broadcast: bool) -> void:
 	
 	# Release input
 	player.is_busy = false
-	
-	# If we set it to broadcast and this is our local player
-	if broadcast and is_local_player:
-		# Report to the server we are lowering our weapon
-		player.player_packets.send_lower_weapon_packet()
 	
 	if not is_local_player:
 		player.player_packets.complete_packet()
@@ -323,7 +321,8 @@ func stop_automatic_firing(broadcast: bool) -> void:
 			is_trying_to_syncronize = false
 			shots_fired = 0
 			server_shots_fired = 0
-			player.player_packets.complete_packet()
+			# Don't complete the packet here
+		
 		# If we fired more rounds than we were supposed to (predicting failed),
 		# reimburse the ammo difference to this remote player in my own local session
 		elif shots_fired > server_shots_fired:
@@ -332,16 +331,18 @@ func stop_automatic_firing(broadcast: bool) -> void:
 			is_trying_to_syncronize = false
 			var ammo_difference: int = shots_fired - server_shots_fired
 			var ammo_to_reimburse: int = player.player_equipment.get_current_ammo() + ammo_difference
+			
 			# Reset all variables
 			shots_fired = 0
 			server_shots_fired = 0
 			player.player_equipment.set_current_ammo(ammo_to_reimburse)
-			player.player_packets.complete_packet()
+			# Don't complete the packet here
+		
 		# If local shots fired is less than the shots the server says we need to take,
 		# keep firing until we are in sync
 		elif shots_fired < server_shots_fired:
 			is_trying_to_syncronize = true
-			next_automatic_fire()
+			# Don't complete the packet here
 
 
 # Tries to fire the next round (live or dry fire) in automatic fire mode,
@@ -401,20 +402,26 @@ func next_automatic_fire() -> void:
 		if is_trying_to_syncronize:
 			# If we still haven't reached the amount of shots we fired according to the server
 			if shots_fired < server_shots_fired:
-				# Try to keep processing the stop_firing_packet we previously got
-				player.player_packets.try_process_current_packet()
+				# Continue firing to catch up
+				next_automatic_fire()
 				return
 			else:
+				# We've caught up, stop firing
 				is_trying_to_syncronize = false
-				player.player_packets.try_process_current_packet()
+				is_auto_firing = false
+				# Don't complete the packet here
 				return
 		
-		# Try to process next packet after animation ends
-		player.player_packets.try_process_next_packet()
-		
-		# If after processing the packet, we still want to keep shooting
-		if is_auto_firing:
-			next_automatic_fire()
+		# If not trying to syncronize
+		# Check if there's a stop firing packet in the queue
+		var stop_firing_packet: Variant = player.player_packets.get_stop_firing_packet_from_queue()
+		# Extract and process this packet immediately
+		if stop_firing_packet:
+			player.player_packets._current_packet = stop_firing_packet
+			player.player_packets._is_processing = true
+			player.process_stop_firing_packet(stop_firing_packet)
+			if is_auto_firing:
+				next_automatic_fire()
 		else:
-			# NOTE I don't really know if this below is doing anything
-			player.player_packets.complete_packet()
+			# Continue firing normally
+			next_automatic_fire()

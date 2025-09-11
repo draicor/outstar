@@ -630,8 +630,12 @@ func teleport_to_position(new_grid_position: Vector2i) -> void:
 # Attempts to predict a path towards that cell to move our character,
 # but only if the cell is reachable and available
 func click_to_move(new_destination: Vector2i) -> void:
-	# Don't start movement if player is busy
-	if player.is_busy:
+	# Don't start movement if player is busy or autopilot is active
+	if player.is_busy or autopilot_active:
+		return
+	
+	# If we are in a weapon state, don't allow movement
+	if player.is_in_weapon_state():
 		return
 	
 	if not _validate_move_position(new_destination):

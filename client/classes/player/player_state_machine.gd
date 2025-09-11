@@ -8,6 +8,7 @@ var current_state: BaseState = null
 var previous_state: BaseState = null
 var is_active: bool = true : set = set_active
 var is_local_player: bool = false # set to true for local player
+var is_transitioning: bool = false # to check if a state transition is in progress
 var player: Player = null
 
 
@@ -50,6 +51,9 @@ func get_current_state() -> BaseState:
 
 
 func change_state(new_state_name: String) -> void:
+	if is_transitioning:
+		return
+	
 	# If our state machine is not active, abort
 	if not is_active:
 		push_error("Player state machine not active for ", player.player_name)
@@ -58,6 +62,8 @@ func change_state(new_state_name: String) -> void:
 	if not states_map.has(new_state_name):
 		push_error("State %s doesn't exist in state machine" % new_state_name)
 		return
+	
+	is_transitioning = true
 	
 	var new_state = states_map[new_state_name]
 	
@@ -75,13 +81,11 @@ func change_state(new_state_name: String) -> void:
 	current_state = new_state
 	current_state.enter()
 	
-	# Force process any pending packets after state change
-	# Use call_deferred to ensure safe execution
-	player.player_packets.call_deferred("try_process_next_packet")
-	
 	emit_signal("player_state_changed",
 		previous_state.state_name if previous_state else "",
 		new_state_name)
+	
+	is_transitioning = false
 
 
 # When toggling this state, toggle the functions that run on tick too
