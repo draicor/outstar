@@ -84,9 +84,9 @@ func update(_delta: float) -> void:
 		return
 	
 	# Handle lower weapon
-	if not Input.is_action_pressed("right_click") and not player.is_busy:
+	if not Input.is_action_pressed("right_click"):
 		is_aim_rotating = false # Prevent rotation
-		await lower_weapon_and_await(true)
+		player.player_actions.queue_lower_weapon_action()
 		return
 	
 	# Fire rifle if mouse isn't over the UI

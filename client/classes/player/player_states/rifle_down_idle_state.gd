@@ -30,8 +30,8 @@ func update(_delta: float) -> void:
 		return
 	
 	# Handle raise weapon
-	if Input.is_action_pressed("right_click") and not player.is_busy and not player.is_mouse_over_ui:
-		await raise_weapon_and_await(true)
+	if Input.is_action_pressed("right_click"):
+		player.player_actions.queue_raise_weapon_action()
 		return
 
 

@@ -206,9 +206,10 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 		# Get our immediate grid destination (this tick)
 		immediate_grid_destination = predicted_path.back()
 		
+		# CAUTION REMOVED THIS TO TEST
 		# We need to send the packet here ONCE, when movement starts
-		if player.my_player_character:
-			player.player_packets.send_destination_packet(immediate_grid_destination)
+		#if player.my_player_character:
+		#	player.player_packets.send_destination_packet(immediate_grid_destination)
 		
 		# If we are in the same cell as the target cell, our predicted_path will have 1 or 0 cells,
 		# instead of moving towards it, we check if we are in range to activate

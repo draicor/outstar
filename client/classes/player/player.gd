@@ -1,9 +1,6 @@
 extends CharacterBody3D
 class_name Player
 
-# Preloading scripts
-const Packets: GDScript = preload("res://packets.gd")
-const Pathfinding: GDScript = preload("res://classes/pathfinding/pathfinding.gd")
 
 # Preloading scenes
 const player_scene: PackedScene = preload("res://objects/player/player.tscn")
@@ -60,6 +57,7 @@ var skeleton: Skeleton3D = null # Our character's skeleton
 @onready var player_audio: PlayerAudio = $PlayerAudio
 @onready var player_equipment: PlayerEquipment = $PlayerEquipment
 @onready var player_packets: PlayerPackets = $PlayerPackets
+@onready var player_actions: PlayerActions = $PlayerActions
 
 
 # Called each tick to draw debugging tools on screen
@@ -137,9 +135,6 @@ func _ready() -> void:
 	# CAUTION
 	# Displays our character, replace with a spawn animation
 	show()
-	
-	# Connect packet signals
-	player_packets.packet_started.connect(_handle_packet_started)
 	
 	call_deferred("_post_ready_initialization")
 
@@ -298,7 +293,9 @@ func handle_movement_click(mouse_position: Vector2) -> void:
 	# Transform the local space position to our grid coordinate
 	var new_destination: Vector2i = Utils.local_to_map(local_point)
 	
-	player_movement.click_to_move(new_destination)
+	# CAUTION removed this to test
+	#player_movement.click_to_move(new_destination)
+	player_actions.queue_move_action(new_destination)
 
 
 # Detects and returns target after mouse click, if valid
@@ -467,211 +464,40 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 	if chat_bubble_icon:
 		chat_bubble_icon.visible = is_typing
 
-
-#####################
-# PACKET PROCESSING #
-#####################
-
-
-func _handle_packet_started(packet: Variant) -> void:
-	# HIGH PRIORITY PACKETS AT THE TOP
-	if packet is Packets.LowerWeapon:
-		_process_lower_weapon_packet()
-	elif packet is Packets.RaiseWeapon:
-		_process_raise_weapon_packet()
-	elif packet is Packets.MoveCharacter:
-		_process_move_character_packet(packet)
-	elif packet is Packets.StartFiringWeapon:
-		_process_start_firing_weapon_packet(packet)
-	elif packet is Packets.StopFiringWeapon:
-		process_stop_firing_weapon_packet(packet)
-	elif packet is Packets.FireWeapon:
-		_process_fire_weapon_packet(packet)
-	elif packet is Packets.RotateCharacter:
-		_process_rotate_character_packet(packet)
-	
-	# LOWER PRIORITY PACKETS
-	elif packet is Packets.UpdateSpeed:
-		_process_update_speed_packet(packet)
-	elif packet is Packets.SwitchWeapon:
-		_process_switch_weapon_packet(packet)
-	elif packet is Packets.ReloadWeapon:
-		_process_reload_weapon_packet(packet)
-	elif packet is Packets.ToggleFireMode:
-		_process_toggle_fire_mode_packet()
-	else:
-		player_packets.complete_packet() # Unknown packet
-
-
-# Updates the character's server grid position
-func _process_move_character_packet(packet: Packets.MoveCharacter) -> void:
-	var server_position: Vector2i = Vector2i(
-		packet.get_position().get_x(),
-		packet.get_position().get_z()
-	)
-	
-	# Store the previous position before updating anything
-	var previous_position: Vector2i = player_movement.server_grid_position
-	
-	# Remove the player from the grid position it was
-	RegionManager.remove_object(previous_position, self)
-	# Add the player to the new position in my local grid
-	RegionManager.set_object(server_position, self)
-	
-	# Only do the reconciliation for my player, not the other players
-	if my_player_character and player_movement.is_predicting:
-		player_movement.handle_server_reconciliation(server_position)
-	# Remote players are always in sync with the server
-	else:
-		player_movement.handle_remote_player_movement(server_position)
-	
-	if player_packets.is_processing_packet():
-		# If we were processing a MoveCharacter packet, complete it
-			if player_packets._current_packet is Packets.MoveCharacter:
-				player_packets.complete_packet()
-
-
-# Updates the player's move speed to match the server's
-func _process_update_speed_packet(packet: Packets.UpdateSpeed) -> void:
-	var new_speed: int = packet.get_speed()
-	
-	# Only allow speed changes when not moving
-	if not player_movement.in_motion:
-		# Clamp speed to 1-3 range
-		player_speed = clamp(new_speed, 1, 3)
-	
-	player_packets.complete_packet()
-
-
-func _process_switch_weapon_packet(packet: Packets.SwitchWeapon) -> void:
-	var slot = packet.get_slot()
-	var current_state: BaseState = player_state_machine.get_current_state()
-	
-	if current_state:
-		# Call without broadcast since this came from server
-		current_state.switch_weapon(slot, false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		player_packets.complete_packet()
-
-
-func _process_reload_weapon_packet(packet: Packets.ReloadWeapon) -> void:
-	var slot = packet.get_slot()
-	var amount = packet.get_amount()
-	var current_state: BaseState = player_state_machine.get_current_state()
-	
-	if current_state:
-		# Call without broadcast since this came from server
-		await current_state.reload_weapon_and_await(slot, amount, false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		player_packets.complete_packet()
-
-
-func _process_raise_weapon_packet() -> void:
-	var current_state: BaseState = player_state_machine.get_current_state()
-	
-	if current_state:
-		# Call without broadcast since this came from server
-		await current_state.raise_weapon_and_await(false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		player_packets.complete_packet()
-
-
-func _process_lower_weapon_packet() -> void:
-	var current_state: BaseState = player_state_machine.get_current_state()
-	
-	if current_state:
-		# Call without broadcast since this came from server
-		await current_state.lower_weapon_and_await(false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		player_packets.complete_packet()
-
-
-func _process_rotate_character_packet(packet: Packets.RotateCharacter) -> void:
-	var new_rotation: float = packet.get_rotation_y()
-	player_movement.rotation_target = new_rotation
-	player_movement.is_rotating = true
-	# Complete the packet right away
-	player_packets.complete_packet()
-
-
-func _process_fire_weapon_packet(packet: Packets.FireWeapon) -> void:
-	var current_state: BaseState = player_state_machine.get_current_state()
-	
-	if current_state:
-		# Extract shooter's rotation from the packet
-		var rotation_y: float = packet.get_rotation_y()
-		# Update rotation before shooting
-		player_movement.rotation_target = rotation_y
-		player_movement.is_rotating = true
-		# Extract target position
-		var target: Vector3 = Vector3(packet.get_x(), packet.get_y(), packet.get_z())
-		# Call without broadcast since this came from server
-		current_state.single_fire(target, false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		player_packets.complete_packet()
-
-
-func _process_toggle_fire_mode_packet() -> void:
-	var current_state: BaseState = player_state_machine.get_current_state()
-	
-	if current_state:
-		# Call without broadcast since this came from server
-		current_state.toggle_fire_mode(false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		player_packets.complete_packet()
-
-
-func _process_start_firing_weapon_packet(packet: Packets.StartFiringWeapon) -> void:
-	var current_state: BaseState = player_state_machine.get_current_state()
-	
-	if current_state:
-		# Extract shooter's rotation from the packet
-		var rotation_y: float = packet.get_rotation_y()
-		# Update rotation before shooting
-		player_movement.rotation_target = rotation_y
-		player_movement.is_rotating = true
-		# Extract the shooter's current ammo from the packet
-		player_equipment.set_current_ammo(packet.get_ammo())
-		# Call without broadcast since this came from server
-		current_state.start_automatic_firing(false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		player_packets.complete_packet()
-
-
-func process_stop_firing_weapon_packet(packet: Packets.StopFiringWeapon) -> void:
-	var current_state: BaseState = player_state_machine.get_current_state()
-	
-	if current_state:
-		# Extract shooter's rotation from the packet
-		var rotation_y: float = packet.get_rotation_y()
-		# Update rotation before shooting
-		player_movement.rotation_target = rotation_y
-		player_movement.is_rotating = true
-		# Extract the amount of shots taken until we stopped to keep remote players synced
-		var server_shots_fired: int = packet.get_shots_fired()
-		current_state.server_shots_fired = server_shots_fired
-		# Call without broadcast since this came from server
-		current_state.stop_automatic_firing(false)
-	
-	# Always complete the packet after processing
-	player_packets.complete_packet()
-
+####################
+# HELPER FUNCTIONS #
+####################
 
 # Helper method to check if we are in a weapon aim state
-func is_in_weapon_state() -> bool:
+func is_in_weapon_aim_state() -> bool:
 	var current_state: String = player_state_machine.get_current_state_name()
 	return current_state in [player_packets.WEAPON_AIM_STATES]
+
+
+# Helper function to check if we can raise our weapon
+func can_raise_weapon() -> bool:
+	# If we are busy, we can't
+	if is_busy:
+		return false
+	# If our mouse is over UI, we can't
+	if is_mouse_over_ui:
+		return false
+	
+	# Check if we are in the right player state
+	var weapon_type: String = player_equipment.get_current_weapon_type()
+	var target_state_name: String = weapon_type + "_down_idle"
+	# If our weapon is equipped but down, we can raise it
+	return player_state_machine.get_current_state_name() == target_state_name
+
+
+# Helper function to check if we can lower our weapon
+func can_lower_weapon() -> bool:
+	# If we are busy, we can't
+	if is_busy:
+		return false
+	
+	# Check if we are in the right player state
+	var weapon_type: String = player_equipment.get_current_weapon_type()
+	var target_state_name: String = weapon_type + "_aim_idle"
+	# If our weapon is equipped and raised, we can lower it
+	return player_state_machine.get_current_state_name() == target_state_name

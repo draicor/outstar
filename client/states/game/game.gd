@@ -72,10 +72,10 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 	# HIGHER PRIORITY PACKETS THAT GET QUEUED
 	if packet.has_lower_weapon():
 		_route_lower_weapon_packet(sender_id, packet.get_lower_weapon())
-	elif packet.has_raise_weapon():
-		_route_raise_weapon_packet(sender_id, packet.get_raise_weapon())
 	elif packet.has_move_character():
 		_route_move_character_packet(sender_id, packet.get_move_character())
+	elif packet.has_raise_weapon():
+		_route_raise_weapon_packet(sender_id, packet.get_raise_weapon())
 	elif packet.has_start_firing_weapon():
 		_route_start_firing_weapon_packet(sender_id, packet.get_start_firing_weapon())
 	elif packet.has_stop_firing_weapon():

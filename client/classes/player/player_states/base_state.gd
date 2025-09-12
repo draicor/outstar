@@ -173,6 +173,18 @@ func raise_weapon_and_await(broadcast: bool) -> void:
 	
 	# Get current weapon type
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	var target_state_name: String = weapon_type + "_aim_idle"
+	
+	# Check against trying to raise the gun if already raised
+	if player.player_state_machine.get_current_state_name() == target_state_name:
+		# Release input before completing packet
+		player.is_busy = false
+		# Already in this state, abort
+		if not is_local_player:
+			# Check if this is a raise weapon packet
+			if player.player_packets.get_current_packet_type() == "RaiseWeapon":
+				player.player_packets.complete_packet()
+		return
 	
 	# Play the raise weapon animation
 	await player.player_animator.play_weapon_animation_and_await(
@@ -182,7 +194,7 @@ func raise_weapon_and_await(broadcast: bool) -> void:
 	player.is_busy = true # Block input again because animator released it
 	
 	# Transition to the aim state for this weapon
-	player.player_state_machine.change_state(weapon_type + "_aim_idle")
+	player.player_state_machine.change_state(target_state_name)
 	
 	# If we set it to broadcast and this is our local player
 	if broadcast and is_local_player:
@@ -201,6 +213,18 @@ func lower_weapon_and_await(broadcast: bool) -> void:
 	
 	# Get current weapon type
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	var target_state_name: String = weapon_type + "_down_idle"
+	
+	# Check against trying to lower the gun if already lowered
+	if player.player_state_machine.get_current_state_name() == target_state_name:
+		# Already in this state, abort
+		# Release input before completing packet
+		player.is_busy = false
+		if not is_local_player:
+			# Check if the current packet is a lower weapon packet
+			if player.player_packets.get_current_packet_type() == "LowerWeapon":
+				player.player_packets.complete_packet()
+		return
 	
 	# Play the lower weapon animation
 	await player.player_animator.play_weapon_animation_and_await(
@@ -210,7 +234,7 @@ func lower_weapon_and_await(broadcast: bool) -> void:
 	player.is_busy = true # Block input again because animator released it
 	
 	# Transition to the down state for this weapon
-	player.player_state_machine.change_state(weapon_type + "_down_idle")
+	player.player_state_machine.change_state(target_state_name)
 	
 	# If we set it to broadcast and this is our local player
 	if broadcast and is_local_player:
