@@ -144,13 +144,29 @@ func queue_switch_weapon_action(slot: int) -> void:
 # not in any weapon aim state (can't move while aiming),
 # and the cell is both reachable and available
 func _validate_move_character(destination: Vector2i) -> bool:
-	return (
-		not player.is_busy and
-		not player.player_movement.autopilot_active and
-		not player.is_in_weapon_aim_state() and
-		RegionManager.is_cell_reachable(destination) and 
-		RegionManager.is_cell_available(destination)
-	)
+	# If we are already at this destination
+	if destination == player.player_movement.grid_position:
+		return false
+	# If we are busy
+	if player.is_busy:
+		return false
+	# If we are in autopilot mode
+	if player.player_movement.autopilot_active:
+		return false
+	# If we are weapon aiming
+	if player.is_in_weapon_aim_state():
+		return false
+	# If the cell is not reachable
+	if not RegionManager.is_cell_reachable(destination):
+		return false
+	# If the cell is occupied
+	if not RegionManager.is_cell_available(destination):
+		# If the cell is occupied by someone other than our player
+		if RegionManager.get_object(destination) != player:
+			return false
+	
+	# If we got this far, then we can move!
+	return true
 
 
 func _process_move_character_action(destination: Vector2i) -> void:
@@ -177,8 +193,12 @@ func _process_move_character_action(destination: Vector2i) -> void:
 		destination
 	)
 	
+	# Since we use multi-segment movement, we need to send the immediate destination, not destination
+	var immediate_destination: Vector2i = player.player_movement.immediate_grid_destination
+	
+	
 	# Create the packet
-	_current_action.packet = player.player_packets.create_destination_packet(destination)
+	_current_action.packet = player.player_packets.create_destination_packet(immediate_destination)
 	complete_action(true)
 
 

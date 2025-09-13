@@ -435,3 +435,15 @@ func next_automatic_fire() -> void:
 		# Try to process the next packet and keep shooting
 		player.player_packets.try_process_next_packet()
 		next_automatic_fire()
+
+
+# Helper function to skip input if one of these is valid
+func ignore_input() -> bool:
+	if player.is_busy:
+		return true
+	if player.player_movement.autopilot_active:
+		return true
+	if player.is_mouse_over_ui:
+		return true
+	
+	return false

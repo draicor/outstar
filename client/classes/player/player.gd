@@ -477,9 +477,6 @@ func can_raise_weapon() -> bool:
 	# If we are busy, we can't
 	if is_busy:
 		return false
-	# If our mouse is over UI, we can't
-	if is_mouse_over_ui:
-		return false
 	
 	# Check if we are in the right player state
 	var weapon_type: String = player_equipment.get_current_weapon_type()

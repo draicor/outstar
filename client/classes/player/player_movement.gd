@@ -483,6 +483,7 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		
 		if player.my_player_character:
 			unconfirmed_path.append(immediate_grid_destination)
+			# Use the action queue for the next segment
 			if not autopilot_active:
 				player.player_actions.queue_move_action(immediate_grid_destination)
 		

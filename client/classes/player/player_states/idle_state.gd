@@ -25,8 +25,7 @@ func physics_update(delta: float) -> void:
 
 
 func handle_input(event: InputEvent) -> void:
-	# If we are busy, ignore input
-	if player.is_busy or player.player_movement.autopilot_active:
+	if ignore_input():
 		return
 	
 	if event.is_action_pressed("left_click"):
