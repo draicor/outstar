@@ -61,10 +61,8 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):
-		await reload_weapon_and_await(
-			player.player_equipment.current_slot,
-			player.player_equipment.get_current_weapon_max_ammo(),
-			true
+		player.player_actions.queue_reload_weapon_action(
+			player.player_equipment.get_current_weapon_max_ammo()
 		)
 	
 	# Toggle weapon fire mode

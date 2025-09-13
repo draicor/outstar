@@ -468,13 +468,11 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 # HELPER FUNCTIONS #
 ####################
 
-# Helper method to check if we are in a weapon aim state
 func is_in_weapon_aim_state() -> bool:
 	var current_state: String = player_state_machine.get_current_state_name()
 	return current_state in [player_packets.WEAPON_AIM_STATES]
 
 
-# Helper function to check if we can raise our weapon
 func can_raise_weapon() -> bool:
 	# If we are busy, we can't
 	if is_busy:
@@ -490,7 +488,6 @@ func can_raise_weapon() -> bool:
 	return player_state_machine.get_current_state_name() == target_state_name
 
 
-# Helper function to check if we can lower our weapon
 func can_lower_weapon() -> bool:
 	# If we are busy, we can't
 	if is_busy:
@@ -501,3 +498,38 @@ func can_lower_weapon() -> bool:
 	var target_state_name: String = weapon_type + "_aim_idle"
 	# If our weapon is equipped and raised, we can lower it
 	return player_state_machine.get_current_state_name() == target_state_name
+
+
+func can_reload_weapon() -> bool:
+	if is_busy:
+		return false
+	
+	# CAUTION update this to check if we ammo available
+	return true
+
+
+# Fire weapon has nothing to do with ammo, because we have dry firing
+func can_fire_weapon() -> bool:
+	if is_busy:
+		return false
+	if is_mouse_over_ui:
+		return false
+	
+	# Check if player is in a weapon state
+	var current_state: String = player_state_machine.get_current_state_name()
+	if not current_state in player_packets.WEAPON_AIM_STATES:
+		return false
+	
+	return true
+
+
+func can_toggle_fire_mode() -> bool:
+	return not is_busy
+
+
+func can_switch_weapon(slot: int) -> bool:
+	if is_busy:
+		return false
+	
+	# Allow only if the slot is valid and we aren't already using that slot
+	return player_equipment.is_invalid_weapon_slot(slot) and player_equipment.current_slot != slot

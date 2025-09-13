@@ -99,7 +99,7 @@ func update(_delta: float) -> void:
 			start_automatic_firing(true)
 		else: # Single fire mode
 			var target: Vector3 = player.get_mouse_world_position()
-			single_fire(target, true)
+			player.player_actions.queue_single_fire_action(target)
 		return
 
 
@@ -117,15 +117,13 @@ func handle_input(event: InputEvent) -> void:
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):
 		is_aim_rotating = false
-		await reload_weapon_and_await(
-			player.player_equipment.current_slot,
-			player.player_equipment.get_current_weapon_max_ammo(),
-			true
+		player.player_actions.queue_reload_weapon_action(
+			player.player_equipment.get_current_weapon_max_ammo()
 		)
-		# If we are still holding right click, play the rifle aim idle animation
-		if Input.is_action_pressed("right_click"):
-			player.player_animator.switch_animation("idle")
-			is_aim_rotating = true
+		## If we are still holding right click, play the rifle aim idle animation
+		#if Input.is_action_pressed("right_click"):
+			#player.player_animator.switch_animation("idle")
+			#is_aim_rotating = true
 	
 	# Toggle weapon fire mode
 	elif event.is_action_pressed("weapon_mode"):

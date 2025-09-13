@@ -60,7 +60,6 @@ func complete_action(success: bool) -> void:
 		WebSocket.send(_current_action.packet)
 		_current_action.state = ActionState.COMPLETED
 	else:
-		push_error("Action ", _current_action.action_type ," FAILED")
 		_current_action.state = ActionState.FAILED
 	
 	_current_action = null
@@ -91,10 +90,16 @@ func process_next_action() -> void:
 		"lower_weapon":
 			print("process lower weapon action")
 			_process_lower_weapon_action()
+		"single_fire":
+			print("process single fire action")
+			_process_single_fire_action(_current_action.action_data)
 		"start_firing":
 			print("process start firing action")
 		"stop_firing":
 			print("process stop firing action")
+		"reload_weapon":
+			print("process reload weapon action")
+			_process_reload_weapon_action(_current_action.action_data)
 		_:
 			push_error("Unknown action type: ", _current_action.action_type)
 			complete_action(false)
@@ -112,11 +117,23 @@ func queue_raise_weapon_action() -> void:
 func queue_lower_weapon_action() -> void:
 	add_action("lower_weapon")
 
-func queue_start_firing_action(target: Vector3) -> void:
-	add_action("start_firing", target)
+func queue_single_fire_action(target: Vector3) -> void:
+	add_action("single_fire", target)
+
+func queue_start_firing_action() -> void:
+	add_action("start_firing")
 
 func queue_stop_firing_action() -> void:
 	add_action("stop_firing")
+
+func queue_reload_weapon_action(amount: int) -> void:
+	add_action("reload_weapon", {"amount": amount})
+
+func queue_toggle_fire_mode_action() -> void:
+	add_action("toggle_fire_mode")
+
+func queue_switch_weapon_action(slot: int) -> void:
+	add_action("switch_weapon", slot)
 
 ###################
 # PROCESS ACTIONS #
@@ -204,4 +221,61 @@ func _process_lower_weapon_action() -> void:
 	player.player_state_machine.change_state(target_state_name)
 	# Create the packet
 	_current_action.packet = player.player_packets.create_lower_weapon_packet()
+	complete_action(true)
+
+
+func _process_reload_weapon_action(data: Dictionary) -> void:
+	# Check if we can reload
+	if not player.can_reload_weapon():
+		complete_action(false)
+		return
+	
+	var weapon_slot = player.player_equipment.current_slot
+	var amount = data["amount"]
+	
+	# Perform local actions
+	# Get the weapon type and play its animation
+	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	await player.player_animator.play_weapon_animation_and_await(
+		"reload",
+		weapon_type
+	)
+	# Update local state
+	player.player_equipment.reload_equipped_weapon(amount)
+	
+	# Create the packet
+	_current_action.packet = player.player_packets.create_reload_weapon_packet(weapon_slot, amount)
+	complete_action(true)
+
+
+func _process_single_fire_action(target: Vector3) -> void:
+	# If target is invalid
+	if target == Vector3.ZERO:
+		complete_action(false)
+		return
+	
+	# Check if we can fire regardless of ammo count
+	if not player.can_fire_weapon():
+		complete_action(false)
+		return
+	
+	# Perform local actions
+	# Get weapon data
+	var weapon = player.player_equipment.equipped_weapon
+	var anim_name: String = weapon.get_animation()
+	var play_rate: float = weapon.get_animation_play_rate()
+	
+	# Check if we have ammo
+	var has_ammo: bool = player.player_equipment.can_fire_weapon()
+	
+	# Adjust for dry fire
+	if not has_ammo:
+		play_rate = weapon.semi_fire_rate
+		player.player_state_machine.get_current_state().dry_fired = true
+
+	# Ammo decrement happens from player_equipment.weapon_fire()
+	await player.player_animator.play_animation_and_await(anim_name, play_rate)
+	
+	# Create the packet
+	_current_action.packet = player.player_packets.create_fire_weapon_packet(target, player.player_movement.rotation_target)
 	complete_action(true)

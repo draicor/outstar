@@ -206,11 +206,6 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 		# Get our immediate grid destination (this tick)
 		immediate_grid_destination = predicted_path.back()
 		
-		# CAUTION REMOVED THIS TO TEST
-		# We need to send the packet here ONCE, when movement starts
-		#if player.my_player_character:
-		#	player.player_packets.send_destination_packet(immediate_grid_destination)
-		
 		# If we are in the same cell as the target cell, our predicted_path will have 1 or 0 cells,
 		# instead of moving towards it, we check if we are in range to activate
 		if predicted_path.size() < 2:
@@ -488,9 +483,8 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		
 		if player.my_player_character:
 			unconfirmed_path.append(immediate_grid_destination)
-			# Only send a packet if we are not correcting our position
 			if not autopilot_active:
-				player.player_packets.send_destination_packet(immediate_grid_destination)
+				player.player_actions.queue_move_action(immediate_grid_destination)
 		
 		# Update speed only once per path segment
 		cells_to_move_this_tick = current_path.size()
