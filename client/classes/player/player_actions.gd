@@ -94,6 +94,10 @@ func process_next_action() -> void:
 			print("process stop firing action")
 		"reload_weapon":
 			_process_reload_weapon_action(_current_action.action_data)
+		"toggle_fire_mode":
+			_process_toggle_fire_mode_action()
+		"switch_weapon":
+			print("process switch weapon action")
 		_:
 			push_error("Unknown action type: ", _current_action.action_type)
 			complete_action(false)
@@ -235,6 +239,17 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	# Update local state
 	player.player_equipment.reload_equipped_weapon(amount)
 	
+	# If we are still holding right click after reloading
+	if Input.is_action_pressed("right_click"):
+		# Play the rifle aim idle animation
+		player.player_animator.switch_animation("idle")
+		# Enable aim rotation
+		player.player_state_machine.get_current_state().is_aim_rotating = true
+	# If we released the right click
+	else:
+		# Queue lowering the rifle
+		queue_lower_weapon_action()
+	
 	# Create the packet
 	_current_action.packet = player.player_packets.create_reload_weapon_packet(weapon_slot, amount)
 	complete_action(true)
@@ -270,4 +285,19 @@ func _process_single_fire_action(target: Vector3) -> void:
 	
 	# Create the packet
 	_current_action.packet = player.player_packets.create_fire_weapon_packet(target, player.player_movement.rotation_target)
+	complete_action(true)
+
+
+func _process_toggle_fire_mode_action() -> void:
+	# Check if we can toggle fire mode
+	if not player.can_toggle_fire_mode():
+		complete_action(false)
+		return
+	
+	# Perform local actions
+	player.player_audio.play_weapon_fire_mode_selector()
+	player.player_equipment.toggle_fire_mode()
+	
+	# Create the packet
+	_current_action.packet = player.player_packets.create_toggle_fire_mode_packet()
 	complete_action(true)

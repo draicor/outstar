@@ -33,6 +33,7 @@ func handle_input(event: InputEvent) -> void:
 				player.start_interaction(target)
 			# Add other types of target classes later
 		
-		# If we didn't click on anything interactable, then attempt to move to that cell
+		# If we didn't click on anything interactable
 		else:
+			# Attempt to move to that cell (uses the action queue internally)
 			player.handle_movement_click(mouse_position)

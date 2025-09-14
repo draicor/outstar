@@ -318,6 +318,7 @@ func handle_movement_click(mouse_position: Vector2) -> void:
 	# If moving
 	else:
 		# Store the new path for later user, skipping the first cell
+		# No need to add it to the queue, the player_movement system does this automatically
 		player_movement.next_tick_predicted_path = path.slice(1)
 	
 	# Overwrite our current local grid destination
@@ -547,7 +548,17 @@ func can_fire_weapon() -> bool:
 
 
 func can_toggle_fire_mode() -> bool:
-	return not is_busy
+	if is_busy:
+		return false
+	if player_movement.autopilot_active:
+		return false
+	if player_equipment.equipped_weapon_name == "unarmed":
+		return false
+	if player_equipment.equipped_weapon:
+		if not player_equipment.equipped_weapon.has_method("set_fire_mode"):
+			return false
+	
+	return true
 
 
 func can_switch_weapon(slot: int) -> bool:

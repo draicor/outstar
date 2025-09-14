@@ -54,18 +54,20 @@ func handle_input(event: InputEvent) -> void:
 		else:
 			# If we are not busy now
 			if not player.is_busy:
-				# Attempt to move
+				# Attempt to move to that cell (uses the action queue internally)
 				player.handle_movement_click(mouse_position)
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):
+		# We raise our weapon first, then reload
+		player.player_actions.queue_raise_weapon_action()
 		player.player_actions.queue_reload_weapon_action(
 			player.player_equipment.get_current_weapon_max_ammo()
 		)
 	
 	# Toggle weapon fire mode
 	elif event.is_action_pressed("weapon_mode"):
-		toggle_fire_mode(true)
+		player.player_actions.queue_toggle_fire_mode_action()
 	
 	# Unequip rifle
 	elif event.is_action_pressed("weapon_unequip"):

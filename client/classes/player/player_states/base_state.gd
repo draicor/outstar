@@ -16,6 +16,7 @@ var rotation_sync_timer: float = 0.0
 var last_sent_rotation: float = 0.0
 var rotation_timer_interval: float = AIM_ROTATION_INTERVAL
 const ROTATION_CHANGE_THRESHOLD: float = 0.1 # radians
+var is_aim_rotating: bool = false
 # Weapon firing
 var dry_fired: bool = false
 # Firearm automatic firing

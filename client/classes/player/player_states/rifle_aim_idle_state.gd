@@ -2,7 +2,6 @@ extends BaseState
 class_name RifleAimIdleState
 
 var last_target_point: Vector3 = Vector3.ZERO
-var is_aim_rotating: bool = false
 var mouse_captured: bool = false
 
 
@@ -81,7 +80,8 @@ func update(_delta: float) -> void:
 	
 	# Handle lower weapon
 	if not Input.is_action_pressed("right_click"):
-		is_aim_rotating = false # Prevent rotation
+		# Prevent rotation while lowering weapon
+		is_aim_rotating = false
 		player.player_actions.queue_lower_weapon_action()
 		return
 	
@@ -111,15 +111,12 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):
+		# Prevent rotation while reloading
 		is_aim_rotating = false
 		player.player_actions.queue_reload_weapon_action(
 			player.player_equipment.get_current_weapon_max_ammo()
 		)
-		## If we are still holding right click, play the rifle aim idle animation
-		#if Input.is_action_pressed("right_click"):
-			#player.player_animator.switch_animation("idle")
-			#is_aim_rotating = true
 	
 	# Toggle weapon fire mode
 	elif event.is_action_pressed("weapon_mode"):
-		toggle_fire_mode(true)
+		player.player_actions.queue_toggle_fire_mode_action()
