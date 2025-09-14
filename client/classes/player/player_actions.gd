@@ -170,6 +170,11 @@ func _validate_move_character(destination: Vector2i) -> bool:
 
 
 func _process_move_character_action(destination: Vector2i) -> void:
+	# If we are already at this destination
+	if destination == player.player_movement.grid_position:
+		complete_action(false)
+		return
+	
 	if not _validate_move_character(destination):
 		complete_action(false)
 		return
@@ -195,7 +200,6 @@ func _process_move_character_action(destination: Vector2i) -> void:
 	
 	# Since we use multi-segment movement, we need to send the immediate destination, not destination
 	var immediate_destination: Vector2i = player.player_movement.immediate_grid_destination
-	
 	
 	# Create the packet
 	_current_action.packet = player.player_packets.create_destination_packet(immediate_destination)

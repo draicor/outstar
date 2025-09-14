@@ -194,10 +194,12 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 		return
 	
 	# Different handling based on current movement state
-	# When already moving, append to existing path
+	# When already moving, queue the new movement action
 	if in_motion:
-		next_tick_predicted_path = prediction.slice(1) # Account for current cell
 		grid_destination = target_position
+		# Store the new path for later user, account for current cell
+		next_tick_predicted_path = prediction.slice(1)
+		return
 	
 	# When starting from idle
 	else:
@@ -277,8 +279,9 @@ func _start_new_movement(target_position: Vector2i) -> void:
 func _update_existing_movement(target_position: Vector2i) -> void:
 	var prediction: Array[Vector2i] = predict_path(immediate_grid_destination, target_position)
 	if prediction.size() > 0:
-		next_tick_predicted_path = prediction.slice(1) # Remove starting cell
 		grid_destination = target_position
+		# Remove starting cell since we are already moving
+		next_tick_predicted_path = prediction.slice(1)
 
 
 # Returns true if the next step is going to be a diagonal step
@@ -483,9 +486,6 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		
 		if player.my_player_character:
 			unconfirmed_path.append(immediate_grid_destination)
-			# Use the action queue for the next segment
-			if not autopilot_active:
-				player.player_actions.queue_move_action(immediate_grid_destination)
 		
 		# Update speed only once per path segment
 		cells_to_move_this_tick = current_path.size()
@@ -650,8 +650,10 @@ func click_to_move(new_destination: Vector2i) -> void:
 	player.pending_interaction = null
 	
 	if in_motion:
+		# If we're already moving, just update the destination
 		_update_existing_movement(new_destination)
 	else:
+		 # If we're not moving, start a new movement
 		_start_new_movement(new_destination)
 
 
