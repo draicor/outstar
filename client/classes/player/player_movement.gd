@@ -16,7 +16,6 @@ const ANGLE_THRESHOLD: float = 0.01 # Radians threshold for considering rotation
 
 # Signals
 signal rotation_completed
-signal movement_completed
 
 # Tick related data
 var movement_tick: float = SERVER_TICK # Defaults to server_tick
@@ -196,8 +195,7 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 	# Different handling based on current movement state
 	# When already moving, queue the new movement action
 	if in_motion:
-		grid_destination = target_position
-		# Store the new path for later user, account for current cell
+		# Store the new path for later user, skipping the first cell
 		next_tick_predicted_path = prediction.slice(1)
 		return
 	
@@ -367,8 +365,8 @@ func handle_server_reconciliation(new_server_position: Vector2i) -> void:
 	server_grid_position = new_server_position
 	
 	if _prediction_was_valid(unconfirmed_path.duplicate(), new_server_position):
-		# If the server position is the same as our final destination, clear our path
-		if new_server_position == grid_destination:
+		# If the server position matches our immediate destination, clear the unconfirmed path
+		if new_server_position == immediate_grid_destination:
 			unconfirmed_path = []
 		
 		# If our prediction has been valid, then don't do anything
@@ -439,12 +437,13 @@ func process_movement_step(delta: float) -> void:
 		_interpolate_position(delta)
 		return
 	
-	_update_grid_position() # locally
+	# We already moved to the next cell, so we update
+	_update_grid_position()
 	
 	if player.my_player_character and is_predicting:
 		_process_path_segment(delta, predicted_path, next_tick_predicted_path)
 	else:
-		# We need to update the locomotion animation before _process_path_segment
+		# We need to update the locomotion animation for remote players BEFORE _process_path_segment
 		if not player.my_player_character:
 			player.player_animator.update_locomotion_animation(cells_to_move_this_tick)
 		# This has to be after update_locomotion_animation(),
@@ -486,6 +485,11 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		
 		if player.my_player_character:
 			unconfirmed_path.append(immediate_grid_destination)
+			# CAUTION
+			# This is working for local players, but will break remote players,
+			# if we attempt to use the action queue for remote player movement
+			# We queue the next action here instead of moving right away
+			player.player_actions.queue_move_action(immediate_grid_destination)
 		
 		# Update speed only once per path segment
 		cells_to_move_this_tick = current_path.size()
@@ -516,15 +520,6 @@ func complete_movement() -> void:
 				return # Stop here to prevent movement reset
 	
 	_finalize_movement()
-	
-	movement_completed.emit() # CAUTION I don't remember where this is being used
-	
-	# If this is a remote player
-	#if not player.my_player_character:
-		#if player.player_packets.is_processing_packet():
-			## If we were processing a MoveCharacter packet, complete it
-			#if player.player_packets._current_packet is Packets.MoveCharacter:
-				#player.player_packets.complete_packet()
 
 
 # Movement cleanup and executes the post movement logic
@@ -630,7 +625,6 @@ func teleport_to_position(new_grid_position: Vector2i) -> void:
 
 # Attempts to predict a path towards that cell to move our character,
 # but only if the cell is reachable and available
-# THIS FUNCTION ONLY GETS USED IN MY LOCAL PLAYER, NOT FOR REMOTE PLAYERS
 func click_to_move(new_destination: Vector2i) -> void:
 	# If player is busy, don't move
 	if player.is_busy:

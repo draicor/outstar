@@ -3,7 +3,6 @@ class_name PlayerActions
 
 # Preloading scripts
 const Packets: GDScript = preload("res://packets.gd")
-const Pathfinding: GDScript = preload("res://classes/pathfinding/pathfinding.gd")
 
 var player: Player = null # Our parent node
 
@@ -82,23 +81,18 @@ func process_next_action() -> void:
 	# Process based on action type
 	match _current_action.action_type:
 		"move":
-			print("process move action")
 			_process_move_character_action(_current_action.action_data)
 		"raise_weapon":
-			print("process raise weapon action")
 			_process_raise_weapon_action()
 		"lower_weapon":
-			print("process lower weapon action")
 			_process_lower_weapon_action()
 		"single_fire":
-			print("process single fire action")
 			_process_single_fire_action(_current_action.action_data)
 		"start_firing":
 			print("process start firing action")
 		"stop_firing":
 			print("process stop firing action")
 		"reload_weapon":
-			print("process reload weapon action")
 			_process_reload_weapon_action(_current_action.action_data)
 		_:
 			push_error("Unknown action type: ", _current_action.action_type)
@@ -144,12 +138,6 @@ func queue_switch_weapon_action(slot: int) -> void:
 # not in any weapon aim state (can't move while aiming),
 # and the cell is both reachable and available
 func _validate_move_character(destination: Vector2i) -> bool:
-	# If we are already at this destination
-	if destination == player.player_movement.grid_position:
-		return false
-	# If we are busy
-	if player.is_busy:
-		return false
 	# If we are in autopilot mode
 	if player.player_movement.autopilot_active:
 		return false
@@ -159,9 +147,8 @@ func _validate_move_character(destination: Vector2i) -> bool:
 	# If the cell is not reachable
 	if not RegionManager.is_cell_reachable(destination):
 		return false
-	# If the cell is occupied
+	# If the cell is occupied by someone other than our player
 	if not RegionManager.is_cell_available(destination):
-		# If the cell is occupied by someone other than our player
 		if RegionManager.get_object(destination) != player:
 			return false
 	
@@ -169,40 +156,21 @@ func _validate_move_character(destination: Vector2i) -> bool:
 	return true
 
 
-func _process_move_character_action(destination: Vector2i) -> void:
-	# If we are already at this destination
-	if destination == player.player_movement.grid_position:
+func _process_move_character_action(new_destination: Vector2i) -> void:
+	# If the movement action is not valid
+	if not _validate_move_character(new_destination):
 		complete_action(false)
 		return
 	
-	if not _validate_move_character(destination):
-		complete_action(false)
-		return
-	
-	# Pathfind and movement setup
-	var path = Pathfinding.find_path(
-		player.player_movement.grid_position,
-		destination,
-		RegionManager.grid_width,
-		RegionManager.grid_height,
-		player
-	)
-	
-	if path.is_empty():
-		complete_action(false)
-		return
-	
-	# Set up movement locally
-	player.player_movement.start_movement_towards(
-		player.player_movement.grid_position,
-		destination
-	)
-	
-	# Since we use multi-segment movement, we need to send the immediate destination, not destination
-	var immediate_destination: Vector2i = player.player_movement.immediate_grid_destination
+	# If we are idling, we start movement locally
+	if not player.player_movement.in_motion:
+		player.player_movement.start_movement_towards(
+			player.player_movement.immediate_grid_destination,
+			new_destination
+		)
 	
 	# Create the packet
-	_current_action.packet = player.player_packets.create_destination_packet(immediate_destination)
+	_current_action.packet = player.player_packets.create_destination_packet(player.player_movement.immediate_grid_destination)
 	complete_action(true)
 
 

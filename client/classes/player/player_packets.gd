@@ -235,15 +235,6 @@ func get_current_packet_type() -> String:
 
 # Determines if the current packet can be processed right away
 func can_process_packet() -> bool:
-	# Don't process packets if player is busy
-	if player.is_busy:
-		push_error("player is busy in can_process_packet")
-		return false
-	# Don't process packets if autopilot is active
-	if player.player_movement.autopilot_active:
-		push_error("autopilot active")
-		return false
-	
 	# Get current state name
 	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
@@ -551,8 +542,8 @@ func _process_move_character_packet(packet: Packets.MoveCharacter) -> void:
 	# Add the player to the new position in my local grid
 	RegionManager.set_object(server_position, self)
 	
-	# Only do the reconciliation for my player, not the other players
-	if player.my_player_character and player.player_movement.is_predicting:
+	# Only do the reconciliation for my player
+	if player.my_player_character:
 		player.player_movement.handle_server_reconciliation(server_position)
 	# Remote players are always in sync with the server
 	else:

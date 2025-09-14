@@ -202,7 +202,7 @@ func play_animation_and_await(animation_name: String, play_rate: float = 1.0) ->
 		# awaiting play_animation_and_await() too for it to work
 		await animation_player.animation_finished
 	else:
-		print(animation_name, " animation not found.")
+		push_error(animation_name, " animation not found.")
 	
 	if player.my_player_character:
 		player.is_busy = false

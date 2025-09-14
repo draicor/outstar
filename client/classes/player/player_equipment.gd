@@ -152,7 +152,7 @@ func equip_weapon(weapon_name: String) -> void:
 			# Initialize the weapon sounds for this weapon
 			player.player_audio.setup_weapon_audio_players(weapon_name)
 	else:
-		print("Weapon %s (%s) not found" % [weapon_name, weapon_types[weapon_name]])
+		push_error("Weapon %s (%s) not found" % [weapon_name, weapon_types[weapon_name]])
 
 
 # Stops left hand IK and removes our equipped weapon

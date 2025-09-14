@@ -242,7 +242,7 @@ func _send_client_entered_packet() -> bool:
 
 func _handle_request_denied_packet(reason: String) -> void:
 	# Just jog the error to console for now
-	print(reason)
+	push_error(reason)
 	
 	# TO UPGRADE
 	# We need to have a Callable that we assign a different function

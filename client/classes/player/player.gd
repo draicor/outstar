@@ -1,7 +1,8 @@
 extends CharacterBody3D
 class_name Player
 
-
+# Preloading scripts
+const Pathfinding: GDScript = preload("res://classes/pathfinding/pathfinding.gd")
 # Preloading scenes
 const player_scene: PackedScene = preload("res://objects/player/player.tscn")
 
@@ -289,13 +290,38 @@ func handle_movement_click(mouse_position: Vector2) -> void:
 	var local_point : Vector3 = mouse_raycast(mouse_position)
 	# If the point was invalid, exit
 	if local_point == Vector3.ZERO: return
-		
+	
 	# Transform the local space position to our grid coordinate
 	var new_destination: Vector2i = Utils.local_to_map(local_point)
 	
-	# CAUTION removed this to test
-	#player_movement.click_to_move(new_destination)
-	player_actions.queue_move_action(new_destination)
+	# If we are already there or moving there, ignore
+	if new_destination == player_movement.immediate_grid_destination:
+		return
+	
+	# Pathfind and movement setup
+	var path = Pathfinding.find_path(
+		player_movement.immediate_grid_destination,
+		new_destination,
+		RegionManager.grid_width,
+		RegionManager.grid_height,
+		self
+	)
+	
+	if path.is_empty():
+		return
+	
+	# If not moving
+	if not player_movement.in_motion:
+		# NOTE we only queue the action if we were idling
+		player_actions.queue_move_action(new_destination)
+	
+	# If moving
+	else:
+		# Store the new path for later user, skipping the first cell
+		player_movement.next_tick_predicted_path = path.slice(1)
+	
+	# Overwrite our current local grid destination
+	player_movement.grid_destination = new_destination
 
 
 # Detects and returns target after mouse click, if valid
