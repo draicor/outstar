@@ -195,7 +195,8 @@ func raise_weapon_and_await(broadcast: bool) -> void:
 	player.is_busy = true # Block input again because animator released it
 	
 	# Transition to the aim state for this weapon
-	player.player_state_machine.change_state(target_state_name)
+	if target_state_name != player.player_state_machine.get_current_state_name():
+		player.player_state_machine.change_state(target_state_name)
 	
 	# If we set it to broadcast and this is our local player
 	if broadcast and is_local_player:
@@ -235,7 +236,8 @@ func lower_weapon_and_await(broadcast: bool) -> void:
 	player.is_busy = true # Block input again because animator released it
 	
 	# Transition to the down state for this weapon
-	player.player_state_machine.change_state(target_state_name)
+	if target_state_name != player.player_state_machine.get_current_state_name():
+		player.player_state_machine.change_state(target_state_name)
 	
 	# If we set it to broadcast and this is our local player
 	if broadcast and is_local_player:

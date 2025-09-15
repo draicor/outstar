@@ -64,7 +64,7 @@ func change_state(new_state_name: String) -> void:
 	if current_state:
 		# If we are already in this state, ignore
 		if current_state == new_state:
-			push_error("Trying to switch to same state", current_state)
+			push_error("Trying to switch to same state: ", current_state)
 			return
 		
 		# Exit current state

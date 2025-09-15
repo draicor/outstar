@@ -55,8 +55,10 @@ func complete_action(success: bool) -> void:
 		return
 	
 	if success and _current_action.packet:
-		# Send the packet
-		WebSocket.send(_current_action.packet)
+		# Send the packet only if this is my local character
+		if player.my_player_character:
+			WebSocket.send(_current_action.packet)
+		
 		_current_action.state = ActionState.COMPLETED
 	else:
 		_current_action.state = ActionState.FAILED
@@ -89,15 +91,17 @@ func process_next_action() -> void:
 		"single_fire":
 			_process_single_fire_action(_current_action.action_data)
 		"start_firing":
-			_process_start_firing_action()
+			_process_start_firing_action(_current_action.action_data)
 		"stop_firing":
-			_process_stop_firing_action()
+			_process_stop_firing_action(_current_action.action_data)
 		"reload_weapon":
 			_process_reload_weapon_action(_current_action.action_data)
 		"toggle_fire_mode":
 			_process_toggle_fire_mode_action()
 		"switch_weapon":
 			_process_switch_weapon_action(_current_action.action_data)
+		"rotate":
+			_process_rotate_action(_current_action.action_data)
 		_:
 			push_error("Unknown action type: ", _current_action.action_type)
 			complete_action(false)
@@ -118,11 +122,11 @@ func queue_lower_weapon_action() -> void:
 func queue_single_fire_action(target: Vector3) -> void:
 	add_action("single_fire", target)
 
-func queue_start_firing_action() -> void:
-	add_action("start_firing")
+func queue_start_firing_action(ammo: int) -> void:
+	add_action("start_firing", ammo)
 
-func queue_stop_firing_action() -> void:
-	add_action("stop_firing")
+func queue_stop_firing_action(server_shots_fired: int) -> void:
+	add_action("stop_firing", server_shots_fired)
 
 func queue_reload_weapon_action(amount: int) -> void:
 	add_action("reload_weapon", {"amount": amount})
@@ -132,6 +136,9 @@ func queue_toggle_fire_mode_action() -> void:
 
 func queue_switch_weapon_action(slot: int) -> void:
 	add_action("switch_weapon", slot)
+
+func queue_rotate_action(rotation_y: float) -> void:
+	add_action("rotate", rotation_y)
 
 ###################
 # PROCESS ACTIONS #
@@ -191,9 +198,13 @@ func _process_raise_weapon_action() -> void:
 		"down_to_aim",
 		weapon_type
 	)
-	# Switch to this weapon state
+	
+	# Switch to the appropiate state based on weapon type
 	var target_state_name: String = weapon_type + "_aim_idle"
-	player.player_state_machine.change_state(target_state_name)
+	# If we are not already in the same state
+	if target_state_name != player.player_state_machine.get_current_state_name():
+		player.player_state_machine.change_state(target_state_name)
+	
 	# Create the packet
 	_current_action.packet = player.player_packets.create_raise_weapon_packet()
 	complete_action(true)
@@ -212,9 +223,13 @@ func _process_lower_weapon_action() -> void:
 		"aim_to_down",
 		weapon_type
 	)
-	# Switch to this weapon state
+	
+	# Switch to the appropiate state based on weapon type
 	var target_state_name: String = weapon_type + "_down_idle"
-	player.player_state_machine.change_state(target_state_name)
+	# If we are not already in the same state
+	if target_state_name != player.player_state_machine.get_current_state_name():
+		player.player_state_machine.change_state(target_state_name)
+	
 	# Create the packet
 	_current_action.packet = player.player_packets.create_lower_weapon_packet()
 	complete_action(true)
@@ -340,18 +355,17 @@ func _process_switch_weapon_action(slot: int) -> void:
 		player.player_equipment.hide_weapon_hud()
 	
 	# Switch to the appropiate state based on weapon type
-	var weapon_state: String = player.player_equipment.get_weapon_state_by_weapon_type(current_weapon_type)
-	if weapon_state != "":
-		# If we are not already in the same state (switching from one rifle to another rifle for example)
-		if weapon_state != player.player_state_machine.get_current_state_name():
-			player.player_state_machine.change_state(weapon_state)
+	var target_state_name: String = player.player_equipment.get_weapon_state_by_weapon_type(current_weapon_type)
+	# If we are not already in the same state (switching from one rifle to another rifle for example)
+	if target_state_name != player.player_state_machine.get_current_state_name():
+		player.player_state_machine.change_state(target_state_name)
 	
 	# Create the packet
 	_current_action.packet = player.player_packets.create_switch_weapon_packet(slot)
 	complete_action(true)
 
 
-func _process_start_firing_action() -> void:
+func _process_start_firing_action(ammo: int) -> void:
 	# Check if we can start firing
 	if not player.can_start_firing():
 		complete_action(false)
@@ -375,6 +389,7 @@ func _process_start_firing_action() -> void:
 		return
 	
 	# Perform local actions
+	player.player_equipment.set_current_ammo(ammo)
 	current_state.start_automatic_firing(false)
 	
 	# Create the packet
@@ -385,7 +400,7 @@ func _process_start_firing_action() -> void:
 	complete_action(true)
 
 
-func _process_stop_firing_action() -> void:
+func _process_stop_firing_action(server_shots_fired: int) -> void:
 	# Check if we can stop firing
 	var current_state: BaseState = player.player_state_machine.get_current_state()
 	if not current_state:
@@ -397,6 +412,7 @@ func _process_stop_firing_action() -> void:
 		return
 	
 	# Perform local actions
+	current_state.server_shots_fired = server_shots_fired
 	current_state.stop_automatic_firing(false)
 	
 	# Create the packet
@@ -404,4 +420,14 @@ func _process_stop_firing_action() -> void:
 		player.player_movement.rotation_target,
 		current_state.shots_fired
 	)
+	complete_action(true)
+
+
+func _process_rotate_action(rotation_y: float) -> void:
+	# Set the rotation target
+	player.player_movement.rotation_target = rotation_y
+	player.player_movement.is_rotating = true
+	
+	# Create the packet
+	_current_action.packet = player.player_packets.create_rotate_character_packet(rotation_y)
 	complete_action(true)

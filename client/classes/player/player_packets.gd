@@ -83,6 +83,10 @@ func reset_packet_timeout() -> void:
 func get_packet_type(packet: Variant) -> String:
 	var packet_type: String = "Unknown"
 	
+	# If the packet is not valid, ignore
+	if not packet:
+		return packet_type
+	
 	if packet is Packets.MoveCharacter:
 		packet_type = "MoveCharacter"
 	elif packet is Packets.LowerWeapon:
@@ -231,6 +235,13 @@ func get_current_packet_type() -> String:
 	if packet:
 		return get_packet_type(get_current_packet())
 	return "Unknown"
+
+
+func route_packet_to_action_queue(action_type: String, action_data: Variant = null) -> void:
+	# Add the action to the queue
+	player.player_actions.add_action(action_type, action_data)
+	# Complete the packet immediately since we already queued the action
+	complete_packet()
 
 
 # Determines if the current packet can be processed right away
@@ -568,54 +579,19 @@ func _process_update_speed_packet(packet: Packets.UpdateSpeed) -> void:
 
 
 func _process_switch_weapon_packet(packet: Packets.SwitchWeapon) -> void:
-	var slot = packet.get_slot()
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	
-	if current_state:
-		# Call without broadcast since this came from server
-		current_state.switch_weapon(slot, false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		complete_packet()
+	route_packet_to_action_queue("switch_weapon", packet.get_slot())
 
 
 func _process_reload_weapon_packet(packet: Packets.ReloadWeapon) -> void:
-	var slot = packet.get_slot()
-	var amount = packet.get_amount()
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	
-	if current_state:
-		# Call without broadcast since this came from server
-		await current_state.reload_weapon_and_await(slot, amount, false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		complete_packet()
+	route_packet_to_action_queue("reload_weapon", {"amount": packet.get_amount()})
 
 
 func _process_raise_weapon_packet() -> void:
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	
-	if current_state:
-		# Call without broadcast since this came from server
-		await current_state.raise_weapon_and_await(false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		complete_packet()
+	route_packet_to_action_queue("raise_weapon")
 
 
 func _process_lower_weapon_packet() -> void:
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	
-	if current_state:
-		# Call without broadcast since this came from server
-		await current_state.lower_weapon_and_await(false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		complete_packet()
+	route_packet_to_action_queue("lower_weapon")
 
 
 func _process_rotate_character_packet(packet: Packets.RotateCharacter) -> void:
@@ -646,50 +622,21 @@ func _process_fire_weapon_packet(packet: Packets.FireWeapon) -> void:
 
 
 func _process_toggle_fire_mode_packet() -> void:
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	
-	if current_state:
-		# Call without broadcast since this came from server
-		current_state.toggle_fire_mode(false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		complete_packet()
+	route_packet_to_action_queue("toggle_fire_mode")
 
 
 func _process_start_firing_weapon_packet(packet: Packets.StartFiringWeapon) -> void:
-	var current_state: BaseState = player.player_state_machine.get_current_state()
+	# We queue rotation before queuing start firing action
+	player.player_actions.add_action("rotate", packet.get_rotation_y())
+	player.player_actions.add_action("start_firing", packet.get_ammo())
 	
-	if current_state:
-		# Extract shooter's rotation from the packet
-		var rotation_y: float = packet.get_rotation_y()
-		# Update rotation before shooting
-		player.player_movement.rotation_target = rotation_y
-		player.player_movement.is_rotating = true
-		# Extract the shooter's current ammo from the packet
-		player.player_equipment.set_current_ammo(packet.get_ammo())
-		# Call without broadcast since this came from server
-		current_state.start_automatic_firing(false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		complete_packet()
+	complete_packet()
 
 
 func process_stop_firing_weapon_packet(packet: Packets.StopFiringWeapon) -> void:
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	
-	if current_state:
-		# Extract shooter's rotation from the packet
-		var rotation_y: float = packet.get_rotation_y()
-		# Update rotation before shooting
-		player.player_movement.rotation_target = rotation_y
-		player.player_movement.is_rotating = true
-		# Extract the amount of shots taken until we stopped to keep remote players synced
-		var server_shots_fired: int = packet.get_shots_fired()
-		current_state.server_shots_fired = server_shots_fired
-		# Call without broadcast since this came from server
-		current_state.stop_automatic_firing(false)
+	# We queue rotation before queueing stop firing action
+	player.player_actions.add_action("rotate", packet.get_rotation_y())
+	player.player_actions.add_action("stop_firing", packet.get_shots_fired())
 	
 	# Always complete the packet after processing
 	complete_packet()
