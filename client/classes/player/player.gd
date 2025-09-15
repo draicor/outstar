@@ -564,6 +564,11 @@ func can_toggle_fire_mode() -> bool:
 func can_switch_weapon(slot: int) -> bool:
 	if is_busy:
 		return false
+	if player_movement.autopilot_active:
+		return false
+	if player_equipment.current_slot == slot:
+		return false
+	if player_equipment.is_invalid_weapon_slot(slot):
+		return false
 	
-	# Allow only if the slot is valid and we aren't already using that slot
-	return player_equipment.is_invalid_weapon_slot(slot) and player_equipment.current_slot != slot
+	return true

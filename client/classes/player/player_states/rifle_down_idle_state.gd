@@ -73,14 +73,14 @@ func handle_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("weapon_unequip"):
 		switch_weapon(0, true) # Unarmed
 	
-	# Weapon switch
+	# Switch Weapon
 	elif event.is_action_pressed("weapon_one"): # Unarmed
-		switch_weapon(0, true)
+		player.player_actions.queue_switch_weapon_action(0)
 	elif event.is_action_pressed("weapon_two"):
-		switch_weapon(1, true)
+		player.player_actions.queue_switch_weapon_action(1)
 	elif event.is_action_pressed("weapon_three"):
-		switch_weapon(2, true)
+		player.player_actions.queue_switch_weapon_action(2)
 	elif event.is_action_pressed("weapon_four"):
-		switch_weapon(3, true)
+		player.player_actions.queue_switch_weapon_action(3)
 	elif event.is_action_pressed("weapon_five"):
-		switch_weapon(4, true)
+		player.player_actions.queue_switch_weapon_action(4)

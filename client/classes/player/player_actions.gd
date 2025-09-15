@@ -97,7 +97,7 @@ func process_next_action() -> void:
 		"toggle_fire_mode":
 			_process_toggle_fire_mode_action()
 		"switch_weapon":
-			print("process switch weapon action")
+			_process_switch_weapon_action(_current_action.action_data)
 		_:
 			push_error("Unknown action type: ", _current_action.action_type)
 			complete_action(false)
@@ -300,4 +300,52 @@ func _process_toggle_fire_mode_action() -> void:
 	
 	# Create the packet
 	_current_action.packet = player.player_packets.create_toggle_fire_mode_packet()
+	complete_action(true)
+
+
+func _process_switch_weapon_action(slot: int) -> void:
+	# Check if we can switch weapons
+	if not player.can_switch_weapon(slot):
+		complete_action(false)
+		return
+	
+	# Perform local actions
+	# Get current weapon type for animation
+	var current_weapon_type: String = player.player_equipment.get_current_weapon_type()
+	
+	# If we have a weapon equipped, play unequip animation
+	if current_weapon_type != "unarmed":
+		await player.player_animator.play_weapon_animation_and_await(
+			"unequip",
+			current_weapon_type
+		)
+	
+	# Switch weapons
+	player.player_equipment.switch_weapon_by_slot(slot)
+	
+	# Get new weapon type
+	current_weapon_type = player.player_equipment.get_current_weapon_type()
+	
+	# If we are switching to a weapon, play equip animation
+	if current_weapon_type != "unarmed":
+		await player.player_animator.play_weapon_animation_and_await(
+			"equip",
+			current_weapon_type
+		)
+	
+	# Update HUD
+	if current_weapon_type != "unarmed":
+		player.player_equipment.show_weapon_hud()
+	else:
+		player.player_equipment.hide_weapon_hud()
+	
+	# Switch to the appropiate state based on weapon type
+	var weapon_state: String = player.player_equipment.get_weapon_state_by_weapon_type(current_weapon_type)
+	if weapon_state != "":
+		# If we are not already in the same state (switching from one rifle to another rifle for example)
+		if weapon_state != player.player_state_machine.get_current_state_name():
+			player.player_state_machine.change_state(weapon_state)
+	
+	# Create the packet
+	_current_action.packet = player.player_packets.create_switch_weapon_packet(slot)
 	complete_action(true)
