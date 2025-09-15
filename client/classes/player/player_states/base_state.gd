@@ -311,10 +311,12 @@ func toggle_fire_mode(broadcast: bool) -> void:
 
 
 func start_automatic_firing(broadcast: bool) -> void:
-	if is_local_player and broadcast:
-		# Send our current rotation and also our remaining ammo on the currently equipped weapon
-		player.player_packets.send_start_firing_weapon_packet(player.player_movement.rotation_target, player.player_equipment.get_current_ammo())
-		# Reduce the rotation timer interval by half because we want accurate aiming
+	if is_local_player:
+		if broadcast:
+			# Send our current rotation and also our remaining ammo on the currently equipped weapon
+			player.player_packets.send_start_firing_weapon_packet(player.player_movement.rotation_target, player.player_equipment.get_current_ammo())
+		
+		# Reduce the rotation timer interval to rotate more often
 		rotation_timer_interval = FIRING_ROTATION_INTERVAL
 	
 	is_auto_firing = true
@@ -326,12 +328,16 @@ func start_automatic_firing(broadcast: bool) -> void:
 
 
 func stop_automatic_firing(broadcast: bool) -> void:
-	if is_local_player and broadcast:
-		player.player_packets.send_stop_firing_weapon_packet(player.player_movement.rotation_target, shots_fired)
-		shots_fired = 0 # Reset the local shots_fired variable after sending the packet
+	if is_local_player:
+		if broadcast:
+			player.player_packets.send_stop_firing_weapon_packet(player.player_movement.rotation_target, shots_fired)
+		
+		# Reset the local shots_fired variable after sending the packet
+		shots_fired = 0
 		# Increase the rotation update interval since we are no longer firing
 		rotation_timer_interval = AIM_ROTATION_INTERVAL
 		is_auto_firing = false
+		dry_fired = false
 	
 	# If remote player
 	if not is_local_player:

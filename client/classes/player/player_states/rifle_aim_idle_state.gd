@@ -92,7 +92,7 @@ func update(_delta: float) -> void:
 			return
 		
 		if player.player_equipment.get_fire_mode() == 1: # Automatic mode
-			start_automatic_firing(true)
+			player.player_actions.queue_start_firing_action()
 		else: # Single fire mode
 			var target: Vector3 = player.get_mouse_world_position()
 			player.player_actions.queue_single_fire_action(target)
@@ -106,8 +106,7 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Track trigger release
 	if event.is_action_released("left_click"):
-		stop_automatic_firing(true)
-		dry_fired = false
+		player.player_actions.queue_stop_firing_action()
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):

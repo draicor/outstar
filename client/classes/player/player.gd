@@ -536,12 +536,16 @@ func can_reload_weapon() -> bool:
 func can_fire_weapon() -> bool:
 	if is_busy:
 		return false
+	if player_movement.autopilot_active:
+		return false
 	if is_mouse_over_ui:
+		return false
+	if player_equipment.equipped_weapon_name == "unarmed":
 		return false
 	
 	# Check if player is in a weapon state
-	var current_state: String = player_state_machine.get_current_state_name()
-	if not current_state in player_packets.WEAPON_AIM_STATES:
+	var current_state_name: String = player_state_machine.get_current_state_name()
+	if not current_state_name in player_packets.WEAPON_AIM_STATES:
 		return false
 	
 	return true
@@ -569,6 +573,36 @@ func can_switch_weapon(slot: int) -> bool:
 	if player_equipment.current_slot == slot:
 		return false
 	if player_equipment.is_invalid_weapon_slot(slot):
+		return false
+	
+	return true
+
+
+func can_start_firing() -> bool:
+	if is_busy:
+		return false
+	if player_movement.autopilot_active:
+		return false
+	if is_mouse_over_ui:
+		return false
+	# If no weapon is equipped
+	if player_equipment.equipped_weapon_name == "unarmed":
+		return false
+	
+	# If not in a weapon state
+	var current_state_name: String = player_state_machine.get_current_state_name()
+	if not current_state_name in player_packets.WEAPON_STATES:
+		return false
+	
+	var current_state: BaseState = player_state_machine.get_current_state()
+	if not current_state:
+		return false
+	# If already firing
+	if current_state.is_auto_firing:
+		return false
+	
+	# If weapon is in semi-auto fire mode
+	if player_equipment.get_fire_mode() == 0:
 		return false
 	
 	return true

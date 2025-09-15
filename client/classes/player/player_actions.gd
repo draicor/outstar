@@ -89,9 +89,9 @@ func process_next_action() -> void:
 		"single_fire":
 			_process_single_fire_action(_current_action.action_data)
 		"start_firing":
-			print("process start firing action")
+			_process_start_firing_action()
 		"stop_firing":
-			print("process stop firing action")
+			_process_stop_firing_action()
 		"reload_weapon":
 			_process_reload_weapon_action(_current_action.action_data)
 		"toggle_fire_mode":
@@ -348,4 +348,60 @@ func _process_switch_weapon_action(slot: int) -> void:
 	
 	# Create the packet
 	_current_action.packet = player.player_packets.create_switch_weapon_packet(slot)
+	complete_action(true)
+
+
+func _process_start_firing_action() -> void:
+	# Check if we can start firing
+	if not player.can_start_firing():
+		complete_action(false)
+		return
+	
+	# Get the current state
+	var current_state: BaseState = player.player_state_machine.get_current_state()
+	if not current_state:
+		complete_action(false)
+		return
+	
+	# If we are in a weapon down state, we need to raise the weapon first
+	if current_state.is_weapon_down_idle_state():
+		# Queue a raise weapon action first, then requeue the start firing action
+		var raise_weapon_action = add_action("raise_weapon")
+		# Mark as completed to avoid sending packet
+		raise_weapon_action.state = ActionState.COMPLETED
+		# Requeue the start firing action
+		add_action("start_firing")
+		complete_action(true)
+		return
+	
+	# Perform local actions
+	current_state.start_automatic_firing(false)
+	
+	# Create the packet
+	_current_action.packet = player.player_packets.create_start_firing_weapon_packet(
+		player.player_movement.rotation_target,
+		player.player_equipment.get_current_ammo()
+	)
+	complete_action(true)
+
+
+func _process_stop_firing_action() -> void:
+	# Check if we can stop firing
+	var current_state: BaseState = player.player_state_machine.get_current_state()
+	if not current_state:
+		complete_action(false)
+		return
+	
+	if not current_state.is_auto_firing:
+		complete_action(false)
+		return
+	
+	# Perform local actions
+	current_state.stop_automatic_firing(false)
+	
+	# Create the packet
+	_current_action.packet = player.player_packets.create_stop_firing_weapon_packet(
+		player.player_movement.rotation_target,
+		current_state.shots_fired
+	)
 	complete_action(true)
