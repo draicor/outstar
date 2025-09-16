@@ -595,30 +595,19 @@ func _process_lower_weapon_packet() -> void:
 
 
 func _process_rotate_character_packet(packet: Packets.RotateCharacter) -> void:
-	var new_rotation: float = packet.get_rotation_y()
-	player.player_movement.rotation_target = new_rotation
-	player.player_movement.is_rotating = true
-	# Complete the packet right away
-	complete_packet()
+	route_packet_to_action_queue("rotate", packet.get_rotation_y())
 
 
 func _process_fire_weapon_packet(packet: Packets.FireWeapon) -> void:
-	var current_state: BaseState = player.player_state_machine.get_current_state()
+	# Extract target position and rotation from the packet
+	var target: Vector3 = Vector3(packet.get_x(), packet.get_y(), packet.get_z())
+	var rotation_y: float = packet.get_rotation_y()
 	
-	if current_state:
-		# Extract shooter's rotation from the packet
-		var rotation_y: float = packet.get_rotation_y()
-		# Update rotation before shooting
-		player.player_movement.rotation_target = rotation_y
-		player.player_movement.is_rotating = true
-		# Extract target position
-		var target: Vector3 = Vector3(packet.get_x(), packet.get_y(), packet.get_z())
-		# Call without broadcast since this came from server
-		current_state.single_fire(target, false)
-		# Completion will be handled by the state machine
-	else:
-		# If no state available, complete immediately
-		complete_packet()
+	# For fire actions, we need to queue both rotation and fire actions
+	player.player_actions.add_action("rotate", rotation_y)
+	player.player_actions.add_action("single_fire", target)
+	
+	complete_packet()
 
 
 func _process_toggle_fire_mode_packet() -> void:
