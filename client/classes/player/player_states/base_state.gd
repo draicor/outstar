@@ -375,7 +375,6 @@ func stop_automatic_firing(broadcast: bool) -> void:
 
 
 # Tries to fire the next round (live or dry fire) in automatic fire mode,
-# It also processes the next packet in the packet queue after firing, uses recursion
 func next_automatic_fire() -> void:
 	# If we are not firing anymore, abort
 	if not is_auto_firing:
@@ -401,7 +400,7 @@ func next_automatic_fire() -> void:
 			if is_local_player:
 				# Check for trigger release during the animation
 				if not Input.is_action_pressed("left_click"):
-					stop_automatic_firing(true)
+					player.player_actions.queue_stop_firing_action(shots_fired)
 					dry_fired = false
 			# Remote players
 			else:
@@ -422,7 +421,7 @@ func next_automatic_fire() -> void:
 			next_automatic_fire()
 		# Check for trigger release during the animation
 		else:
-			stop_automatic_firing(true)
+			player.player_actions.queue_stop_firing_action(shots_fired)
 			dry_fired = false
 	
 	# For remote players
@@ -441,9 +440,9 @@ func next_automatic_fire() -> void:
 				# Don't complete the packet here
 				return
 		
-		# Try to process the next packet and keep shooting
-		player.player_packets.try_process_next_packet()
-		next_automatic_fire()
+		# For remote players, always continue firing until we receive a stop packet
+		if is_auto_firing:
+			next_automatic_fire()
 
 
 # Helper function to skip input if one of these is valid

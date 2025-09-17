@@ -410,7 +410,7 @@ func _process_start_firing_action(ammo: int) -> void:
 		# Mark as completed to avoid sending packet
 		raise_weapon_action.state = ActionState.COMPLETED
 		# Requeue the start firing action
-		add_action("start_firing")
+		add_action("start_firing", ammo)
 		complete_action(true)
 		return
 	
@@ -460,6 +460,11 @@ func _process_rotate_action(rotation_y: float) -> void:
 	# Set the rotation target
 	player.player_movement.rotation_target = rotation_y
 	player.player_movement.is_rotating = true
+	
+	# Wait for the rotation to complete
+	var rotation_threshold = 0.05 # Radians (about 3 degrees)
+	while abs(player.model.rotation.y - rotation_y) > rotation_threshold:
+		await get_tree().process_frame
 	
 	if player.my_player_character:
 		# Create the packet

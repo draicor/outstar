@@ -16,13 +16,6 @@ enum Priority {
 var _queue: Array = []
 var _current_packet: Variant = null
 var _is_processing: bool = false
-# Prevent the packet queue to hanging due to infinite retries
-var _retry_count: int = 0
-const MAX_RETRIES: int = 10 # Prevent infinite loops (10 ticks = 5 seconds)
-var _retry_timer: Timer
-# Prevent the packet queue from hanging due to uncaught errors
-var _packet_process_timeout: float = 0
-const MAX_PACKET_PROCESSING_TIMEOUT: float = 5.0 # 10 second timeout
 
 
 const IDLE_STATES: Array[String] = [
@@ -53,31 +46,9 @@ func _ready() -> void:
 	await get_tree().process_frame
 	player = get_parent()
 	
-	# Create retry timer
-	_retry_timer = Timer.new()
-	_retry_timer.wait_time = 0.5 # 500ms
-	_retry_timer.one_shot = true
-	_retry_timer.timeout.connect(_on_retry_timeout)
-	add_child(_retry_timer)
-	
 	# Do this only for my local player
 	if player.my_player_character:
 		Signals.ui_change_move_speed_button.connect(handle_signal_ui_update_speed_button)
-
-
-# Track packet processing timeout
-func _process(delta: float) -> void:
-	if _is_processing:
-		_packet_process_timeout += delta
-	else:
-		_packet_process_timeout = 0
-
-
-# Resets timeout and max retry variables for packet processing
-func reset_packet_timeout() -> void:
-	_packet_process_timeout = 0
-	_retry_count = 0
-	_retry_timer.stop()
 
 
 func get_packet_type(packet: Variant) -> String:
@@ -121,7 +92,6 @@ func get_packet_type(packet: Variant) -> String:
 	return packet_type
 
 
-
 # Adds packet to queue with specified priority
 func add_packet(packet: Variant, priority: int = Priority.NORMAL) -> void:
 	# DEBUG adding packet to remote player
@@ -146,40 +116,7 @@ func try_process_next_packet() -> void:
 	_current_packet = _queue.pop_front()
 	_is_processing = true
 	
-	# Check if we can process this packet now
-	if can_process_packet():
-		reset_packet_timeout()
-		try_process_current_packet()
-	
-	# Can't process the packet now
-	else:
-		# Check if we hit the retry limit or the packet timeout
-		if _retry_count > MAX_RETRIES or _packet_process_timeout > MAX_PACKET_PROCESSING_TIMEOUT:
-			reset_packet_timeout()
-			if _current_packet:
-				# DEBUG dropping packet of remote player
-				if not player.my_player_character:
-					print("[REMOTE] %s -> Dropping %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
-				
-				GameManager.packets_lost += 1
-				
-				# Drop the current packet and process the next one
-				complete_packet()
-		
-		# If we haven't reach the limit
-		else:
-			# Add the packet to the front of the queue and try again in one server tick
-			_queue.push_front(_current_packet)
-			_current_packet = null
-			_is_processing = false
-			# Increment retry count by 1 tick
-			_retry_count += 1
-			# Restart the timer so we try in 1 server tick again
-			_retry_timer.start()
-
-
-func _on_retry_timeout() -> void:
-	try_process_next_packet()
+	try_process_current_packet()
 
 
 func try_process_current_packet() -> void:
@@ -203,12 +140,12 @@ func try_process_current_packet() -> void:
 func complete_packet() -> void:
 	# DEBUG completing packet of remote player
 	if not player.my_player_character:
-		print("[REMOTE] %s -> Completing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
+		if _current_packet:
+			print("[REMOTE] %s -> Completing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
 	
 	_current_packet = null
 	_is_processing = false
 	
-	reset_packet_timeout()
 	# Try to process next packet immediately after completing
 	try_process_next_packet()
 
@@ -244,63 +181,7 @@ func route_packet_to_action_queue(action_type: String, action_data: Variant = nu
 	complete_packet()
 
 
-# Determines if the current packet can be processed right away
 func can_process_packet() -> bool:
-	# Get current state name
-	var current_state_name: String = player.player_state_machine.get_current_state_name()
-	
-	# MOVE CHARACTER
-	if _current_packet is Packets.MoveCharacter:
-		if player.my_player_character:
-			return true
-		else:
-			if current_state_name in WEAPON_AIM_STATES:
-				print("Character trying to move while in aim state, force lowering weapon")
-				player.player_state_machine.get_current_state().lower_weapon_and_await(false)
-			return current_state_name in MOVE_STATES
-	
-	# Only process these packets in their valid states
-	# LOWER WEAPON
-	elif _current_packet is Packets.LowerWeapon:
-		# Allow lowering weapon only in aim states
-		return current_state_name in WEAPON_STATES
-	
-	# RAISE WEAPON
-	elif _current_packet is Packets.RaiseWeapon:
-		# Allow raising weapon only in down states
-		return current_state_name in WEAPON_STATES
-	
-	# START AUTOMATIC FIRE WEAPON
-	elif _current_packet is Packets.StartFiringWeapon:
-		if current_state_name in WEAPON_DOWN_STATES:
-			print("Character trying to start auto fire while in an idle state, force raising weapon")
-			player.player_state_machine.get_current_state().raise_weapon_and_await(false)
-		return current_state_name in WEAPON_AIM_STATES
-	
-	# STOP AUTOMATIC FIRE WEAPON
-	elif _current_packet is Packets.StopFiringWeapon:
-		if current_state_name in WEAPON_DOWN_STATES:
-			print("Character trying to stop auto fire while in an idle state, force raising weapon")
-			player.player_state_machine.get_current_state().raise_weapon_and_await(false)
-		return current_state_name in WEAPON_AIM_STATES
-	
-	# SINGLE FIRE WEAPON
-	elif _current_packet is Packets.FireWeapon:
-		if current_state_name in WEAPON_DOWN_STATES:
-			print("Character trying to start single fire while in an idle state, force raising weapon")
-			player.player_state_machine.get_current_state().raise_weapon_and_await(false)
-		return current_state_name in WEAPON_AIM_STATES
-	
-	elif _current_packet is Packets.UpdateSpeed:
-		return current_state_name in IDLE_STATES
-	elif _current_packet is Packets.SwitchWeapon:
-		return current_state_name in IDLE_STATES
-	elif _current_packet is Packets.ReloadWeapon:
-		return current_state_name in WEAPON_STATES
-	elif _current_packet is Packets.ToggleFireMode:
-		return current_state_name in WEAPON_STATES
-
-	# Allow other packets by default
 	return true
 
 
@@ -627,5 +508,4 @@ func process_stop_firing_weapon_packet(packet: Packets.StopFiringWeapon) -> void
 	player.player_actions.add_action("rotate", packet.get_rotation_y())
 	player.player_actions.add_action("stop_firing", packet.get_shots_fired())
 	
-	# Always complete the packet after processing
 	complete_packet()
