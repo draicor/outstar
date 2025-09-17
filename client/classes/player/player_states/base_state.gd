@@ -299,36 +299,6 @@ func single_fire(target: Vector3, broadcast: bool) -> void:
 		player.player_packets.complete_packet()
 
 
-func toggle_fire_mode(broadcast: bool) -> void:
-	player.player_audio.play_weapon_fire_mode_selector()
-	player.player_equipment.toggle_fire_mode()
-	
-	# If we set it to broadcast and this is our local player
-	if is_local_player and broadcast:
-		player.player_packets.send_toggle_fire_mode_packet()
-	
-	# If remote player
-	if not is_local_player:
-		player.player_packets.complete_packet()
-
-
-func start_automatic_firing(broadcast: bool) -> void:
-	if is_local_player:
-		if broadcast:
-			# Send our current rotation and also our remaining ammo on the currently equipped weapon
-			player.player_packets.send_start_firing_weapon_packet(player.player_movement.rotation_target, player.player_equipment.get_current_ammo())
-		
-		# Reduce the rotation timer interval to rotate more often
-		rotation_timer_interval = FIRING_ROTATION_INTERVAL
-	
-	is_auto_firing = true
-	next_automatic_fire() # Fire immediately
-	
-	# If remote player
-	if not is_local_player:
-		player.player_packets.complete_packet()
-
-
 func stop_automatic_firing(broadcast: bool) -> void:
 	if is_local_player:
 		if broadcast:

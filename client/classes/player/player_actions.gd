@@ -261,21 +261,21 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 		"reload",
 		weapon_type
 	)
+	# Play the rifle aim idle animation
+	player.player_animator.switch_animation("idle")
 	# Update local state
 	player.player_equipment.reload_equipped_weapon(amount)
 	
-	# If we are still holding right click after reloading
-	if Input.is_action_pressed("right_click"):
-		# Play the rifle aim idle animation
-		player.player_animator.switch_animation("idle")
-		# Enable aim rotation
-		player.player_state_machine.get_current_state().is_aim_rotating = true
-	# If we released the right click
-	else:
-		# Queue lowering the rifle
-		queue_lower_weapon_action()
-	
 	if player.my_player_character:
+		# If we are still holding right click after reloading
+		if Input.is_action_pressed("right_click"):
+			# Enable aim rotation
+			player.player_state_machine.get_current_state().is_aim_rotating = true
+		# If we released the right click
+		else:
+			# Queue lowering the rifle
+			queue_lower_weapon_action()
+		
 		# Create the packet
 		_current_action.packet = player.player_packets.create_reload_weapon_packet(weapon_slot, amount)
 	
@@ -414,16 +414,22 @@ func _process_start_firing_action(ammo: int) -> void:
 		complete_action(true)
 		return
 	
-	# Perform local actions
-	player.player_equipment.set_current_ammo(ammo)
-	current_state.start_automatic_firing(false)
-	
 	if player.my_player_character:
+		# Reduce the rotation timer interval to rotate more often
+		current_state.rotation_timer_interval = current_state.FIRING_ROTATION_INTERVAL
 		# Create the packet
 		_current_action.packet = player.player_packets.create_start_firing_weapon_packet(
 			player.player_movement.rotation_target,
 			player.player_equipment.get_current_ammo()
 		)
+	else:
+		player.player_equipment.set_current_ammo(ammo)
+	
+	# Perform local actions
+	# Start firing immediately
+	current_state.shots_fired = 0
+	current_state.is_auto_firing = true
+	current_state.next_automatic_fire()
 	
 	complete_action(true)
 
@@ -431,22 +437,26 @@ func _process_start_firing_action(ammo: int) -> void:
 func _process_stop_firing_action(server_shots_fired: int) -> void:
 	var current_state: BaseState = player.player_state_machine.get_current_state()
 	
+	if not current_state:
+		complete_action(false)
+		return
+	
 	# Only validate local player
 	if player.my_player_character:
 		# Check if we can stop firing
-		if not current_state:
-			complete_action(false)
-			return
-		
 		if not current_state.is_auto_firing:
 			complete_action(false)
 			return
 	
+	if not player.my_player_character:
+		current_state.server_shots_fired = server_shots_fired
+	
 	# Perform local actions
-	current_state.server_shots_fired = server_shots_fired
 	current_state.stop_automatic_firing(false)
 	
 	if player.my_player_character:
+		# Increase the rotation update interval since we are no longer firing
+		current_state.rotation_timer_interval = current_state.AIM_ROTATION_INTERVAL
 		# Create the packet
 		_current_action.packet = player.player_packets.create_stop_firing_weapon_packet(
 			player.player_movement.rotation_target,
