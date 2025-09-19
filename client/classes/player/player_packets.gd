@@ -434,17 +434,10 @@ func _process_move_character_packet(packet: Packets.MoveCharacter) -> void:
 	# Add the player to the new position in my local grid
 	RegionManager.set_object(server_position, self)
 	
-	# Only do the reconciliation for my player
-	if player.my_player_character:
-		player.player_movement.handle_server_reconciliation(server_position)
-	# Remote players are always in sync with the server
-	else:
-		player.player_movement.handle_remote_player_movement(server_position)
+	# Update server position for both local and remote players
+	player.player_movement.server_grid_position = server_position
 	
-	if is_processing_packet():
-		# If we were processing a MoveCharacter packet, complete it
-			if _current_packet is Packets.MoveCharacter:
-				complete_packet()
+	route_packet_to_action_queue("move", server_position)
 
 
 # Updates the player's move speed to match the server's

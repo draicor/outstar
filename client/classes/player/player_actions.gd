@@ -166,23 +166,46 @@ func _validate_move_character(destination: Vector2i) -> bool:
 
 
 func _process_move_character_action(new_destination: Vector2i) -> void:
-	# If the movement action is not valid
-	if not _validate_move_character(new_destination):
-		complete_action(false)
-		return
-	
-	# If we are idling, we start movement locally
-	if not player.player_movement.in_motion:
-		player.player_movement.start_movement_towards(
-			player.player_movement.immediate_grid_destination,
-			new_destination
-		)
-	
+	# Only validate local player
 	if player.my_player_character:
+		# If the movement action is not valid
+		if not _validate_move_character(new_destination):
+			complete_action(false)
+			return
+		
+		# If we are idling, we start movement locally
+		if not player.player_movement.in_motion:
+			player.player_movement.start_movement_towards(
+				player.player_movement.immediate_grid_destination,
+				new_destination
+			)
+		
 		# Create the packet
 		_current_action.packet = player.player_packets.create_destination_packet(player.player_movement.immediate_grid_destination)
+		complete_action(true)
 	
-	complete_action(true)
+	# Handle remote player movement
+	else:
+		var current_position: Vector2i = player.player_movement.immediate_grid_destination
+		
+		# Calculate path from immediate destination to new destination
+		var path: Array[Vector2i] = player.player_movement.predict_path(
+			current_position,
+			new_destination
+		)
+		if path.is_empty():
+			complete_action(false)
+			return
+		
+		# Set up movement for the remote player
+		player.player_movement.handle_remote_player_movement(path)
+		
+		# NOTE
+		# Wait until the movement is complete before marking action as completed
+		while player.player_movement.in_motion:
+			await get_tree().process_frame
+		
+		complete_action(true)
 
 
 func _process_raise_weapon_action() -> void:

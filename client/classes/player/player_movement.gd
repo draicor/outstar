@@ -361,9 +361,6 @@ func setup_movement_step(path: Array[Vector2i]) -> void:
 
 # Called when we receive a new position packet from the server to make sure we are synced locally
 func handle_server_reconciliation(new_server_position: Vector2i) -> void:
-	# Override our server grid position with the server's
-	server_grid_position = new_server_position
-	
 	if _prediction_was_valid(unconfirmed_path.duplicate(), new_server_position):
 		# If the server position matches our immediate destination, clear the unconfirmed path
 		if new_server_position == immediate_grid_destination:
@@ -386,48 +383,39 @@ func handle_server_reconciliation(new_server_position: Vector2i) -> void:
 				player.player_state_machine.change_state("move")
 
 
-# Called when we receive a new position packet to move remote players (always in sync)
-func handle_remote_player_movement(new_server_position: Vector2i) -> void:
-	var next_path: Array[Vector2i] = predict_path(server_grid_position, new_server_position)
+func handle_remote_player_movement(path: Array[Vector2i]) -> void:
+	if in_motion:
+		# Append the next path to our next tick server path, removing the overlap
+		next_tick_server_path.append_array(path.slice(1))
 	
-	# Override our server grid position with the server's AFTER tracing a path towards it
-	server_grid_position = new_server_position
-	
-	# If our next path is valid
-	if next_path.size() > 1:
-		if in_motion:
-			# Append the next path to our next tick server path, removing the overlap
-			next_tick_server_path.append_array(next_path.slice(1))
+	# If we are idling
+	else:
+		# If we are not in the same position as the server,
+		# pathfind from our current position to the first server position,
+		# and append the rest of the path we moved in for next tick
+		if grid_position != path[0]:
+			var sync_path: Array[Vector2i] = predict_path(grid_position, path[0])
+			# Take the first segment based on player's speed and remove overlap
+			server_path = Utils.pop_multiple_front(sync_path, player.player_speed + 1)
+			# Save the rest of the path for next tick
+			next_tick_server_path.append_array(sync_path)
+			next_tick_server_path.append_array(path.slice(1))
 		
-		# If we are idling
+		# If we are in perfect sync with the server
 		else:
-			# If we are not in the same position as the server,
-			# pathfind from our current position to the first server position,
-			# and append the rest of the path we moved in for next tick
-			if grid_position != next_path[0]:
-				var sync_path: Array[Vector2i] = predict_path(grid_position, next_path[0])
-				# Take the first segment based on player's speed and remove overlap
-				server_path = Utils.pop_multiple_front(sync_path, player.player_speed + 1)
-				# Save the rest of the path for next tick
-				next_tick_server_path.append_array(sync_path)
-				next_tick_server_path.append_array(next_path.slice(1))
-			
-			# If we are in sync with the server
-			else:
-				# Take the first segment based on player's speed and remove overlap
-				server_path = Utils.pop_multiple_front(next_path, player.player_speed + 1)
-				# Set the remaining path for next ticks
-				next_tick_server_path = next_path
-			
-			cells_to_move_this_tick = server_path.size()-1
-			immediate_grid_destination = server_path.back() if server_path.size() > 0 else server_grid_position
-			
-			# If we have cells to move
-			if server_path.size() > 0:
-				setup_movement_step(server_path) # This starts movement
-				# If we are not already in the move state, try to change to it
-				if player.player_state_machine.get_current_state_name() != "move":
-					player.player_state_machine.change_state("move")
+			server_path = Utils.pop_multiple_front(path, player.player_speed + 1)
+			# Set the remaining path for the next ticks
+			next_tick_server_path = path
+	
+	cells_to_move_this_tick = server_path.size() -1
+	immediate_grid_destination = server_path.back() if server_path.size() > 0 else server_grid_position
+	
+	# If we have cells to move
+	if server_path.size() > 0:
+		setup_movement_step(server_path) # This starts movement
+		# If we are not already in the move state, try to change to it
+		if player.player_state_machine.get_current_state_name() != "move":
+			player.player_state_machine.change_state("move")
 
 
 # Called on tick from the _process function
@@ -485,11 +473,9 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		
 		if player.my_player_character:
 			unconfirmed_path.append(immediate_grid_destination)
-			# CAUTION
-			# This is working for local players, but will break remote players,
-			# if we attempt to use the action queue for remote player movement
-			# We queue the next action here instead of moving right away
-			player.player_actions.queue_move_action(immediate_grid_destination)
+		
+		# NOTE Handles both local and remote players
+		player.player_actions.queue_move_action(immediate_grid_destination)
 		
 		# Update speed only once per path segment
 		cells_to_move_this_tick = current_path.size()
