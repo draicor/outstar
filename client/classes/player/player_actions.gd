@@ -475,12 +475,16 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 			current_state.shots_fired = 0
 			current_state.server_shots_fired = 0
 			player.player_equipment.set_current_ammo(ammo_to_reimburse)
-			# Don't complete the packet here
 		
 		# If local shots fired is less than the shots the server says we need to take,
 		# keep firing until we are in sync
 		elif current_state.shots_fired < current_state.server_shots_fired:
 			current_state.is_trying_to_syncronize = true
+			
+			# Wait until we are done syncing before completing this action
+			while current_state.is_trying_to_syncronize:
+				# NOTE this will block this action until we fire all the bullets
+				await get_tree().process_frame
 	
 	if player.my_player_character:
 		# Increase the rotation update interval since we are no longer firing

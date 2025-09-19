@@ -360,9 +360,9 @@ func next_automatic_fire() -> void:
 				return
 			else:
 				# We've caught up, stop firing
+				# NOTE this unblocks the player_actions for this remote player
 				is_trying_to_syncronize = false
 				is_auto_firing = false
-				# Don't complete the packet here
 				return
 		
 		# For remote players, always continue firing until we receive a stop packet
