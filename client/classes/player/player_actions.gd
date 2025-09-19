@@ -426,9 +426,11 @@ func _process_start_firing_action(ammo: int) -> void:
 		player.player_equipment.set_current_ammo(ammo)
 	
 	# Perform local actions
-	# Start firing immediately
 	current_state.shots_fired = 0
+	current_state.server_shots_fired = 0
 	current_state.is_auto_firing = true
+	
+	# Start firing immediately
 	current_state.next_automatic_fire()
 	
 	complete_action(true)
@@ -448,15 +450,44 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 			complete_action(false)
 			return
 	
+	# Update if remote player
 	if not player.my_player_character:
 		current_state.server_shots_fired = server_shots_fired
-	
-	# Perform local actions
-	current_state.stop_automatic_firing(false)
+		
+		# If we predicted the same amount of bullets the player fired, then stop firing
+		if current_state.shots_fired == current_state.server_shots_fired:
+			# Reset all variables and stop firing
+			current_state.is_auto_firing = false
+			current_state.is_trying_to_syncronize = false
+			current_state.shots_fired = 0
+			current_state.server_shots_fired = 0
+		
+		# If we fired more rounds than we were supposed to (predicting failed),
+		# reimburse the ammo difference to this remote player in my own local session
+		elif current_state.shots_fired > current_state.server_shots_fired:
+			# Stop firing immediately
+			current_state.is_auto_firing = false
+			current_state.is_trying_to_syncronize = false
+			var ammo_difference: int = current_state.shots_fired - current_state.server_shots_fired
+			var ammo_to_reimburse: int = player.player_equipment.get_current_ammo() + ammo_difference
+			
+			# Reset all variables
+			current_state.shots_fired = 0
+			current_state.server_shots_fired = 0
+			player.player_equipment.set_current_ammo(ammo_to_reimburse)
+			# Don't complete the packet here
+		
+		# If local shots fired is less than the shots the server says we need to take,
+		# keep firing until we are in sync
+		elif current_state.shots_fired < current_state.server_shots_fired:
+			current_state.is_trying_to_syncronize = true
 	
 	if player.my_player_character:
 		# Increase the rotation update interval since we are no longer firing
 		current_state.rotation_timer_interval = current_state.AIM_ROTATION_INTERVAL
+		current_state.is_auto_firing = false
+		current_state.dry_fired = false
+		
 		# Create the packet
 		_current_action.packet = player.player_packets.create_stop_firing_weapon_packet(
 			player.player_movement.rotation_target,

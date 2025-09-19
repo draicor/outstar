@@ -299,51 +299,6 @@ func single_fire(target: Vector3, broadcast: bool) -> void:
 		player.player_packets.complete_packet()
 
 
-func stop_automatic_firing(broadcast: bool) -> void:
-	if is_local_player:
-		if broadcast:
-			player.player_packets.send_stop_firing_weapon_packet(player.player_movement.rotation_target, shots_fired)
-		
-		# Reset the local shots_fired variable after sending the packet
-		shots_fired = 0
-		# Increase the rotation update interval since we are no longer firing
-		rotation_timer_interval = AIM_ROTATION_INTERVAL
-		is_auto_firing = false
-		dry_fired = false
-	
-	# If remote player
-	if not is_local_player:
-		# If we predicted the same amount of bullets the player fired, then stop firing
-		if shots_fired == server_shots_fired:
-			# Reset all variables and stop firing
-			is_auto_firing = false
-			is_trying_to_syncronize = false
-			shots_fired = 0
-			server_shots_fired = 0
-			# Don't complete the packet here
-		
-		# If we fired more rounds than we were supposed to (predicting failed),
-		# reimburse the ammo difference to this remote player in my own local session
-		elif shots_fired > server_shots_fired:
-			# Stop firing immediately
-			is_auto_firing = false
-			is_trying_to_syncronize = false
-			var ammo_difference: int = shots_fired - server_shots_fired
-			var ammo_to_reimburse: int = player.player_equipment.get_current_ammo() + ammo_difference
-			
-			# Reset all variables
-			shots_fired = 0
-			server_shots_fired = 0
-			player.player_equipment.set_current_ammo(ammo_to_reimburse)
-			# Don't complete the packet here
-		
-		# If local shots fired is less than the shots the server says we need to take,
-		# keep firing until we are in sync
-		elif shots_fired < server_shots_fired:
-			is_trying_to_syncronize = true
-			# Don't complete the packet here
-
-
 # Tries to fire the next round (live or dry fire) in automatic fire mode,
 func next_automatic_fire() -> void:
 	# If we are not firing anymore, abort
