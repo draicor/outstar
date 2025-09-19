@@ -95,8 +95,8 @@ func get_packet_type(packet: Variant) -> String:
 # Adds packet to queue with specified priority
 func add_packet(packet: Variant, priority: int = Priority.NORMAL) -> void:
 	# DEBUG adding packet to remote player
-	if not player.my_player_character:
-		print("[REMOTE] %s -> Adding %s packet to queue, current_state: %s, at: %d" % [player.player_name, get_packet_type(packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
+	#if not player.my_player_character:
+		#print("[REMOTE] %s -> Adding %s packet to queue, current_state: %s, at: %d" % [player.player_name, get_packet_type(packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
 	
 	match priority:
 		Priority.HIGH:
@@ -122,8 +122,8 @@ func try_process_next_packet() -> void:
 func try_process_current_packet() -> void:
 	if _current_packet:
 		# DEBUG processing packet of remote player
-		if not player.my_player_character:
-			print("[REMOTE] %s -> Processing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
+		#if not player.my_player_character:
+			#print("[REMOTE] %s -> Processing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
 		
 		# NOTE
 		# Process packet
@@ -139,9 +139,9 @@ func try_process_current_packet() -> void:
 # Called when current packet action completes
 func complete_packet() -> void:
 	# DEBUG completing packet of remote player
-	if not player.my_player_character:
-		if _current_packet:
-			print("[REMOTE] %s -> Completing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
+	#if not player.my_player_character:
+		#if _current_packet:
+			#print("[REMOTE] %s -> Completing %s packet, current_state: %s at: %d" % [player.player_name, get_packet_type(_current_packet), player.player_state_machine.get_current_state_name(), Time.get_ticks_msec()])
 	
 	_current_packet = null
 	_is_processing = false

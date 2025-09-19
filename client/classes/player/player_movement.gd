@@ -220,6 +220,7 @@ func start_movement_towards(start_position: Vector2i, target_position: Vector2i,
 		
 		# We add to our local unconfirmed path the next steps we'll take
 		unconfirmed_path.append(immediate_grid_destination)
+		
 		# Remove the first cell from the predicted_path because we are already there
 		predicted_path = predicted_path.slice(1)
 		# Store the remaining prediction (if any) for next tick

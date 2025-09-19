@@ -12,7 +12,7 @@ func _init() -> void:
 func enter() -> void:
 	player.player_animator.switch_animation_library("rifle_aim")
 	player.player_animator.switch_animation("idle")
-	# Initialize with current mouse world position
+	# Enable aim rotation
 	is_aim_rotating = true
 	# Always reset dry_fired to false on state changes
 	dry_fired = false
@@ -80,8 +80,6 @@ func update(_delta: float) -> void:
 	
 	# Handle lower weapon
 	if not Input.is_action_pressed("right_click"):
-		# Prevent rotation while lowering weapon
-		is_aim_rotating = false
 		player.player_actions.queue_lower_weapon_action()
 		return
 	
@@ -112,8 +110,6 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):
-		# Prevent rotation while reloading
-		is_aim_rotating = false
 		player.player_actions.queue_reload_weapon_action(
 			player.player_equipment.get_current_weapon_max_ammo()
 		)

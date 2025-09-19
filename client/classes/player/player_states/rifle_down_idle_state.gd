@@ -14,7 +14,7 @@ func enter() -> void:
 	# Only connect these signals for my local player character, once
 	if is_local_player:
 		if not signals_connected:
-			Signals.ui_hud_weapon_slot.connect(switch_weapon)
+			Signals.ui_hud_weapon_slot.connect(player.player_actions.queue_switch_weapon_action)
 			signals_connected = true
 
 
@@ -71,7 +71,7 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Unequip rifle
 	elif event.is_action_pressed("weapon_unequip"):
-		switch_weapon(0, true) # Unarmed
+		player.player_actions.queue_switch_weapon_action(0)
 	
 	# Switch Weapon
 	elif event.is_action_pressed("weapon_one"): # Unarmed

@@ -46,4 +46,4 @@ func _on_weapon_five_button_pressed() -> void:
 func _handle_weapon_switch(weapon_slot: int) -> void:
 	if GameManager.player_character.my_player_character:
 		if GameManager.player_character.player_equipment.current_slot != weapon_slot:
-			Signals.ui_hud_weapon_slot.emit(weapon_slot, true)
+			Signals.ui_hud_weapon_slot.emit(weapon_slot)

@@ -6,20 +6,9 @@ const Packets: GDScript = preload("res://packets.gd")
 
 var player: Player = null # Our parent node
 
-
-enum ActionState {
-	PENDING,
-	PROCESSING,
-	COMPLETED,
-	FAILED,
-}
-
-
 class QueuedAction:
 	var action_type: String
 	var action_data: Variant
-	var state: ActionState = ActionState.PENDING
-	var packet: Variant = null
 	
 	func _init(type: String, data: Variant = null):
 		action_type = type
@@ -50,16 +39,9 @@ func add_action(action_type: String, action_data: Variant = null) -> QueuedActio
 	return action
 
 
-func complete_action(success: bool) -> void:
+func complete_action() -> void:
 	if not _current_action:
 		return
-	
-	if success and _current_action.packet and player.my_player_character:
-		# Send the packet only if this is my local character
-		WebSocket.send(_current_action.packet)
-		_current_action.state = ActionState.COMPLETED
-	else:
-		_current_action.state = ActionState.COMPLETED if success else ActionState.FAILED
 	
 	_current_action = null
 	
@@ -76,7 +58,10 @@ func process_next_action() -> void:
 	
 	_is_processing = true
 	_current_action = _queue.pop_front() # Get the next action
-	_current_action.state = ActionState.PROCESSING
+	
+	# DEBUG
+	if not player.my_player_character:
+		print(Time.get_ticks_msec(), " ", _current_action.action_type)
 	
 	# Process based on action type
 	match _current_action.action_type:
@@ -102,7 +87,7 @@ func process_next_action() -> void:
 			_process_rotate_action(_current_action.action_data)
 		_:
 			push_error("Unknown action type: ", _current_action.action_type)
-			complete_action(false)
+			complete_action()
 
 #################
 # QUEUE ACTIONS #
@@ -170,7 +155,7 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 	if player.my_player_character:
 		# If the movement action is not valid
 		if not _validate_move_character(new_destination):
-			complete_action(false)
+			complete_action()
 			return
 		
 		# If we are idling, we start movement locally
@@ -180,12 +165,26 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 				new_destination
 			)
 		
-		# Create the packet
-		_current_action.packet = player.player_packets.create_destination_packet(player.player_movement.immediate_grid_destination)
-		complete_action(true)
+		player.player_packets.send_destination_packet(player.player_movement.immediate_grid_destination)
+		complete_action()
 	
 	# Handle remote player movement
 	else:
+		# Get the current state
+		var current_state: BaseState = player.player_state_machine.get_current_state()
+		if not current_state:
+			complete_action()
+			return
+		
+		# If we are in a weapon aim state, we need to lower the weapon first
+		if current_state.is_weapon_aim_idle_state():
+			# Queue a lower weapon action first
+			add_action("lower_weapon")
+			# Requeue the move action
+			add_action("move", new_destination)
+			complete_action()
+			return
+		
 		var current_position: Vector2i = player.player_movement.immediate_grid_destination
 		
 		# Calculate path from immediate destination to new destination
@@ -194,7 +193,7 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 			new_destination
 		)
 		if path.is_empty():
-			complete_action(false)
+			complete_action()
 			return
 		
 		# Set up movement for the remote player
@@ -205,7 +204,7 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 		while player.player_movement.in_motion:
 			await get_tree().process_frame
 		
-		complete_action(true)
+		complete_action()
 
 
 func _process_raise_weapon_action() -> void:
@@ -213,8 +212,11 @@ func _process_raise_weapon_action() -> void:
 	if player.my_player_character:
 		# Check if we can raise weapon
 		if not player.can_raise_weapon():
-			complete_action(false)
+			complete_action()
 			return
+		
+		# After local validation, we send the packet
+		player.player_packets.send_raise_weapon_packet()
 	
 	# Perform local actions
 	# Get the weapon type and play its animation
@@ -230,11 +232,7 @@ func _process_raise_weapon_action() -> void:
 	if target_state_name != player.player_state_machine.get_current_state_name():
 		player.player_state_machine.change_state(target_state_name)
 	
-	if player.my_player_character:
-		# Create the packet
-		_current_action.packet = player.player_packets.create_raise_weapon_packet()
-	
-	complete_action(true)
+	complete_action()
 
 
 func _process_lower_weapon_action() -> void:
@@ -242,10 +240,16 @@ func _process_lower_weapon_action() -> void:
 	if player.my_player_character:
 		# Check if we can lower weapon
 		if not player.can_lower_weapon():
-			complete_action(false)
+			complete_action()
 			return
+		
+		# After local validation, we send the packet
+		player.player_packets.send_lower_weapon_packet()
 	
 	# Perform local actions
+	# Disable aim rotation
+	player.player_state_machine.get_current_state().is_aim_rotating = false
+	
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
 	await player.player_animator.play_weapon_animation_and_await(
@@ -259,11 +263,7 @@ func _process_lower_weapon_action() -> void:
 	if target_state_name != player.player_state_machine.get_current_state_name():
 		player.player_state_machine.change_state(target_state_name)
 	
-	if player.my_player_character:
-		# Create the packet
-		_current_action.packet = player.player_packets.create_lower_weapon_packet()
-	
-	complete_action(true)
+	complete_action()
 
 
 func _process_reload_weapon_action(data: Dictionary) -> void:
@@ -271,19 +271,30 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	if player.my_player_character:
 		# Check if we can reload
 		if not player.can_reload_weapon():
-			complete_action(false)
+			complete_action()
 			return
 	
 	var weapon_slot = player.player_equipment.current_slot
 	var amount = data["amount"]
 	
+	if player.my_player_character:
+		# After local validation, we send the packet
+		player.player_packets.send_reload_weapon_packet(weapon_slot, amount)
+	
 	# Perform local actions
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	# Disable aim rotation
+	player.player_state_machine.get_current_state().is_aim_rotating = false
+	
 	await player.player_animator.play_weapon_animation_and_await(
 		"reload",
 		weapon_type
 	)
+	
+	# Enable aim rotation after reload
+	player.player_state_machine.get_current_state().is_aim_rotating = true
+	
 	# Play the rifle aim idle animation
 	player.player_animator.switch_animation("idle")
 	# Update local state
@@ -298,11 +309,8 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 		else:
 			# Queue lowering the rifle
 			queue_lower_weapon_action()
-		
-		# Create the packet
-		_current_action.packet = player.player_packets.create_reload_weapon_packet(weapon_slot, amount)
 	
-	complete_action(true)
+	complete_action()
 
 
 func _process_single_fire_action(target: Vector3) -> void:
@@ -310,13 +318,16 @@ func _process_single_fire_action(target: Vector3) -> void:
 	if player.my_player_character:
 		# If target is invalid
 		if target == Vector3.ZERO:
-			complete_action(false)
+			complete_action()
 			return
 		
 		# Check if we can fire regardless of ammo count
 		if not player.can_fire_weapon():
-			complete_action(false)
+			complete_action()
 			return
+		
+		# After local validation, we send the packet
+		player.player_packets.send_fire_weapon_packet(target, player.player_movement.rotation_target)
 	
 	# Perform local actions
 	# Get weapon data
@@ -335,11 +346,7 @@ func _process_single_fire_action(target: Vector3) -> void:
 	# Ammo decrement happens from player_equipment.weapon_fire()
 	await player.player_animator.play_animation_and_await(anim_name, play_rate)
 	
-	if player.my_player_character:
-		# Create the packet
-		_current_action.packet = player.player_packets.create_fire_weapon_packet(target, player.player_movement.rotation_target)
-	
-	complete_action(true)
+	complete_action()
 
 
 func _process_toggle_fire_mode_action() -> void:
@@ -347,18 +354,17 @@ func _process_toggle_fire_mode_action() -> void:
 	if player.my_player_character:
 		# Check if we can toggle fire mode
 		if not player.can_toggle_fire_mode():
-			complete_action(false)
+			complete_action()
 			return
+		
+		# After local validation, we send the packet
+		player.player_packets.send_toggle_fire_mode_packet()
 	
 	# Perform local actions
 	player.player_audio.play_weapon_fire_mode_selector()
 	player.player_equipment.toggle_fire_mode()
 	
-	if player.my_player_character:
-		# Create the packet
-		_current_action.packet = player.player_packets.create_toggle_fire_mode_packet()
-	
-	complete_action(true)
+	complete_action()
 
 
 func _process_switch_weapon_action(slot: int) -> void:
@@ -366,8 +372,11 @@ func _process_switch_weapon_action(slot: int) -> void:
 	if player.my_player_character:
 		# Check if we can switch weapons
 		if not player.can_switch_weapon(slot):
-			complete_action(false)
+			complete_action()
 			return
+		
+		# After local validation, we send the packet
+		player.player_packets.send_switch_weapon_packet(slot)
 	
 	# Perform local actions
 	# Get current weapon type for animation
@@ -405,11 +414,7 @@ func _process_switch_weapon_action(slot: int) -> void:
 	if target_state_name != player.player_state_machine.get_current_state_name():
 		player.player_state_machine.change_state(target_state_name)
 	
-	if player.my_player_character:
-		# Create the packet
-		_current_action.packet = player.player_packets.create_switch_weapon_packet(slot)
-	
-	complete_action(true)
+	complete_action()
 
 
 func _process_start_firing_action(ammo: int) -> void:
@@ -417,34 +422,33 @@ func _process_start_firing_action(ammo: int) -> void:
 	if player.my_player_character:
 		# Check if we can start firing
 		if not player.can_start_firing():
-			complete_action(false)
+			complete_action()
 			return
+		
+		# After local validation, we send the packet
+		player.player_packets.send_start_firing_weapon_packet(
+			player.player_movement.rotation_target,
+			player.player_equipment.get_current_ammo()
+		)
 	
 	# Get the current state
 	var current_state: BaseState = player.player_state_machine.get_current_state()
 	if not current_state:
-		complete_action(false)
+		complete_action()
 		return
 	
 	# If we are in a weapon down state, we need to raise the weapon first
 	if current_state.is_weapon_down_idle_state():
-		# Queue a raise weapon action first, then requeue the start firing action
-		var raise_weapon_action = add_action("raise_weapon")
-		# Mark as completed to avoid sending packet
-		raise_weapon_action.state = ActionState.COMPLETED
+		# Queue a raise weapon action first
+		add_action("raise_weapon")
 		# Requeue the start firing action
 		add_action("start_firing", ammo)
-		complete_action(true)
+		complete_action()
 		return
 	
 	if player.my_player_character:
 		# Reduce the rotation timer interval to rotate more often
 		current_state.rotation_timer_interval = current_state.FIRING_ROTATION_INTERVAL
-		# Create the packet
-		_current_action.packet = player.player_packets.create_start_firing_weapon_packet(
-			player.player_movement.rotation_target,
-			player.player_equipment.get_current_ammo()
-		)
 	else:
 		player.player_equipment.set_current_ammo(ammo)
 	
@@ -456,22 +460,28 @@ func _process_start_firing_action(ammo: int) -> void:
 	# Start firing immediately
 	current_state.next_automatic_fire()
 	
-	complete_action(true)
+	complete_action()
 
 
 func _process_stop_firing_action(server_shots_fired: int) -> void:
 	var current_state: BaseState = player.player_state_machine.get_current_state()
 	
 	if not current_state:
-		complete_action(false)
+		complete_action()
 		return
 	
 	# Only validate local player
 	if player.my_player_character:
 		# Check if we can stop firing
 		if not current_state.is_auto_firing:
-			complete_action(false)
+			complete_action()
 			return
+		
+		# After local validation, we send the packet
+		player.player_packets.send_stop_firing_weapon_packet(
+			player.player_movement.rotation_target,
+			current_state.shots_fired
+		)
 	
 	# Update if remote player
 	if not player.my_player_character:
@@ -514,14 +524,8 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 		current_state.rotation_timer_interval = current_state.AIM_ROTATION_INTERVAL
 		current_state.is_auto_firing = false
 		current_state.dry_fired = false
-		
-		# Create the packet
-		_current_action.packet = player.player_packets.create_stop_firing_weapon_packet(
-			player.player_movement.rotation_target,
-			current_state.shots_fired
-		)
 	
-	complete_action(true)
+	complete_action()
 
 
 func _process_rotate_action(rotation_y: float) -> void:
@@ -534,8 +538,7 @@ func _process_rotate_action(rotation_y: float) -> void:
 	while abs(player.model.rotation.y - rotation_y) > rotation_threshold:
 		await get_tree().process_frame
 	
-	if player.my_player_character:
-		# Create the packet
-		_current_action.packet = player.player_packets.create_rotate_character_packet(rotation_y)
+	# CAUTION
+	# We don't send packets from this action since we are sending them from base_state.gd
 	
-	complete_action(true)
+	complete_action()
