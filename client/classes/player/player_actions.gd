@@ -512,10 +512,24 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 		# If local shots fired is less than the shots the server says we need to take,
 		# keep firing until we are in sync
 		elif current_state.shots_fired < current_state.server_shots_fired:
+			# If we are no longer in a state where we can fire, abort synchronization
+			if not player.is_in_weapon_aim_state() or not current_state.is_auto_firing:
+				current_state.is_auto_firing = false
+				current_state.is_trying_to_syncronize = false
+				current_state.shots_fired = 0
+				current_state.server_shots_fired = 0
+				complete_action()
+				return
+				
 			current_state.is_trying_to_syncronize = true
 			
 			# Wait until we are done syncing before completing this action
 			while current_state.is_trying_to_syncronize:
+				# If we're no longer in a state where we can fire, abort synchronization
+				if not player.is_in_weapon_aim_state() or not current_state.is_auto_firing:
+					current_state.is_trying_to_syncronize = false
+					break
+				
 				# NOTE this will block this action until we fire all the bullets
 				await get_tree().process_frame
 	
