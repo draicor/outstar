@@ -429,11 +429,11 @@ func process_movement_step(delta: float) -> void:
 	# We already moved to the next cell, so we update
 	_update_grid_position()
 	
-	if player.my_player_character and is_predicting:
+	if player.is_local_player and is_predicting:
 		_process_path_segment(delta, predicted_path, next_tick_predicted_path)
 	else:
 		# We need to update the locomotion animation for remote players BEFORE _process_path_segment
-		if not player.my_player_character:
+		if not player.is_local_player:
 			player.player_animator.update_locomotion_animation(cells_to_move_this_tick)
 		# This has to be after update_locomotion_animation(),
 		# otherwise we don't transition into the idle animation correctly
@@ -472,7 +472,7 @@ func _process_path_segment(delta: float, current_path: Array[Vector2i], next_pat
 		# Update our immediate grid destination
 		immediate_grid_destination = current_path.back()
 		
-		if player.my_player_character:
+		if player.is_local_player:
 			unconfirmed_path.append(immediate_grid_destination)
 		
 		# NOTE Handles both local and remote players

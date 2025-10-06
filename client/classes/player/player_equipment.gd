@@ -287,7 +287,7 @@ func get_current_ammo() -> int:
 func set_current_ammo(amount: int) -> void:
 	weapon_slots[current_slot]["ammo"] = amount
 	# Do this only for my local character
-	if player.my_player_character:
+	if player.is_local_player:
 		update_hud_ammo()
 
 
@@ -333,13 +333,13 @@ func update_hud_ammo() -> void:
 
 func hide_weapon_hud() -> void:
 	# Do this only for my local character
-	if player.my_player_character:
+	if player.is_local_player:
 		Signals.ui_hide_bottom_right_hud.emit()
 
 
 func show_weapon_hud() -> void:
 	# Do this only for my local character
-	if player.my_player_character:
+	if player.is_local_player:
 		# We update our ammo counter and then we display it
 		Signals.ui_update_ammo.emit()
 		Signals.ui_show_bottom_right_hud.emit()

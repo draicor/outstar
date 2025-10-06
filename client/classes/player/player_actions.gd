@@ -60,7 +60,7 @@ func process_next_action() -> void:
 	_current_action = _queue.pop_front() # Get the next action
 	
 	# DEBUG
-	if not player.my_player_character:
+	if not player.is_local_player:
 		print(Time.get_ticks_msec(), " ", _current_action.action_type)
 	
 	# Process based on action type
@@ -152,7 +152,7 @@ func _validate_move_character(destination: Vector2i) -> bool:
 
 func _process_move_character_action(new_destination: Vector2i) -> void:
 	# Only validate local player
-	if player.my_player_character:
+	if player.is_local_player:
 		# If the movement action is not valid
 		if not _validate_move_character(new_destination):
 			complete_action()
@@ -209,7 +209,7 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 
 func _process_raise_weapon_action() -> void:
 	# Only validate local player
-	if player.my_player_character:
+	if player.is_local_player:
 		# Check if we can raise weapon
 		if not player.can_raise_weapon():
 			complete_action()
@@ -237,7 +237,7 @@ func _process_raise_weapon_action() -> void:
 
 func _process_lower_weapon_action() -> void:
 	# Only validate local player
-	if player.my_player_character:
+	if player.is_local_player:
 		# Check if we can lower weapon
 		if not player.can_lower_weapon():
 			complete_action()
@@ -268,7 +268,7 @@ func _process_lower_weapon_action() -> void:
 
 func _process_reload_weapon_action(data: Dictionary) -> void:
 	# Only validate local player
-	if player.my_player_character:
+	if player.is_local_player:
 		# Check if we can reload
 		if not player.can_reload_weapon():
 			complete_action()
@@ -277,7 +277,7 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	var weapon_slot = player.player_equipment.current_slot
 	var amount = data["amount"]
 	
-	if player.my_player_character:
+	if player.is_local_player:
 		# After local validation, we send the packet
 		player.player_packets.send_reload_weapon_packet(weapon_slot, amount)
 	
@@ -300,7 +300,7 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	# Update local state
 	player.player_equipment.reload_equipped_weapon(amount)
 	
-	if player.my_player_character:
+	if player.is_local_player:
 		# If we are still holding right click after reloading
 		if Input.is_action_pressed("right_click"):
 			# Enable aim rotation
@@ -315,7 +315,7 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 
 func _process_single_fire_action(target: Vector3) -> void:
 	# Only validate local player
-	if player.my_player_character:
+	if player.is_local_player:
 		# If target is invalid
 		if target == Vector3.ZERO:
 			complete_action()
@@ -351,7 +351,7 @@ func _process_single_fire_action(target: Vector3) -> void:
 
 func _process_toggle_fire_mode_action() -> void:
 	# Only validate local player
-	if player.my_player_character:
+	if player.is_local_player:
 		# Check if we can toggle fire mode
 		if not player.can_toggle_fire_mode():
 			complete_action()
@@ -369,7 +369,7 @@ func _process_toggle_fire_mode_action() -> void:
 
 func _process_switch_weapon_action(slot: int) -> void:
 	# Only validate local player
-	if player.my_player_character:
+	if player.is_local_player:
 		# Check if we can switch weapons
 		if not player.can_switch_weapon(slot):
 			complete_action()
@@ -419,7 +419,7 @@ func _process_switch_weapon_action(slot: int) -> void:
 
 func _process_start_firing_action(ammo: int) -> void:
 	# Only validate local player
-	if player.my_player_character:
+	if player.is_local_player:
 		# Check if we can start firing
 		if not player.can_start_firing():
 			complete_action()
@@ -446,7 +446,7 @@ func _process_start_firing_action(ammo: int) -> void:
 		complete_action()
 		return
 	
-	if player.my_player_character:
+	if player.is_local_player:
 		# Reduce the rotation timer interval to rotate more often
 		current_state.rotation_timer_interval = current_state.FIRING_ROTATION_INTERVAL
 	else:
@@ -471,7 +471,7 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 		return
 	
 	# Only validate local player
-	if player.my_player_character:
+	if player.is_local_player:
 		# Check if we can stop firing
 		if not current_state.is_auto_firing:
 			complete_action()
@@ -484,7 +484,7 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 		)
 	
 	# Update if remote player
-	if not player.my_player_character:
+	if not player.is_local_player:
 		current_state.server_shots_fired = server_shots_fired
 		
 		# If we predicted the same amount of bullets the player fired, then stop firing
@@ -533,7 +533,7 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 				# NOTE this will block this action until we fire all the bullets
 				await get_tree().process_frame
 	
-	if player.my_player_character:
+	if player.is_local_player:
 		# Increase the rotation update interval since we are no longer firing
 		current_state.rotation_timer_interval = current_state.AIM_ROTATION_INTERVAL
 		current_state.is_auto_firing = false

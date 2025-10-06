@@ -21,7 +21,7 @@ func _ready() -> void:
 	# We disable input and only use unhandled_input
 	set_process_input(false)
 	
-	if player.my_player_character:
+	if player.is_local_player:
 		is_local_player = true
 	
 	# Collect all child states

@@ -27,7 +27,7 @@ var player_speed: int
 var spawn_position: Vector2i
 var spawn_rotation: float
 var tooltip: String
-var my_player_character: bool # Used to differentiate my character from remote players
+var is_local_player: bool # Used to differentiate my character from remote players
 var spawn_weapon_slot: int = 0
 var spawn_weapon_slots: Array[Dictionary] = []
 
@@ -95,7 +95,7 @@ static func instantiate(
 	player.player_speed = character_speed
 	player.spawn_position = server_spawn_position
 	player.spawn_rotation = server_spawn_rotation
-	player.my_player_character = is_my_player_character
+	player.is_local_player = is_my_player_character
 	player.tooltip = nickname
 	# Weapon data
 	player.spawn_weapon_slot = server_weapon_slot
@@ -125,7 +125,7 @@ func _ready() -> void:
 	model.rotation.y = spawn_rotation
 	
 	# Do this only for my local character
-	if my_player_character:
+	if is_local_player:
 		_setup_local_player_components()
 		_register_global_references() # After _setup_local_player_components()
 		player_state_machine.is_local_player = true # To allow input
@@ -221,7 +221,7 @@ func _setup_chat_bubble_sprite() -> void:
 	chat_bubble_icon.centered = true
 	chat_bubble_icon.offset = Vector2(0, 0)
 	
-	if my_player_character:
+	if is_local_player:
 		# Hide/reveal the chat bubble icon based on our is_player_typing value
 		toggle_chat_bubble_icon(GameManager.is_player_typing)
 	else:
@@ -452,7 +452,7 @@ func handle_pending_interaction() -> void:
 func _show_debug_tools() -> void:
 	 # Only draw in editor/debug builds
 	if OS.is_debug_build():
-		if my_player_character:
+		if is_local_player:
 			_draw_circle(Utils.map_to_local(player_movement.grid_destination), 0.5, Color.RED, 16) # Grid destination
 			_draw_circle(Utils.map_to_local(player_movement.immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
 			_draw_circle(Utils.map_to_local(player_movement.grid_position), 0.3, Color.GREEN, 16) # Grid position
