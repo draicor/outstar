@@ -128,10 +128,9 @@ func _ready() -> void:
 	if is_local_player:
 		_setup_local_player_components()
 		_register_global_references() # After _setup_local_player_components()
-		player_state_machine.is_local_player = true # To allow input
 	
 	# Initialize state machine for all players
-	player_state_machine.set_active(true)
+	player_state_machine.set_active(true, is_local_player)
 	
 	# CAUTION
 	# Displays our character, replace with a spawn animation

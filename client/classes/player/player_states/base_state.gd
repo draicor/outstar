@@ -6,7 +6,6 @@ signal finished(next_state_name)
 var player_state_machine: PlayerStateMachine = null
 var player: Player = null
 var state_name: String = "unnamed_state"
-var is_local_player: bool = false # set to true for local player
 var signals_connected: bool = false # to only do this once
 # Rotation broadcast logic
 # 1 second for idle aim and 0.5 seconds for automatic firing
@@ -94,7 +93,7 @@ func next_automatic_fire() -> void:
 			# Override play rate for dry fire (always use semi-auto speed)
 			await player.player_animator.play_animation_and_await(anim_name, weapon.semi_fire_rate)
 			# After dry firing once, automatically stop trying to fire
-			if is_local_player:
+			if player.is_local_player:
 				# Check for trigger release during the animation
 				if not Input.is_action_pressed("left_click"):
 					player.player_actions.queue_stop_firing_action(shots_fired)
@@ -112,7 +111,7 @@ func next_automatic_fire() -> void:
 	# Increase our local firing counter to keep track of how many bullets we have fired
 	shots_fired += 1
 	
-	if is_local_player:
+	if player.is_local_player:
 		# If we are still holding the left click, continue firing
 		if Input.is_action_pressed("left_click"):
 			next_automatic_fire()

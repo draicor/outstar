@@ -18,7 +18,7 @@ func enter() -> void:
 	dry_fired = false
 	
 	# If this is our local player
-	if player.player_state_machine.is_local_player:
+	if player.is_local_player:
 		player.set_mouse_cursor("crosshair")
 		# Reduce the rotation step to minimum when aiming
 		player.camera.ROTATION_STEP = 1.0
@@ -28,7 +28,7 @@ func enter() -> void:
 
 func exit() -> void:
 	# If this is our local player
-	if player.player_state_machine.is_local_player:
+	if player.is_local_player:
 		broadcast_rotation_if_changed()
 		player.set_mouse_cursor("default")
 		# Restore the camera rotation step to default
@@ -44,7 +44,7 @@ func physics_update(delta: float) -> void:
 	if not is_aim_rotating:
 		return
 	
-	if is_local_player:
+	if player.is_local_player:
 		# Update the rotation sync timer
 		rotation_sync_timer += delta
 		

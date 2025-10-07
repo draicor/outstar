@@ -6,8 +6,7 @@ signal player_state_changed(previous_state, new_state)
 var states_map: Dictionary = {}
 var current_state: BaseState = null
 var previous_state: BaseState = null
-var is_active: bool = true : set = set_active
-var is_local_player: bool = false # set to true for local player
+var is_active: bool = true
 var player: Player = null
 
 
@@ -21,16 +20,12 @@ func _ready() -> void:
 	# We disable input and only use unhandled_input
 	set_process_input(false)
 	
-	if player.is_local_player:
-		is_local_player = true
-	
 	# Collect all child states
 	for child in get_children():
 		if child is BaseState:
 			states_map[child.state_name] = child
 			child.player_state_machine = self
 			child.player = player
-			child.is_local_player = is_local_player
 
 
 # Returns the current state name
@@ -81,11 +76,11 @@ func change_state(new_state_name: String) -> void:
 
 
 # When toggling this state, toggle the functions that run on tick too
-func set_active(value: bool) -> void:
+func set_active(value: bool, is_local_player: bool) -> void:
 	is_active = value
 	set_physics_process(value)
 	
-	# Disable these for remote players (update, unhandled
+	# Disable input for remote players (update and unhandled_input)
 	set_process(value and is_local_player)
 	set_process_unhandled_input(value and is_local_player)
 

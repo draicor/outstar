@@ -12,7 +12,7 @@ func enter() -> void:
 	player.player_animator.switch_animation("idle")
 	
 	# Only connect these signals for my local player character, once
-	if is_local_player:
+	if player.is_local_player:
 		if not signals_connected:
 			Signals.ui_hud_weapon_slot.connect(player.player_actions.queue_switch_weapon_action)
 			signals_connected = true

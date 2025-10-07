@@ -206,7 +206,7 @@ func _process_hit(hit: Dictionary) -> void:
 		if hit_player:
 			# Check if this weapon belongs to the local player
 			var owner_player = get_weapon_owner()
-			if owner_player and owner_player.my_player_character:
+			if owner_player and owner_player.is_local_player:
 				# We check if this was a headshot or not
 				var is_critical: bool = false
 				if collider.is_in_group("headshot_material"):
