@@ -461,6 +461,12 @@ func _process_start_firing_action(ammo: int) -> void:
 
 
 func _process_stop_firing_action(server_shots_fired: int) -> void:
+	var current_state: BaseState = player.player_state_machine.get_current_state()
+	
+	if not current_state:
+		complete_action()
+		return
+	
 	# Only validate local player
 	if player.is_local_player:
 		# Check if we can stop firing
@@ -474,15 +480,14 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 			player.shots_fired
 		)
 	
-	# Update if remote player
-	else:
+	# For remote players, we need to ensure all shots are fired before completing
+	if not player.is_local_player:
 		player.server_shots_fired = server_shots_fired
 		
 		# If we predicted the same amount of bullets the player fired, then stop firing
 		if player.shots_fired == player.server_shots_fired:
 			# Reset all variables and stop firing
 			player.is_auto_firing = false
-			player.is_trying_to_syncronize = false
 			player.shots_fired = 0
 			player.server_shots_fired = 0
 		
@@ -491,7 +496,6 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 		elif player.shots_fired > player.server_shots_fired:
 			# Stop firing immediately
 			player.is_auto_firing = false
-			player.is_trying_to_syncronize = false
 			var ammo_difference: int = player.shots_fired - player.server_shots_fired
 			var ammo_to_reimburse: int = player.player_equipment.get_current_ammo() + ammo_difference
 			
@@ -501,44 +505,48 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 			player.player_equipment.set_current_ammo(ammo_to_reimburse)
 		
 		# If local shots fired is less than the shots the server says we need to take,
-		# keep firing until we are in sync
+		# fire the remaining shots immediately and wait for them to complete
 		elif player.shots_fired < player.server_shots_fired:
-			player.is_trying_to_syncronize = true
-			
-			# Fire the remaining shots immediately in sequence
-			var shots_to_fire: int = player.server_shots_fired - player.shots_fired
-			for i in range(shots_to_fire):
-				# Check if we can still fire
-				if not player.is_in_weapon_aim_state() or not player.is_auto_firing:
-					break
-				
-				# Fire one shot
-				var weapon = player.player_equipment.equipped_weapon
-				var anim_name: String = weapon.get_animation()
-				var play_rate: float = weapon.get_animation_play_rate()
-				
-				# Check ammo for this shot
-				var has_ammo: bool = player.player_equipment.can_fire_weapon()
-				if not has_ammo:
-					play_rate = weapon.semi_fire_rate
-				
-				await player.player_animator.play_animation_and_await(anim_name, play_rate)
-				player.shots_fired += 1
-				
-				# If we have ammo, decrement it
-				if has_ammo:
-					player.player_equipment.decrement_ammo()
-			
-			# Reset after synchronization attempt
+			# Stop the automatic firing loop
 			player.is_auto_firing = false
-			player.is_trying_to_syncronize = false
-			player.server_shots_fired = 0
+			
+			# Fire the remaining shots and wait for them to complete
+			var shots_to_fire: int = player.server_shots_fired - player.shots_fired
+			await _fire_remaining_shots_sync(shots_to_fire)
 	
 	if player.is_local_player:
 		player.is_auto_firing = false
 		player.dry_fired = false
 	
 	complete_action()
+
+
+# Synchronously fire remaining shots - this function doesn't return until all shots are fired
+func _fire_remaining_shots_sync(shots_to_fire: int) -> void:
+	for i in range(shots_to_fire):
+		# Check if we can still fire - if not, break out
+		if not player.is_in_weapon_aim_state():
+			print("Not in weapon aim state, break out of fire remaining shots sync")
+			break
+		
+		# Fire one shot
+		var weapon = player.player_equipment.equipped_weapon
+		var anim_name: String = weapon.get_animation()
+		var play_rate: float = weapon.get_animation_play_rate()
+		
+		# Check ammo for this shot
+		var has_ammo: bool = player.player_equipment.can_fire_weapon()
+		if not has_ammo:
+			play_rate = weapon.semi_fire_rate
+		
+		# Play animation and wait for it to complete
+		await player.player_animator.play_animation_and_await(anim_name, play_rate)
+		
+		player.shots_fired += 1
+		
+		# If we have ammo, decrement it
+		if has_ammo:
+			player.player_equipment.decrement_ammo()
 
 
 func _process_rotate_action(rotation_y: float) -> void:
