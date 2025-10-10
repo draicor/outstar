@@ -13,9 +13,9 @@ func enter() -> void:
 	player.player_animator.switch_animation_library("rifle_aim")
 	player.player_animator.switch_animation("idle")
 	# Enable aim rotation
-	is_aim_rotating = true
+	player.is_aim_rotating = true
 	# Always reset dry_fired to false on state changes
-	dry_fired = false
+	player.dry_fired = false
 	
 	# If this is our local player
 	if player.is_local_player:
@@ -23,7 +23,7 @@ func enter() -> void:
 		# Reduce the rotation step to minimum when aiming
 		player.camera.ROTATION_STEP = 1.0
 		# Store our model's Y rotation upon entering this state
-		last_sent_rotation = player.model.rotation.y
+		player.last_sent_rotation = player.model.rotation.y
 
 
 func exit() -> void:
@@ -41,16 +41,16 @@ func exit() -> void:
 # Rotates the character on tick to match the mouse position
 func physics_update(delta: float) -> void:
 	# If we are leaving this state, don't rotate anymore
-	if not is_aim_rotating:
+	if not player.is_aim_rotating:
 		return
 	
 	if player.is_local_player:
 		# Update the rotation sync timer
-		rotation_sync_timer += delta
+		player.rotation_sync_timer += delta
 		
 		# If it's time to send an update to the server
-		if rotation_sync_timer > rotation_timer_interval:
-			rotation_sync_timer = 0.0
+		if player.rotation_sync_timer > player.rotation_timer_interval:
+			player.rotation_sync_timer = 0.0
 			broadcast_rotation_if_changed()
 	
 		var target_point: Vector3 = player.get_mouse_world_position()
@@ -86,7 +86,7 @@ func update(_delta: float) -> void:
 	# Fire rifle if mouse isn't over the UI
 	if Input.is_action_pressed("left_click") and not player.is_mouse_over_ui:
 		# If we are still auto firing, prevent restarting it
-		if is_auto_firing:
+		if player.is_auto_firing:
 			return
 		
 		if player.player_equipment.get_fire_mode() == 1: # Automatic mode
@@ -106,7 +106,7 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Track trigger release
 	if event.is_action_released("left_click"):
-		player.player_actions.queue_stop_firing_action(shots_fired)
+		player.player_actions.queue_stop_firing_action(player.shots_fired)
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):

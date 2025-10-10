@@ -48,6 +48,22 @@ var character: Node = null
 var chat_bubble_icon: Sprite3D
 var skeleton: Skeleton3D = null # Our character's skeleton
 
+# Rotation broadcast logic
+const AIM_ROTATION_INTERVAL: float = 1.0 # 1 second timer to update rotation
+var rotation_sync_timer: float = 0.0
+var last_sent_rotation: float = 0.0
+var rotation_timer_interval: float = AIM_ROTATION_INTERVAL
+const ROTATION_CHANGE_THRESHOLD: float = 0.1 # radians
+var is_aim_rotating: bool = false
+
+# Weapon firing logic
+var dry_fired: bool = false
+# Firearm automatic firing
+var is_auto_firing: bool = false
+var is_trying_to_syncronize: bool = false
+var shots_fired: int = 0
+var server_shots_fired: int = 0
+
 # Scene tree nodes
 @onready var model: Node3D = $Model # Used to attach the model and rotate it
 @onready var camera_rig: Node3D = $CameraPivot/CameraRig # Used to attach the camera
@@ -593,11 +609,8 @@ func can_start_firing() -> bool:
 	if not current_state_name in player_packets.WEAPON_STATES:
 		return false
 	
-	var current_state: BaseState = player_state_machine.get_current_state()
-	if not current_state:
-		return false
 	# If already firing
-	if current_state.is_auto_firing:
+	if is_auto_firing:
 		return false
 	
 	# If weapon is in semi-auto fire mode

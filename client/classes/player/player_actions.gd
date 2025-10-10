@@ -248,7 +248,7 @@ func _process_lower_weapon_action() -> void:
 	
 	# Perform local actions
 	# Disable aim rotation
-	player.player_state_machine.get_current_state().is_aim_rotating = false
+	player.is_aim_rotating = false
 	
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
@@ -285,7 +285,7 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
 	# Disable aim rotation
-	player.player_state_machine.get_current_state().is_aim_rotating = false
+	player.is_aim_rotating = false
 	
 	await player.player_animator.play_weapon_animation_and_await(
 		"reload",
@@ -293,7 +293,7 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	)
 	
 	# Enable aim rotation after reload
-	player.player_state_machine.get_current_state().is_aim_rotating = true
+	player.is_aim_rotating = true
 	
 	# Play the rifle aim idle animation
 	player.player_animator.switch_animation("idle")
@@ -304,7 +304,7 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 		# If we are still holding right click after reloading
 		if Input.is_action_pressed("right_click"):
 			# Enable aim rotation
-			player.player_state_machine.get_current_state().is_aim_rotating = true
+			player.is_aim_rotating = true
 		# If we released the right click
 		else:
 			# Queue lowering the rifle
@@ -446,16 +446,13 @@ func _process_start_firing_action(ammo: int) -> void:
 		complete_action()
 		return
 	
-	if player.is_local_player:
-		# Reduce the rotation timer interval to rotate more often
-		current_state.rotation_timer_interval = current_state.FIRING_ROTATION_INTERVAL
-	else:
+	if not player.is_local_player:
 		player.player_equipment.set_current_ammo(ammo)
 	
 	# Perform local actions
-	current_state.shots_fired = 0
-	current_state.server_shots_fired = 0
-	current_state.is_auto_firing = true
+	player.shots_fired = 0
+	player.server_shots_fired = 0
+	player.is_auto_firing = true
 	
 	# Start firing immediately
 	current_state.next_automatic_fire()
@@ -464,80 +461,82 @@ func _process_start_firing_action(ammo: int) -> void:
 
 
 func _process_stop_firing_action(server_shots_fired: int) -> void:
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	
-	if not current_state:
-		complete_action()
-		return
-	
 	# Only validate local player
 	if player.is_local_player:
 		# Check if we can stop firing
-		if not current_state.is_auto_firing:
+		if not player.is_auto_firing:
 			complete_action()
 			return
 		
 		# After local validation, we send the packet
 		player.player_packets.send_stop_firing_weapon_packet(
 			player.player_movement.rotation_target,
-			current_state.shots_fired
+			player.shots_fired
 		)
 	
 	# Update if remote player
-	if not player.is_local_player:
-		current_state.server_shots_fired = server_shots_fired
+	else:
+		player.server_shots_fired = server_shots_fired
 		
 		# If we predicted the same amount of bullets the player fired, then stop firing
-		if current_state.shots_fired == current_state.server_shots_fired:
+		if player.shots_fired == player.server_shots_fired:
 			# Reset all variables and stop firing
-			current_state.is_auto_firing = false
-			current_state.is_trying_to_syncronize = false
-			current_state.shots_fired = 0
-			current_state.server_shots_fired = 0
+			player.is_auto_firing = false
+			player.is_trying_to_syncronize = false
+			player.shots_fired = 0
+			player.server_shots_fired = 0
 		
 		# If we fired more rounds than we were supposed to (predicting failed),
 		# reimburse the ammo difference to this remote player in my own local session
-		elif current_state.shots_fired > current_state.server_shots_fired:
+		elif player.shots_fired > player.server_shots_fired:
 			# Stop firing immediately
-			current_state.is_auto_firing = false
-			current_state.is_trying_to_syncronize = false
-			var ammo_difference: int = current_state.shots_fired - current_state.server_shots_fired
+			player.is_auto_firing = false
+			player.is_trying_to_syncronize = false
+			var ammo_difference: int = player.shots_fired - player.server_shots_fired
 			var ammo_to_reimburse: int = player.player_equipment.get_current_ammo() + ammo_difference
 			
 			# Reset all variables
-			current_state.shots_fired = 0
-			current_state.server_shots_fired = 0
+			player.shots_fired = 0
+			player.server_shots_fired = 0
 			player.player_equipment.set_current_ammo(ammo_to_reimburse)
 		
 		# If local shots fired is less than the shots the server says we need to take,
 		# keep firing until we are in sync
-		elif current_state.shots_fired < current_state.server_shots_fired:
-			# If we are no longer in a state where we can fire, abort synchronization
-			if not player.is_in_weapon_aim_state() or not current_state.is_auto_firing:
-				current_state.is_auto_firing = false
-				current_state.is_trying_to_syncronize = false
-				current_state.shots_fired = 0
-				current_state.server_shots_fired = 0
-				complete_action()
-				return
-				
-			current_state.is_trying_to_syncronize = true
+		elif player.shots_fired < player.server_shots_fired:
+			player.is_trying_to_syncronize = true
 			
-			# Wait until we are done syncing before completing this action
-			while current_state.is_trying_to_syncronize:
-				# If we're no longer in a state where we can fire, abort synchronization
-				if not player.is_in_weapon_aim_state() or not current_state.is_auto_firing:
-					current_state.is_trying_to_syncronize = false
+			# Fire the remaining shots immediately in sequence
+			var shots_to_fire: int = player.server_shots_fired - player.shots_fired
+			for i in range(shots_to_fire):
+				# Check if we can still fire
+				if not player.is_in_weapon_aim_state() or not player.is_auto_firing:
 					break
 				
-				# NOTE this will block this action until we fire all the bullets
-				await get_tree().process_frame
+				# Fire one shot
+				var weapon = player.player_equipment.equipped_weapon
+				var anim_name: String = weapon.get_animation()
+				var play_rate: float = weapon.get_animation_play_rate()
+				
+				# Check ammo for this shot
+				var has_ammo: bool = player.player_equipment.can_fire_weapon()
+				if not has_ammo:
+					play_rate = weapon.semi_fire_rate
+				
+				await player.player_animator.play_animation_and_await(anim_name, play_rate)
+				player.shots_fired += 1
+				
+				# If we have ammo, decrement it
+				if has_ammo:
+					player.player_equipment.decrement_ammo()
+			
+			# Reset after synchronization attempt
+			player.is_auto_firing = false
+			player.is_trying_to_syncronize = false
+			player.server_shots_fired = 0
 	
 	if player.is_local_player:
-		# Increase the rotation update interval since we are no longer firing
-		current_state.rotation_timer_interval = current_state.AIM_ROTATION_INTERVAL
-		current_state.is_auto_firing = false
-		current_state.dry_fired = false
+		player.is_auto_firing = false
+		player.dry_fired = false
 	
 	complete_action()
 
