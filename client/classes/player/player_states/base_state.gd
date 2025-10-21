@@ -68,6 +68,7 @@ func next_automatic_fire() -> void:
 	if not player.is_local_player and player.expected_shots_fired >= 0 and player.shots_fired >= player.expected_shots_fired:
 		player.is_auto_firing = false
 		player.expected_shots_fired = -1
+		player.fire_start_time = 0
 		return
 	
 	# Get the weapon data from the player equipment system
@@ -119,6 +120,8 @@ func next_automatic_fire() -> void:
 				next_automatic_fire()
 			else:
 				player.is_auto_firing = false
+				player.expected_shots_fired = -1
+				player.fire_start_time = 0
 
 
 # Helper function to skip input if one of these is valid

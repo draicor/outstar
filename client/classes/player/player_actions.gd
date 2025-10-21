@@ -456,6 +456,9 @@ func _process_start_firing_action(ammo: int) -> void:
 	# For remote players, we need to track the expected shot count
 	if not player.is_local_player:
 		player.expected_shots_fired = -1 # Unknown until we get stop_firing
+		
+		# Add a small delay to ensure we don't process stop_firing too quickly
+		player.fire_start_time = Time.get_ticks_msec()
 	
 	# Start firing immediately
 	current_state.next_automatic_fire()
@@ -487,6 +490,13 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 	if not player.is_local_player:
 		# Store the expected shot count
 		player.expected_shots_fired = server_shots_fired
+		
+		# If we just started firing, wait a bit before processing stop_firing
+		if player.fire_start_time > 0 and Time.get_ticks_msec() - player.fire_start_time  < 100:
+			# Re-queue this stop_firing action to be processed later
+			call_deferred("add_action", "stop_firing", server_shots_fired)
+			complete_action()
+			return
 		
 		# If we've already fired more shots than expected, reimburse ammo
 		if player.shots_fired > player.expected_shots_fired:

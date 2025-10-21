@@ -63,6 +63,7 @@ var is_auto_firing: bool = false
 var is_trying_to_syncronize: bool = false
 var shots_fired: int = 0
 var expected_shots_fired: int = -1
+var fire_start_time: int = 0
 
 # Scene tree nodes
 @onready var model: Node3D = $Model # Used to attach the model and rotate it
