@@ -451,8 +451,11 @@ func _process_start_firing_action(ammo: int) -> void:
 	
 	# Perform local actions
 	player.shots_fired = 0
-	player.server_shots_fired = 0
 	player.is_auto_firing = true
+	
+	# For remote players, we need to track the expected shot count
+	if not player.is_local_player:
+		player.expected_shots_fired = -1 # Unknown until we get stop_firing
 	
 	# Start firing immediately
 	current_state.next_automatic_fire()
@@ -480,40 +483,26 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 			player.shots_fired
 		)
 	
-	# For remote players, we need to ensure all shots are fired before completing
+	# For remote players
 	if not player.is_local_player:
-		player.server_shots_fired = server_shots_fired
+		# Store the expected shot count
+		player.expected_shots_fired = server_shots_fired
 		
-		# If we predicted the same amount of bullets the player fired, then stop firing
-		if player.shots_fired == player.server_shots_fired:
-			# Reset all variables and stop firing
-			player.is_auto_firing = false
-			player.shots_fired = 0
-			player.server_shots_fired = 0
-		
-		# If we fired more rounds than we were supposed to (predicting failed),
-		# reimburse the ammo difference to this remote player in my own local session
-		elif player.shots_fired > player.server_shots_fired:
-			# Stop firing immediately
-			player.is_auto_firing = false
-			var ammo_difference: int = player.shots_fired - player.server_shots_fired
+		# If we've already fired more shots than expected, reimburse ammo
+		if player.shots_fired > player.expected_shots_fired:
+			var ammo_difference: int = player.shots_fired - player.expected_shots_fired
 			var ammo_to_reimburse: int = player.player_equipment.get_current_ammo() + ammo_difference
-			
-			# Reset all variables
-			player.shots_fired = 0
-			player.server_shots_fired = 0
 			player.player_equipment.set_current_ammo(ammo_to_reimburse)
-		
-		# If local shots fired is less than the shots the server says we need to take,
-		# fire the remaining shots immediately and wait for them to complete
-		elif player.shots_fired < player.server_shots_fired:
-			# Stop the automatic firing loop
+			# Stop firing since we've fired too many
 			player.is_auto_firing = false
-			
-			# Fire the remaining shots and wait for them to complete
-			var shots_to_fire: int = player.server_shots_fired - player.shots_fired
-			await _fire_remaining_shots_sync(shots_to_fire)
-	
+		
+		# If we've fired exactly the expected amount, stop firing
+		elif player.shots_fired == player.expected_shots_fired:
+			player.is_auto_firing = false
+		
+		# If we haven't fired enough shots, don't do anything
+		# The automatic firing loop will handle stopping when it reaches expected_shots_fired
+		
 	if player.is_local_player:
 		player.is_auto_firing = false
 		player.dry_fired = false
@@ -526,8 +515,15 @@ func _fire_remaining_shots_sync(shots_to_fire: int) -> void:
 	for i in range(shots_to_fire):
 		# Check if we can still fire - if not, break out
 		if not player.is_in_weapon_aim_state():
-			print("Not in weapon aim state, break out of fire remaining shots sync")
-			break
+			print("Not in weapon aim state during fire remaining shots sync, attempting to raise weapon")
+			
+			# Try to raise the weapon again
+			await _ensure_weapon_raised()
+			
+			# If we're still not in the weapon aim state, we can't continue
+			if not player.is_in_weapon_aim_state():
+				push_error("Cannot fire remaining shots, weapon not raised")
+				break
 		
 		# Fire one shot
 		var weapon = player.player_equipment.equipped_weapon
@@ -536,6 +532,7 @@ func _fire_remaining_shots_sync(shots_to_fire: int) -> void:
 		
 		# Check ammo for this shot
 		var has_ammo: bool = player.player_equipment.can_fire_weapon()
+		# If out of ammo, reduce the fire rate to semi automatic fire rate
 		if not has_ammo:
 			play_rate = weapon.semi_fire_rate
 		
@@ -547,6 +544,32 @@ func _fire_remaining_shots_sync(shots_to_fire: int) -> void:
 		# If we have ammo, decrement it
 		if has_ammo:
 			player.player_equipment.decrement_ammo()
+
+
+# Helper function to ensure the weapon is raised before firing
+func _ensure_weapon_raised() -> void:
+	# If we're already in a weapon aim state, we're good
+	if player.is_in_weapon_aim_state():
+		return
+	
+	# Get the current state
+	var current_state: BaseState = player.player_state_machine.get_current_state()
+	if not current_state:
+		return
+	
+	# If we're in a weapon down state, raise the weapon
+	if current_state.is_weapon_down_idle_state():
+		# Play the raised weapon animation directly without using the action queue
+		var weapon_type: String = player.player_equipment.get_current_weapon_type()
+		await player.player_animator.play_weapon_animation_and_await(
+			"down_to_aim",
+			weapon_type
+		)
+		
+		# Switch to the appropiate state
+		var target_state_name: String = weapon_type + "_aim_idle"
+		if target_state_name != player.player_state_machine.get_current_state_name():
+			player.player_state_machine.change_state(target_state_name)
 
 
 func _process_rotate_action(rotation_y: float) -> void:

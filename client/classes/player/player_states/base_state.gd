@@ -54,7 +54,7 @@ func is_weapon_aim_idle_state() -> bool:
 			return false
 
 
-# Tries to fire the next round (live or dry fire) in automatic fire mode,
+# Tries to fire the next round (live or dry fire) in automatic fire mode
 func next_automatic_fire() -> void:
 	# If we are not firing anymore, abort
 	if not player.is_auto_firing:
@@ -62,6 +62,12 @@ func next_automatic_fire() -> void:
 	
 	# If not in automatic fire mode, abort
 	if player.player_equipment.get_fire_mode() != 1:
+		return
+	
+	# For remote players, check if we've reached the expected shot count
+	if not player.is_local_player and player.expected_shots_fired >= 0 and player.shots_fired >= player.expected_shots_fired:
+		player.is_auto_firing = false
+		player.expected_shots_fired = -1
 		return
 	
 	# Get the weapon data from the player equipment system
@@ -104,32 +110,15 @@ func next_automatic_fire() -> void:
 			player.player_actions.queue_stop_firing_action(player.shots_fired)
 			player.dry_fired = false
 	
-	# For remote players
+	# For remote players, continue firing until we reach expected_shots_fired
 	else:
-		# If we are lagging behind the server and we are trying to catch up
-		if player.is_trying_to_syncronize:
-			# If we still haven't reached the amount of shots we fired according to the server
-			if player.shots_fired < player.server_shots_fired:
-				# Check if we can actually fire (have ammo)
-				if player.player_equipment.can_fire_weapon():
-					# Continue firing to catch up
-					next_automatic_fire()
-					return
-				
-				# Out of ammo, stop trying to sync
-				else:
-					player.is_trying_to_syncronize = false
-					player.is_auto_firing = false
-					return
-			else:
-				# We've caught up, stop firing
-				player.is_trying_to_syncronize = false
-				player.is_auto_firing = false
-				return
-		
-		# For remote players, always continue firing until we receive a stop packet
+		# Check if we should continue firing
 		if player.is_auto_firing:
-			next_automatic_fire()
+			# If we know the expected shot count and we haven't reached it yet, continue
+			if player.expected_shots_fired < 0 or player.shots_fired < player.expected_shots_fired:
+				next_automatic_fire()
+			else:
+				player.is_auto_firing = false
 
 
 # Helper function to skip input if one of these is valid
