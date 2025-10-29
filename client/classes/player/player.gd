@@ -63,7 +63,6 @@ var is_auto_firing: bool = false
 var is_trying_to_syncronize: bool = false
 var shots_fired: int = 0
 var expected_shots_fired: int = -1
-var fire_start_time: int = 0
 
 # Scene tree nodes
 @onready var model: Node3D = $Model # Used to attach the model and rotate it
@@ -507,12 +506,16 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 	if chat_bubble_icon:
 		chat_bubble_icon.visible = is_typing
 
+
 ####################
 # HELPER FUNCTIONS #
 ####################
 
 func is_in_weapon_aim_state() -> bool:
 	var current_state: String = player_state_machine.get_current_state_name()
+	var result: bool = current_state in player_packets.WEAPON_AIM_STATES
+	print("DEBUG: is_in_weapon_aim_state - current_state: '", current_state, "', result: ", result)
+	
 	return current_state in [player_packets.WEAPON_AIM_STATES]
 
 

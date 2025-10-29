@@ -68,7 +68,6 @@ func next_automatic_fire() -> void:
 	if not player.is_local_player and player.expected_shots_fired >= 0 and player.shots_fired >= player.expected_shots_fired:
 		player.is_auto_firing = false
 		player.expected_shots_fired = -1
-		player.fire_start_time = 0
 		return
 	
 	# Get the weapon data from the player equipment system
@@ -83,12 +82,14 @@ func next_automatic_fire() -> void:
 			player.dry_fired = true
 			# Override play rate for dry fire (always use semi-auto speed)
 			await player.player_animator.play_animation_and_await(anim_name, weapon.semi_fire_rate)
+			
 			# After dry firing once, automatically stop trying to fire
 			if player.is_local_player:
 				# Check for trigger release during the animation
 				if not Input.is_action_pressed("left_click"):
 					player.player_actions.queue_stop_firing_action(player.shots_fired)
 					player.dry_fired = false
+			
 			# Remote players
 			else:
 				player.is_auto_firing = false
@@ -108,7 +109,9 @@ func next_automatic_fire() -> void:
 			next_automatic_fire()
 		# Check for trigger release during the animation
 		else:
-			player.player_actions.queue_stop_firing_action(player.shots_fired)
+			# Only queue stop_firing if we're not already stopping
+			if player.is_auto_firing:
+				player.player_actions.queue_stop_firing_action(player.shots_fired)
 			player.dry_fired = false
 	
 	# For remote players, continue firing until we reach expected_shots_fired
@@ -121,7 +124,6 @@ func next_automatic_fire() -> void:
 			else:
 				player.is_auto_firing = false
 				player.expected_shots_fired = -1
-				player.fire_start_time = 0
 
 
 # Helper function to skip input if one of these is valid

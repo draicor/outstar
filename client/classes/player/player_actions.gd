@@ -31,6 +31,11 @@ func _ready() -> void:
 
 func add_action(action_type: String, action_data: Variant = null) -> QueuedAction:
 	var action = QueuedAction.new(action_type, action_data)
+	
+	# DEBUG: Track stop_firing actions
+	if action_type == "stop_firing":
+		print("Queueing stop_firing action with shots_fired: ", action_data, " at ", Time.get_ticks_msec())
+	
 	_queue.append(action)
 	
 	if not _is_processing:
@@ -172,6 +177,8 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 	else:
 		# Get the current state
 		var current_state: BaseState = player.player_state_machine.get_current_state()
+		print("DEBUG: Processing move action, current state: ", current_state)
+		
 		if not current_state:
 			complete_action()
 			return
@@ -456,12 +463,12 @@ func _process_start_firing_action(ammo: int) -> void:
 	# For remote players, we need to track the expected shot count
 	if not player.is_local_player:
 		player.expected_shots_fired = -1 # Unknown until we get stop_firing
-		
-		# Add a small delay to ensure we don't process stop_firing too quickly
-		player.fire_start_time = Time.get_ticks_msec()
 	
 	# Start firing immediately
 	current_state.next_automatic_fire()
+	
+	# Wait one frame to ensure the automatic firing loop has started
+	await get_tree().process_frame
 	
 	complete_action()
 
@@ -485,37 +492,70 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 			player.player_movement.rotation_target,
 			player.shots_fired
 		)
+		
+		player.is_auto_firing = false
+		player.dry_fired = false
 	
 	# For remote players
 	if not player.is_local_player:
-		# Store the expected shot count
+		print("DEBUG: Processing stop_firing action, current state: ", current_state)
+		print("DEBUG: player.shots_fired: ", player.shots_fired)
+		print("DEBUG: server_shots_fired: ", server_shots_fired)
+		
+		print("DEBUG: player.expected_shots_fired BEFORE: ", player.expected_shots_fired)
+		# Store the server's shot count
 		player.expected_shots_fired = server_shots_fired
+		print("DEBUG: player.expected_shots_fired AFTER: ", player.expected_shots_fired)
 		
-		# If we just started firing, wait a bit before processing stop_firing
-		if player.fire_start_time > 0 and Time.get_ticks_msec() - player.fire_start_time  < 100:
-			# Re-queue this stop_firing action to be processed later
-			call_deferred("add_action", "stop_firing", server_shots_fired)
-			complete_action()
-			return
+		# Stop any current firing loop
+		player.is_auto_firing = false
 		
-		# If we've already fired more shots than expected, reimburse ammo
+		# If we've already fired more shots than the server says, reimburse ammo
 		if player.shots_fired > player.expected_shots_fired:
+			print("DEBUG: already fired more shots than the server, reimbursing ammo")
 			var ammo_difference: int = player.shots_fired - player.expected_shots_fired
 			var ammo_to_reimburse: int = player.player_equipment.get_current_ammo() + ammo_difference
+			# Reimburse the ammo
 			player.player_equipment.set_current_ammo(ammo_to_reimburse)
-			# Stop firing since we've fired too many
-			player.is_auto_firing = false
+			player.shots_fired = player.expected_shots_fired
 		
-		# If we've fired exactly the expected amount, stop firing
-		elif player.shots_fired == player.expected_shots_fired:
-			player.is_auto_firing = false
+		# If we haven't fired enough shots, fire them now
+		elif player.shots_fired < player.expected_shots_fired:
+			var shots_to_fire = player.expected_shots_fired - player.shots_fired
+			print("DEBUG: Need to fire ", shots_to_fire, " more shots")
+			
+			# Fire all remaining shots directly without checking state
+			
+			# Ensure we're in the weapon aim state
+			if not player.is_in_weapon_aim_state():
+				print("DEBUG: Not in weapon aim state, raising weapon")
+				await _ensure_weapon_raised()
+			
+			# We'll assume we're in the right state since we just received start_firing
+			# Fire all remaining shots
+			for i in range(shots_to_fire):
+				# Fire one shot
+				var weapon = player.player_equipment.equipped_weapon
+				var anim_name: String = weapon.get_animation()
+				var play_rate: float = weapon.get_animation_play_rate()
+			
+				# Check ammo for this shot
+				var has_ammo: bool = player.player_equipment.can_fire_weapon()
+				if not has_ammo:
+					play_rate = weapon.semi_fire_rate
+					print("DEBUG: Out of ammo, dry firing")
+				
+				await player.player_animator.play_animation_and_await(anim_name, play_rate)
+				player.shots_fired += 1
+				
+				# If we have ammo, decrement it
+				if has_ammo:
+					player.player_equipment.decrement_ammo()
+				
+				print("DEBUG: Fired shot ", i+1, " of ", shots_to_fire)
 		
-		# If we haven't fired enough shots, don't do anything
-		# The automatic firing loop will handle stopping when it reaches expected_shots_fired
-		
-	if player.is_local_player:
-		player.is_auto_firing = false
-		player.dry_fired = false
+		# Reset for next time
+		player.expected_shots_fired = -1
 	
 	complete_action()
 
