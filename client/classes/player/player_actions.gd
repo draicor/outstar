@@ -524,14 +524,12 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 			var shots_to_fire = player.expected_shots_fired - player.shots_fired
 			print("DEBUG: Need to fire ", shots_to_fire, " more shots")
 			
-			# Fire all remaining shots directly without checking state
-			
 			# Ensure we're in the weapon aim state
 			if not player.is_in_weapon_aim_state():
 				print("DEBUG: Not in weapon aim state, raising weapon")
 				await _ensure_weapon_raised()
 			
-			# We'll assume we're in the right state since we just received start_firing
+			# We'll assume we're in the right state here
 			# Fire all remaining shots
 			for i in range(shots_to_fire):
 				# Fire one shot
@@ -548,52 +546,12 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 				await player.player_animator.play_animation_and_await(anim_name, play_rate)
 				player.shots_fired += 1
 				
-				# If we have ammo, decrement it
-				if has_ammo:
-					player.player_equipment.decrement_ammo()
-				
 				print("DEBUG: Fired shot ", i+1, " of ", shots_to_fire)
 		
 		# Reset for next time
 		player.expected_shots_fired = -1
 	
 	complete_action()
-
-
-# Synchronously fire remaining shots - this function doesn't return until all shots are fired
-func _fire_remaining_shots_sync(shots_to_fire: int) -> void:
-	for i in range(shots_to_fire):
-		# Check if we can still fire - if not, break out
-		if not player.is_in_weapon_aim_state():
-			print("Not in weapon aim state during fire remaining shots sync, attempting to raise weapon")
-			
-			# Try to raise the weapon again
-			await _ensure_weapon_raised()
-			
-			# If we're still not in the weapon aim state, we can't continue
-			if not player.is_in_weapon_aim_state():
-				push_error("Cannot fire remaining shots, weapon not raised")
-				break
-		
-		# Fire one shot
-		var weapon = player.player_equipment.equipped_weapon
-		var anim_name: String = weapon.get_animation()
-		var play_rate: float = weapon.get_animation_play_rate()
-		
-		# Check ammo for this shot
-		var has_ammo: bool = player.player_equipment.can_fire_weapon()
-		# If out of ammo, reduce the fire rate to semi automatic fire rate
-		if not has_ammo:
-			play_rate = weapon.semi_fire_rate
-		
-		# Play animation and wait for it to complete
-		await player.player_animator.play_animation_and_await(anim_name, play_rate)
-		
-		player.shots_fired += 1
-		
-		# If we have ammo, decrement it
-		if has_ammo:
-			player.player_equipment.decrement_ammo()
 
 
 # Helper function to ensure the weapon is raised before firing
