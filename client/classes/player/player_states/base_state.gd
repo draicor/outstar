@@ -64,7 +64,7 @@ func next_automatic_fire() -> void:
 	if player.player_equipment.get_fire_mode() != 1:
 		return
 	
-	# For remote players, check if we've reached the expected shot count
+	# For remote players, check if we've reached the expected shot count, abort
 	if not player.is_local_player and player.expected_shots_fired >= 0 and player.shots_fired >= player.expected_shots_fired:
 		player.is_auto_firing = false
 		player.expected_shots_fired = -1
@@ -98,7 +98,7 @@ func next_automatic_fire() -> void:
 		# Return here to prevent shooting a live round after the dry fire
 		return
 	
-	# Play normal firing logic
+	# If we have ammo, fire live round
 	await player.player_animator.play_animation_and_await(anim_name, play_rate)
 	# Increase our local firing counter to keep track of how many bullets we have fired
 	player.shots_fired += 1
@@ -118,10 +118,13 @@ func next_automatic_fire() -> void:
 	else:
 		# Check if we should continue firing
 		if player.is_auto_firing:
-			# If we know the expected shot count and we haven't reached it yet, continue
+			# If we don't know how many shots to take
+			# OR
+			# If we know the expected shot count and we haven't reached it yet, continue firing
 			if player.expected_shots_fired < 0 or player.shots_fired < player.expected_shots_fired:
 				next_automatic_fire()
 			else:
+				# Stop firing
 				player.is_auto_firing = false
 				player.expected_shots_fired = -1
 

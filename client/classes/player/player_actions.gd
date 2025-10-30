@@ -32,10 +32,6 @@ func _ready() -> void:
 func add_action(action_type: String, action_data: Variant = null) -> QueuedAction:
 	var action = QueuedAction.new(action_type, action_data)
 	
-	# DEBUG: Track stop_firing actions
-	if action_type == "stop_firing":
-		print("Queueing stop_firing action with shots_fired: ", action_data, " at ", Time.get_ticks_msec())
-	
 	_queue.append(action)
 	
 	if not _is_processing:
@@ -65,8 +61,8 @@ func process_next_action() -> void:
 	_current_action = _queue.pop_front() # Get the next action
 	
 	# DEBUG
-	if not player.is_local_player:
-		print(Time.get_ticks_msec(), " ", _current_action.action_type)
+	#if not player.is_local_player:
+		#print(Time.get_ticks_msec(), " ", _current_action.action_type)
 	
 	# Process based on action type
 	match _current_action.action_type:
@@ -177,8 +173,6 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 	else:
 		# Get the current state
 		var current_state: BaseState = player.player_state_machine.get_current_state()
-		print("DEBUG: Processing move action, current state: ", current_state)
-		
 		if not current_state:
 			complete_action()
 			return
@@ -474,15 +468,15 @@ func _process_start_firing_action(ammo: int) -> void:
 
 
 func _process_stop_firing_action(server_shots_fired: int) -> void:
+	# Get the current state
 	var current_state: BaseState = player.player_state_machine.get_current_state()
-	
 	if not current_state:
 		complete_action()
 		return
 	
 	# Only validate local player
 	if player.is_local_player:
-		# Check if we can stop firing
+		# Check if we are firing, if not, abort
 		if not player.is_auto_firing:
 			complete_action()
 			return
@@ -498,21 +492,14 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 	
 	# For remote players
 	if not player.is_local_player:
-		print("DEBUG: Processing stop_firing action, current state: ", current_state)
-		print("DEBUG: player.shots_fired: ", player.shots_fired)
-		print("DEBUG: server_shots_fired: ", server_shots_fired)
-		
-		print("DEBUG: player.expected_shots_fired BEFORE: ", player.expected_shots_fired)
 		# Store the server's shot count
 		player.expected_shots_fired = server_shots_fired
-		print("DEBUG: player.expected_shots_fired AFTER: ", player.expected_shots_fired)
 		
 		# Stop any current firing loop
 		player.is_auto_firing = false
 		
 		# If we've already fired more shots than the server says, reimburse ammo
 		if player.shots_fired > player.expected_shots_fired:
-			print("DEBUG: already fired more shots than the server, reimbursing ammo")
 			var ammo_difference: int = player.shots_fired - player.expected_shots_fired
 			var ammo_to_reimburse: int = player.player_equipment.get_current_ammo() + ammo_difference
 			# Reimburse the ammo
@@ -522,11 +509,9 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 		# If we haven't fired enough shots, fire them now
 		elif player.shots_fired < player.expected_shots_fired:
 			var shots_to_fire = player.expected_shots_fired - player.shots_fired
-			print("DEBUG: Need to fire ", shots_to_fire, " more shots")
 			
 			# Ensure we're in the weapon aim state
 			if not player.is_in_weapon_aim_state():
-				print("DEBUG: Not in weapon aim state, raising weapon")
 				await _ensure_weapon_raised()
 			
 			# We'll assume we're in the right state here
@@ -541,14 +526,11 @@ func _process_stop_firing_action(server_shots_fired: int) -> void:
 				var has_ammo: bool = player.player_equipment.can_fire_weapon()
 				if not has_ammo:
 					play_rate = weapon.semi_fire_rate
-					print("DEBUG: Out of ammo, dry firing")
 				
 				await player.player_animator.play_animation_and_await(anim_name, play_rate)
 				player.shots_fired += 1
-				
-				print("DEBUG: Fired shot ", i+1, " of ", shots_to_fire)
 		
-		# Reset for next time
+		# Reset count for next time
 		player.expected_shots_fired = -1
 	
 	complete_action()

@@ -513,9 +513,6 @@ func toggle_chat_bubble_icon(is_typing: bool) -> void:
 
 func is_in_weapon_aim_state() -> bool:
 	var current_state: String = player_state_machine.get_current_state_name()
-	var result: bool = current_state in player_packets.WEAPON_AIM_STATES
-	print("DEBUG: is_in_weapon_aim_state - current_state: '", current_state, "', result: ", result)
-	
 	return current_state in [player_packets.WEAPON_AIM_STATES]
 
 
