@@ -86,6 +86,8 @@ func process_next_action() -> void:
 			_process_switch_weapon_action(_current_action.action_data)
 		"rotate":
 			_process_rotate_action(_current_action.action_data)
+		"apply_damage":
+			_process_apply_damage_action(_current_action.action_data)
 		_:
 			push_error("Unknown action type: ", _current_action.action_type)
 			complete_action()
@@ -342,7 +344,7 @@ func _process_single_fire_action(target: Vector3) -> void:
 	# Adjust for dry fire
 	if not has_ammo:
 		play_rate = weapon.semi_fire_rate
-		player.player_state_machine.get_current_state().dry_fired = true
+		player.dry_fired = true
 
 	# Ammo decrement happens from player_equipment.weapon_fire()
 	await player.player_animator.play_animation_and_await(anim_name, play_rate)
@@ -568,11 +570,25 @@ func _process_rotate_action(rotation_y: float) -> void:
 	player.player_movement.is_rotating = true
 	
 	# Wait for the rotation to complete
-	var rotation_threshold = 0.05 # Radians (about 3 degrees)
+	var rotation_threshold = 0.1 # Radians (about 6 degrees)
 	while abs(player.model.rotation.y - rotation_y) > rotation_threshold:
 		await get_tree().process_frame
 	
 	# CAUTION
 	# We don't send packets from this action since we are sending them from base_state.gd
+	
+	complete_action()
+
+
+func _process_apply_damage_action(data: Dictionary) -> void:
+	var target_id: int = data["target_id"]
+	var damage: int = data["damage"]
+	#var damage_type: String = data["damage_type"] # Not in use yet
+	var damage_position: Vector3 = data["damage_position"]
+	
+	# Only process if the target still exists
+	if GameManager.is_player_valid(target_id):
+		SfxManager.spawn_damage_number(damage, damage_position)
+		# NOTE Reduce health and stuff here
 	
 	complete_action()

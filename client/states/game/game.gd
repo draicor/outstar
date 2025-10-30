@@ -443,6 +443,7 @@ func _route_stop_firing_weapon_packet(sender_id: int, stop_firing_weapon_packet:
 
 func _handle_apply_player_damage_packet(sender_id: int, apply_damage_packet: Packets.ApplyPlayerDamage) -> void:
 	var attacker_id: int = apply_damage_packet.get_attacker_id()
+	
 	if sender_id != attacker_id:
 		push_error("sender_id is different from attacker_id in apply_player_damage_packet")
 		return
@@ -452,11 +453,35 @@ func _handle_apply_player_damage_packet(sender_id: int, apply_damage_packet: Pac
 		push_error("target_id is not in our map of connected players in apply_player_damage_packet")
 		return
 	
+	# If the attacker is a remote player, route through their action queue
+	if attacker_id != GameManager.client_id:
+		var attacker: Player = GameManager.get_player_by_id(attacker_id)
+		if attacker:
+			# Create a custom damage action that will be processed in order
+			attacker.player_actions.add_action("apply_damage", {
+				"target_id": apply_damage_packet.get_target_id(),
+				"damage": apply_damage_packet.get_damage(),
+				"damage_type": apply_damage_packet.get_damage_type(),
+				"damage_position": Vector3(
+					apply_damage_packet.get_x(),
+					apply_damage_packet.get_y(),
+					apply_damage_packet.get_z())
+			})
+		return
+	
+	# For local player as attacker, process immediately
+	_process_damage_immediately(apply_damage_packet)
+
+
+func _process_damage_immediately(apply_damage_packet: Packets.ApplyPlayerDamage) -> void:
+	var target_id: int = apply_damage_packet.get_target_id()
+	if not GameManager.is_player_valid(target_id):
+		return
+	
 	# Get the rest of the data from the packet
 	var damage: int = apply_damage_packet.get_damage()
 	# var damage_type: String = apply_damage_packet.get_damage_type()
 	var damage_position: Vector3 = Vector3(apply_damage_packet.get_x(), apply_damage_packet.get_y(), apply_damage_packet.get_z())
 	
 	SfxManager.spawn_damage_number(damage, damage_position)
-	
 	# NOTE Reduce health and stuff here
