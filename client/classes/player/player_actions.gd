@@ -19,6 +19,9 @@ class QueuedAction:
 var _queue: Array[QueuedAction] = []
 var _is_processing: bool = false
 var _current_action: QueuedAction = null
+# target_id -> {damage: int, position: Vector3, timer: Timer}
+var _damage_aggregation: Dictionary = {}
+var _damage_aggregation_timeout: float = 0.3 # 300ms to aggregate damage
 
 
 func _ready() -> void:
@@ -588,7 +591,46 @@ func _process_apply_damage_action(data: Dictionary) -> void:
 	
 	# Only process if the target still exists
 	if GameManager.is_player_valid(target_id):
-		SfxManager.spawn_damage_number(damage, damage_position)
+		_aggregate_damage(target_id, damage, damage_position)
+		# SfxManager.spawn_damage_number(damage, damage_position)
 		# NOTE Reduce health and stuff here
 	
 	complete_action()
+
+
+func _aggregate_damage(target_id: int, damage: int, damage_position: Vector3) -> void:
+	# If we already have a pending aggregation for this target
+	if _damage_aggregation.has(target_id):
+		var aggregate: Dictionary = _damage_aggregation[target_id]
+		aggregate.damage += damage
+		aggregate.position = damage_position # Use the last position
+		# aggregate.timer.start(_damage_aggregation_timeout) # Reset timer
+	else:
+		# Create new aggregation
+		var timer: Timer = Timer.new()
+		timer.wait_time = _damage_aggregation_timeout
+		timer.one_shot = true
+		timer.timeout.connect(_on_damage_aggregation_timeout.bind(target_id))
+		add_child(timer)
+		timer.start(_damage_aggregation_timeout)
+		
+		_damage_aggregation[target_id] = {
+			"damage": damage,
+			"position": damage_position,
+			"timer": timer
+		}
+
+
+# Handles damage aggregation timer timeout
+func _on_damage_aggregation_timeout(target_id: int) -> void:
+	if _damage_aggregation.has(target_id):
+		var aggregate: Dictionary = _damage_aggregation[target_id]
+		
+		# Only process if the target still exists
+		if GameManager.is_player_valid(target_id):
+			SfxManager.spawn_damage_number(aggregate.damage, aggregate.position)
+			# NOTE reduce health here if needed
+		
+		# Clean up
+		aggregate.timer.queue_free()
+		_damage_aggregation.erase(target_id)
