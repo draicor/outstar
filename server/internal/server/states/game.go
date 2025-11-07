@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"server/internal/server"
 	"server/internal/server/math"
 	"server/internal/server/objects"
@@ -15,6 +16,32 @@ import (
 // SERVER TICKS
 // Player movement runs at 2Hz (0.5s ticks)
 const PlayerMoveTick float64 = 0.5
+
+// Simple weapon damage dictionary
+var weaponDamages = map[string]struct {
+	MinDamage uint64
+	MaxDamage uint64
+}{
+	// player_equipment.gd add_weapon_to_slot()
+	// Rifles
+	"unarmed":   {MinDamage: 1, MaxDamage: 2},
+	"m16_rifle": {MinDamage: 1, MaxDamage: 8},
+	"akm_rifle": {MinDamage: 2, MaxDamage: 12},
+}
+
+// Rolls damage for a weapon
+func getWeaponDamage(weaponName string) uint64 {
+	if damageRange, exists := weaponDamages[weaponName]; exists {
+		// Calculate random damage between min and max
+		if damageRange.MaxDamage > damageRange.MinDamage {
+			return damageRange.MinDamage + uint64(rand.Intn(int(damageRange.MaxDamage-damageRange.MinDamage)+1))
+		}
+		return damageRange.MinDamage
+	}
+
+	// Default damage if weapon is not found
+	return 0
+}
 
 type Game struct {
 	client                 server.Client
@@ -520,17 +547,17 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 		return
 	}
 
-	// Calculate damage based on weapon type and weapon name?
-	var damage uint64 = 5 // CAUTION placeholder
+	// Calculate damage based on weapon name
+	var damage uint64 = getWeaponDamage(attackerWeapon.WeaponName)
 
 	// If was critical damage, then do double damage
 	if payload.GetIsCritical() {
 		damage = damage * 2
 	}
 
+	// IMPLEMENT THIS BELOW
 	// Apply damage to target at server level here
 
-	// DEBUG: Print the equipped weapon info
 	// state.logger.Printf("%s got hit with %s (%s)", targetClient.GetPlayerCharacter().Name, attackerWeapon.WeaponType, attackerWeapon.WeaponName)
 
 	// Create apply damage packet and load it
