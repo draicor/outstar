@@ -1,7 +1,6 @@
 package states
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -12,10 +11,6 @@ import (
 
 	"server/pkg/packets"
 )
-
-// SERVER TICKS
-// Player movement runs at 2Hz (0.5s ticks)
-const PlayerMoveTick float64 = 0.5
 
 // Simple weapon damage dictionary
 var weaponDamages = map[string]struct {
@@ -44,10 +39,9 @@ func getWeaponDamage(weaponName string) uint64 {
 }
 
 type Game struct {
-	client                 server.Client
-	player                 *objects.Player
-	cancelPlayerUpdateLoop context.CancelFunc
-	logger                 *log.Logger
+	client server.Client
+	player *objects.Player
+	logger *log.Logger
 }
 
 func (state *Game) GetName() string {
@@ -71,11 +65,6 @@ func (state *Game) OnExit() {
 	// We broadcast the client leaving in websocket.go close()
 	// We save the client's data in the database in websocket.go close()
 	// We remove the player from the grid in region.go
-
-	// We stop the player update loop
-	if state.cancelPlayerUpdateLoop != nil {
-		state.cancelPlayerUpdateLoop()
-	}
 
 	// Remove this player from the list of players from the Hub
 	state.client.GetHub().SharedObjects.Players.Remove(state.client.GetId())
@@ -104,32 +93,10 @@ func (state *Game) OnEnter() {
 		updatePlayerPacket := packets.NewSpawnCharacter(id, client.GetPlayerCharacter())
 		state.client.SendPacket(updatePlayerPacket)
 	})
-
-	// Start the player update loop in its own co-routine
-	if state.cancelPlayerUpdateLoop == nil {
-		ctx, cancel := context.WithCancel(context.Background())
-		state.cancelPlayerUpdateLoop = cancel
-		go state.playerUpdateLoop(ctx)
-	}
-}
-
-// Runs in a loop updating the player
-func (state *Game) playerUpdateLoop(ctx context.Context) {
-	ticker := time.NewTicker(time.Duration(PlayerMoveTick*1000) * time.Millisecond)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			state.updateCharacter()
-		case <-ctx.Done():
-			return
-		}
-	}
 }
 
 // Keeps an accurate representation of the character's position on the server
-func (state *Game) updateCharacter() {
+func (state *Game) processMovement() {
 	// If we are already at our destination, we are done moving
 	if state.player.GetGridPosition() == state.player.GetGridDestination() {
 		return
@@ -341,6 +308,9 @@ func (state *Game) HandleDestination(payload *packets.Destination) {
 		if previousDestination != destination {
 			// Overwrite the destination
 			state.player.SetGridDestination(destination)
+			// Process movement immediately instead of waiting for tick
+			state.processMovement()
+
 		} // New destination is the same as our previous one, ignore
 	} // New destination was invalid, ignore
 }
