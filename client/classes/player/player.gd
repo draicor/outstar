@@ -64,6 +64,9 @@ var is_trying_to_syncronize: bool = false
 var shots_fired: int = 0
 var expected_shots_fired: int = -1
 
+# Signals
+var ui_hud_weapon_slot_signals_connected: bool = false
+
 # Scene tree nodes
 @onready var model: Node3D = $Model # Used to attach the model and rotate it
 @onready var camera_rig: Node3D = $CameraPivot/CameraRig # Used to attach the camera
