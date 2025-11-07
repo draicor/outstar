@@ -8,8 +8,11 @@ scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\db.sqlite draicor@64.223.1
 # We access our folder
 cd /home/draicor/mmo/server
 
+# We move the new server file to the proper folder
+mv ./mmo-server-linux-arm64-v0.0.3.8 ./mmo/server
+
 # Update the permissions of the new file
-chmod +x ./mmo-server-linux-arm64-v0.0.3.7
+chmod +x ./mmo-server-linux-arm64-v0.0.3.8
 
 # Stop the server
 sudo systemctl stop mmo-server
@@ -31,7 +34,7 @@ Description=MMO Server
 After=network.target
 
 [Service]
-ExecStart=/home/draicor/mmo-server-linux-arm64-v0.0.3.7
+ExecStart=/home/draicor/mmo-server-linux-arm64-v0.0.3.8
 RemainAfterExit=no
 Restart=always
 RestartSec=30s
