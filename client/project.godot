@@ -10,11 +10,11 @@ config_version=5
 
 [application]
 
-config/name="Outstar Online"
+config/name="OutstarOnline"
 config/version="0.0.3.9"
 run/main_scene="res://main.tscn"
 config/use_custom_user_dir=true
-config/features=PackedStringArray("4.4", "GL Compatibility")
+config/features=PackedStringArray("4.5", "GL Compatibility")
 run/max_fps=60
 config/icon="uid://bjqb64snmtum0"
 config/windows_native_icon="res://assets/icons/outstar_online.ico"
@@ -154,3 +154,4 @@ weapon_five={
 [rendering]
 
 rendering_device/staging_buffer/max_size_mb=512
+textures/vram_compression/import_etc2_astc=true

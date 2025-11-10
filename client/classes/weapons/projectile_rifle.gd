@@ -218,6 +218,10 @@ func _process_hit(hit: Dictionary) -> void:
 					hit.position,
 					is_critical
 				)
+		
+		# CAUTION
+		# else:
+		# Add here the code to report damage to destructibles!
 	
 	# Play impact and sound effects
 	if collider and collider.is_in_group("body_material"):

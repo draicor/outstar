@@ -8,7 +8,7 @@ scp C:\Users\Draicor\Documents\Draicor\mmo\client\bin\linux\mmo_client_linux_v0.
 # To upload the server files to linux using powershell:
 scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\db.sqlite draicor@74.75.158.246:/home/draicor
 
-scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\mmo-server-linux-arm64-v0.0.3.8 draicor@74.75.158.246:/home/draicor
+scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\mmo-server-linux-arm64-v0.0.3.9 draicor@74.75.158.246:/home/draicor
 
 # switch to root user (if not logged in as root)
 sudo su -
@@ -27,7 +27,7 @@ chmod +x ./mmo-server-linux-arm64-v0.0.1.0
 # I ran it in the foreground by using
 ./mmo-server-linux-arm64-v0.0.1.0
 
-## Setting it up as a Systemd service
+# Setting it up as a Systemd service
 
 # Navigate into the systemd folder and create a new config file
 cd /etc/systemd/system

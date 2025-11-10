@@ -2,23 +2,23 @@
 sudo su -
 
 # To upload the server files to linux using powershell:
-scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\mmo-server-linux-arm64-v0.0.3.7 draicor@64.223.161.129:/home/draicor/mmo/server/
-scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\db.sqlite draicor@64.223.161.129:/home/draicor/mmo/server/
+scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\mmo-server-linux-arm64-v0.0.3.7 draicor@74.75.158.246:/home/draicor/mmo/server/
+scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\db.sqlite draicor@74.75.158.246:/home/draicor/mmo/server/
 
 # We access our folder
 cd /home/draicor/mmo/server
 
 # We move the new server file to the proper folder
-mv ./mmo-server-linux-arm64-v0.0.3.8 ./mmo/server
+mv ./mmo-server-linux-arm64-v0.0.3.9 ./mmo/server
 
 # Update the permissions of the new file
-chmod +x ./mmo-server-linux-arm64-v0.0.3.8
+chmod +x ./mmo-server-linux-arm64-v0.0.3.9
 
 # Stop the server
 sudo systemctl stop mmo-server
 
 # Remove the previous server version
-rm ./mmo-server-linux-arm64-v0.0.3.7
+rm ./mmo-server-linux-arm64-v0.0.3.9
 
 # If we need to update the db, we can do mv db.sqlite /server from the /mmo folder
 
@@ -34,7 +34,7 @@ Description=MMO Server
 After=network.target
 
 [Service]
-ExecStart=/home/draicor/mmo-server-linux-arm64-v0.0.3.8
+ExecStart=/home/draicor/mmo-server-linux-arm64-v0.0.3.9
 RemainAfterExit=no
 Restart=always
 RestartSec=30s
