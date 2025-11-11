@@ -44,6 +44,14 @@ func _on_weapon_five_button_pressed() -> void:
 
 
 func _handle_weapon_switch(weapon_slot: int) -> void:
-	if GameManager.player_character.is_local_player:
-		if GameManager.player_character.player_equipment.current_slot != weapon_slot:
-			Signals.ui_hud_weapon_slot.emit(weapon_slot)
+	# Ignore input
+	if not GameManager.player_character.is_local_player:
+		return
+	if GameManager.player_character.is_busy:
+		return
+	if GameManager.player_character.player_movement.in_motion:
+		return
+	if GameManager.player_character.player_equipment.current_slot == weapon_slot:
+		return
+	
+	Signals.ui_hud_weapon_slot.emit(weapon_slot)
