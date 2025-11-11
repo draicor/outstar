@@ -176,6 +176,15 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 	
 	# Handle remote player movement
 	else:
+		# Get all consecutive movements
+		var all_movements: Array[Vector2i] = _get_consecutive_movements(new_destination)
+		# Get the last destination from all movements
+		var final_destination: Vector2i = all_movements[-1]
+		
+		# Remove all but the first movement from queue (current one is being processed)
+		for i in range(1, all_movements.size()):
+			_remove_next_movement_action()
+		
 		# Get the current state
 		var current_state: BaseState = player.player_state_machine.get_current_state()
 		if not current_state:
@@ -184,10 +193,8 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 		
 		# If we are in a weapon aim state, we need to lower the weapon first
 		if current_state.is_weapon_aim_idle_state():
-			# Queue a lower weapon action first
-			add_action("lower_weapon")
-			# Requeue the move action
-			add_action("move", new_destination)
+			add_action("lower_weapon") # Queue a lower weapon action first
+			add_action("move", final_destination) # Requeue movement action
 			complete_action()
 			return
 		
@@ -196,21 +203,46 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 		# Calculate path from immediate destination to new destination
 		var path: Array[Vector2i] = player.player_movement.predict_path(
 			current_position,
-			new_destination
+			final_destination
 		)
-		if path.is_empty():
+		
+		# Check if path is valid (needs at least 2 points: start and destination)
+		if path.size() < 2:
 			complete_action()
 			return
 		
 		# Set up movement for the remote player
 		player.player_movement.handle_remote_player_movement(path)
 		
-		# NOTE
-		# Wait until the movement is complete before marking action as completed
+		# NOTE Wait until the movement is complete before marking action as completed
 		while player.player_movement.in_motion:
 			await get_tree().process_frame
 		
 		complete_action()
+
+
+# Collect consecutive movement actions from queue
+func _get_consecutive_movements(first_destination: Vector2i) -> Array[Vector2i]:
+	var destinations: Array[Vector2i] = [first_destination]
+	
+	# Look for consecutive movement actions without removing them
+	for i in range(_queue.size()):
+		if _queue[i].action_type == "move":
+			var next_dest: Vector2i = _queue[i].action_data
+			# Only add if it's different from the last one
+			if next_dest != destinations[-1]:
+				destinations.append(next_dest)
+		else:
+			break
+	
+	return destinations
+
+
+func _remove_next_movement_action() -> void:
+	for i in range(_queue.size()):
+		if _queue[i].action_type == "move":
+			_queue.remove_at(i)
+			return
 
 
 func _process_raise_weapon_action() -> void:
