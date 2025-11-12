@@ -11,9 +11,9 @@ import (
 )
 
 const createCharacter = `-- name: CreateCharacter :one
-INSERT INTO characters (user_id, gender, region_id, map_id, x, z, hp, max_hp, speed, rotation_y)
+INSERT INTO characters (user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING id, user_id, gender, region_id, map_id, x, z, hp, max_hp, speed, rotation_y, weapon_slot
+RETURNING id, user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y, weapon_slot
 `
 
 type CreateCharacterParams struct {
@@ -23,8 +23,8 @@ type CreateCharacterParams struct {
 	MapID     int64
 	X         int64
 	Z         int64
-	Hp        int64
-	MaxHp     int64
+	Health    int64
+	MaxHealth int64
 	Speed     int64
 	RotationY float64
 }
@@ -38,8 +38,8 @@ func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams
 		arg.MapID,
 		arg.X,
 		arg.Z,
-		arg.Hp,
-		arg.MaxHp,
+		arg.Health,
+		arg.MaxHealth,
 		arg.Speed,
 		arg.RotationY,
 	)
@@ -52,8 +52,8 @@ func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams
 		&i.MapID,
 		&i.X,
 		&i.Z,
-		&i.Hp,
-		&i.MaxHp,
+		&i.Health,
+		&i.MaxHealth,
 		&i.Speed,
 		&i.RotationY,
 		&i.WeaponSlot,
@@ -104,7 +104,7 @@ func (q *Queries) DeleteWeaponSlots(ctx context.Context, characterID int64) erro
 }
 
 const getCharacterByID = `-- name: GetCharacterByID :one
-SELECT id, user_id, gender, region_id, map_id, x, z, hp, max_hp, speed, rotation_y, weapon_slot FROM characters WHERE id = ?
+SELECT id, user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y, weapon_slot FROM characters WHERE id = ?
 `
 
 func (q *Queries) GetCharacterByID(ctx context.Context, id int64) (Character, error) {
@@ -118,8 +118,8 @@ func (q *Queries) GetCharacterByID(ctx context.Context, id int64) (Character, er
 		&i.MapID,
 		&i.X,
 		&i.Z,
-		&i.Hp,
-		&i.MaxHp,
+		&i.Health,
+		&i.MaxHealth,
 		&i.Speed,
 		&i.RotationY,
 		&i.WeaponSlot,
@@ -128,7 +128,7 @@ func (q *Queries) GetCharacterByID(ctx context.Context, id int64) (Character, er
 }
 
 const getCharacterByUserID = `-- name: GetCharacterByUserID :one
-SELECT id, user_id, gender, region_id, map_id, x, z, hp, max_hp, speed, rotation_y, weapon_slot FROM characters WHERE user_id = ?
+SELECT id, user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y, weapon_slot FROM characters WHERE user_id = ?
 `
 
 func (q *Queries) GetCharacterByUserID(ctx context.Context, userID int64) (Character, error) {
@@ -142,8 +142,8 @@ func (q *Queries) GetCharacterByUserID(ctx context.Context, userID int64) (Chara
 		&i.MapID,
 		&i.X,
 		&i.Z,
-		&i.Hp,
-		&i.MaxHp,
+		&i.Health,
+		&i.MaxHealth,
 		&i.Speed,
 		&i.RotationY,
 		&i.WeaponSlot,
@@ -176,7 +176,7 @@ func (q *Queries) GetCharacterPosition(ctx context.Context, id int64) (GetCharac
 
 const getFullCharacterData = `-- name: GetFullCharacterData :one
 SELECT
-  c.id, c.gender, c.region_id, c.map_id, c.x, c.z, c.hp, c.max_hp, c.speed, c.rotation_y, c.weapon_slot,
+  c.id, c.gender, c.region_id, c.map_id, c.x, c.z, c.health, c.max_health, c.speed, c.rotation_y, c.weapon_slot,
   u.username, u.nickname
 FROM characters c
 JOIN users u ON c.user_id = u.id
@@ -190,8 +190,8 @@ type GetFullCharacterDataRow struct {
 	MapID      int64
 	X          int64
 	Z          int64
-	Hp         int64
-	MaxHp      int64
+	Health     int64
+	MaxHealth  int64
 	Speed      int64
 	RotationY  float64
 	WeaponSlot int64
@@ -209,8 +209,8 @@ func (q *Queries) GetFullCharacterData(ctx context.Context, id int64) (GetFullCh
 		&i.MapID,
 		&i.X,
 		&i.Z,
-		&i.Hp,
-		&i.MaxHp,
+		&i.Health,
+		&i.MaxHealth,
 		&i.Speed,
 		&i.RotationY,
 		&i.WeaponSlot,
@@ -367,25 +367,25 @@ func (q *Queries) SetUserCharacterID(ctx context.Context, arg SetUserCharacterID
 
 const updateCharacterStats = `-- name: UpdateCharacterStats :exec
 UPDATE characters
-set hp = ?, max_hp = ?
+set health = ?, max_health = ?
 WHERE id = ?
 `
 
 type UpdateCharacterStatsParams struct {
-	Hp    int64
-	MaxHp int64
-	ID    int64
+	Health    int64
+	MaxHealth int64
+	ID        int64
 }
 
 func (q *Queries) UpdateCharacterStats(ctx context.Context, arg UpdateCharacterStatsParams) error {
-	_, err := q.db.ExecContext(ctx, updateCharacterStats, arg.Hp, arg.MaxHp, arg.ID)
+	_, err := q.db.ExecContext(ctx, updateCharacterStats, arg.Health, arg.MaxHealth, arg.ID)
 	return err
 }
 
 const updateFullCharacterData = `-- name: UpdateFullCharacterData :exec
 UPDATE characters
 SET
-  region_id = ?, map_id = ?, x = ?, z = ?, hp = ?, max_hp = ?, speed = ?, rotation_y = ?, weapon_slot = ?
+  region_id = ?, map_id = ?, x = ?, z = ?, health = ?, max_health = ?, speed = ?, rotation_y = ?, weapon_slot = ?
 WHERE id = ?
 `
 
@@ -394,8 +394,8 @@ type UpdateFullCharacterDataParams struct {
 	MapID      int64
 	X          int64
 	Z          int64
-	Hp         int64
-	MaxHp      int64
+	Health     int64
+	MaxHealth  int64
 	Speed      int64
 	RotationY  float64
 	WeaponSlot int64
@@ -408,8 +408,8 @@ func (q *Queries) UpdateFullCharacterData(ctx context.Context, arg UpdateFullCha
 		arg.MapID,
 		arg.X,
 		arg.Z,
-		arg.Hp,
-		arg.MaxHp,
+		arg.Health,
+		arg.MaxHealth,
 		arg.Speed,
 		arg.RotationY,
 		arg.WeaponSlot,

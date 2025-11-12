@@ -16,8 +16,8 @@ type Character struct {
 	MapID      int64
 	X          int64
 	Z          int64
-	Hp         int64
-	MaxHp      int64
+	Health     int64
+	MaxHealth  int64
 	Speed      int64
 	RotationY  float64
 	WeaponSlot int64

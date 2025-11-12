@@ -1486,13 +1486,23 @@ class SpawnCharacter:
 		service.field = __speed
 		data[__speed.tag] = service
 		
-		__current_weapon = PBField.new("current_weapon", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__health = PBField.new("health", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __health
+		data[__health.tag] = service
+		
+		__max_health = PBField.new("max_health", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 8, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __max_health
+		data[__max_health.tag] = service
+		
+		__current_weapon = PBField.new("current_weapon", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 9, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
 		service.field = __current_weapon
 		data[__current_weapon.tag] = service
 		
 		var __weapons_default: Array[WeaponSlot] = []
-		__weapons = PBField.new("weapons", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 8, true, __weapons_default)
+		__weapons = PBField.new("weapons", PB_DATA_TYPE.MESSAGE, PB_RULE.REPEATED, 10, true, __weapons_default)
 		service = PBServiceField.new()
 		service.field = __weapons
 		service.func_ref = Callable(self, "add_weapons")
@@ -1579,6 +1589,32 @@ class SpawnCharacter:
 	func set_speed(value : int) -> void:
 		__speed.value = value
 	
+	var __health: PBField
+	func has_health() -> bool:
+		if __health.value != null:
+			return true
+		return false
+	func get_health() -> int:
+		return __health.value
+	func clear_health() -> void:
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		__health.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_health(value : int) -> void:
+		__health.value = value
+	
+	var __max_health: PBField
+	func has_max_health() -> bool:
+		if __max_health.value != null:
+			return true
+		return false
+	func get_max_health() -> int:
+		return __max_health.value
+	func clear_max_health() -> void:
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		__max_health.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_max_health(value : int) -> void:
+		__max_health.value = value
+	
 	var __current_weapon: PBField
 	func has_current_weapon() -> bool:
 		if __current_weapon.value != null:
@@ -1587,7 +1623,7 @@ class SpawnCharacter:
 	func get_current_weapon() -> int:
 		return __current_weapon.value
 	func clear_current_weapon() -> void:
-		data[7].state = PB_SERVICE_STATE.UNFILLED
+		data[9].state = PB_SERVICE_STATE.UNFILLED
 		__current_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_current_weapon(value : int) -> void:
 		__current_weapon.value = value
@@ -1596,7 +1632,7 @@ class SpawnCharacter:
 	func get_weapons() -> Array[WeaponSlot]:
 		return __weapons.value
 	func clear_weapons() -> void:
-		data[8].state = PB_SERVICE_STATE.UNFILLED
+		data[10].state = PB_SERVICE_STATE.UNFILLED
 		__weapons.value.clear()
 	func add_weapons() -> WeaponSlot:
 		var element = WeaponSlot.new()

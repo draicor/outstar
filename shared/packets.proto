@@ -45,8 +45,10 @@ message SpawnCharacter { // Sent by the server to spawn a character
   double rotation_y = 4;
   string gender = 5;
   uint64 speed = 6;
-  uint64 current_weapon = 7; // Current equipped weapon by slot
-  repeated WeaponSlot weapons = 8; // All weapon slots
+  uint64 health = 7;
+  uint64 max_health = 8;
+  uint64 current_weapon = 9; // Current equipped weapon by slot
+  repeated WeaponSlot weapons = 10; // All weapon slots
 }
 // Character movement
 message MoveCharacter { // Sent by the server to move remote characters

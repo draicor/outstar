@@ -398,12 +398,12 @@ func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.Us
 	character, err := q.CreateCharacter(ctx, db.CreateCharacterParams{
 		UserID:    user.ID,
 		Gender:    gender,
-		RegionID:  1, // We could have the player choose his starting location
-		MapID:     1, // We could have the player choose his starting location
-		X:         0, // Update this depending on the spawn location?
-		Z:         0, // Update this depending on the spawn location?
-		Hp:        100,
-		MaxHp:     100,
+		RegionID:  1,             // We could have the player choose his starting location
+		MapID:     1,             // We could have the player choose his starting location
+		X:         0,             // Update this depending on the spawn location?
+		Z:         0,             // Update this depending on the spawn location?
+		Health:    100,           // Health
+		MaxHealth: 100,           // Max Health
 		Speed:     2,             // Create character with speed set to jog
 		RotationY: objects.SOUTH, // Always spawn looking south when creating the character
 		// Weapon data
@@ -480,8 +480,8 @@ func (h *Hub) SaveCharacter(client Client) error {
 		MapID:      int64(character.GetMapId()),
 		X:          int64(character.GetGridPosition().X),
 		Z:          int64(character.GetGridPosition().Z),
-		Hp:         int64(100), // TO FIX Create character.GetHealth()
-		MaxHp:      int64(100), // TO FIX Create character.GetMaxHealth()
+		Health:     int64(character.GetHealth()),
+		MaxHealth:  int64(character.GetMaxHealth()),
 		Speed:      int64(character.GetSpeed()),
 		RotationY:  float64(character.GetRotation()),
 		WeaponSlot: int64(character.GetCurrentWeapon()),

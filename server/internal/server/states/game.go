@@ -504,9 +504,15 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 	targetId := payload.GetTargetId()
 
 	// targetClient, exists
-	_, exists := state.client.GetRegion().Clients.Get(targetId)
+	targetClient, exists := state.client.GetRegion().Clients.Get(targetId)
 	if !exists {
 		state.logger.Printf("Invalid target ID %d in damage report packet", targetId)
+		return
+	}
+
+	targetPlayer := targetClient.GetPlayerCharacter()
+	// If the target is already dead, ignore this damage
+	if !targetPlayer.IsAlive() {
 		return
 	}
 
@@ -525,23 +531,30 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 		damage = damage * 2
 	}
 
-	// IMPLEMENT THIS BELOW
-	// Apply damage to target at server level here
+	// Apply damage to target
+	targetPlayer.DecreaseHealth(damage)
 
-	// state.logger.Printf("%s got hit with %s (%s)", targetClient.GetPlayerCharacter().Name, attackerWeapon.WeaponType, attackerWeapon.WeaponName)
+	// Check if the player is still alive after applying damage
+	if targetPlayer.IsAlive() {
+		// Create apply damage packet and load it
+		applyDamagePacket := packets.NewApplyPlayerDamage(
+			state.client.GetId(),
+			targetId,
+			damage,
+			"bullet",
+			payload.GetX(),
+			payload.GetY(),
+			payload.GetZ(),
+		)
 
-	// Create apply damage packet and load it
-	applyDamagePacket := packets.NewApplyPlayerDamage(
-		state.client.GetId(),
-		targetId,
-		damage,
-		"bullet",
-		payload.GetX(),
-		payload.GetY(),
-		payload.GetZ(),
-	)
+		// Tell everyone to apply the damage (including the attacker)
+		state.client.SendPacket(applyDamagePacket)
+		state.client.Broadcast(applyDamagePacket)
 
-	// Tell everyone to apply the damage (including the attacker)
-	state.client.SendPacket(applyDamagePacket)
-	state.client.Broadcast(applyDamagePacket)
+	} else {
+		// TO FIX
+		// Create a packet to kill a player (causing it to play an animation and sound of dying?)
+		state.logger.Printf("%s died!", targetPlayer.Name)
+
+	}
 }

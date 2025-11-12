@@ -129,6 +129,8 @@ func NewSpawnCharacter(id uint64, player *objects.Player) Payload {
 			RotationY:     player.GetRotation(),
 			Gender:        player.GetGender(),
 			Speed:         player.GetSpeed(),
+			Health:        player.GetHealth(),
+			MaxHealth:     player.GetMaxHealth(),
 			CurrentWeapon: player.GetCurrentWeapon(),
 			Weapons:       convertWeaponsToProto(*player.GetWeapons()),
 		},

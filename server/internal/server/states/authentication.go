@@ -183,8 +183,10 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 		uint64(character.WeaponSlot),
 		*weapons,
 		// Stats
-		level, experience,
+		level, experience, // TO FIX -> Load this from the database too!
 		// Atributes
+		uint64(character.Health),
+		uint64(character.MaxHealth),
 	))
 
 	state.logger.Printf("%s logged in as %s", username, user.Nickname)

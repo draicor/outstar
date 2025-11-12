@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS characters (
   map_id INTEGER NOT NULL DEFAULT 1, -- Which map file to load
   x INTEGER NOT NULL DEFAULT 1,
   z INTEGER NOT NULL DEFAULT 1,
-  hp INTEGER NOT NULL DEFAULT 100,
-  max_hp INTEGER NOT NULL DEFAULT 100,
+  health INTEGER NOT NULL DEFAULT 100,
+  max_health INTEGER NOT NULL DEFAULT 100,
   speed INTEGER NOT NULL DEFAULT 1 CHECK (speed BETWEEN 1 and 3), -- Clamp speed
   rotation_y REAL NOT NULL DEFAULT 0.0,
   weapon_slot INTEGER NOT NULL DEFAULT 0 CHECK (weapon_slot BETWEEN 0 and 4), -- Clamp weapon slot

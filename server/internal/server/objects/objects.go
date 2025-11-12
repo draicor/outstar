@@ -42,7 +42,9 @@ type Player struct {
 	Level      uint64
 	Experience uint64
 	// Attributes
-	speed uint64 // Cells per tick
+	speed     uint64 // Cells per tick
+	health    uint64 // Current health
+	maxHealth uint64 // Maximum health
 	// Weapon state
 	currentWeapon uint64        // Current weapon slot
 	weapons       []*WeaponSlot // Array of weapon slots
@@ -167,7 +169,51 @@ func (player *Player) ToggleCurrentWeaponFireMode() {
 		// Switch to semi-auto
 		player.SetCurrentWeaponFireMode(0)
 	}
+}
 
+// Health get/set
+func (player *Player) GetHealth() uint64 {
+	return player.health
+}
+func (player *Player) SetHealth(newHealth uint64) {
+	// Health shouldn't be greater than max health
+	if newHealth > player.maxHealth {
+		player.health = player.maxHealth
+	} else {
+		player.health = newHealth
+	}
+}
+
+// MaxHealth get/set
+func (player *Player) GetMaxHealth() uint64 {
+	return player.maxHealth
+}
+func (player *Player) SetMaxHealth(newMaxHealth uint64) {
+	player.maxHealth = newMaxHealth
+	// If current health exceeds new max health, cap it
+	if player.health > player.maxHealth {
+		player.health = player.maxHealth
+	}
+}
+
+// Health manipulation
+func (player *Player) DecreaseHealth(amount uint64) {
+	if amount >= player.health {
+		player.health = 0
+	} else {
+		player.health -= amount
+	}
+}
+
+func (player *Player) IncreaseHealth(amount uint64) {
+	player.health += amount
+	if player.health > player.maxHealth {
+		player.health = player.maxHealth
+	}
+}
+
+func (player *Player) IsAlive() bool {
+	return player.health > 0
 }
 
 // Static function to create a new player
@@ -182,6 +228,8 @@ func CreatePlayer(
 	level uint64,
 	experience uint64,
 	// Atributes
+	health uint64,
+	maxHealth uint64,
 ) *Player {
 	return &Player{
 		Name:   name,
@@ -192,8 +240,10 @@ func CreatePlayer(
 		// Stats
 		Level:      level,
 		Experience: experience,
+		speed:      speed,
 		// Attributes
-		speed: speed,
+		health:    health,
+		maxHealth: maxHealth,
 		// Equipped Weapon Data
 		currentWeapon: currentWeapon,
 		weapons:       weapons,
