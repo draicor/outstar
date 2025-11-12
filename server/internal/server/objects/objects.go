@@ -204,7 +204,6 @@ func (player *Player) DecreaseHealth(amount uint64) {
 		player.health -= amount
 	}
 }
-
 func (player *Player) IncreaseHealth(amount uint64) {
 	player.health += amount
 	if player.health > player.maxHealth {
@@ -212,8 +211,24 @@ func (player *Player) IncreaseHealth(amount uint64) {
 	}
 }
 
+// Checks if this player is still alive
 func (player *Player) IsAlive() bool {
 	return player.health > 0
+}
+
+// Respawn resets the player's stats back to default
+func (player *Player) Respawn() {
+	player.health = player.maxHealth // Back to full health (could respawn with 10%?)
+	player.currentWeapon = 0         // Back to unarmed
+	player.RotationY = SOUTH         // Face south
+}
+
+// Returns the default respawn location for this region
+// We should probably set it up as a dictionary where each key is a region_id and the value
+// is an array of valid respawn coordinates.
+func (player *Player) GetRespawnLocation() (uint64, uint64) {
+	// We'll use (0,0) as the default, customize this later!
+	return 0, 0
 }
 
 // Static function to create a new player
