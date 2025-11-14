@@ -71,9 +71,10 @@ func _ready() -> void:
 
 # Helper function for _ready()
 func setup_movement_data_at_spawn() -> void:
-	player.position = interpolated_position # Has to be set after the player scene has been created
-	# Convert our model's y-rotation (radians) to a forward direction vector
-	forward_direction = Vector3(sin(player.spawn_rotation), 0, cos(player.spawn_rotation))
+	if player:
+		player.position = interpolated_position # Has to be set after the player scene has been created
+		# Convert our model's y-rotation (radians) to a forward direction vector
+		forward_direction = Vector3(sin(player.spawn_rotation), 0, cos(player.spawn_rotation))
 
 
 ##################

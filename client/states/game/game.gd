@@ -257,47 +257,84 @@ func _handle_spawn_character_packet(spawn_character_packet: Packets.SpawnCharact
 	# If this player is NOT in our list of players
 	# then is a new player so we need to spawn it
 	if not player:
-		# Check if our client id is the same as this update player packet sender id
-		var is_my_player_character := player_id == GameManager.client_id
-		
-		# Get the spawn position from the packet
-		var spawn_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
-		var weapon_slots: Array[Dictionary] = []
-		# Get the spawn weapons from the packet
-		var spawn_weapons = spawn_character_packet.get_weapons()
-		# Extract weapon slots from the packet
-		for i in range(spawn_weapons.size()):
-			var weapon_slot = spawn_weapons[i]
-			weapon_slots.insert(weapon_slot.get_slot_index(), {
-				"weapon_name": weapon_slot.get_weapon_name(),
-				"weapon_type": weapon_slot.get_weapon_type(),
-				"display_name": weapon_slot.get_display_name(),
-				"ammo": weapon_slot.get_ammo(),
-				"fire_mode": weapon_slot.get_fire_mode()
-			})
-		
-		# Grab all of the data from the server and use it to create this player character
-		var new_player: Player = Player.instantiate(
-			player_id,
-			spawn_character_packet.get_name(),
-			spawn_character_packet.get_gender(),
-			spawn_character_packet.get_speed(),
-			spawn_position,
-			spawn_character_packet.get_rotation_y(),
-			is_my_player_character,
-			spawn_character_packet.get_current_weapon(),
-			weapon_slots
-		)
-		# Add this player to our map of players
-		GameManager.register_player(player_id, new_player)
-		
-		# For remote players
-		if not is_my_player_character:
-			# Add the player to the new position in my local grid
-			RegionManager.set_object(spawn_position, new_player)
-		
-		# Spawn the player
-		_current_map_scene.add_child(new_player)
+		_spawn_new_player(player_id, spawn_character_packet)
+	else:
+		# Respawn existing player
+		_handle_player_respawn(player, spawn_character_packet)
+
+
+func _spawn_new_player(player_id: int, spawn_character_packet: Packets.SpawnCharacter) -> void:
+	# Check if our client id is the same as this update player packet sender id
+	var is_my_player_character := player_id == GameManager.client_id
+	
+	# Get the spawn position from the packet
+	var spawn_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
+	var weapon_slots: Array[Dictionary] = []
+	# Get the spawn weapons from the packet
+	var spawn_weapons = spawn_character_packet.get_weapons()
+	# Extract weapon slots from the packet
+	for i in range(spawn_weapons.size()):
+		var weapon_slot = spawn_weapons[i]
+		weapon_slots.insert(weapon_slot.get_slot_index(), {
+			"weapon_name": weapon_slot.get_weapon_name(),
+			"weapon_type": weapon_slot.get_weapon_type(),
+			"display_name": weapon_slot.get_display_name(),
+			"ammo": weapon_slot.get_ammo(),
+			"fire_mode": weapon_slot.get_fire_mode()
+		})
+	
+	# Grab all of the data from the server and use it to create this player character
+	var new_player: Player = Player.instantiate(
+		player_id,
+		spawn_character_packet.get_name(),
+		spawn_character_packet.get_gender(),
+		spawn_character_packet.get_speed(),
+		spawn_character_packet.get_health(),
+		spawn_character_packet.get_max_health(),
+		spawn_position,
+		spawn_character_packet.get_rotation_y(),
+		is_my_player_character,
+		spawn_character_packet.get_current_weapon(),
+		weapon_slots
+	)
+	# Add this player to our map of players
+	GameManager.register_player(player_id, new_player)
+	
+	# For remote players
+	if not is_my_player_character:
+		# Add the player to the new position in my local grid
+		RegionManager.set_object(spawn_position, new_player)
+	
+	# Spawn the player
+	_current_map_scene.add_child(new_player)
+
+
+func _handle_player_respawn(player: Player, spawn_character_packet: Packets.SpawnCharacter) -> void:
+	var new_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
+	
+	# Update stats
+	player.health = spawn_character_packet.get_health()
+	player.max_health = spawn_character_packet.get_max_health()
+	
+	# Remove from old position and add to new position
+	var old_position: Vector2i = player.player_movement.server_grid_position
+	RegionManager.remove_object(old_position, player)
+	RegionManager.set_object(new_position, player)
+	
+	# Update all movement related positions
+	player.player_movement.server_grid_position = new_position
+	player.player_movement.grid_position = new_position
+	player.player_movement.grid_destination = new_position
+	player.player_movement.immediate_grid_destination = new_position
+	player.player_movement.interpolated_position = Utils.map_to_local(new_position)
+	
+	# Reset position and rotation
+	player.spawn_rotation = spawn_character_packet.get_rotation_y()
+	player.player_movement.setup_movement_data_at_spawn()
+	player.model.rotation.y = player.spawn_rotation # Snap the rotation to the new spawn rotation
+	
+	# Reset any death state and go to appropriate idle state
+	player.update_weapon_state()
 
 
 func _handle_region_data_packet(region_data_packet: Packets.RegionData) -> void:

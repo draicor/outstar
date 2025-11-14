@@ -24,6 +24,8 @@ var player_id: int
 var player_name: String
 var gender: String
 var player_speed: int
+var health: int
+var max_health: int
 var spawn_position: Vector2i
 var spawn_rotation: float
 var tooltip: String
@@ -99,6 +101,8 @@ static func instantiate(
 	nickname: String,
 	character_gender: String,
 	character_speed: int,
+	character_health: int,
+	character_max_health: int,
 	server_spawn_position: Vector2i,
 	server_spawn_rotation: float, # Used to update our model.rotation.y
 	is_my_player_character: bool,
@@ -112,6 +116,8 @@ static func instantiate(
 	player.player_name = nickname
 	player.gender = character_gender
 	player.player_speed = character_speed
+	player.health = character_health
+	player.max_health = character_max_health
 	player.spawn_position = server_spawn_position
 	player.spawn_rotation = server_spawn_rotation
 	player.is_local_player = is_my_player_character
@@ -155,10 +161,10 @@ func _ready() -> void:
 	# Displays our character, replace with a spawn animation
 	show()
 	
-	call_deferred("_post_ready_initialization")
+	call_deferred("update_weapon_state")
 
 # Called a frame later to let the child components catch up
-func _post_ready_initialization() -> void:
+func update_weapon_state() -> void:
 	# Await an extra frame otherwise it won't work
 	await get_tree().process_frame
 	
@@ -622,3 +628,15 @@ func can_start_firing() -> bool:
 		return false
 	
 	return true
+
+
+func handle_death() -> void:
+	# Set health to 0
+	health = 0
+	
+	# Change to dead state
+	if player_state_machine:
+		player_state_machine.change_state("dead")
+	
+	# Play death animation and sound
+	# for local player, show death screen or UI?

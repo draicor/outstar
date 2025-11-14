@@ -115,3 +115,39 @@ func (r *Region) Start() {
 func (r *Region) GetClient(id uint64) (Client, bool) {
 	return r.Clients.Get(id)
 }
+
+// Handles player respawn logic
+func (r *Region) RespawnPlayer(client Client) error {
+	player := client.GetPlayerCharacter()
+
+	// Reset player stats
+	player.Respawn()
+
+	// Get the grid and find a spawn cell using your existing logic
+	grid := r.GetGrid()
+
+	// Use the player's respawn location or default to (0,0)
+	respawnX, respawnZ := player.GetRespawnLocation()
+	playerSpawnCell := grid.GetSpawnCell(respawnX, respawnZ)
+
+	// If no cell was found in this region, return error
+	if playerSpawnCell == nil {
+		return fmt.Errorf("no respawn location available in region %d", r.GetId())
+	}
+
+	// Place player at respawn location
+	grid.SetObject(playerSpawnCell, player)
+	player.SetGridPosition(playerSpawnCell)
+	player.SetGridDestination(playerSpawnCell)
+
+	// Create and broadcast respawn packet
+	respawnPacket := packets.NewSpawnCharacter(client.GetId(), player)
+
+	// Broadcast respawn to everyone in the region (including the respawning client)
+	client.SendPacket(respawnPacket)
+	client.Broadcast(respawnPacket)
+
+	r.logger.Printf("Player %s respawned at (%d, %d)", player.Name, playerSpawnCell.X, playerSpawnCell.Z)
+
+	return nil
+}

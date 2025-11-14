@@ -551,10 +551,24 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 		state.client.SendPacket(applyDamagePacket)
 		state.client.Broadcast(applyDamagePacket)
 
+		// If the player died
 	} else {
-		// TO FIX
-		// Create a packet to kill a player (causing it to play an animation and sound of dying?)
-		state.logger.Printf("%s died!", targetPlayer.Name)
+		// Create a packet to notify the player died
+		deathPacket := packets.NewApplyPlayerDamage(
+			state.client.GetId(),
+			targetId,
+			damage,
+			"death", // Special damage type for death
+			payload.GetX(),
+			payload.GetY(),
+			payload.GetZ(),
+		)
 
+		// Tell everyone the player died (including the attacker)
+		state.client.SendPacket(deathPacket)
+		state.client.Broadcast(deathPacket)
+
+		// Respawn the player using the region's respawn system
+		state.client.GetRegion().RespawnPlayer(targetClient)
 	}
 }
