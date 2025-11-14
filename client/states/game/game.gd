@@ -84,7 +84,8 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_route_fire_weapon_packet(sender_id, packet.get_fire_weapon())
 	elif packet.has_rotate_character():
 		_route_rotate_character_packet(sender_id, packet.get_rotate_character())
-
+	elif packet.has_player_died():
+		_route_player_died_packet(packet.get_player_died())
 
 	# LOWER PRIORITY PACKETS THAT GET QUEUED
 	elif packet.has_spawn_character():
@@ -158,7 +159,7 @@ func _handle_client_left_packet(sender_id: int, client_left_packet: Packets.Clie
 	var player: Player = GameManager.get_player_by_id(sender_id)
 	if player:
 		# Remove this player from our grid
-		RegionManager.remove_object(player.player_movement.server_grid_position, player)
+		RegionManager.remove_object(player.player_movement.immediate_grid_destination)
 		
 		# Free memory
 		if is_instance_valid(player):
@@ -495,3 +496,14 @@ func _process_damage_immediately(apply_damage_packet: Packets.ApplyPlayerDamage)
 	
 	SfxManager.spawn_damage_number(damage, damage_position)
 	# NOTE Reduce health and stuff here
+
+
+func _route_player_died_packet(player_died_packet: Packets.PlayerDied) -> void:
+	var target_id: int = player_died_packet.get_target_id()
+	if not GameManager.is_player_valid(target_id):
+		return
+	
+	var target: Player = GameManager.get_player_by_id(target_id)
+	if target:
+		# Route through the player target's action queue
+		target.player_actions.add_action("death", player_died_packet)

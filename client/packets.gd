@@ -2724,6 +2724,69 @@ class ApplyPlayerDamage:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
+class PlayerDied:
+	func _init():
+		var service
+		
+		__attacker_id = PBField.new("attacker_id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __attacker_id
+		data[__attacker_id.tag] = service
+		
+		__target_id = PBField.new("target_id", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __target_id
+		data[__target_id.tag] = service
+		
+	var data = {}
+	
+	var __attacker_id: PBField
+	func has_attacker_id() -> bool:
+		if __attacker_id.value != null:
+			return true
+		return false
+	func get_attacker_id() -> int:
+		return __attacker_id.value
+	func clear_attacker_id() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__attacker_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_attacker_id(value : int) -> void:
+		__attacker_id.value = value
+	
+	var __target_id: PBField
+	func has_target_id() -> bool:
+		if __target_id.value != null:
+			return true
+		return false
+	func get_target_id() -> int:
+		return __target_id.value
+	func clear_target_id() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__target_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_target_id(value : int) -> void:
+		__target_id.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
 class Packet:
 	func _init():
 		var service
@@ -2913,6 +2976,12 @@ class Packet:
 		service.func_ref = Callable(self, "new_apply_player_damage")
 		data[__apply_player_damage.tag] = service
 		
+		__player_died = PBField.new("player_died", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 32, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = __player_died
+		service.func_ref = Callable(self, "new_player_died")
+		data[__player_died.tag] = service
+		
 	var data = {}
 	
 	var __sender_id: PBField
@@ -2998,6 +3067,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__public_message.value = PublicMessage.new()
 		return __public_message.value
 	
@@ -3071,6 +3142,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__handshake.value = Handshake.new()
 		return __handshake.value
 	
@@ -3144,6 +3217,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__heartbeat.value = Heartbeat.new()
 		return __heartbeat.value
 	
@@ -3217,6 +3292,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__server_metrics.value = ServerMetrics.new()
 		return __server_metrics.value
 	
@@ -3290,6 +3367,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__request_granted.value = RequestGranted.new()
 		return __request_granted.value
 	
@@ -3363,6 +3442,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__request_denied.value = RequestDenied.new()
 		return __request_denied.value
 	
@@ -3436,6 +3517,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__login_request.value = LoginRequest.new()
 		return __login_request.value
 	
@@ -3509,6 +3592,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__register_request.value = RegisterRequest.new()
 		return __register_request.value
 	
@@ -3582,6 +3667,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__login_success.value = LoginSuccess.new()
 		return __login_success.value
 	
@@ -3655,6 +3742,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__logout_request.value = LogoutRequest.new()
 		return __logout_request.value
 	
@@ -3728,6 +3817,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__client_entered.value = ClientEntered.new()
 		return __client_entered.value
 	
@@ -3801,6 +3892,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__client_left.value = ClientLeft.new()
 		return __client_left.value
 	
@@ -3874,6 +3967,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = JoinRegionRequest.new()
 		return __join_region_request.value
 	
@@ -3947,6 +4042,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__region_data.value = RegionData.new()
 		return __region_data.value
 	
@@ -4020,6 +4117,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__spawn_character.value = SpawnCharacter.new()
 		return __spawn_character.value
 	
@@ -4093,6 +4192,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__move_character.value = MoveCharacter.new()
 		return __move_character.value
 	
@@ -4166,6 +4267,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__rotate_character.value = RotateCharacter.new()
 		return __rotate_character.value
 	
@@ -4239,6 +4342,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__destination.value = Destination.new()
 		return __destination.value
 	
@@ -4312,6 +4417,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = UpdateSpeed.new()
 		return __update_speed.value
 	
@@ -4385,6 +4492,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = ChatBubble.new()
 		return __chat_bubble.value
 	
@@ -4458,6 +4567,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__switch_weapon.value = SwitchWeapon.new()
 		return __switch_weapon.value
 	
@@ -4531,6 +4642,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__reload_weapon.value = ReloadWeapon.new()
 		return __reload_weapon.value
 	
@@ -4604,6 +4717,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__raise_weapon.value = RaiseWeapon.new()
 		return __raise_weapon.value
 	
@@ -4677,6 +4792,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = LowerWeapon.new()
 		return __lower_weapon.value
 	
@@ -4750,6 +4867,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__fire_weapon.value = FireWeapon.new()
 		return __fire_weapon.value
 	
@@ -4823,6 +4942,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__toggle_fire_mode.value = ToggleFireMode.new()
 		return __toggle_fire_mode.value
 	
@@ -4896,6 +5017,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__start_firing_weapon.value = StartFiringWeapon.new()
 		return __start_firing_weapon.value
 	
@@ -4969,6 +5092,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__stop_firing_weapon.value = StopFiringWeapon.new()
 		return __stop_firing_weapon.value
 	
@@ -5042,6 +5167,8 @@ class Packet:
 		data[30].state = PB_SERVICE_STATE.FILLED
 		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__report_player_damage.value = ReportPlayerDamage.new()
 		return __report_player_damage.value
 	
@@ -5115,8 +5242,85 @@ class Packet:
 		__report_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[30].state = PB_SERVICE_STATE.UNFILLED
 		data[31].state = PB_SERVICE_STATE.FILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = ApplyPlayerDamage.new()
 		return __apply_player_damage.value
+	
+	var __player_died: PBField
+	func has_player_died() -> bool:
+		if __player_died.value != null:
+			return true
+		return false
+	func get_player_died() -> PlayerDied:
+		return __player_died.value
+	func clear_player_died() -> void:
+		data[32].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_player_died() -> PlayerDied:
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		__server_metrics.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		__logout_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		__move_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__rotate_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[22].state = PB_SERVICE_STATE.UNFILLED
+		__reload_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[23].state = PB_SERVICE_STATE.UNFILLED
+		__raise_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[24].state = PB_SERVICE_STATE.UNFILLED
+		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
+		__toggle_fire_mode.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[27].state = PB_SERVICE_STATE.UNFILLED
+		__start_firing_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[28].state = PB_SERVICE_STATE.UNFILLED
+		__stop_firing_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[29].state = PB_SERVICE_STATE.UNFILLED
+		__report_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[30].state = PB_SERVICE_STATE.UNFILLED
+		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[31].state = PB_SERVICE_STATE.UNFILLED
+		data[32].state = PB_SERVICE_STATE.FILLED
+		__player_died.value = PlayerDied.new()
+		return __player_died.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

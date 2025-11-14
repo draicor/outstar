@@ -460,7 +460,7 @@ func _update_grid_position() -> void:
 	
 	# Update RegionManager grid when position changes
 	if old_position != grid_position:
-		RegionManager.remove_object(old_position, player)
+		RegionManager.remove_object(old_position)
 		RegionManager.set_object(grid_position, player)
 
 

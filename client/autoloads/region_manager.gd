@@ -109,10 +109,10 @@ func set_object(cell: Vector2i, object: Object) -> void:
 		_grid[index].object = object
 
 
-# Attempts to remove the object passed from this cell
-func remove_object(cell: Vector2i, object: Object) -> void:
-	if is_in_grid(cell):
-		var index = cell.y * grid_width + cell.x
-		# If the object at this cell is the same as the object I want to remove
-		if _grid[index].object == object:
-			_grid[index].object = null
+# Removes the object passed from this cell
+func remove_object(cell: Vector2i) -> void:
+	if not is_in_grid(cell):
+		return
+	
+	var index = cell.y * grid_width + cell.x
+	_grid[index].object = null

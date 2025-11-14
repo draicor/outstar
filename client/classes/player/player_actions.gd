@@ -93,6 +93,8 @@ func process_next_action() -> void:
 			_process_apply_damage_action(_current_action.action_data)
 		"respawn":
 			_process_respawn_action(_current_action.action_data)
+		"death":
+			_process_player_died_action(_current_action.action_data)
 		_:
 			push_error("Unknown action type: ", _current_action.action_type)
 			complete_action()
@@ -214,7 +216,7 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 			return
 		
 		# Remove player from current position in grid BEFORE moving
-		RegionManager.remove_object(current_position, player)
+		RegionManager.remove_object(current_position)
 		
 		# Set up movement for the remote player
 		player.player_movement.handle_remote_player_movement(path)
@@ -623,17 +625,13 @@ func _process_rotate_action(rotation_y: float) -> void:
 func _process_apply_damage_action(data: Dictionary) -> void:
 	var target_id: int = data["target_id"]
 	var damage: int = data["damage"]
-	var damage_type: String = data["damage_type"]
+	# var damage_type: String = data["damage_type"]
 	var damage_position: Vector3 = data["damage_position"]
 	
 	# Only process if the target still exists
 	if GameManager.is_player_valid(target_id):
-		if damage_type == "death":
-			# Handle death through the action queue
-			_handle_player_death(target_id)
-		else:
-			# Regular damage, reduce health inside _aggregate_damage
-			_aggregate_damage(target_id, damage, damage_position)
+		# Regular damage, reduce health inside _aggregate_damage
+		_aggregate_damage(target_id, damage, damage_position)
 	
 	complete_action()
 
@@ -706,15 +704,10 @@ func _process_respawn_action(spawn_character_packet: Packets.SpawnCharacter) -> 
 		complete_action()
 		return
 	
-	var old_position: Vector2i = target_player.player_movement.server_grid_position
 	var new_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
-	
-	print("Player death, removing from position: ", old_position)
-	RegionManager.remove_object(old_position, target_player)
 	
 	# Add player to the new position in the grid
 	RegionManager.set_object(new_position, target_player)
-	print("player spawn, adding to position: ", new_position)
 	
 	# Update stats
 	target_player.health = spawn_character_packet.get_health()
@@ -734,5 +727,53 @@ func _process_respawn_action(spawn_character_packet: Packets.SpawnCharacter) -> 
 	
 	# Reset any death state and go to appropriate idle state
 	target_player.update_weapon_state()
+	
+	complete_action()
+
+
+func _process_player_died_action(player_died_packet: Packets.PlayerDied) -> void:
+	# var attacker_id: int = player_died_packet.get_attacker_id()
+	var target_id: int = player_died_packet.get_target_id()
+	
+	# Only process if the target still exists
+	if not GameManager.is_player_valid(target_id):
+		complete_action()
+		return
+	
+	var target_player: Player = GameManager.get_player_by_id(target_id)
+	
+	# Set health to 0
+	target_player.health = 0
+	
+	# Remove player from grid immediately on death
+	RegionManager.remove_object(target_player.player_movement.immediate_grid_destination)
+	
+	# Reset all movement state back to default (idle)
+	target_player.player_movement.clear_movement_state()
+	
+	# Clear this player's action queue
+	if target_player == player:
+		_queue.clear()
+	
+	# Play death sounds and animations or SFX
+	# For local player, show death screen
+	# Log the death
+	
+	# DEBUGGING
+	#var killer_name: String = "unknown"
+	#if GameManager.is_player_valid(attacker_id):
+		#var killer: Player = GameManager.get_player_by_id(attacker_id)
+		#killer_name = killer.player_name
+	#print("Player ", target_player.player_name, " died (killed by ", killer_name, ")")
+	
+	# Force idle state if not already idling
+	var current_state_name: String = target_player.player_state_machine.get_current_state_name()
+	var target_state_name: String = target_player.player_animator.get_idle_state_name()
+	# If we are not already in the same state
+	if current_state_name != target_state_name:
+		player.player_state_machine.change_state(target_state_name)
+	
+	# If we get killed while playing an animation we need to reset our busy state to false
+	target_player.is_busy = false
 	
 	complete_action()

@@ -250,9 +250,7 @@ func get_idle_state_name() -> String:
 		female_locomotion: return "idle"
 		male_locomotion: return "idle"
 		rifle_down_locomotion: return "rifle_down_idle"
-		rifle_aim_locomotion:
-			push_error("Error in get_idle_state_name, requesting idle state when in rifle aim locomotion.")
-			return "rifle_down_idle"
+		rifle_aim_locomotion: return "rifle_down_idle"
 		_:
 			push_error("Error in get_idle_state_name, can't find ", locomotion)
 			return "idle"

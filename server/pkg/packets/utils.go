@@ -264,3 +264,13 @@ func NewApplyPlayerDamage(attackerId, targetId, damage uint64, damage_type strin
 		},
 	}
 }
+
+// Sent by the server when a player dies
+func NewPlayerDied(attackerId, targetId uint64) Payload {
+	return &Packet_PlayerDied{
+		PlayerDied: &PlayerDied{
+			AttackerId: attackerId,
+			TargetId:   targetId,
+		},
+	}
+}

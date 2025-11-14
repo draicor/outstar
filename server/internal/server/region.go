@@ -119,13 +119,19 @@ func (r *Region) GetClient(id uint64) (Client, bool) {
 // Handles player respawn logic
 func (r *Region) RespawnPlayer(client Client) error {
 	player := client.GetPlayerCharacter()
+	// Get the player's current position
+	deathPosition := player.GetGridPosition()
 
 	// Reset player stats
 	player.Respawn()
 
-	// Get the grid and find a spawn cell using your existing logic
+	// Get the grid
 	grid := r.GetGrid()
 
+	// Remove player from server grid immediately
+	grid.SetObject(deathPosition, nil)
+
+	// Find a spawn cell using the existing logic
 	// Use the player's respawn location or default to (0,0)
 	respawnX, respawnZ := player.GetRespawnLocation()
 	playerSpawnCell := grid.GetSpawnCell(respawnX, respawnZ)

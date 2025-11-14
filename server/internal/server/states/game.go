@@ -553,31 +553,17 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 
 		// If the player died
 	} else {
-		// Get the player's current position
-		deathPosition := targetPlayer.GetGridPosition()
-		// Remove player from grid immediately
-		region := targetClient.GetRegion()
-		if region != nil {
-			grid := region.GetGrid()
-			grid.SetObject(deathPosition, nil)
-		}
-
-		// Create apply damage packet and load it
-		applyDamagePacket := packets.NewApplyPlayerDamage(
+		// Create death notification packet
+		playerDiedPacket := packets.NewPlayerDied(
 			state.client.GetId(),
 			targetId,
-			damage,
-			"death", // Special damage type for death
-			payload.GetX(),
-			payload.GetY(),
-			payload.GetZ(),
 		)
 
-		// Tell everyone to apply the damage (including the attacker)
-		state.client.SendPacket(applyDamagePacket)
-		state.client.Broadcast(applyDamagePacket)
+		// Tell everyone to this player died
+		state.client.SendPacket(playerDiedPacket)
+		state.client.Broadcast(playerDiedPacket)
 
-		// Respawn the player using the region's respawn system
+		// Respawn the player using the region's respawn system (we pass the death's position)
 		state.client.GetRegion().RespawnPlayer(targetClient)
 	}
 }
