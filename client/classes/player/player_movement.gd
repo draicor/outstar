@@ -454,8 +454,14 @@ func _interpolate_position(delta: float) -> void:
 
 # Update this player's local position after each completed step
 func _update_grid_position() -> void:
+	var old_position: Vector2i = grid_position
 	interpolated_position = next_cell
 	grid_position = Utils.local_to_map(interpolated_position)
+	
+	# Update RegionManager grid when position changes
+	if old_position != grid_position:
+		RegionManager.remove_object(old_position, player)
+		RegionManager.set_object(grid_position, player)
 
 
 # Helper function to process the movement logic for both local and remote players
@@ -593,7 +599,11 @@ func teleport_to_position(new_grid_position: Vector2i) -> void:
 	player.position = interpolated_position
 	next_cell = interpolated_position
 	
-	# Reset movement state
+	clear_movement_state()
+
+
+# Resets movement state back to idle
+func clear_movement_state() -> void:
 	in_motion = false
 	is_rotating = false
 	movement_elapsed_time = 0

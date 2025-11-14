@@ -91,6 +91,8 @@ func process_next_action() -> void:
 			_process_rotate_action(_current_action.action_data)
 		"apply_damage":
 			_process_apply_damage_action(_current_action.action_data)
+		"respawn":
+			_process_respawn_action(_current_action.action_data)
 		_:
 			push_error("Unknown action type: ", _current_action.action_type)
 			complete_action()
@@ -210,6 +212,9 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 		if path.size() < 2:
 			complete_action()
 			return
+		
+		# Remove player from current position in grid BEFORE moving
+		RegionManager.remove_object(current_position, player)
 		
 		# Set up movement for the remote player
 		player.player_movement.handle_remote_player_movement(path)
@@ -618,14 +623,17 @@ func _process_rotate_action(rotation_y: float) -> void:
 func _process_apply_damage_action(data: Dictionary) -> void:
 	var target_id: int = data["target_id"]
 	var damage: int = data["damage"]
-	#var damage_type: String = data["damage_type"] # Not in use yet
+	var damage_type: String = data["damage_type"]
 	var damage_position: Vector3 = data["damage_position"]
 	
 	# Only process if the target still exists
 	if GameManager.is_player_valid(target_id):
-		_aggregate_damage(target_id, damage, damage_position)
-		# SfxManager.spawn_damage_number(damage, damage_position)
-		# NOTE Reduce health and stuff here
+		if damage_type == "death":
+			# Handle death through the action queue
+			_handle_player_death(target_id)
+		else:
+			# Regular damage, reduce health inside _aggregate_damage
+			_aggregate_damage(target_id, damage, damage_position)
 	
 	complete_action()
 
@@ -636,7 +644,6 @@ func _aggregate_damage(target_id: int, damage: int, damage_position: Vector3) ->
 		var aggregate: Dictionary = _damage_aggregation[target_id]
 		aggregate.damage += damage
 		aggregate.position = damage_position # Use the last position
-		# aggregate.timer.start(_damage_aggregation_timeout) # Reset timer
 	else:
 		# Create new aggregation
 		var timer: Timer = Timer.new()
@@ -666,3 +673,66 @@ func _on_damage_aggregation_timeout(target_id: int) -> void:
 		# Clean up
 		aggregate.timer.queue_free()
 		_damage_aggregation.erase(target_id)
+
+
+func _handle_player_death(target_id: int) -> void:
+	# Attempt to retrieve the player character object
+	var target_player: Player = GameManager.get_player_by_id(target_id)
+	if not target_player:
+		complete_action()
+		return
+	
+	# Reset stats to death state (Remove buffs, etc)
+	target_player.health = 0
+	
+	# We handle removing the character from the grid in the respawn packet
+	
+	# Reset all movement state back to default (idle)
+	target_player.player_movement.clear_movement_state()
+	
+	# Clear this player's action queue
+	_queue.clear()
+	
+	# Play death animation here
+	# Play death sound
+	# Play death SFX
+	# if local player, show respawn button to send request respawn packet
+
+
+func _process_respawn_action(spawn_character_packet: Packets.SpawnCharacter) -> void:
+	# Attempt to retrieve the player character object
+	var target_player: Player = GameManager.get_player_by_id(spawn_character_packet.get_id())
+	if not target_player:
+		complete_action()
+		return
+	
+	var old_position: Vector2i = target_player.player_movement.server_grid_position
+	var new_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
+	
+	print("Player death, removing from position: ", old_position)
+	RegionManager.remove_object(old_position, target_player)
+	
+	# Add player to the new position in the grid
+	RegionManager.set_object(new_position, target_player)
+	print("player spawn, adding to position: ", new_position)
+	
+	# Update stats
+	target_player.health = spawn_character_packet.get_health()
+	target_player.max_health = spawn_character_packet.get_max_health()
+	
+	# Update all movement related positions
+	target_player.player_movement.server_grid_position = new_position
+	target_player.player_movement.grid_position = new_position
+	target_player.player_movement.grid_destination = new_position
+	target_player.player_movement.immediate_grid_destination = new_position
+	target_player.player_movement.interpolated_position = Utils.map_to_local(new_position)
+	
+	# Reset position and rotation
+	target_player.spawn_rotation = spawn_character_packet.get_rotation_y()
+	target_player.player_movement.setup_movement_data_at_spawn()
+	target_player.model.rotation.y = target_player.spawn_rotation # Snap the rotation to the new spawn rotation
+	
+	# Reset any death state and go to appropriate idle state
+	target_player.update_weapon_state()
+	
+	complete_action()

@@ -246,9 +246,13 @@ func (h *Hub) JoinRegion(username string) {
 			region.AddClientChannel <- client
 			// Save the new region pointer in the client
 			client.SetRegion(region)
+
+			// Get our player character
+			player := client.GetPlayerCharacter()
+
 			// Save the region ID and map ID in the character
-			client.GetPlayerCharacter().SetRegionId(regionId)
-			client.GetPlayerCharacter().SetMapId(mapId)
+			player.SetRegionId(regionId)
+			player.SetMapId(mapId)
 
 			// Only spawn in this cell if its not occupied, if it is, find a cell nearby that is free
 			grid := region.GetGrid()
@@ -267,11 +271,11 @@ func (h *Hub) JoinRegion(username string) {
 			client.SendPacket(packets.NewRegionData(region.GetId(), grid.GetMaxWidth(), grid.GetMaxHeight()))
 
 			// Update the position and destination for this player character
-			client.GetPlayerCharacter().SetGridPosition(playerSpawnCell)
-			client.GetPlayerCharacter().SetGridDestination(playerSpawnCell)
+			player.SetGridPosition(playerSpawnCell)
+			player.SetGridDestination(playerSpawnCell)
 
 			// Place the player in the grid for this region
-			grid.SetObject(playerSpawnCell, client.GetPlayerCharacter())
+			grid.SetObject(playerSpawnCell, player)
 
 		} else { // If the region does not exist
 			log.Printf("Region %d not available", regionId)

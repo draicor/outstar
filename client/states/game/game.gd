@@ -87,6 +87,10 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 
 
 	# LOWER PRIORITY PACKETS THAT GET QUEUED
+	elif packet.has_spawn_character():
+		_route_spawn_character_packet(packet.get_spawn_character())
+	elif packet.has_apply_player_damage():
+		_route_apply_player_damage_packet(sender_id, packet.get_apply_player_damage())
 	elif packet.has_update_speed():
 		_route_update_speed_packet(sender_id, packet.get_update_speed())
 	elif packet.has_switch_weapon():
@@ -98,9 +102,7 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 	
 	# IMMEDIATE PACKETS DON'T GO INTO PACKET QUEUE
 	# PACKETS THAT NEED CLIENT_ID INSIDE THE PACKET
-	if packet.has_spawn_character():
-		_handle_spawn_character_packet(packet.get_spawn_character())
-	elif packet.has_region_data():
+	if packet.has_region_data():
 		_handle_region_data_packet(packet.get_region_data())
 	elif packet.has_heartbeat():
 		Signals.heartbeat_received.emit()
@@ -115,8 +117,6 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_handle_chat_bubble_packet(sender_id, packet.get_chat_bubble())
 	elif packet.has_client_left():
 		_handle_client_left_packet(sender_id, packet.get_client_left())
-	elif packet.has_apply_player_damage():
-		_handle_apply_player_damage_packet(sender_id, packet.get_apply_player_damage())
 
 
 # Print the message into our chat window and update that player's chat bubble
@@ -250,17 +250,18 @@ func _handle_request_denied_packet(reason: String) -> void:
 	# have a packet type for every type of request unless we have to!
 
 
-func _handle_spawn_character_packet(spawn_character_packet: Packets.SpawnCharacter) -> void:
+func _route_spawn_character_packet(spawn_character_packet: Packets.SpawnCharacter) -> void:
 	var player_id := spawn_character_packet.get_id()
 	# Attempt to retrieve the player character object
 	var player: Player = GameManager.get_player_by_id(player_id)
-	# If this player is NOT in our list of players
-	# then is a new player so we need to spawn it
+	
+	# If this player is not in our list of players, then it's a new player
+	# This does not go into the action queue, it gets spawned as fast as possible!
 	if not player:
 		_spawn_new_player(player_id, spawn_character_packet)
 	else:
-		# Respawn existing player
-		_handle_player_respawn(player, spawn_character_packet)
+		# Respawn existing player through the action queue
+		player.player_actions.add_action("respawn", spawn_character_packet)
 
 
 func _spawn_new_player(player_id: int, spawn_character_packet: Packets.SpawnCharacter) -> void:
@@ -307,34 +308,6 @@ func _spawn_new_player(player_id: int, spawn_character_packet: Packets.SpawnChar
 	
 	# Spawn the player
 	_current_map_scene.add_child(new_player)
-
-
-func _handle_player_respawn(player: Player, spawn_character_packet: Packets.SpawnCharacter) -> void:
-	var new_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
-	
-	# Update stats
-	player.health = spawn_character_packet.get_health()
-	player.max_health = spawn_character_packet.get_max_health()
-	
-	# Remove from old position and add to new position
-	var old_position: Vector2i = player.player_movement.server_grid_position
-	RegionManager.remove_object(old_position, player)
-	RegionManager.set_object(new_position, player)
-	
-	# Update all movement related positions
-	player.player_movement.server_grid_position = new_position
-	player.player_movement.grid_position = new_position
-	player.player_movement.grid_destination = new_position
-	player.player_movement.immediate_grid_destination = new_position
-	player.player_movement.interpolated_position = Utils.map_to_local(new_position)
-	
-	# Reset position and rotation
-	player.spawn_rotation = spawn_character_packet.get_rotation_y()
-	player.player_movement.setup_movement_data_at_spawn()
-	player.model.rotation.y = player.spawn_rotation # Snap the rotation to the new spawn rotation
-	
-	# Reset any death state and go to appropriate idle state
-	player.update_weapon_state()
 
 
 func _handle_region_data_packet(region_data_packet: Packets.RegionData) -> void:
@@ -478,7 +451,7 @@ func _route_stop_firing_weapon_packet(sender_id: int, stop_firing_weapon_packet:
 		player.player_packets.add_packet(stop_firing_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
-func _handle_apply_player_damage_packet(sender_id: int, apply_damage_packet: Packets.ApplyPlayerDamage) -> void:
+func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Packets.ApplyPlayerDamage) -> void:
 	var attacker_id: int = apply_damage_packet.get_attacker_id()
 	
 	if sender_id != attacker_id:
