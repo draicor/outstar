@@ -464,8 +464,24 @@ func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Pack
 		push_error("target_id is not in our map of connected players in apply_player_damage_packet")
 		return
 	
-	# If the attacker is a remote player, route through their action queue
-	if attacker_id != GameManager.client_id:
+	var target_player: Player = GameManager.get_player_by_id(target_id)
+	# Reduce health immediately for consistency
+	target_player.decrease_health(apply_damage_packet.get_damage())
+	
+	# If target is dead, don't process any damage visualization
+	if not target_player.is_alive():
+		# Clear any pending damage aggregation for this target
+		_clear_pending_damage_for_target(target_id)
+		return
+	
+	var is_local_attacker: bool = (attacker_id == GameManager.client_id)
+	var is_local_victim: bool = (target_id == GameManager.client_id)
+	
+	if is_local_attacker:
+		# Local attacker sees damage immediately
+		_process_damage_immediately(apply_damage_packet)
+	elif is_local_victim:
+		# Local victim - queue damage to maintain action order
 		var attacker: Player = GameManager.get_player_by_id(attacker_id)
 		if attacker:
 			# Create a custom damage action that will be processed in order
@@ -478,10 +494,18 @@ func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Pack
 					apply_damage_packet.get_y(),
 					apply_damage_packet.get_z())
 			})
-		return
-	
-	# For local player as attacker, process immediately
-	_process_damage_immediately(apply_damage_packet)
+	else:
+		# Bystander - process immediately but check if target is alive
+		if target_player.is_alive():
+			_process_damage_immediately(apply_damage_packet)
+
+
+# Clears damage aggregation for this target across ALL players
+func _clear_pending_damage_for_target(target_id: int) -> void:
+	for player_id in GameManager._players:
+		var player: Player = GameManager.get_player_by_id(player_id)
+		if player and player.player_actions:
+			player.player_actions.clear_pending_damage_numbers(target_id)
 
 
 func _process_damage_immediately(apply_damage_packet: Packets.ApplyPlayerDamage) -> void:

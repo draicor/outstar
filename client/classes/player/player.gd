@@ -630,6 +630,23 @@ func can_start_firing() -> bool:
 	return true
 
 
+func decrease_health(amount: int) -> void:
+	if amount >= health:
+		health = 0
+	else:
+		health -= amount
+
+
+func increase_health(amount: int) -> void:
+	health += amount
+	if health > max_health:
+		health = max_health
+
+
+func is_alive() -> bool:
+	return health > 0
+
+
 func handle_death() -> void:
 	# Set health to 0
 	health = 0

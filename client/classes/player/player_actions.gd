@@ -628,15 +628,26 @@ func _process_apply_damage_action(data: Dictionary) -> void:
 	# var damage_type: String = data["damage_type"]
 	var damage_position: Vector3 = data["damage_position"]
 	
-	# Only process if the target still exists
+	# Only process if the target still exists and is alive
 	if GameManager.is_player_valid(target_id):
-		# Regular damage, reduce health inside _aggregate_damage
-		_aggregate_damage(target_id, damage, damage_position)
+		var target_player: Player = GameManager.get_player_by_id(target_id)
+		if target_player.is_alive():
+			# Regular damage, reduce health inside _aggregate_damage
+			_aggregate_damage(target_id, damage, damage_position)
+		else:
+			clear_pending_damage_numbers(target_id)
 	
 	complete_action()
 
 
 func _aggregate_damage(target_id: int, damage: int, damage_position: Vector3) -> void:
+	if not GameManager.is_player_valid(target_id):
+		return
+	
+	var target_player: Player = GameManager.get_player_by_id(target_id)
+	if not target_player.is_alive():
+		return
+	
 	# If we already have a pending aggregation for this target
 	if _damage_aggregation.has(target_id):
 		var aggregate: Dictionary = _damage_aggregation[target_id]
@@ -663,46 +674,29 @@ func _on_damage_aggregation_timeout(target_id: int) -> void:
 	if _damage_aggregation.has(target_id):
 		var aggregate: Dictionary = _damage_aggregation[target_id]
 		
-		# Only process if the target still exists
+		# Only process if the target still exists and is still alive
 		if GameManager.is_player_valid(target_id):
-			SfxManager.spawn_damage_number(aggregate.damage, aggregate.position)
-			# NOTE reduce health here if needed
+			var target_player: Player = GameManager.get_player_by_id(target_id)
+			if target_player.is_alive():
+				SfxManager.spawn_damage_number(aggregate.damage, aggregate.position)
+				# NOTE reduce HUD health here
 		
 		# Clean up
 		aggregate.timer.queue_free()
 		_damage_aggregation.erase(target_id)
 
 
-func _handle_player_death(target_id: int) -> void:
+func _process_respawn_action(spawn_character_packet: Packets.SpawnCharacter) -> void:
+	var target_id: int = spawn_character_packet.get_id()
 	# Attempt to retrieve the player character object
 	var target_player: Player = GameManager.get_player_by_id(target_id)
 	if not target_player:
 		complete_action()
 		return
 	
-	# Reset stats to death state (Remove buffs, etc)
-	target_player.health = 0
-	
-	# We handle removing the character from the grid in the respawn packet
-	
-	# Reset all movement state back to default (idle)
-	target_player.player_movement.clear_movement_state()
-	
-	# Clear this player's action queue
-	_queue.clear()
-	
-	# Play death animation here
-	# Play death sound
-	# Play death SFX
-	# if local player, show respawn button to send request respawn packet
-
-
-func _process_respawn_action(spawn_character_packet: Packets.SpawnCharacter) -> void:
-	# Attempt to retrieve the player character object
-	var target_player: Player = GameManager.get_player_by_id(spawn_character_packet.get_id())
-	if not target_player:
-		complete_action()
-		return
+	# Clear any pending damage aggregation and any pending damage actions for the respawned player
+	clear_pending_damage_numbers(target_id)
+	_clear_pending_damage_actions(target_id)
 	
 	var new_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
 	
@@ -742,6 +736,10 @@ func _process_player_died_action(player_died_packet: Packets.PlayerDied) -> void
 	
 	var target_player: Player = GameManager.get_player_by_id(target_id)
 	
+	# Clear pending damage numbers and damage actions for this target
+	clear_pending_damage_numbers(target_id)
+	_clear_pending_damage_actions(target_id)
+	
 	# Set health to 0
 	target_player.health = 0
 	
@@ -777,3 +775,23 @@ func _process_player_died_action(player_died_packet: Packets.PlayerDied) -> void
 	target_player.is_busy = false
 	
 	complete_action()
+
+
+# Clears damage aggregation for this player
+func clear_pending_damage_numbers(target_id: int) -> void:
+	if _damage_aggregation.has(target_id):
+		var aggregate: Dictionary = _damage_aggregation[target_id]
+		aggregate.timer.stop()
+		aggregate.timer.queue_free()
+		_damage_aggregation.erase(target_id)
+
+
+# Removes any pending apply_damage from the queue
+func _clear_pending_damage_actions(target_id: int) -> void:
+	var i: int = 0
+	while i < _queue.size():
+		var action = _queue[i]
+		if action.action_type == "apply_damage" and action.action_data["target_id"] == target_id:
+			_queue.remove_at(i)
+		else:
+			i += 1
