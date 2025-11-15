@@ -478,8 +478,9 @@ func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Pack
 	var is_local_victim: bool = (target_id == GameManager.client_id)
 	
 	if is_local_attacker:
-		# Local attacker sees damage immediately
-		_process_damage_immediately(apply_damage_packet)
+		# Local attacker - process immediately but check if target is alive
+		if target_player.is_alive():
+			_process_damage_immediately(apply_damage_packet)
 	elif is_local_victim:
 		# Local victim - queue damage to maintain action order
 		var attacker: Player = GameManager.get_player_by_id(attacker_id)
@@ -513,13 +514,18 @@ func _process_damage_immediately(apply_damage_packet: Packets.ApplyPlayerDamage)
 	if not GameManager.is_player_valid(target_id):
 		return
 	
+	var target_player: Player = GameManager.get_player_by_id(target_id)
+	if not target_player.is_alive():
+		return
+	
+	print(target_player.health)
+	
 	# Get the rest of the data from the packet
 	var damage: int = apply_damage_packet.get_damage()
 	# var damage_type: String = apply_damage_packet.get_damage_type()
 	var damage_position: Vector3 = Vector3(apply_damage_packet.get_x(), apply_damage_packet.get_y(), apply_damage_packet.get_z())
 	
 	SfxManager.spawn_damage_number(damage, damage_position)
-	# NOTE Reduce health and stuff here
 
 
 func _route_player_died_packet(player_died_packet: Packets.PlayerDied) -> void:

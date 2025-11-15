@@ -700,9 +700,6 @@ func _process_respawn_action(spawn_character_packet: Packets.SpawnCharacter) -> 
 	
 	var new_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
 	
-	# Add player to the new position in the grid
-	RegionManager.set_object(new_position, target_player)
-	
 	# Update stats
 	target_player.health = spawn_character_packet.get_health()
 	target_player.max_health = spawn_character_packet.get_max_health()
@@ -721,6 +718,12 @@ func _process_respawn_action(spawn_character_packet: Packets.SpawnCharacter) -> 
 	
 	# Reset any death state and go to appropriate idle state
 	target_player.update_weapon_state()
+	
+	# Remove player from the old position in the local grid
+	RegionManager.remove_object(target_player.player_movement.immediate_grid_destination)
+	
+	# Add player to the new position in the grid
+	RegionManager.set_object(new_position, target_player)
 	
 	complete_action()
 
@@ -742,9 +745,6 @@ func _process_player_died_action(player_died_packet: Packets.PlayerDied) -> void
 	
 	# Set health to 0
 	target_player.health = 0
-	
-	# Remove player from grid immediately on death
-	RegionManager.remove_object(target_player.player_movement.immediate_grid_destination)
 	
 	# Reset all movement state back to default (idle)
 	target_player.player_movement.clear_movement_state()
@@ -770,6 +770,9 @@ func _process_player_died_action(player_died_packet: Packets.PlayerDied) -> void
 	# If we are not already in the same state
 	if current_state_name != target_state_name:
 		player.player_state_machine.change_state(target_state_name)
+	
+	# Remove player from grid immediately on death
+	RegionManager.remove_object(target_player.player_movement.immediate_grid_destination)
 	
 	# If we get killed while playing an animation we need to reset our busy state to false
 	target_player.is_busy = false
