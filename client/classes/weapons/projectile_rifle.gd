@@ -204,6 +204,11 @@ func _process_hit(hit: Dictionary) -> void:
 		# Try to find the player node from the collider
 		var hit_player = _get_player_from_collider(collider)
 		if hit_player:
+			# If the player is not alive, ignore
+			# Check here, so this ignores for all players
+			if not hit_player.is_alive():
+				return
+			
 			# Check if this weapon belongs to the local player
 			var owner_player = get_weapon_owner()
 			if owner_player and owner_player.is_local_player:

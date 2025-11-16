@@ -677,3 +677,5 @@ func handle_respawn() -> void:
 		# If we are not already in the same state
 		if current_state_name != target_state_name:
 			player_state_machine.change_state(target_state_name)
+	
+	show()

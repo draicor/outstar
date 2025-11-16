@@ -544,5 +544,5 @@ func _route_player_died_packet(player_died_packet: Packets.PlayerDied) -> void:
 
 
 func _show_respawn_ui() -> void:
-	chat.info("You died, click here to respawn")
+	print("Player died, click here to respawn")
 	

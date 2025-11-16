@@ -1,3 +1,4 @@
+DeadState
 PlayerActions
 VBoxContainer
 Label
@@ -12,4 +13,3 @@ TextureRect
 MarginContainer
 StaticBody3D
 MeshInstance3D
-GPUParticles3D
