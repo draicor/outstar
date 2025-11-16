@@ -263,6 +263,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_ReportPlayerDamage:
 			state.HandleReportPlayerDamage(casted_payload.ReportPlayerDamage)
 
+		// RESPAWN REQUEST
+		case *packets.Packet_RespawnRequest:
+			state.HandleRespawnRequest(casted_payload.RespawnRequest)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -563,7 +567,33 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 		state.client.SendPacket(playerDiedPacket)
 		state.client.Broadcast(playerDiedPacket)
 
-		// Respawn the player using the region's respawn system (we pass the death's position)
-		state.client.GetRegion().RespawnPlayer(targetClient)
+		// The player stays dead until they send a RespawnRequest packet
+	}
+}
+
+// Processes client respawn after death
+func (state *Game) HandleRespawnRequest(payload *packets.RespawnRequest) {
+	player := state.client.GetPlayerCharacter()
+
+	if player.IsAlive() {
+		state.logger.Printf("Player %s tried to respawn but is still alive", player.Name)
+		return
+	}
+
+	// Get the respawn region from the packet
+	regionId := payload.GetRegionId()
+	if regionId == 0 {
+		// Use current region if none specified
+		regionId = player.GetRegionId()
+	}
+
+	// Respawn the player
+	err := state.client.GetRegion().RespawnPlayer(state.client)
+	if err != nil {
+		state.logger.Printf("Failed to respawn player %s: %v", player.Name, err)
+		// Send a request denied packet to the client
+		state.client.SendPacket(packets.NewRequestDenied("Respawn failed: " + err.Error()))
+	} else {
+		state.logger.Printf("Player %s respawned at region id: %d", player.Name, regionId)
 	}
 }

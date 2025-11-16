@@ -303,6 +303,14 @@ func create_report_player_damage_packet(target_id: int, hit_position: Vector3, i
 	return packet
 
 
+# Creates and returns a respawn_request packet
+func create_respawn_request_packet(region_id: int = 0) -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	var respawn_request_packet := packet.new_respawn_request()
+	respawn_request_packet.set_region_id(region_id)
+	return packet
+
+
 ##################
 # PACKET SENDING #
 ##################
@@ -384,6 +392,11 @@ func send_destination_packet(destination: Vector2i) -> void:
 	var packet: Packets.Packet = player.player_packets.create_destination_packet(destination)
 	WebSocket.send(packet)
 
+
+# Creates and sends a packet to the server requesting to respawn
+func send_respawn_request_packet(region_id: int = 0) -> void:
+	var packet: Packets.Packet = create_respawn_request_packet(region_id)
+	WebSocket.send(packet)
 
 
 #####################

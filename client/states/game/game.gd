@@ -537,3 +537,12 @@ func _route_player_died_packet(player_died_packet: Packets.PlayerDied) -> void:
 	if target:
 		# Route through the player target's action queue
 		target.player_actions.add_action("death", player_died_packet)
+		
+		# If this is our local player, show respawn UI
+		if target_id == GameManager.client_id:
+			_show_respawn_ui()
+
+
+func _show_respawn_ui() -> void:
+	chat.info("You died, click here to respawn")
+	

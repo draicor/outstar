@@ -651,9 +651,29 @@ func handle_death() -> void:
 	# Set health to 0
 	health = 0
 	
+	# Reset all movement state back to default (idle)
+	player_movement.clear_movement_state()
+	
+	# Clear this player's action queue
+	player_actions._queue.clear()
+	
+	# TODO Play death animation and sound
+	hide() # Hide me for now
+	
 	# Change to dead state
 	if player_state_machine:
 		player_state_machine.change_state("dead")
 	
-	# Play death animation and sound
-	# for local player, show death screen or UI?
+	# If local player, show death screen
+
+
+func handle_respawn() -> void:
+	is_busy = false
+	
+	if player_state_machine:
+		# Force idle state if not already idling
+		var current_state_name: String = player_state_machine.get_current_state_name()
+		var target_state_name: String = player_animator.get_idle_state_name()
+		# If we are not already in the same state
+		if current_state_name != target_state_name:
+			player_state_machine.change_state(target_state_name)

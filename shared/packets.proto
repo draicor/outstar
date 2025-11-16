@@ -116,6 +116,9 @@ message PlayerDied {
   uint64 attacker_id = 1; // ID of the player that killed them (0 if environment death)
   uint64 target_id = 2; // ID of the player who died
 }
+message RespawnRequest {
+  uint64 region_id = 1; // Default to the current region for now
+}
 
 // Main Packet container
 message Packet {
@@ -162,5 +165,7 @@ message Packet {
     ApplyPlayerDamage apply_player_damage = 31; // Server
     // Death
     PlayerDied player_died = 32; // Server
+    // Respawn
+    RespawnRequest respawn_request = 33; // Client
   }
 }

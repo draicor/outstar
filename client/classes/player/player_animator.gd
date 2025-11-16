@@ -252,8 +252,7 @@ func get_idle_state_name() -> String:
 		rifle_down_locomotion: return "rifle_down_idle"
 		rifle_aim_locomotion: return "rifle_down_idle"
 		_:
-			push_error("Error in get_idle_state_name, can't find ", locomotion)
-			return "idle"
+			return ""
 
 
 # Returns the aim state name

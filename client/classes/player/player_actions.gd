@@ -700,6 +700,9 @@ func _process_respawn_action(spawn_character_packet: Packets.SpawnCharacter) -> 
 	
 	var new_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
 	
+	# Add player to the new position in the grid
+	RegionManager.set_object(new_position, target_player)
+	
 	# Update stats
 	target_player.health = spawn_character_packet.get_health()
 	target_player.max_health = spawn_character_packet.get_max_health()
@@ -716,14 +719,11 @@ func _process_respawn_action(spawn_character_packet: Packets.SpawnCharacter) -> 
 	target_player.player_movement.setup_movement_data_at_spawn()
 	target_player.model.rotation.y = target_player.spawn_rotation # Snap the rotation to the new spawn rotation
 	
+	# Call the player's respawn handler
+	target_player.handle_respawn()
+	
 	# Reset any death state and go to appropriate idle state
 	target_player.update_weapon_state()
-	
-	# Remove player from the old position in the local grid
-	RegionManager.remove_object(target_player.player_movement.immediate_grid_destination)
-	
-	# Add player to the new position in the grid
-	RegionManager.set_object(new_position, target_player)
 	
 	complete_action()
 
@@ -743,39 +743,10 @@ func _process_player_died_action(player_died_packet: Packets.PlayerDied) -> void
 	clear_pending_damage_numbers(target_id)
 	_clear_pending_damage_actions(target_id)
 	
-	# Set health to 0
-	target_player.health = 0
-	
-	# Reset all movement state back to default (idle)
-	target_player.player_movement.clear_movement_state()
-	
-	# Clear this player's action queue
-	if target_player == player:
-		_queue.clear()
-	
-	# Play death sounds and animations or SFX
-	# For local player, show death screen
-	# Log the death
-	
-	# DEBUGGING
-	#var killer_name: String = "unknown"
-	#if GameManager.is_player_valid(attacker_id):
-		#var killer: Player = GameManager.get_player_by_id(attacker_id)
-		#killer_name = killer.player_name
-	#print("Player ", target_player.player_name, " died (killed by ", killer_name, ")")
-	
-	# Force idle state if not already idling
-	var current_state_name: String = target_player.player_state_machine.get_current_state_name()
-	var target_state_name: String = target_player.player_animator.get_idle_state_name()
-	# If we are not already in the same state
-	if current_state_name != target_state_name:
-		player.player_state_machine.change_state(target_state_name)
+	target_player.handle_death()
 	
 	# Remove player from grid immediately on death
 	RegionManager.remove_object(target_player.player_movement.immediate_grid_destination)
-	
-	# If we get killed while playing an animation we need to reset our busy state to false
-	target_player.is_busy = false
 	
 	complete_action()
 
