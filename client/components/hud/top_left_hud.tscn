@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://bcc5y2dt7prni"]
+
+[ext_resource type="Script" uid="uid://yb0gpyu707ip" path="res://components/hud/top_left_hud.gd" id="1_d8ycu"]
+[ext_resource type="PackedScene" uid="uid://c4o0yu8f3tsj6" path="res://components/health_bar/health_bar.tscn" id="2_xko8v"]
+
+[node name="TopLeftHUD" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_d8ycu")
+
+[node name="HealthBar" parent="." instance=ExtResource("2_xko8v")]
+layout_mode = 0
+offset_right = 200.0
+offset_bottom = 8.0

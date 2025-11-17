@@ -649,6 +649,9 @@ func _aggregate_damage(target_id: int, damage: int, damage_position: Vector3) ->
 	if not target_player.is_alive():
 		return
 	
+	# Decrease the health of this player right away
+	target_player.decrease_health(damage)
+	
 	# If we already have a pending aggregation for this target
 	if _damage_aggregation.has(target_id):
 		var aggregate: Dictionary = _damage_aggregation[target_id]
@@ -680,7 +683,6 @@ func _on_damage_aggregation_timeout(target_id: int) -> void:
 			var target_player: Player = GameManager.get_player_by_id(target_id)
 			if target_player.is_alive():
 				SfxManager.spawn_damage_number(aggregate.damage, aggregate.position)
-				# NOTE reduce HUD health here
 		
 		# Clean up
 		aggregate.timer.queue_free()

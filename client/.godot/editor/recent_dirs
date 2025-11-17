@@ -1,3 +1,4 @@
+res://components/health_bar
 C:/Users/Draicor/Documents/Draicor/mmo/client/bin/android
 C:/Program Files/Eclipse Adoptium/jdk-17.0.17.10-hotspot
 C:/Users/Draicor/Documents/Draicor/mmo/client/bin/windows
@@ -19,4 +20,3 @@ res://components/hud
 res://materials
 res://maps/prototype
 res://themes
-res://components/escape_menu

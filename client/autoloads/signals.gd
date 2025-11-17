@@ -32,6 +32,8 @@ signal ui_show_bottom_right_hud
 signal ui_update_ammo
 signal ui_controls_menu_toggle
 signal ui_hud_weapon_slot(weapon_slot: int, broadcast: bool)
+signal ui_update_health(new_health: int)
+signal ui_update_max_health(new_max_health: int)
 
 # Chat signals
 signal chat_public_message_sent(text: String)

@@ -1,3 +1,5 @@
+Timer
+ProgressBar
 DeadState
 PlayerActions
 VBoxContainer
@@ -11,5 +13,3 @@ PlayerPackets
 Button
 TextureRect
 MarginContainer
-StaticBody3D
-MeshInstance3D

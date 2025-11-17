@@ -632,10 +632,19 @@ func can_start_firing() -> bool:
 
 
 func decrease_health(amount: int) -> void:
+	print(player_name)
+	print("amount: " , amount)
+	print("health: ", health)
+	print("max_health: ", max_health)
+	
 	if amount >= health:
 		health = 0
 	else:
 		health -= amount
+	
+	# Update the HUD only for my local playeroripas
+	if is_local_player:
+		Signals.ui_update_health.emit(health)
 
 
 func increase_health(amount: int) -> void:
