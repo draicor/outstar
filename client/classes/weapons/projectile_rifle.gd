@@ -124,7 +124,7 @@ func weapon_raycast(origin: Vector3, direction: Vector3) -> Dictionary:
 	)
 	ray_query.collision_mask = 3 # Mask 1+2
 	ray_query.hit_from_inside = true
-	ray_query.exclude = [] # Nothing gets excluded
+	ray_query.exclude = GameManager.get_exclude_collision_rids()
 	
 	ray_query.collide_with_areas = true
 	ray_query.collide_with_bodies = true

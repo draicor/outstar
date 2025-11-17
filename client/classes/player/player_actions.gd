@@ -202,6 +202,7 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 			complete_action()
 			return
 		
+		# Immediate grid destination
 		var current_position: Vector2i = player.player_movement.immediate_grid_destination
 		
 		# Calculate path from immediate destination to new destination
@@ -215,7 +216,7 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 			complete_action()
 			return
 		
-		# Remove player from current position in grid BEFORE moving
+		# Remove player from current immediate_grid_destination in grid BEFORE moving
 		RegionManager.remove_object(current_position)
 		
 		# Set up movement for the remote player
@@ -744,9 +745,6 @@ func _process_player_died_action(player_died_packet: Packets.PlayerDied) -> void
 	_clear_pending_damage_actions(target_id)
 	
 	target_player.handle_death()
-	
-	# Remove player from grid immediately on death
-	RegionManager.remove_object(target_player.player_movement.immediate_grid_destination)
 	
 	complete_action()
 

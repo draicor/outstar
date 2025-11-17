@@ -442,7 +442,7 @@ func _process_move_character_packet(packet: Packets.MoveCharacter) -> void:
 	# Store the previous position before updating anything
 	var previous_position: Vector2i = player.player_movement.server_grid_position
 	
-	# Remove the player from the grid position it was
+	# Remove the player from the grid position it wase
 	RegionManager.remove_object(previous_position)
 	# Add the player to the new position in my local grid
 	RegionManager.set_object(server_position, self)

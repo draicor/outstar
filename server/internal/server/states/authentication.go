@@ -172,6 +172,13 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	var level uint64 = 1
 	var experience uint64 = 1
 
+	// Validate some data before setting the player
+	var health uint64 = uint64(character.Health)
+	var maxHealth uint64 = uint64(character.MaxHealth)
+	if health <= 0 || health > maxHealth {
+		health = maxHealth
+	}
+
 	// Recreate this client's player/character data from the database!
 	state.client.SetPlayerCharacter(objects.CreatePlayer(
 		// Basic data
@@ -185,8 +192,8 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 		// Stats
 		level, experience, // TO FIX -> Load this from the database too!
 		// Atributes
-		uint64(character.Health),
-		uint64(character.MaxHealth),
+		health,
+		maxHealth,
 	))
 
 	state.logger.Printf("%s logged in as %s", username, user.Nickname)

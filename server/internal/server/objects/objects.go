@@ -219,6 +219,7 @@ func (player *Player) IsAlive() bool {
 // Respawn resets the player's stats back to default
 func (player *Player) Respawn() {
 	player.health = player.maxHealth // Back to full health (could respawn with 10%?)
+	player.SetCurrentWeaponAmmo(30)  // Back to full ammo
 	player.RotationY = SOUTH         // Face south
 }
 

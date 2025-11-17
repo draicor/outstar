@@ -31,6 +31,9 @@ var packets_sent: int = 0
 var packets_received: int = 0
 var packets_lost: int = 0
 
+# RIDs collision shapes for raycast exclusion
+var exclude_collision_rids: Array[RID] = []
+
 # Internal variables
 var _current_scene_root: Node
 
@@ -92,3 +95,48 @@ func clear_players() -> void:
 				player.queue_free()
 		# Clear our _players map immediately
 		_players.clear()
+
+# Add a player's collision RID to the exclude list
+func add_exclude_collision(player: Player) -> void:
+	# Attempt to add the player collision shape itself, if not already there
+	if player:
+		var player_rid = player.get_rid()
+		if not exclude_collision_rids.has(player_rid):
+			exclude_collision_rids.append(player_rid)
+	
+	# Attempt to add the player's head collision shape, if not already there
+	var head_collision_shape: Area3D = player.get_node("HeadArea3D") as Area3D
+	if head_collision_shape:
+		var head_rid = head_collision_shape.get_rid()
+		if not exclude_collision_rids.has(head_rid):
+			exclude_collision_rids.append(head_rid)
+	
+	# Attempt to add the player's body collision shape, if not already there
+	var body_collision_shape: Area3D = player.get_node("BodyArea3D") as Area3D
+	if body_collision_shape:
+		var body_rid = body_collision_shape.get_rid()
+		if not exclude_collision_rids.has(body_rid):
+			exclude_collision_rids.append(body_rid)
+
+# Remove a player's collision RID from the exclude list
+func remove_exclude_collision(player: Player) -> void:
+	# Attempt to remove the player collision shape itself
+	if player:
+		var player_rid = player.get_rid()
+		exclude_collision_rids.erase(player_rid)
+	
+	# Attempt to remove the player's head collision shape
+	var head_collision_shape: Area3D = player.get_node("HeadArea3D") as Area3D
+	if head_collision_shape:
+		var head_rid = head_collision_shape.get_rid()
+		exclude_collision_rids.erase(head_rid)
+	
+	# Attempt to remove the player's body collision shape
+	var body_collision_shape: Area3D = player.get_node("BodyArea3D") as Area3D
+	if body_collision_shape:
+		var body_rid = body_collision_shape.get_rid()
+		exclude_collision_rids.erase(body_rid)
+
+# Get the current exclude list for raycasts
+func get_exclude_collision_rids() -> Array[RID]:
+	return exclude_collision_rids.duplicate() # Return a copy to be safe

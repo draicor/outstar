@@ -477,13 +477,14 @@ func _show_debug_tools() -> void:
 	 # Only draw in editor/debug builds
 	if OS.is_debug_build():
 		if is_local_player:
-			_draw_circle(Utils.map_to_local(player_movement.grid_destination), 0.5, Color.RED, 16) # Grid destination
-			_draw_circle(Utils.map_to_local(player_movement.immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
-			_draw_circle(Utils.map_to_local(player_movement.grid_position), 0.3, Color.GREEN, 16) # Grid position
-		
-		# Draw the forward direction and server position for all characters on screen
-		DebugDraw3D.draw_line(position, position + player_movement.forward_direction * 1, Color.RED) # 1 meter forward line
-		_draw_circle(Utils.map_to_local(player_movement.server_grid_position), 0.6, Color.REBECCA_PURPLE, 16) # Server position for my character
+			if is_alive():
+				# Draw all local positions
+				_draw_circle(Utils.map_to_local(player_movement.grid_destination), 0.5, Color.RED, 16) # Grid destination
+				_draw_circle(Utils.map_to_local(player_movement.immediate_grid_destination), 0.4, Color.YELLOW, 16) # Immediate grid destination
+				_draw_circle(Utils.map_to_local(player_movement.grid_position), 0.3, Color.GREEN, 16) # Grid position
+				# Draw the forward direction and server position
+				DebugDraw3D.draw_line(position, position + player_movement.forward_direction * 1, Color.RED) # 1 meter forward line
+				_draw_circle(Utils.map_to_local(player_movement.server_grid_position), 0.6, Color.REBECCA_PURPLE, 16) # Server position for my character
 
 
 # Used to draw a circle for debugging purposes
@@ -657,9 +658,6 @@ func handle_death() -> void:
 	# Clear this player's action queue
 	player_actions._queue.clear()
 	
-	# TODO Play death animation and sound
-	hide() # Hide me for now
-	
 	# Change to dead state
 	if player_state_machine:
 		player_state_machine.change_state("dead")
@@ -678,4 +676,22 @@ func handle_respawn() -> void:
 		if current_state_name != target_state_name:
 			player_state_machine.change_state(target_state_name)
 	
-	show()
+	if player_equipment:
+		if player_equipment.equipped_weapon:
+			player_equipment.set_current_ammo(30)
+
+
+func disable_collisions() -> void:
+	set_collision_layer_value(2, false) # Character layer
+	set_collision_mask_value(1, false) # Don't collide with Static layer
+	
+	# Add to GameManager's exclude list
+	GameManager.add_exclude_collision(self)
+
+
+func enable_collisions() -> void:
+	set_collision_layer_value(2, true) # Character layer
+	set_collision_mask_value(1, true) # Collide with Static layer
+	
+	# Remove from GameManager's exclude list
+	GameManager.remove_exclude_collision(self)

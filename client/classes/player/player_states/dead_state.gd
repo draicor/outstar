@@ -11,6 +11,13 @@ func enter() -> void:
 	player.player_movement.autopilot_active = true # Disable movement
 	player.is_busy = true # Block other actions
 	
+	# Remove player from grid immediately on death
+	RegionManager.remove_object(player.player_movement.grid_position)
+	
+	# Disable collisions and add to exclude list
+	player.disable_collisions()
+	player.hide()
+	
 	# Play death animation here
 	# player.player_animator.switch_animation("death")
 	
@@ -23,6 +30,10 @@ func enter() -> void:
 func exit() -> void:
 	player.player_movement.autopilot_active = false
 	player.is_busy = false
+	
+	# Re-enable collisions and remove from exclude list
+	player.enable_collisions()
+	player.show()
 
 
 func handle_input(event: InputEvent) -> void:

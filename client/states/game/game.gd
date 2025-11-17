@@ -158,8 +158,11 @@ func _handle_client_left_packet(sender_id: int, client_left_packet: Packets.Clie
 	# Attempt to retrieve the player character object
 	var player: Player = GameManager.get_player_by_id(sender_id)
 	if player:
+		# Make sure to remove from exclude list if they were dead
+		GameManager.remove_exclude_collision(player)
+		
 		# Remove this player from our grid
-		RegionManager.remove_object(player.player_movement.immediate_grid_destination)
+		RegionManager.remove_object(player.player_movement.grid_position)
 		
 		# Free memory
 		if is_instance_valid(player):
@@ -301,6 +304,8 @@ func _spawn_new_player(player_id: int, spawn_character_packet: Packets.SpawnChar
 	)
 	# Add this player to our map of players
 	GameManager.register_player(player_id, new_player)
+	# Ensure collisions are enabled for newly spawned players
+	new_player.enable_collisions()
 	
 	# For remote players
 	if not is_my_player_character:
