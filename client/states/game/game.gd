@@ -458,6 +458,14 @@ func _route_stop_firing_weapon_packet(sender_id: int, stop_firing_weapon_packet:
 
 
 func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Packets.ApplyPlayerDamage) -> void:
+	print("=== DAMAGE PACKET ROUTING ===")
+	print("Sender ID: ", sender_id)
+	print("Attacker ID: ", apply_damage_packet.get_attacker_id())
+	print("Target ID: ", apply_damage_packet.get_target_id())
+	print("Damage: ", apply_damage_packet.get_damage())
+	print("Is local attacker: ", apply_damage_packet.get_attacker_id() == GameManager.client_id)
+	print("Is local victim: ", apply_damage_packet.get_target_id() == GameManager.client_id)
+	
 	var attacker_id: int = apply_damage_packet.get_attacker_id()
 	
 	if sender_id != attacker_id:
@@ -470,8 +478,6 @@ func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Pack
 		return
 	
 	var target_player: Player = GameManager.get_player_by_id(target_id)
-	# Reduce health immediately for consistency
-	target_player.decrease_health(apply_damage_packet.get_damage())
 	
 	# If target is dead, don't process any damage visualization
 	if not target_player.is_alive():
@@ -479,14 +485,9 @@ func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Pack
 		_clear_pending_damage_for_target(target_id)
 		return
 	
-	var is_local_attacker: bool = (attacker_id == GameManager.client_id)
 	var is_local_victim: bool = (target_id == GameManager.client_id)
 	
-	if is_local_attacker:
-		# Local attacker - process immediately but check if target is alive
-		if target_player.is_alive():
-			_process_damage_immediately(apply_damage_packet)
-	elif is_local_victim:
+	if is_local_victim:
 		# Local victim - queue damage to maintain action order
 		var attacker: Player = GameManager.get_player_by_id(attacker_id)
 		if attacker:
@@ -501,9 +502,9 @@ func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Pack
 					apply_damage_packet.get_z())
 			})
 	else:
-		# Bystander - process immediately but check if target is alive
-		if target_player.is_alive():
-			_process_damage_immediately(apply_damage_packet)
+		# Local attacker or bystander - process immediately
+		print("Processing damage as local attacker or bystander (visual only)")
+		_process_damage_immediately(apply_damage_packet)
 
 
 # Clears damage aggregation for this target across ALL players
@@ -523,7 +524,7 @@ func _process_damage_immediately(apply_damage_packet: Packets.ApplyPlayerDamage)
 	if not target_player.is_alive():
 		return
 	
-	print(target_player.health)
+	print("Showing damage numbers for target: ", target_id)
 	
 	# Get the rest of the data from the packet
 	var damage: int = apply_damage_packet.get_damage()
