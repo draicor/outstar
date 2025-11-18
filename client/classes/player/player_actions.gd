@@ -624,6 +624,12 @@ func _process_rotate_action(rotation_y: float) -> void:
 
 
 func _process_apply_damage_action(data: Dictionary) -> void:
+	print("=== PROCESS APPLY DAMAGE ACTION ===")
+	print("Target ID: ", data["target_id"])
+	print("Damage: ", data["damage"])
+	print("Call stack:")
+	print_stack()
+	
 	var target_id: int = data["target_id"]
 	var damage: int = data["damage"]
 	# var damage_type: String = data["damage_type"]
@@ -633,6 +639,8 @@ func _process_apply_damage_action(data: Dictionary) -> void:
 	if GameManager.is_player_valid(target_id):
 		var target_player: Player = GameManager.get_player_by_id(target_id)
 		if target_player.is_alive():
+			# Reduce health for local victim (with HUD update)
+			target_player.decrease_health(damage, true)
 			# Regular damage, reduce health inside _aggregate_damage
 			_aggregate_damage(target_id, damage, damage_position)
 		else:
@@ -648,9 +656,6 @@ func _aggregate_damage(target_id: int, damage: int, damage_position: Vector3) ->
 	var target_player: Player = GameManager.get_player_by_id(target_id)
 	if not target_player.is_alive():
 		return
-	
-	# Decrease the health of this player right away
-	target_player.decrease_health(damage)
 	
 	# If we already have a pending aggregation for this target
 	if _damage_aggregation.has(target_id):
