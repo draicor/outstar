@@ -9,6 +9,7 @@ import (
 	"server/internal/server/adt"
 	"server/internal/server/db"
 	"server/internal/server/objects"
+	"server/internal/server/pathfinding"
 	"server/pkg/packets"
 	"sync"
 	"time"
@@ -212,6 +213,21 @@ func (h *Hub) GetRegionById(id uint64) (*Region, bool) {
 // Creates a new region and adds it to Hub
 func (h *Hub) CreateRegion(name string, gameMap string, gridWidth uint64, gridHeight uint64, regionId uint64) {
 	region := CreateRegion(name, gameMap, gridWidth, gridHeight)
+
+	switch regionId {
+	case 1: // Prototype [20x40]
+		region.Respawners = []*Respawner{
+			{Position: &pathfinding.Cell{X: 0, Z: 0}, Rotation: objects.SOUTHEAST},
+			{Position: &pathfinding.Cell{X: 19, Z: 0}, Rotation: objects.SOUTHWEST},
+			{Position: &pathfinding.Cell{X: 0, Z: 39}, Rotation: objects.NORTHEAST},
+			{Position: &pathfinding.Cell{X: 19, Z: 39}, Rotation: objects.NORTHWEST},
+		}
+	case 2: // Maze [10x10]
+		region.Respawners = []*Respawner{
+			{Position: &pathfinding.Cell{X: 0, Z: 0}, Rotation: objects.SOUTHEAST},
+			{Position: &pathfinding.Cell{X: 0, Z: 9}, Rotation: objects.NORTHEAST},
+		}
+	}
 
 	// Dereference the pointer to add a REAL region object to the Hub's list of regions
 	// If this is the first region, h.Regions.Add returns 1, and the initial value for the region was 0

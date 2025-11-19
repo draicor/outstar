@@ -217,10 +217,10 @@ func (player *Player) IsAlive() bool {
 }
 
 // Respawn resets the player's stats back to default
-func (player *Player) Respawn() {
+func (player *Player) Respawn(rotation float64) {
 	player.health = player.maxHealth // Back to full health (could respawn with 10%?)
-	player.SetCurrentWeaponAmmo(30)  // Back to full ammo
-	player.RotationY = SOUTH         // Face south
+	player.SetCurrentWeaponAmmo(30)  // FIX THIS -> Back to full ammo
+	player.RotationY = rotation      // Get the rotation from the server respawner
 }
 
 // Returns the default respawn location for this region
