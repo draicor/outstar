@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"server/internal/server/adt"
 	"server/internal/server/pathfinding"
 	"server/pkg/packets"
@@ -30,6 +31,9 @@ type Region struct {
 
 	// 2D Grid map for this region
 	grid pathfinding.Grid
+
+	// List of cells where players can respawn
+	Respawners []*pathfinding.Cell
 
 	logger *log.Logger
 }
@@ -116,8 +120,12 @@ func (r *Region) GetClient(id uint64) (Client, bool) {
 	return r.Clients.Get(id)
 }
 
-// Handles player respawn logic
-func (r *Region) RespawnPlayer(client Client) error {
+// Checks if the desired coordinate is in the respawners list
+// If yes, use that coordinate
+// If no, choose a random respawner from the list
+// If no respawners are defined, fall back to (0,0)
+// Then find the nearest available cell from the chosen coordinate
+func (r *Region) RespawnPlayer(client Client, desiredPosition *pathfinding.Cell) error {
 	player := client.GetPlayerCharacter()
 	// Get the player's current position
 	deathPosition := player.GetGridPosition()
@@ -131,10 +139,35 @@ func (r *Region) RespawnPlayer(client Client) error {
 	// Remove player from server grid immediately
 	grid.SetObject(deathPosition, nil)
 
-	// Find a spawn cell using the existing logic
-	// Use the player's respawn location or default to (0,0)
-	respawnX, respawnZ := player.GetRespawnLocation()
-	playerSpawnCell := grid.GetSpawnCell(respawnX, respawnZ)
+	// Determine respawn cell based on respawners
+	var respawnCell *pathfinding.Cell
+
+	if desiredPosition != nil {
+		// Check if desired position is in respawners list
+		for _, respawner := range r.Respawners {
+			// If we find a match, assign that desired position as our respawn cell
+			if respawner.X == desiredPosition.X && respawner.Z == desiredPosition.Z {
+				respawnCell = desiredPosition
+				break
+			}
+		}
+	}
+
+	// If desired position is not valid or not provided, choose a random respawner
+	if respawnCell == nil {
+		// If this region has valid spawners
+		if len(r.Respawners) > 0 {
+			// Choose a random respawner
+			randIndex := rand.Intn(len(r.Respawners))
+			respawnCell = r.Respawners[randIndex]
+		} else {
+			// Fallback to (0,0) if no respawners defined
+			respawnCell = grid.LocalToMap(0, 0)
+		}
+	}
+
+	// Find the nearest available cell from the chosen respawn cell
+	playerSpawnCell := grid.GetSpawnCell(respawnCell.X, respawnCell.Z)
 
 	// If no cell was found in this region, return error
 	if playerSpawnCell == nil {

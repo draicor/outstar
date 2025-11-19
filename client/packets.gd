@@ -2796,6 +2796,16 @@ class RespawnRequest:
 		service.field = __region_id
 		data[__region_id.tag] = service
 		
+		__x = PBField.new("x", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __x
+		data[__x.tag] = service
+		
+		__z = PBField.new("z", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __z
+		data[__z.tag] = service
+		
 	var data = {}
 	
 	var __region_id: PBField
@@ -2810,6 +2820,32 @@ class RespawnRequest:
 		__region_id.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_region_id(value : int) -> void:
 		__region_id.value = value
+	
+	var __x: PBField
+	func has_x() -> bool:
+		if __x.value != null:
+			return true
+		return false
+	func get_x() -> int:
+		return __x.value
+	func clear_x() -> void:
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__x.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_x(value : int) -> void:
+		__x.value = value
+	
+	var __z: PBField
+	func has_z() -> bool:
+		if __z.value != null:
+			return true
+		return false
+	func get_z() -> int:
+		return __z.value
+	func clear_z() -> void:
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__z.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_z(value : int) -> void:
+		__z.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

@@ -118,6 +118,8 @@ message PlayerDied {
 }
 message RespawnRequest {
   uint64 region_id = 1; // Default to the current region for now
+  uint64 x = 2; // Optional: if provided, try to respawn at this position
+  uint64 z = 3; // Optional: if provided, try to respawn at this position
 }
 
 // Main Packet container

@@ -6,6 +6,7 @@ extends ProgressBar
 var current_health: int = 0
 var current_max_health: int = 0
 
+
 func _ready() -> void:
 	print("=== HEALTH BAR READY ===")
 	print("Health bar path: ", get_path())

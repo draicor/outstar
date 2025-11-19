@@ -43,4 +43,5 @@ func handle_input(event: InputEvent) -> void:
 
 func _handle_respawn_input() -> void:
 	if player.is_local_player and not player.is_alive():
-		player.player_packets.send_respawn_request_packet()
+		var desired_position: Vector2i = Vector2i(3, 3) # Set this to an invalid one to test if random works!
+		player.player_packets.send_respawn_request_packet(0, desired_position)

@@ -7,6 +7,7 @@ import (
 	"server/internal/server"
 	"server/internal/server/math"
 	"server/internal/server/objects"
+	"server/internal/server/pathfinding"
 	"time"
 
 	"server/pkg/packets"
@@ -594,13 +595,19 @@ func (state *Game) HandleRespawnRequest(payload *packets.RespawnRequest) {
 		regionId = player.GetRegionId()
 	}
 
+	// Extract desired position from packet
+	var desiredPosition *pathfinding.Cell = &pathfinding.Cell{
+		X: payload.GetX(),
+		Z: payload.GetZ(),
+	}
+
 	// Respawn the player
-	err := state.client.GetRegion().RespawnPlayer(state.client)
+	err := state.client.GetRegion().RespawnPlayer(state.client, desiredPosition)
 	if err != nil {
 		state.logger.Printf("Failed to respawn player %s: %v", player.Name, err)
 		// Send a request denied packet to the client
 		state.client.SendPacket(packets.NewRequestDenied("Respawn failed: " + err.Error()))
 	} else {
-		state.logger.Printf("Player %s respawned at region id: %d", player.Name, regionId)
+		state.logger.Printf("Player %s respawned at region id: %d at position: (%d, %d)", player.Name, regionId, desiredPosition.X, desiredPosition.Z)
 	}
 }
