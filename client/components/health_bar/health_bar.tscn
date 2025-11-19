@@ -43,7 +43,7 @@ value = 80.0
 show_percentage = false
 
 [node name="DamageTimer" type="Timer" parent="."]
-wait_time = 0.3
+wait_time = 0.6
 one_shot = true
 
 [connection signal="timeout" from="DamageTimer" to="." method="_on_damage_timer_timeout"]

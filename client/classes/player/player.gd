@@ -671,9 +671,15 @@ func is_alive() -> bool:
 	return health > 0
 
 
+# Called from player_actions.gd
 func handle_death() -> void:
 	# Set health to 0
 	health = 0
+	
+	# Update the HUD for local player
+	if is_local_player:
+		Signals.ui_update_health.emit(health)
+		# Show death screen
 	
 	# Reset all movement state back to default (idle)
 	player_movement.clear_movement_state()
@@ -684,8 +690,6 @@ func handle_death() -> void:
 	# Change to dead state
 	if player_state_machine:
 		player_state_machine.change_state("dead")
-	
-	# If local player, show death screen
 
 
 func handle_respawn() -> void:
@@ -701,7 +705,12 @@ func handle_respawn() -> void:
 	
 	if player_equipment:
 		if player_equipment.equipped_weapon:
-			player_equipment.set_current_ammo(30)
+			player_equipment.set_current_ammo(30) # TODO fix this magic number
+	
+	# Update the HUD for local player
+	if is_local_player:
+		Signals.ui_update_health.emit(health)
+		Signals.ui_update_max_health.emit(max_health)
 
 
 func disable_collisions() -> void:

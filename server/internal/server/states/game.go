@@ -20,8 +20,8 @@ var weaponDamages = map[string]struct {
 	// player_equipment.gd add_weapon_to_slot()
 	// Rifles
 	"unarmed":   {MinDamage: 1, MaxDamage: 2},
-	"m16_rifle": {MinDamage: 12, MaxDamage: 24},
-	"akm_rifle": {MinDamage: 15, MaxDamage: 30},
+	"m16_rifle": {MinDamage: 10, MaxDamage: 20},
+	"akm_rifle": {MinDamage: 12, MaxDamage: 24},
 }
 
 // Rolls damage for a weapon
