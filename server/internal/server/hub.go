@@ -216,16 +216,16 @@ func (h *Hub) CreateRegion(name string, gameMap string, gridWidth uint64, gridHe
 
 	switch regionId {
 	case 1: // Prototype [20x40]
-		region.Respawners = []*pathfinding.Cell{
-			{X: 0, Z: 0},
-			{X: 19, Z: 0},
-			{X: 0, Z: 39},
-			{X: 19, Z: 39},
+		region.Respawners = []*Respawner{
+			{Position: &pathfinding.Cell{X: 0, Z: 0}, Rotation: objects.SOUTHEAST},
+			{Position: &pathfinding.Cell{X: 19, Z: 0}, Rotation: objects.SOUTHWEST},
+			{Position: &pathfinding.Cell{X: 0, Z: 39}, Rotation: objects.NORTHEAST},
+			{Position: &pathfinding.Cell{X: 19, Z: 39}, Rotation: objects.NORTHWEST},
 		}
 	case 2: // Maze [10x10]
-		region.Respawners = []*pathfinding.Cell{
-			{X: 0, Z: 0},
-			{X: 0, Z: 9},
+		region.Respawners = []*Respawner{
+			{Position: &pathfinding.Cell{X: 0, Z: 0}, Rotation: objects.SOUTHEAST},
+			{Position: &pathfinding.Cell{X: 0, Z: 9}, Rotation: objects.NORTHEAST},
 		}
 	}
 

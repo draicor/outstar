@@ -63,10 +63,6 @@ func process_next_action() -> void:
 	_is_processing = true
 	_current_action = _queue.pop_front() # Get the next action
 	
-	# DEBUG
-	#if not player.is_local_player:
-		#print(Time.get_ticks_msec(), " ", _current_action.action_type)
-	
 	# Process based on action type
 	match _current_action.action_type:
 		"move":
@@ -624,12 +620,6 @@ func _process_rotate_action(rotation_y: float) -> void:
 
 
 func _process_apply_damage_action(data: Dictionary) -> void:
-	print("=== PROCESS APPLY DAMAGE ACTION ===")
-	print("Target ID: ", data["target_id"])
-	print("Damage: ", data["damage"])
-	print("Call stack:")
-	print_stack()
-	
 	var target_id: int = data["target_id"]
 	var damage: int = data["damage"]
 	# var damage_type: String = data["damage_type"]

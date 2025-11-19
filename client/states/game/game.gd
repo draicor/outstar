@@ -458,14 +458,6 @@ func _route_stop_firing_weapon_packet(sender_id: int, stop_firing_weapon_packet:
 
 
 func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Packets.ApplyPlayerDamage) -> void:
-	print("=== DAMAGE PACKET ROUTING ===")
-	print("Sender ID: ", sender_id)
-	print("Attacker ID: ", apply_damage_packet.get_attacker_id())
-	print("Target ID: ", apply_damage_packet.get_target_id())
-	print("Damage: ", apply_damage_packet.get_damage())
-	print("Is local attacker: ", apply_damage_packet.get_attacker_id() == GameManager.client_id)
-	print("Is local victim: ", apply_damage_packet.get_target_id() == GameManager.client_id)
-	
 	var attacker_id: int = apply_damage_packet.get_attacker_id()
 	
 	if sender_id != attacker_id:
@@ -503,7 +495,6 @@ func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Pack
 			})
 	else:
 		# Local attacker or bystander - process immediately
-		print("Processing damage as local attacker or bystander (visual only)")
 		_process_damage_immediately(apply_damage_packet)
 
 
@@ -523,8 +514,6 @@ func _process_damage_immediately(apply_damage_packet: Packets.ApplyPlayerDamage)
 	var target_player: Player = GameManager.get_player_by_id(target_id)
 	if not target_player.is_alive():
 		return
-	
-	print("Showing damage numbers for target: ", target_id)
 	
 	# Get the rest of the data from the packet
 	var damage: int = apply_damage_packet.get_damage()
@@ -550,5 +539,5 @@ func _route_player_died_packet(player_died_packet: Packets.PlayerDied) -> void:
 
 
 func _show_respawn_ui() -> void:
-	print("Player died, click here to respawn")
+	push_error("Player died, click here to respawn")
 	

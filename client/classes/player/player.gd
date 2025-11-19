@@ -136,12 +136,6 @@ func _init() -> void:
 
 # Called once this character has been created and instantiated
 func _ready() -> void:
-	print("=== PLAYER READY ===")
-	print("Player ID: ", player_id)
-	print("Is local: ", is_local_player)
-	print("Health: ", health)
-	print("Max health: ", max_health)
-	
 	_initialize_character()
 	
 	# Overwrite our local copy of the grid positions
@@ -638,26 +632,13 @@ func can_start_firing() -> bool:
 
 
 func decrease_health(amount: int, update_hud: bool = true) -> void:
-	print("=== DECREASE HEALTH CALLED ===")
-	print("Player: ", player_name)
-	print("Amount: ", amount)
-	print("Current health: ", health)
-	print("Max health: ", max_health)
-	print("Is local player: ", is_local_player)
-	print("Update HUD: ", update_hud)
-	print("Call stack:")
-	print_stack()  # This will show where the call came from
-	
 	if amount >= health:
 		health = 0
 	else:
 		health -= amount
 	
-	print("New health: ", health)
-	
 	# Update the HUD only for my local player and when requested
 	if is_local_player and update_hud:
-		print("Emitting ui_update_health signal with: ", health)
 		Signals.ui_update_health.emit(health)
 
 

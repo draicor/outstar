@@ -5,9 +5,16 @@ import (
 	"log"
 	"math/rand"
 	"server/internal/server/adt"
+	"server/internal/server/objects"
 	"server/internal/server/pathfinding"
 	"server/pkg/packets"
 )
+
+// Respawner represents a spawn point with position and rotation
+type Respawner struct {
+	Position *pathfinding.Cell
+	Rotation float64
+}
 
 // A region is a central point of communication between the connected clients within it
 type Region struct {
@@ -32,8 +39,8 @@ type Region struct {
 	// 2D Grid map for this region
 	grid pathfinding.Grid
 
-	// List of cells where players can respawn
-	Respawners []*pathfinding.Cell
+	// List of spawn points where players can respawn
+	Respawners []*Respawner
 
 	logger *log.Logger
 }
@@ -130,24 +137,23 @@ func (r *Region) RespawnPlayer(client Client, desiredPosition *pathfinding.Cell)
 	// Get the player's current position
 	deathPosition := player.GetGridPosition()
 
-	// Reset player stats
-	player.Respawn()
-
 	// Get the grid
 	grid := r.GetGrid()
 
 	// Remove player from server grid immediately
 	grid.SetObject(deathPosition, nil)
 
-	// Determine respawn cell based on respawners
+	// Determine respawn cell and rotation based on respawners
 	var respawnCell *pathfinding.Cell
+	var respawnRotation float64 = objects.SOUTH // Default rotation
 
 	if desiredPosition != nil {
 		// Check if desired position is in respawners list
 		for _, respawner := range r.Respawners {
 			// If we find a match, assign that desired position as our respawn cell
-			if respawner.X == desiredPosition.X && respawner.Z == desiredPosition.Z {
+			if respawner.Position.X == desiredPosition.X && respawner.Position.Z == desiredPosition.Z {
 				respawnCell = desiredPosition
+				respawnRotation = respawner.Rotation
 				break
 			}
 		}
@@ -159,9 +165,11 @@ func (r *Region) RespawnPlayer(client Client, desiredPosition *pathfinding.Cell)
 		if len(r.Respawners) > 0 {
 			// Choose a random respawner
 			randIndex := rand.Intn(len(r.Respawners))
-			respawnCell = r.Respawners[randIndex]
+			respawner := r.Respawners[randIndex]
+			respawnCell = respawner.Position
+			respawnRotation = respawner.Rotation
 		} else {
-			// Fallback to (0,0) if no respawners defined
+			// Fallback to (0,0) with default rotation if no respawners defined
 			respawnCell = grid.LocalToMap(0, 0)
 		}
 	}
@@ -174,12 +182,15 @@ func (r *Region) RespawnPlayer(client Client, desiredPosition *pathfinding.Cell)
 		return fmt.Errorf("no respawn location available in region %d", r.GetId())
 	}
 
+	// Reset player stats, position and rotation
+	player.Respawn(respawnRotation)
+
 	// Place player at respawn location
 	grid.SetObject(playerSpawnCell, player)
 	player.SetGridPosition(playerSpawnCell)
 	player.SetGridDestination(playerSpawnCell)
 
-	// Create and broadcast respawn packet
+	// Create respawn packet
 	respawnPacket := packets.NewSpawnCharacter(client.GetId(), player)
 
 	// Broadcast respawn to everyone in the region (including the respawning client)
