@@ -25,7 +25,7 @@ offset_right = 100.0
 offset_bottom = 10.0
 theme_override_styles/background = SubResource("StyleBoxEmpty_d8ycu")
 theme_override_styles/fill = SubResource("StyleBoxFlat_xko8v")
-value = 10.0
+value = 100.0
 show_percentage = false
 script = ExtResource("1_2e8xr")
 
@@ -39,7 +39,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/background = SubResource("StyleBoxFlat_d8ycu")
 theme_override_styles/fill = SubResource("StyleBoxFlat_hgdb6")
-value = 80.0
+value = 100.0
 show_percentage = false
 
 [node name="DamageTimer" type="Timer" parent="."]

@@ -4,10 +4,14 @@ extends Node
 const Packets: GDScript = preload("res://packets.gd")
 const GameEscapeMenu: GDScript = preload("res://components/escape_menu/game/game_escape_menu.gd")
 const GameControlsMenu: GDScript = preload("res://components/controls_menu/game/game_controls_menu.gd")
+const GameRespawnMenu = preload("res://components/respawn_menu/game/game_respawn_menu.gd")
+
 
 # Preload scenes
-const game_escape_menu_scene: PackedScene = preload("res://components/escape_menu/game/game_escape_menu.tscn")
+const GAME_ESCAPE_MENU = preload("res://components/escape_menu/game/game_escape_menu.tscn")
 const GAME_CONTROLS_MENU = preload("res://components/controls_menu/game/game_controls_menu.tscn")
+const GAME_RESPAWN_MENU = preload("res://components/respawn_menu/game/game_respawn_menu.tscn")
+
 
 # Holds our current map node so we can spawn scenes into it
 var _current_map_scene: Node
@@ -20,6 +24,7 @@ var chat_container: VBoxContainer
 var chat_input: LineEdit
 var game_escape_menu: GameEscapeMenu
 var game_controls_menu: GameControlsMenu
+var game_respawn_menu: GameRespawnMenu
 
 
 func _ready() -> void:
@@ -41,6 +46,8 @@ func _initialize() -> void:
 	Signals.ui_escape_menu_toggle.connect(_on_ui_escape_menu_toggle)
 	Signals.ui_logout.connect(_handle_signal_ui_logout)
 	Signals.ui_controls_menu_toggle.connect(_handle_signal_ui_controls_menu_toggle)
+	Signals.ui_respawn.connect(_on_ui_respawn)
+	
 	# Chat signals
 	Signals.chat_public_message_sent.connect(_handle_signal_chat_public_message_sent)
 
@@ -52,11 +59,14 @@ func _exit_tree() -> void:
 
 func _create_ui_scenes() -> void:
 	# Create and add each UI scene to the UI canvas layer, hidden
-	game_escape_menu = game_escape_menu_scene.instantiate()
+	game_escape_menu = GAME_ESCAPE_MENU.instantiate()
 	ui_canvas.add_child(game_escape_menu)
 	
 	game_controls_menu = GAME_CONTROLS_MENU.instantiate()
 	ui_canvas.add_child(game_controls_menu)
+	
+	game_respawn_menu = GAME_RESPAWN_MENU.instantiate()
+	ui_canvas.add_child(game_respawn_menu)
 
 
 # If our connection to the server closed
@@ -539,5 +549,14 @@ func _route_player_died_packet(player_died_packet: Packets.PlayerDied) -> void:
 
 
 func _show_respawn_ui() -> void:
-	push_error("Player died, click here to respawn")
-	
+	if game_respawn_menu:
+		game_respawn_menu.toggle_menu(true)
+	else:
+		push_error("game_respawn_menu doesn't exist!")
+
+
+func _on_ui_respawn() -> void:
+	if GameManager.player_character and not GameManager.player_character.is_alive():
+		# Send a respawn request with a position that will trigger random spawn
+		var desired_position: Vector2i = Vector2i(1, 99) # Random respawn
+		GameManager.player_character.player_packets.send_respawn_request_packet(0, desired_position)
