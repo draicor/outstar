@@ -121,7 +121,4 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Crouch toggle (leave crouch)
 	elif event.is_action_pressed("crouch"):
-		# We leave crouch and go to the standing aim state
-		# CAUTION
-		# bad, it has to use the player_actions queue here!
-		player.player_state_machine.change_state("rifle_aim_idle")
+		player.player_actions.queue_leave_crouch_action()

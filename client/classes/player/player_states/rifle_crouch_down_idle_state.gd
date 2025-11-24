@@ -33,13 +33,8 @@ func handle_input(event: InputEvent) -> void:
 	if ignore_input():
 		return
 	
-	# Crouch toggle (leave crouch)
-	if event.is_action_pressed("crouch"):
-		# We leave crouch and go the standing down state
-		player.player_state_machine.change_state("rifle_down_idle")
-	
 	# Reload rifle
-	elif event.is_action_pressed("weapon_reload"):
+	if event.is_action_pressed("weapon_reload"):
 		# We raise our weapon first (to crouch aim), then reload
 		player.player_actions.queue_raise_weapon_action()
 		player.player_actions.queue_reload_weapon_action(
@@ -49,3 +44,7 @@ func handle_input(event: InputEvent) -> void:
 	# Toggle weapon fire mode
 	elif event.is_action_pressed("weapon_mode"):
 		player.player_actions.queue_toggle_fire_mode_action()
+	
+	# Crouch toggle (leave crouch)
+	elif event.is_action_pressed("crouch"):
+		player.player_actions.queue_leave_crouch_action()

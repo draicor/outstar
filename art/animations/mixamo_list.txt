@@ -36,7 +36,7 @@ male_texting_walk -> Male Walking While Texting On A Smartphone
 
 
 RIFLE
-STANDING
+RIFLE STANDING
 rifle_down_idle -> Two Hand Rifle Idle
 257 frames
 rifle_down_walk -> Walking With Rifle Down
@@ -69,7 +69,8 @@ rifle_equip -> Pulling Out Rifle
 31 frames, Overdrive 100
 rifle_unequip -> Putting Rifle Away
 35 frames, Overdrive 100
-CROUCHED
+
+RIFLE CROUCH
 rifle_down_to_crouch_down -> Rifle Standing to Kneeling
 14 frames, Overdrive 100
 rifle_crouch_down_to_down -> Rifle Kneeling to Standing
@@ -89,11 +90,17 @@ rifle_crouch_aim_fire_single_mid_recoil -> Fire Rifle While Crouched
 rifle_crouch_aim_fire_single_high_recoil -> Fire Rifle While Crouched
 37 frames, Recoil 100, Overdrive 50
 rifle_crouch_aim_to_rifle_aim -> Standing Up From A Crouched Position With An Aimed Rifle
+
+rifle_aim_to_rifle_crouch_aim -> MISSING! we need to reverse the animation!
+
+
 16 frames, Hustle 100, Overdrive 100
 rifle_crouch_aim_reload_slow -> Reload Rifle While In Crouch Position
 206 frames, Speed 50, Overdrive 50
 rifle_crouch_aim_reload_fast -> Reload Rifle While In Crouch Position
 155 frames, Speed 100, Overdrive 50
+
+RIFLE DEATHS
 rifle_aim_death_a -> Dying Reaction While Standing Holding A Rifle
 100 frames, Location 0, Overdrive 60
 rifle_aim_death_b -> Dying Reaction While Standing Holding A Rifle

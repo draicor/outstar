@@ -533,9 +533,14 @@ func can_raise_weapon() -> bool:
 	
 	# Check if we are in the right player state
 	var weapon_type: String = player_equipment.get_current_weapon_type()
-	var target_state_name: String = weapon_type + "_down_idle"
-	# If our weapon is equipped but down, we can raise it
-	return player_state_machine.get_current_state_name() == target_state_name
+	var current_state_name: String = player_state_machine.get_current_state_name()
+	
+	# Valid states for raising weapon: weapon_down_idle OR weapon_crouch_down_idle
+	var valid_raise_states: Array[String] = [
+		weapon_type + "_down_idle",
+		weapon_type + "_crouch_down_idle",
+	]
+	return current_state_name in valid_raise_states
 
 
 func can_lower_weapon() -> bool:
@@ -545,9 +550,15 @@ func can_lower_weapon() -> bool:
 	
 	# Check if we are in the right player state
 	var weapon_type: String = player_equipment.get_current_weapon_type()
-	var target_state_name: String = weapon_type + "_aim_idle"
-	# If our weapon is equipped and raised, we can lower it
-	return player_state_machine.get_current_state_name() == target_state_name
+	var current_state_name: String = player_state_machine.get_current_state_name()
+	
+	# Valid states for lowering weapon: weapon_aim_idle OR weapon_crouch_aim_idle
+	var valid_lower_states: Array[String] = [
+		weapon_type + "_aim_idle",
+		weapon_type + "_crouch_aim_idle",
+	]
+	
+	return current_state_name in valid_lower_states
 
 
 func can_reload_weapon() -> bool:

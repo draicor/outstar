@@ -91,6 +91,10 @@ func process_next_action() -> void:
 			_process_respawn_action(_current_action.action_data)
 		"death":
 			_process_player_died_action(_current_action.action_data)
+		"enter_crouch":
+			_process_enter_crouch_action()
+		"leave_crouch":
+			_process_leave_crouch_action()
 		_:
 			push_error("Unknown action type: ", _current_action.action_type)
 			complete_action()
@@ -128,6 +132,12 @@ func queue_switch_weapon_action(slot: int) -> void:
 
 func queue_rotate_action(rotation_y: float) -> void:
 	add_action("rotate", rotation_y)
+
+func queue_enter_crouch_action() -> void:
+	add_action("enter_crouch")
+
+func queue_leave_crouch_action() -> void:
+	add_action("leave_crouch")
 
 ###################
 # PROCESS ACTIONS #
@@ -263,20 +273,27 @@ func _process_raise_weapon_action() -> void:
 	# Perform local actions
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
-	# Check if we're in crouch state to use crouch animation
-	var current_state: String = player.player_state_machine.get_current_state_name()
-	var animation_type: String = "down_to_aim"
-	if current_state == weapon_type + "_crouch_down_idle":
-		animation_type = "crouch_down_to_crouch_aim"
+	# Determine animation and next state based on current state
+	var animation_type: String
+	var target_state_name: String
+	
+	match current_state_name:
+		"rifle_down_idle":
+			animation_type = "down_to_aim"
+			target_state_name = "rifle_aim_idle"
+		"rifle_crouch_down_idle":
+			animation_type = "crouch_down_to_crouch_aim"
+			target_state_name = "rifle_crouch_aim_idle"
+		_:
+			push_error("Error in match current_state_name inside _process_raise_weapon_action()")
 	
 	await player.player_animator.play_weapon_animation_and_await(
 		animation_type,
 		weapon_type
 	)
 	
-	# Switch to the appropiate state based on weapon type
-	var target_state_name: String = weapon_type + "_aim_idle"
 	# If we are not already in the same state
 	if target_state_name != player.player_state_machine.get_current_state_name():
 		player.player_state_machine.change_state(target_state_name)
@@ -296,25 +313,31 @@ func _process_lower_weapon_action() -> void:
 		player.player_packets.send_lower_weapon_packet()
 	
 	# Perform local actions
-	# Disable aim rotation
-	player.is_aim_rotating = false
+	player.is_aim_rotating = false # Disable aim rotation
 	
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
-	
-	# Check if we're in crouch state to use crouch animation
 	var current_state: String = player.player_state_machine.get_current_state_name()
-	var animation_type: String = "aim_to_down"
-	if current_state == weapon_type + "_crouch_aim_idle":
-		animation_type = "crouch_aim_to_crouch_down"
+	
+	# Determine animation and next state based on current state
+	var animation_type: String
+	var target_state_name: String
+	
+	match current_state:
+		"rifle_aim_idle":
+			animation_type = "aim_to_down"
+			target_state_name = "rifle_down_idle"
+		"rifle_crouch_aim_idle":
+			animation_type = "crouch_aim_to_crouch_down"
+			target_state_name = "rifle_crouch_down_idle"
+		_:
+			push_error("Error in match current_state inside _process_lower_weapon_action()")
 	
 	await player.player_animator.play_weapon_animation_and_await(
 		animation_type,
 		weapon_type
 	)
 	
-	# Switch to the appropiate state based on weapon type
-	var target_state_name: String = weapon_type + "_down_idle"
 	# If we are not already in the same state
 	if target_state_name != player.player_state_machine.get_current_state_name():
 		player.player_state_machine.change_state(target_state_name)
@@ -330,8 +353,9 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 			complete_action()
 			return
 	
-	var weapon_slot = player.player_equipment.current_slot
-	var amount = data["amount"]
+	var weapon_slot: int = player.player_equipment.current_slot
+	var amount: int = data["amount"]
+	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
 	if player.is_local_player:
 		# After local validation, we send the packet
@@ -343,15 +367,25 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	# Disable aim rotation
 	player.is_aim_rotating = false
 	
+	# Determine reload animation based on state
+	var reload_animation: String
+	match current_state_name:
+		"rifle_aim_idle":
+			reload_animation = "reload"
+		"rifle_crouch_aim_idle":
+			reload_animation = "crouch_reload"
+		"_":
+			push_error("Error in match current_state_name inside _process_reload_weapon_action()")
+	
 	await player.player_animator.play_weapon_animation_and_await(
-		"reload",
+		reload_animation,
 		weapon_type
 	)
 	
 	# Enable aim rotation after reload
 	player.is_aim_rotating = true
 	
-	# Play the rifle aim idle animation
+	# Play the appropriate  idle animation
 	player.player_animator.switch_animation("idle")
 	# Update local state
 	player.player_equipment.reload_equipped_weapon(amount)
@@ -778,3 +812,75 @@ func _clear_pending_damage_actions(target_id: int) -> void:
 			_queue.remove_at(i)
 		else:
 			i += 1
+
+
+func _process_enter_crouch_action() -> void:
+	if player.is_local_player:
+		# CAUTION
+		# add enter crouch packet here
+		pass
+	
+	# Determine animation and next state based on current state and weapon type
+	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	var animation_type: String
+	var current_state_name: String = player.player_state_machine.get_current_state_name()
+	var target_state_name: String = ""
+	
+	# Determine target crouch state based on current state
+	match current_state_name:
+		"rifle_aim_idle":
+			animation_type = "aim_to_crouch_aim"
+			target_state_name = "rifle_crouch_aim_idle"
+		"rifle_down_idle":
+			animation_type = "down_to_crouch_down"
+			target_state_name = "rifle_crouch_down_idle"
+		"_":
+			push_error("Error in match current_state_name inside _process_enter_crouch_action()")
+	
+	await player.player_animator.play_weapon_animation_and_await(
+		animation_type,
+		weapon_type
+	)
+	
+	if target_state_name != "":
+		# If we are not already in the same state
+		if target_state_name != player.player_state_machine.get_current_state_name():
+			player.player_state_machine.change_state(target_state_name)
+	
+	complete_action()
+
+
+func _process_leave_crouch_action() -> void:
+	if player.is_local_player:
+		# CAUTION
+		# add leave crouch packet here
+		pass
+	
+	# Determine animation and next state based on current state and weapon type
+	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	var animation_type: String
+	var current_state_name: String = player.player_state_machine.get_current_state_name()
+	var target_state_name: String = ""
+	
+	# Determine target crouch state based on current state
+	match current_state_name:
+		"rifle_crouch_aim_idle":
+			animation_type = "crouch_aim_to_aim"
+			target_state_name = "rifle_aim_idle"
+		"rifle_crouch_down_idle":
+			animation_type = "crouch_down_to_down"
+			target_state_name = "rifle_down_idle"
+		"_":
+			push_error("Error in match current_state_name inside _process_leave_crouch_action()")
+	
+	await player.player_animator.play_weapon_animation_and_await(
+		animation_type,
+		weapon_type
+	)
+	
+	if target_state_name != "":
+		# If we are not already in the same state
+		if target_state_name != player.player_state_machine.get_current_state_name():
+			player.player_state_machine.change_state(target_state_name)
+	
+	complete_action()

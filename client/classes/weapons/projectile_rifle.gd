@@ -80,7 +80,7 @@ func _initialize_fire_rates() -> void:
 			},
 			"crouching": {
 				"animation": "rifle/rifle_crouch_aim_fire_single_low_recoil",
-				"play_rate": semi_fire_rate
+				"play_rate": semi_fire_rate * 1.556 # To match shooting standing speed
 			}
 		},
 		FireModes.AUTO: {
@@ -90,7 +90,7 @@ func _initialize_fire_rates() -> void:
 			},
 			"crouching": {
 				"animation": "rifle/rifle_crouch_aim_fire_single_low_recoil",
-				"play_rate": auto_fire_rate
+				"play_rate": auto_fire_rate * 1.556 # To match shooting standing speed
 			}
 		}
 	}

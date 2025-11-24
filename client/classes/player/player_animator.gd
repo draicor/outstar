@@ -55,12 +55,23 @@ var animation_events: Dictionary[String, Array] = {
 		{"time": 0.05, "method": "_call_player_audio_method", "args": ["play_weapon_fire_single"]}, # Has to fire BEFORE decrement ammo
 		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["weapon_fire"]},
 	],
+	"rifle/rifle_crouch_aim_fire_single_low_recoil": [
+		{"time": 0.05, "method": "_call_player_audio_method", "args": ["play_weapon_fire_single"]}, # Has to fire BEFORE decrement ammo
+		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["weapon_fire"]},
+	],
 	"rifle/rifle_aim_reload_fast": [
 		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
 		{"time": 0.5, "method": "_call_player_audio_method", "args": ["play_weapon_remove_magazine"]},
 		{"time": 1.05, "method": "_call_player_audio_method", "args": ["play_weapon_insert_magazine"]},
 		{"time": 1.42, "method": "_call_player_audio_method", "args": ["play_weapon_charging_handle"]},
 		{"time": 1.8, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
+	],
+	"rifle/rifle_crouch_aim_reload_fast": [
+		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
+		{"time": 0.35, "method": "_call_player_audio_method", "args": ["play_weapon_remove_magazine"]},
+		{"time": 1.9, "method": "_call_player_audio_method", "args": ["play_weapon_insert_magazine"]},
+		{"time": 2.95, "method": "_call_player_audio_method", "args": ["play_weapon_charging_handle"]},
+		{"time": 4.1, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
 	],
 	"rifle/rifle_equip": [
 		{"time": 0.95, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
@@ -82,24 +93,44 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 		},
 		"reload": {
 			animation = "rifle/rifle_aim_reload_fast",
-			play_rate = 1.0
+			play_rate = 0.7
+		},
+		"crouch_reload": {
+			animation = "rifle/rifle_crouch_aim_reload_fast",
+			play_rate = 1.3
 		},
 		"down_to_aim": {
 			animation = "rifle/rifle_down_to_aim",
-			play_rate = 2.5
+			play_rate = 3.0
 		},
 		"aim_to_down": {
 			animation = "rifle/rifle_aim_to_down",
-			play_rate = 3.5
+			play_rate = 3.0
 		},
 		"crouch_down_to_crouch_aim": {
 			animation = "rifle/rifle_crouch_down_to_crouch_aim",
-			play_rate = 1.0
+			play_rate = 2.0
 		},
 		"crouch_aim_to_crouch_down": {
 			animation = "rifle/rifle_crouch_aim_to_crouch_down",
+			play_rate = 2.0
+		},
+		"crouch_aim_to_aim": {
+			animation = "rifle/rifle_crouch_aim_to_rifle_aim",
 			play_rate = 1.0
-		}
+		},
+		"crouch_down_to_down": {
+			animation = "rifle/rifle_crouch_down_to_rifle_down", 
+			play_rate = 1.0
+		},
+		"aim_to_crouch_aim": {
+			animation = "rifle/rifle_aim_to_rifle_crouch_aim",
+			play_rate = 1.0
+		},
+		"down_to_crouch_down": {
+			animation = "rifle/rifle_down_to_rifle_crouch_down",
+			play_rate = 1.0
+		},
 	},
 	# Add more weapon types here
 }
@@ -199,6 +230,38 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_aim_idle", 0.15)
 	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_aim_walk", 0.2)
 	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_aim_jog", 0.2)
+	
+	# Blend rifle crouch down to rifle crouch aim
+	animation_player.set_blend_time("rifle/rifle_crouch_down_idle", "rifle/rifle_crouch_down_to_crouch_aim", 0.2)
+	animation_player.set_blend_time("rifle/rifle_crouch_down_to_crouch_aim", "rifle/rifle_crouch_aim_idle", 0.2)
+	
+	# Blend rifle crouch aim to rifle crouch down
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_to_crouch_down", 0.2)
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_to_crouch_down", "rifle/rifle_crouch_down_idle", 0.2)
+	
+	# Blend rifle crouch reload
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_reload_fast", 0.2)
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_reload_fast", "rifle/rifle_crouch_aim_idle", 0.2)
+	
+	# Blend rifle aim to rifle crouch aim
+	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_to_rifle_crouch_aim", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_to_rifle_crouch_aim", "rifle/rifle_crouch_aim_idle", 0.2)
+	
+	# Blend rifle down to rifle crouch down
+	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_to_rifle_crouch_down", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_to_rifle_crouch_down", "rifle/rifle_crouch_down_idle", 0.2)
+	
+	# Blend rifle crouch aim to rifle aim
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_to_rifle_aim", 0.2)
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_to_rifle_aim", "rifle/rifle_aim_idle", 0.2)
+	
+	# Blend rifle crouch down to rifle down
+	animation_player.set_blend_time("rifle/rifle_crouch_down_idle", "rifle/rifle_crouch_down_to_rifle_down", 0.2)
+	animation_player.set_blend_time("rifle/rifle_crouch_down_to_rifle_down", "rifle/rifle_down_idle", 0.2)
+	
+	# Blend rifle crouch firing
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_fire_single_low_recoil", 0.4)
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_fire_single_low_recoil", "rifle/rifle_crouch_aim_fire_single_low_recoil", 0.2)
 
 
 # Plays and awaits until the animation ends, if found
