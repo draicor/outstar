@@ -10,6 +10,8 @@ func enter() -> void:
 	player.player_movement.in_motion = false
 	player.player_animator.switch_animation_library("rifle_down")
 	player.player_animator.switch_animation("idle")
+	# Clear crouching state
+	player.is_crouching = false
 	
 	# Connect the ui hud signals for my local player character
 	if player.is_local_player:
@@ -84,3 +86,7 @@ func handle_input(event: InputEvent) -> void:
 		player.player_actions.queue_switch_weapon_action(3)
 	elif event.is_action_pressed("weapon_five"):
 		player.player_actions.queue_switch_weapon_action(4)
+	
+	# Crouch toggle
+	elif event.is_action_pressed("crouch"):
+		player.player_actions.queue_enter_crouch_action()

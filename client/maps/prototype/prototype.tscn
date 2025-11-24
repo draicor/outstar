@@ -1,13 +1,23 @@
-[gd_scene load_steps=10 format=3 uid="uid://jhkvchq2mafw"]
+[gd_scene load_steps=14 format=3 uid="uid://jhkvchq2mafw"]
 
 [ext_resource type="Material" uid="uid://b3onmphfaukv7" path="res://materials/floor_material.tres" id="1_yug3s"]
 [ext_resource type="Texture2D" uid="uid://b7ybyv5g56u4b" path="res://assets/textures/prototype/orange/texture_03.png" id="2_mbxpg"]
+[ext_resource type="Texture2D" uid="uid://78maukvil3jn" path="res://assets/textures/prototype/red/texture_03.png" id="3_jpgwj"]
 [ext_resource type="PackedScene" uid="uid://c02g6pvx6whn1" path="res://objects/interactables/containers/crate.tscn" id="3_mbxpg"]
 [ext_resource type="PackedScene" uid="uid://bppqkbicuvcd5" path="res://objects/interactables/portals/portal.tscn" id="4_cf12v"]
 [ext_resource type="PackedScene" uid="uid://b50kp036v1tmq" path="res://objects/destructible/target_dummy/target_dummy.tscn" id="5_wq85k"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf12v"]
 albedo_texture = ExtResource("2_mbxpg")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5a0s2"]
+albedo_texture = ExtResource("3_jpgwj")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5v5rx"]
+albedo_texture = ExtResource("3_jpgwj")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q6kop"]
+albedo_texture = ExtResource("3_jpgwj")
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_vmii6"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -27,7 +37,7 @@ tonemap_mode = 2
 
 [node name="Static" type="Node3D" parent="World"]
 
-[node name="Floor" type="CSGBox3D" parent="World/Static"]
+[node name="Floor" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -0.5, 10)
 material_override = ExtResource("1_yug3s")
 use_collision = true
@@ -41,33 +51,79 @@ use_collision = true
 collision_mask = 0
 size = Vector3(20, 1, 20)
 
-[node name="Wall" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
+[node name="OuterWalls" type="Node3D" parent="World/Static"]
+
+[node name="Wall" type="CSGBox3D" parent="World/Static/OuterWalls" groups=["concrete_material"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.1, 1, 20)
 material_override = SubResource("StandardMaterial3D_cf12v")
 use_collision = true
 collision_mask = 0
 size = Vector3(0.2, 2, 40)
 
-[node name="Wall2" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
+[node name="Wall2" type="CSGBox3D" parent="World/Static/OuterWalls" groups=["concrete_material"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 1, 20)
 material_override = SubResource("StandardMaterial3D_cf12v")
 use_collision = true
 collision_mask = 0
 size = Vector3(0.2, 2, 40)
 
-[node name="Wall3" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
+[node name="Wall3" type="CSGBox3D" parent="World/Static/OuterWalls" groups=["concrete_material"]]
 transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 10, 1, 40.1)
 material_override = SubResource("StandardMaterial3D_cf12v")
 use_collision = true
 collision_mask = 0
 size = Vector3(0.2, 2, 20)
 
-[node name="Wall4" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
+[node name="Wall4" type="CSGBox3D" parent="World/Static/OuterWalls" groups=["concrete_material"]]
 transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 10, 1, -0.1)
 material_override = SubResource("StandardMaterial3D_cf12v")
 use_collision = true
 collision_mask = 0
 size = Vector3(0.2, 2, 20)
+
+[node name="LowWalls" type="Node3D" parent="World/Static"]
+
+[node name="Wall5" type="CSGBox3D" parent="World/Static/LowWalls" groups=["concrete_material"]]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 3, 0.375, 5.5)
+material_override = SubResource("StandardMaterial3D_5a0s2")
+use_collision = true
+collision_mask = 0
+size = Vector3(0.1, 0.75, 6)
+
+[node name="Wall6" type="CSGBox3D" parent="World/Static/LowWalls" groups=["concrete_material"]]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 17, 0.375, 5.5)
+use_collision = true
+collision_mask = 0
+size = Vector3(0.1, 0.75, 6)
+material = SubResource("StandardMaterial3D_5v5rx")
+
+[node name="Wall7" type="CSGBox3D" parent="World/Static/LowWalls" groups=["concrete_material"]]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 3, 0.375, 34.5)
+use_collision = true
+collision_mask = 0
+size = Vector3(0.1, 0.75, 6)
+material = SubResource("StandardMaterial3D_5v5rx")
+
+[node name="Wall8" type="CSGBox3D" parent="World/Static/LowWalls" groups=["concrete_material"]]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 17, 0.375, 34.5)
+use_collision = true
+collision_mask = 0
+size = Vector3(0.1, 0.75, 6)
+material = SubResource("StandardMaterial3D_5v5rx")
+
+[node name="Wall9" type="CSGBox3D" parent="World/Static/LowWalls" groups=["concrete_material"]]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 10, 0.375, 27.5)
+use_collision = true
+collision_mask = 0
+size = Vector3(0.1, 0.75, 6)
+material = SubResource("StandardMaterial3D_5v5rx")
+
+[node name="Wall10" type="CSGBox3D" parent="World/Static/LowWalls" groups=["concrete_material"]]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 10, 0.375, 12.5)
+material_override = SubResource("StandardMaterial3D_q6kop")
+use_collision = true
+collision_mask = 0
+size = Vector3(0.1, 0.75, 6)
 
 [node name="Lights" type="Node3D" parent="World"]
 

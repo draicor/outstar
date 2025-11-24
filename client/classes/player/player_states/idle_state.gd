@@ -41,6 +41,10 @@ func handle_input(event: InputEvent) -> void:
 		
 		# If we didn't click on anything interactable
 		else:
+			# Clear any pending interactions
+			player.interaction_target = null
+			player.pending_interaction = null
+	
 			# Attempt to move to that cell (uses the action queue internally)
 			player.handle_movement_click(mouse_position)
 	

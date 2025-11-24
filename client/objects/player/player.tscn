@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://xgut27qtlpbd"]
+[gd_scene load_steps=21 format=3 uid="uid://xgut27qtlpbd"]
 
 [ext_resource type="Script" uid="uid://bflh4x8wu5ha6" path="res://classes/player/player.gd" id="1_jpa1g"]
 [ext_resource type="PackedScene" uid="uid://2gtaxxvwtitn" path="res://components/chat_bubble/chat_bubble_manager.tscn" id="2_634de"]
@@ -12,7 +12,9 @@
 [ext_resource type="Script" uid="uid://dnyl6g0hdrkme" path="res://classes/player/player_states/rifle_aim_idle_state.gd" id="8_4ka5w"]
 [ext_resource type="Script" uid="uid://dr0x30oqyyfjk" path="res://classes/player/player_audio.gd" id="10_jm32w"]
 [ext_resource type="Script" uid="uid://hbfve37uavsw" path="res://classes/player/player_states/dead_state.gd" id="10_ylcck"]
+[ext_resource type="Script" uid="uid://11vyhkx2sqk4" path="res://classes/player/player_states/rifle_crouch_down_idle_state.gd" id="11_dthqj"]
 [ext_resource type="Script" uid="uid://cyqk3p6o7qlpf" path="res://classes/player/player_equipment.gd" id="11_psowp"]
+[ext_resource type="Script" uid="uid://b386r8xhr3g43" path="res://classes/player/player_states/rifle_crouch_aim_idle_state.gd" id="12_xlkbi"]
 [ext_resource type="Script" uid="uid://bj3ahj1d4q5pq" path="res://classes/player/player_packets.gd" id="13_c34wb"]
 [ext_resource type="Script" uid="uid://bscnqm2gbffuw" path="res://classes/player/player_actions.gd" id="14_45rsp"]
 
@@ -96,6 +98,14 @@ metadata/_custom_type_script = "uid://dnyl6g0hdrkme"
 [node name="DeadState" type="Node" parent="PlayerStateMachine"]
 script = ExtResource("10_ylcck")
 metadata/_custom_type_script = "uid://hbfve37uavsw"
+
+[node name="RifleCrouchDownIdleState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("11_dthqj")
+metadata/_custom_type_script = "uid://11vyhkx2sqk4"
+
+[node name="RifleCrouchAimIdleState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("12_xlkbi")
+metadata/_custom_type_script = "uid://b386r8xhr3g43"
 
 [node name="PlayerAnimator" type="Node" parent="."]
 script = ExtResource("7_td0ib")

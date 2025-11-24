@@ -26,6 +26,7 @@ var player: Player = null # Our parent node
 # Logic variables
 var in_motion: bool = false # If the character is moving
 var autopilot_active: bool = false # If the server is forcing the player to move
+var should_crouch_after_movement: bool = false # Tracks if we should crouch after movement
 
 # Movement data set at spawn
 var server_grid_position: Vector2i # Used to spawn the character and also to correct the player's position
@@ -541,6 +542,12 @@ func _finalize_movement() -> void:
 		# If we are not already in the state, try to change to it
 		if player.player_state_machine.get_current_state_name() != equipped_weapon_idle_state:
 			player.player_state_machine.change_state(equipped_weapon_idle_state)
+			
+		# After movement, once we are back at idle, check if we should crouch
+		if should_crouch_after_movement:
+			should_crouch_after_movement = false
+			player.player_actions.queue_enter_crouch_action()
+			return
 
 
 # Called when we have to sync with the server position

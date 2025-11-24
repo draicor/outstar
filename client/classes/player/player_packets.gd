@@ -30,12 +30,16 @@ const MOVE_STATES: Array[String] = [
 const WEAPON_STATES: Array[String] = [
 	"rifle_down_idle",
 	"rifle_aim_idle",
+	"rifle_crouch_down_idle",
+	"rifle_crouch_aim_idle",
 ]
 const WEAPON_DOWN_STATES: Array[String] = [
 	"rifle_down_idle",
+	"rifle_crouch_down_idle",
 ]
 const WEAPON_AIM_STATES: Array[String] = [
 	"rifle_aim_idle",
+	"rifle_crouch_aim_idle",
 ]
 
 

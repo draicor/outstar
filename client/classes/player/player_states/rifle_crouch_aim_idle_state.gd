@@ -1,23 +1,22 @@
 extends BaseState
-class_name RifleAimIdleState
+class_name RifleCrouchAimIdleState
 
 var last_target_point: Vector3 = Vector3.ZERO
-var mouse_captured: bool = false
 
 
 func _init() -> void:
-	state_name = "rifle_aim_idle"
+	state_name = "rifle_crouch_aim_idle"
 
 
 func enter() -> void:
-	player.player_animator.switch_animation_library("rifle_aim")
+	player.player_animator.switch_animation_library("rifle_crouch_aim")
 	player.player_animator.switch_animation("idle")
 	# Enable aim rotation
 	player.is_aim_rotating = true
 	# Always reset dry_fired to false on state changes
 	player.dry_fired = false
-	# Clear crouching state
-	player.is_crouching = false
+	# Set crouching state
+	player.is_crouching = true
 	
 	# If this is our local player
 	if player.is_local_player:
@@ -38,6 +37,8 @@ func exit() -> void:
 	
 	# For local and remote players
 	player.player_movement.is_rotating = false
+	
+	# Don't set is_crouching to false here because we might be transitioning to another crouch state
 
 
 # Rotates the character on tick to match the mouse position
@@ -54,14 +55,15 @@ func physics_update(delta: float) -> void:
 		if player.rotation_sync_timer > player.rotation_timer_interval:
 			player.rotation_sync_timer = 0.0
 			broadcast_rotation_if_changed()
-	
+		
 		var target_point: Vector3 = player.get_mouse_world_position()
 		
 		# Only update if we have a valid target
 		if target_point != Vector3.ZERO:
 			# Calculate direction to target
 			var direction: Vector3 = (target_point - player.global_position).normalized()
-			# Remove the vertical rotation
+			
+			# Remove the vertical direction
 			direction.y = 0
 			
 			# Only update if direction is valid
@@ -80,7 +82,7 @@ func update(_delta: float) -> void:
 	if ignore_input():
 		return
 	
-	# Handle lower weapon
+	# Handle lower weapon (release right click) - transition to crouch down state
 	if not Input.is_action_pressed("right_click"):
 		player.player_actions.queue_lower_weapon_action()
 		return
@@ -98,6 +100,7 @@ func update(_delta: float) -> void:
 		else: # Single fire mode
 			var target: Vector3 = player.get_mouse_world_position()
 			player.player_actions.queue_single_fire_action(target)
+		
 		return
 
 
@@ -107,7 +110,7 @@ func handle_input(event: InputEvent) -> void:
 		return
 	
 	# Track trigger release
-	if event.is_action_released("left_click"):
+	if event.is_action_pressed("left_click"):
 		player.player_actions.queue_stop_firing_action(player.shots_fired)
 	
 	# Reload rifle
@@ -120,6 +123,6 @@ func handle_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("weapon_mode"):
 		player.player_actions.queue_toggle_fire_mode_action()
 	
-	# Crouch toggle
+	# Crouch toggle (leave crouch)
 	elif event.is_action_pressed("crouch"):
-		player.player_actions.queue_enter_crouch_action()
+		player.player_actions.queue_leave_crouch_action()
