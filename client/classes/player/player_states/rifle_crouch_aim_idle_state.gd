@@ -15,6 +15,8 @@ func enter() -> void:
 	player.is_aim_rotating = true
 	# Always reset dry_fired to false on state changes
 	player.dry_fired = false
+	# Set crouching state
+	player.is_crouching = true
 	
 	# If this is our local player
 	if player.is_local_player:
@@ -35,6 +37,8 @@ func exit() -> void:
 	
 	# For local and remote players
 	player.player_movement.is_rotating = false
+	
+	# Don't set is_crouching to false here because we might be transitioning to another crouch state
 
 
 # Rotates the character on tick to match the mouse position

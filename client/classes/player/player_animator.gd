@@ -121,7 +121,7 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 		},
 		"crouch_down_to_down": {
 			animation = "rifle/rifle_crouch_down_to_rifle_down", 
-			play_rate = 1.0
+			play_rate = 1.3
 		},
 		"aim_to_crouch_aim": {
 			animation = "rifle/rifle_aim_to_rifle_crouch_aim",
@@ -129,7 +129,7 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 		},
 		"down_to_crouch_down": {
 			animation = "rifle/rifle_down_to_rifle_crouch_down",
-			play_rate = 1.0
+			play_rate = 1.3
 		},
 	},
 	# Add more weapon types here

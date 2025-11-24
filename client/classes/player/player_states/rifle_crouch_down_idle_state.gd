@@ -10,6 +10,8 @@ func enter() -> void:
 	player.player_movement.in_motion = false
 	player.player_animator.switch_animation_library("rifle_crouch_down")
 	player.player_animator.switch_animation("idle")
+	# Set crouching state
+	player.is_crouching = true
 
 
 # We have to update rotations here so we can rotate towards our targets
@@ -33,8 +35,38 @@ func handle_input(event: InputEvent) -> void:
 	if ignore_input():
 		return
 	
+	# If we left clicked to move
+	if event.is_action_pressed("left_click"):
+		# Get the mouse position and check what kind of target we have
+		var mouse_position: Vector2 = player.get_viewport().get_mouse_position()
+		var target: Object = player.get_mouse_click_target(mouse_position)
+		
+		# If we have a valid target, we try to determine what kind of class it is
+		if target:
+			if target is Interactable:
+				# Leave crouch, then interact
+				player.player_actions.queue_leave_crouch_action()
+				# The interaction will be handled after leaving crouch
+				player.pending_interaction = target
+			# Add other types of target classes later
+		
+		# If we didn't click on anything interactable
+		else:
+			# Clear any pending interactions
+			player.interaction_target = null
+			player.pending_interaction = null
+			
+			# Remember we need to crouch after movement
+			player.player_movement.should_crouch_after_movement = true
+			# Leave crouch, then move, then re-enter crouch at destination
+			player.player_actions.queue_leave_crouch_action()
+			# Store the destination for movement after leaving crouch
+			var destination: Vector2i = Utils.local_to_map(player.get_mouse_world_position())
+			player.player_movement.grid_destination = destination
+		return
+	
 	# Reload rifle
-	if event.is_action_pressed("weapon_reload"):
+	elif event.is_action_pressed("weapon_reload"):
 		# We raise our weapon first (to crouch aim), then reload
 		player.player_actions.queue_raise_weapon_action()
 		player.player_actions.queue_reload_weapon_action(

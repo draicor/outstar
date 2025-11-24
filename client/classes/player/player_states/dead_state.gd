@@ -9,7 +9,11 @@ func _init() -> void:
 func enter() -> void:
 	player.player_movement.in_motion = false
 	player.player_movement.autopilot_active = true # Disable movement
-	player.is_busy = true # Block other actions
+	# Clear any pending interactions
+	player.interaction_target = null
+	player.pending_interaction = null
+	# Block other actions
+	player.is_busy = true
 	
 	# Remove player from grid immediately on death
 	RegionManager.remove_object(player.player_movement.grid_position)

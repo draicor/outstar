@@ -35,7 +35,8 @@ var spawn_weapon_slots: Array[Dictionary] = []
 
 # Logic variables
 var is_busy: bool = false # Blocks input during interactions
-var is_mouse_over_ui = false # Used to prevent input of certain actions while on the UI
+var is_mouse_over_ui: bool = false # Used to prevent input of certain actions while on the UI
+var is_crouching: bool = false # Tracks crouch state
 
 # Interaction system
 var interaction_target: Interactable = null # The object we are trying to interact with

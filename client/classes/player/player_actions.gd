@@ -182,6 +182,7 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 			)
 		
 		player.player_packets.send_destination_packet(player.player_movement.immediate_grid_destination)
+		
 		complete_action()
 	
 	# Handle remote player movement
@@ -882,5 +883,13 @@ func _process_leave_crouch_action() -> void:
 		# If we are not already in the same state
 		if target_state_name != player.player_state_machine.get_current_state_name():
 			player.player_state_machine.change_state(target_state_name)
+	
+	# After leaving crouch, check if we need to move
+	if player.player_movement.grid_destination != player.player_movement.grid_position:
+		# Queue movement to the stored destination
+		queue_move_action(player.player_movement.grid_destination)
+	# Check if we have an interact target
+	elif player.pending_interaction != null:
+		player.handle_pending_interaction()
 	
 	complete_action()

@@ -16,6 +16,8 @@ func enter() -> void:
 	player.is_aim_rotating = true
 	# Always reset dry_fired to false on state changes
 	player.dry_fired = false
+	# Clear crouching state
+	player.is_crouching = false
 	
 	# If this is our local player
 	if player.is_local_player:

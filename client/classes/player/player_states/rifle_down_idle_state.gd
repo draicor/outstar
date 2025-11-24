@@ -10,6 +10,8 @@ func enter() -> void:
 	player.player_movement.in_motion = false
 	player.player_animator.switch_animation_library("rifle_down")
 	player.player_animator.switch_animation("idle")
+	# Clear crouching state
+	player.is_crouching = false
 	
 	# Connect the ui hud signals for my local player character
 	if player.is_local_player:
