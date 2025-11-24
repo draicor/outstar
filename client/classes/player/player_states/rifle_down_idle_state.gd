@@ -84,3 +84,9 @@ func handle_input(event: InputEvent) -> void:
 		player.player_actions.queue_switch_weapon_action(3)
 	elif event.is_action_pressed("weapon_five"):
 		player.player_actions.queue_switch_weapon_action(4)
+	
+	# Crouch toggle
+	elif event.is_action_pressed("crouch"):
+		# CAUTION
+		# bad, it has to use the player_actions queue here!
+		player.player_state_machine.change_state("rifle_crouch_down_idle")

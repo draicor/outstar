@@ -32,6 +32,12 @@ var rifle_aim_locomotion: Dictionary[String, Dictionary] = {
 	"jog": {animation = "rifle/rifle_aim_jog", play_rate = 1.0},
 	"run": {animation = "rifle/rifle_down_run", play_rate = 1.1},
 }
+var rifle_crouch_down_locomotion: Dictionary[String, Dictionary] = {
+	"idle": {animation = "rifle/rifle_crouch_down_idle", play_rate = 1.0},
+}
+var rifle_crouch_aim_locomotion: Dictionary[String, Dictionary] = {
+	"idle": {animation = "rifle/rifle_crouch_aim_idle", play_rate = 1.0},
+}
 
 # Animation events (timing for each animation)
 var current_animation: String = ""
@@ -50,14 +56,14 @@ var animation_events: Dictionary[String, Array] = {
 		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["weapon_fire"]},
 	],
 	"rifle/rifle_aim_reload_fast": [
-		{"time": 0.2, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
-		{"time": 0.7, "method": "_call_player_audio_method", "args": ["play_weapon_remove_magazine"]},
-		{"time": 1.6, "method": "_call_player_audio_method", "args": ["play_weapon_insert_magazine"]},
-		{"time": 2.2, "method": "_call_player_audio_method", "args": ["play_weapon_charging_handle"]},
-		{"time": 2.5, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
+		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
+		{"time": 0.5, "method": "_call_player_audio_method", "args": ["play_weapon_remove_magazine"]},
+		{"time": 1.05, "method": "_call_player_audio_method", "args": ["play_weapon_insert_magazine"]},
+		{"time": 1.42, "method": "_call_player_audio_method", "args": ["play_weapon_charging_handle"]},
+		{"time": 1.8, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
 	],
 	"rifle/rifle_equip": [
-		{"time": 1.5, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
+		{"time": 0.95, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
 	],
 	"rifle/rifle_unequip": [
 		{"time": 0.0, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
@@ -68,15 +74,15 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 	"rifle": {
 		"equip": {
 			animation = "rifle/rifle_equip",
-			play_rate = 1.3
+			play_rate = 1.0
 		},
 		"unequip": {
 			animation = "rifle/rifle_unequip",
-			play_rate = 1.3
+			play_rate = 1.0
 		},
 		"reload": {
 			animation = "rifle/rifle_aim_reload_fast",
-			play_rate = 1.2
+			play_rate = 1.0
 		},
 		"down_to_aim": {
 			animation = "rifle/rifle_down_to_aim",
@@ -85,6 +91,14 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 		"aim_to_down": {
 			animation = "rifle/rifle_aim_to_down",
 			play_rate = 3.5
+		},
+		"crouch_down_to_crouch_aim": {
+			animation = "rifle/rifle_crouch_down_to_crouch_aim",
+			play_rate = 1.0
+		},
+		"crouch_aim_to_crouch_down": {
+			animation = "rifle/rifle_crouch_aim_to_crouch_down",
+			play_rate = 1.0
 		}
 	},
 	# Add more weapon types here
@@ -160,7 +174,7 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_fire_single_fast", 0.2)
 	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_walk", 0.2)
 	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_jog", 0.2)
-	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_run", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_jog", 0.2)
 	
 	# Blend rifle down locomotion
 	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_walk", 0.2)
@@ -280,6 +294,8 @@ func switch_animation_library(animation_library: String) -> void:
 		"female": locomotion = female_locomotion
 		"rifle_down": locomotion = rifle_down_locomotion
 		"rifle_aim": locomotion = rifle_aim_locomotion
+		"rifle_crouch_down": locomotion = rifle_crouch_down_locomotion
+		"rifle_crouch_aim": locomotion = rifle_crouch_aim_locomotion
 		_: push_error("Library name not valid")
 
 

@@ -263,8 +263,15 @@ func _process_raise_weapon_action() -> void:
 	# Perform local actions
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	
+	# Check if we're in crouch state to use crouch animation
+	var current_state: String = player.player_state_machine.get_current_state_name()
+	var animation_type: String = "down_to_aim"
+	if current_state == weapon_type + "_crouch_down_idle":
+		animation_type = "crouch_down_to_crouch_aim"
+	
 	await player.player_animator.play_weapon_animation_and_await(
-		"down_to_aim",
+		animation_type,
 		weapon_type
 	)
 	
@@ -294,8 +301,15 @@ func _process_lower_weapon_action() -> void:
 	
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
+	
+	# Check if we're in crouch state to use crouch animation
+	var current_state: String = player.player_state_machine.get_current_state_name()
+	var animation_type: String = "aim_to_down"
+	if current_state == weapon_type + "_crouch_aim_idle":
+		animation_type = "crouch_aim_to_crouch_down"
+	
 	await player.player_animator.play_weapon_animation_and_await(
-		"aim_to_down",
+		animation_type,
 		weapon_type
 	)
 	

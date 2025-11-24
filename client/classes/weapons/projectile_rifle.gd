@@ -74,12 +74,24 @@ func calculate_recoil() -> void:
 func _initialize_fire_rates() -> void:
 	fire_rates = {
 		FireModes.SEMI: {
-			"animation": "rifle/rifle_aim_fire_single_fast",
-			"play_rate": semi_fire_rate
+			"standing": {
+				"animation": "rifle/rifle_aim_fire_single_fast",
+				"play_rate": semi_fire_rate
+			},
+			"crouching": {
+				"animation": "rifle/rifle_crouch_aim_fire_single_low_recoil",
+				"play_rate": semi_fire_rate
+			}
 		},
 		FireModes.AUTO: {
-			"animation": "rifle/rifle_aim_fire_single_fast",
-			"play_rate": auto_fire_rate
+			"standing": {
+				"animation": "rifle/rifle_aim_fire_single_fast",
+				"play_rate": auto_fire_rate
+			},
+			"crouching": {
+				"animation": "rifle/rifle_crouch_aim_fire_single_low_recoil",
+				"play_rate": auto_fire_rate
+			}
 		}
 	}
 
@@ -164,12 +176,36 @@ func set_fire_mode(mode: int) -> void:
 	calculate_recoil()
 
 
+# Returns the appropriate animation based on stance and fire mode
 func get_animation() -> String:
-	return fire_rates[current_fire_mode]["animation"]
+	var owner_player: Player = get_weapon_owner()
+	if not owner_player:
+		return fire_rates[FireModes.SEMI]["standing"]["animation"]
+	
+	var current_state: String = owner_player.player_state_machine.get_current_state_name()
+	var stance: String = "standing"
+	
+	# Check if we are in crouch aim state
+	if current_state == "rifle_crouch_aim_idle":
+		stance = "crouching"
+	
+	return fire_rates[current_fire_mode][stance]["animation"]
 
 
+# Returns the appropriate animation play rate based on stance and fire mode
 func get_animation_play_rate() -> float:
-	return fire_rates[current_fire_mode]["play_rate"]
+	var owner_player: Player = get_weapon_owner()
+	if not owner_player:
+		return fire_rates[FireModes.SEMI]["standing"]["play_rate"]
+	
+	var current_state: String = owner_player.player_state_machine.get_current_state_name()
+	var stance: String = "standing"
+	
+	# Check if we are in crouch aim state
+	if current_state == "rifle_crouch_aim_idle":
+		stance = "crouching"
+	
+	return fire_rates[current_fire_mode][stance]["play_rate"]
 
 
 # Traverses up the tree to find the player node

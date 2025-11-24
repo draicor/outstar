@@ -36,6 +36,7 @@ male_texting_walk -> Male Walking While Texting On A Smartphone
 
 
 RIFLE
+STANDING
 rifle_down_idle -> Two Hand Rifle Idle
 257 frames
 rifle_down_walk -> Walking With Rifle Down
@@ -56,18 +57,53 @@ rifle_aim_jog -> Running With Rifle Aimed
 24 frames, Style 50, Stride 50
 rifle_aim_run -> Running With Rifle Aimed
 19 frames, Style 50, Stride 100
-rifle_aim_fire_single_slow -> Firing A Rifle While Standing
-31 frames, Stance 0, Recoil 50
-rifle_aim_fire_single_fast -> Firing A Rifle While Standing
-8 frames
+rifle_aim_fire_single_slow -> Firing A Rifle While Standing #2
+28 frames, Stance 0, Recoil 100
+rifle_aim_fire_single_fast -> Firing A Rifle While Standing #1
+8 frames, Overdrive 50
 rifle_aim_reload_slow -> Reloading Rifle While Standing
-193 frames, Speed 50, Arm-Height 100
+146 frames, Speed 75, Arm-Height 100
 rifle_aim_reload_fast -> Reloading Rifle While Standing
-99 frames, Speed 100, Arm-Height 100
+66 frames, Speed 100, Arm-Height 100, Overdrive 75
 rifle_equip -> Pulling Out Rifle
-61 frames
+31 frames, Overdrive 100
 rifle_unequip -> Putting Rifle Away
-69 frames
+35 frames, Overdrive 100
+CROUCHED
+rifle_down_to_crouch_down -> Rifle Standing to Kneeling
+14 frames, Overdrive 100
+rifle_crouch_down_to_down -> Rifle Kneeling to Standing
+19 frames, Overdrive 100
+rifle_crouch_down_idle -> Rifle Kneeling Idle
+51 frames
+rifle_crouch_down_to_crouch_aim -> Rifle Kneeling And Aiming
+16 frames, Overdrive 75
+rifle_crouch_aim_to_crouch_down -> Rifle Aiming And Kneeling
+16 frames, Overdrive 75
+rifle_crouch_aim_idle -> Crouching Holding A Rifle
+129 frames, Movement 50, Heartrate 50, Overdrive 50
+rifle_crouch_aim_fire_single_low_recoil -> Fire Rifle While Crouched
+13 frames, Recoil 0, Overdrive 100
+rifle_crouch_aim_fire_single_mid_recoil -> Fire Rifle While Crouched
+21 frames, Recoil 50, Overdrive 75
+rifle_crouch_aim_fire_single_high_recoil -> Fire Rifle While Crouched
+37 frames, Recoil 100, Overdrive 50
+rifle_crouch_aim_to_rifle_aim -> Standing Up From A Crouched Position With An Aimed Rifle
+16 frames, Hustle 100, Overdrive 100
+rifle_crouch_aim_reload_slow -> Reload Rifle While In Crouch Position
+206 frames, Speed 50, Overdrive 50
+rifle_crouch_aim_reload_fast -> Reload Rifle While In Crouch Position
+155 frames, Speed 100, Overdrive 50
+rifle_aim_death_a -> Dying Reaction While Standing Holding A Rifle
+100 frames, Location 0, Overdrive 60
+rifle_aim_death_b -> Dying Reaction While Standing Holding A Rifle
+93 frames, Location 20, Overdrive 60
+rifle_aim_death_c -> Dying Reaction While Standing Holding A Rifle
+93 frames, Location 40, Overdrive 60
+rifle_aim_death_d -> Dying Reaction While Standing Holding A Rifle
+88 frames, Location 100, Overdrive 60
+rifle_crouch_death -> Rifle Death Crouched From Headshot Front
+48 frames, Overdrive 60
 
 
 PISTOL
