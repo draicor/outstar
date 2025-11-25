@@ -417,6 +417,11 @@ func _process_single_fire_action(target: Vector3) -> void:
 			complete_action()
 			return
 		
+		# If the muzzle is inside geometry (walls), don't fire
+		if player.player_equipment.equipped_weapon.is_weapon_inside_wall():
+			complete_action()
+			return
+		
 		# After local validation, we send the packet
 		player.player_packets.send_fire_weapon_packet(target, player.player_movement.rotation_target)
 	
@@ -513,6 +518,11 @@ func _process_start_firing_action(ammo: int) -> void:
 	if player.is_local_player:
 		# Check if we can start firing
 		if not player.can_start_firing():
+			complete_action()
+			return
+		
+		# If the muzzle is inside geometry (walls), don't fire
+		if player.player_equipment.equipped_weapon.is_weapon_inside_wall():
 			complete_action()
 			return
 		

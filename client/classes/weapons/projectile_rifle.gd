@@ -96,6 +96,24 @@ func _initialize_fire_rates() -> void:
 	}
 
 
+# Adds a sphere shape cast to detect if the weapon is inside geometry
+func is_weapon_inside_wall() -> bool:
+	var muzzle_position: Vector3 = muzzle_marker_3d.global_position
+	var shape: SphereShape3D = SphereShape3D.new()
+	shape.radius = 0.05 # Small radius around muzzle
+	
+	var query: PhysicsShapeQueryParameters3D = PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform.origin = muzzle_position
+	query.collision_mask = 1 # Static layer
+	query.collide_with_areas = true
+	query.collide_with_bodies = true
+	query.exclude = GameManager.get_exclude_collision_rids()
+	
+	var results: Array[Dictionary] = get_world_3d().direct_space_state.intersect_shape(query)
+	return results.size() > 0
+
+
 func fire(direction: Vector3 = Vector3.ZERO) -> Vector3:
 	# Get weapon muzzle position
 	var muzzle_position: Vector3 = muzzle_marker_3d.global_position

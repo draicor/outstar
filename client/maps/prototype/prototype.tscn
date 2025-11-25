@@ -1,6 +1,7 @@
-[gd_scene load_steps=14 format=3 uid="uid://jhkvchq2mafw"]
+[gd_scene load_steps=15 format=3 uid="uid://jhkvchq2mafw"]
 
 [ext_resource type="Material" uid="uid://b3onmphfaukv7" path="res://materials/floor_material.tres" id="1_yug3s"]
+[ext_resource type="PackedScene" uid="uid://cq6jnds4vnpcm" path="res://objects/static/wall/wall.tscn" id="2_5a0s2"]
 [ext_resource type="Texture2D" uid="uid://b7ybyv5g56u4b" path="res://assets/textures/prototype/orange/texture_03.png" id="2_mbxpg"]
 [ext_resource type="Texture2D" uid="uid://78maukvil3jn" path="res://assets/textures/prototype/red/texture_03.png" id="3_jpgwj"]
 [ext_resource type="PackedScene" uid="uid://c02g6pvx6whn1" path="res://objects/interactables/containers/crate.tscn" id="3_mbxpg"]
@@ -52,27 +53,6 @@ collision_mask = 0
 size = Vector3(20, 1, 20)
 
 [node name="OuterWalls" type="Node3D" parent="World/Static"]
-
-[node name="Wall" type="CSGBox3D" parent="World/Static/OuterWalls" groups=["concrete_material"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.1, 1, 20)
-material_override = SubResource("StandardMaterial3D_cf12v")
-use_collision = true
-collision_mask = 0
-size = Vector3(0.2, 2, 40)
-
-[node name="Wall2" type="CSGBox3D" parent="World/Static/OuterWalls" groups=["concrete_material"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 1, 20)
-material_override = SubResource("StandardMaterial3D_cf12v")
-use_collision = true
-collision_mask = 0
-size = Vector3(0.2, 2, 40)
-
-[node name="Wall3" type="CSGBox3D" parent="World/Static/OuterWalls" groups=["concrete_material"]]
-transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 10, 1, 40.1)
-material_override = SubResource("StandardMaterial3D_cf12v")
-use_collision = true
-collision_mask = 0
-size = Vector3(0.2, 2, 20)
 
 [node name="Wall4" type="CSGBox3D" parent="World/Static/OuterWalls" groups=["concrete_material"]]
 transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 10, 1, -0.1)
@@ -162,3 +142,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 0, 0.5)
 
 [node name="TargetDummy6" parent="World/Destructible" instance=ExtResource("5_wq85k")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 0.5)
+
+[node name="Wall" parent="." instance=ExtResource("2_5a0s2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.908185, 1.000001, 39.05896)
+wall_size = Vector3(10, 2, 0.5)
+groups = Array[StringName]([&"concrete_material"])
+
+[node name="Wall2" parent="." instance=ExtResource("2_5a0s2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.51648, 0.99999905, 29.821804)
+wall_size = Vector3(3, 2, 0.5)
+groups = Array[StringName]([&"concrete_material"])
