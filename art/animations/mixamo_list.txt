@@ -45,10 +45,6 @@ rifle_down_jog -> Running With Rifle Down
 20 frames
 rifle_down_run -> Rifle Sprint Forward
 19 frames, Overdrive 30
-rifle_down_to_aim -> Rifle Down To Aiming
-26 frames
-rifle_aim_to_down -> Rifle Aiming To Down
-45 frames
 rifle_aim_idle -> Rifle Standing Aiming Idle
 93 frames
 rifle_aim_walk -> Walking While Aiming Rifle
@@ -71,16 +67,8 @@ rifle_unequip -> Putting Rifle Away
 35 frames, Overdrive 100
 
 RIFLE CROUCH
-rifle_down_to_crouch_down -> Rifle Standing to Kneeling
-14 frames, Overdrive 100
-rifle_crouch_down_to_down -> Rifle Kneeling to Standing
-19 frames, Overdrive 100
 rifle_crouch_down_idle -> Rifle Kneeling Idle
 51 frames
-rifle_crouch_down_to_crouch_aim -> Rifle Kneeling And Aiming
-16 frames, Overdrive 75
-rifle_crouch_aim_to_crouch_down -> Rifle Aiming And Kneeling
-16 frames, Overdrive 75
 rifle_crouch_aim_idle -> Crouching Holding A Rifle
 129 frames, Movement 50, Heartrate 50, Overdrive 50
 rifle_crouch_aim_fire_single_low_recoil -> Fire Rifle While Crouched
@@ -89,16 +77,30 @@ rifle_crouch_aim_fire_single_mid_recoil -> Fire Rifle While Crouched
 21 frames, Recoil 50, Overdrive 75
 rifle_crouch_aim_fire_single_high_recoil -> Fire Rifle While Crouched
 37 frames, Recoil 100, Overdrive 50
-rifle_crouch_aim_to_rifle_aim -> Standing Up From A Crouched Position With An Aimed Rifle
-
-rifle_aim_to_rifle_crouch_aim -> MISSING! we need to reverse the animation!
-
-
-16 frames, Hustle 100, Overdrive 100
 rifle_crouch_aim_reload_slow -> Reload Rifle While In Crouch Position
 206 frames, Speed 50, Overdrive 50
 rifle_crouch_aim_reload_fast -> Reload Rifle While In Crouch Position
 155 frames, Speed 100, Overdrive 50
+
+
+EDITED RIFLE ANIMATIONS
+rifle_aim_to_rifle_down [remove hips_motion] -> Rifle Aiming To Down
+45 frames
+rifle_crouch_aim_to_rifle_crouch_down [remove hips_motion] -> Rifle Aiming And Kneeling
+16 frames, Overdrive 75
+rifle_crouch_down_to_rifle_crouch_aim [remove hips_motion] -> Rifle Kneeling And Aiming
+16 frames, Overdrive 75
+rifle_down_to_rifle_aim [remove hips_motion] -> Rifle Down To Aiming
+26 frames
+rifle_down_to_rifle_crouch_down [remove hips motion] -> Rifle Standing to Kneeling
+14 frames, Overdrive 100
+rifle_aim_to_rifle_crouch_aim [remove hips_motion] -> Reversed using scale -1 and then G to move the frames.
+16 frames
+rifle_crouch_aim_to_rifle_aim [remove hips_motion] -> Standing Up From A Crouched Position With An Aimed Rifle
+16 frames, Hustle 100, Overdrive 100
+rifle_crouch_down_to_rifle_down -> Rifle Kneeling to Standing
+19 frames, Overdrive 100
+
 
 RIFLE DEATHS
 rifle_aim_death_a -> Dying Reaction While Standing Holding A Rifle
