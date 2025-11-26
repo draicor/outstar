@@ -1,11 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://bgdnoec83tblt"]
+[gd_scene load_steps=9 format=3 uid="uid://bgdnoec83tblt"]
 
 [ext_resource type="Material" uid="uid://b3onmphfaukv7" path="res://materials/floor_material.tres" id="1_kc1w1"]
-[ext_resource type="Texture2D" uid="uid://b7ybyv5g56u4b" path="res://assets/textures/prototype/orange/texture_03.png" id="2_jbvjh"]
+[ext_resource type="PackedScene" uid="uid://yvt8oh33qd4p" path="res://objects/static/wall/concrete/wall_800x200x100_concrete.tscn" id="2_bqlwn"]
+[ext_resource type="PackedScene" uid="uid://r40ud5g2n5al" path="res://objects/static/wall/concrete/wall_200x200x100_concrete.tscn" id="3_27xwa"]
 [ext_resource type="PackedScene" uid="uid://bppqkbicuvcd5" path="res://objects/interactables/portals/portal.tscn" id="3_kc1w1"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cf12v"]
-albedo_texture = ExtResource("2_jbvjh")
+[ext_resource type="PackedScene" uid="uid://cyae66e5t8mtf" path="res://objects/static/wall/concrete/wall_100x200x100_concrete.tscn" id="4_m2qdd"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_vmii6"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -32,19 +31,43 @@ use_collision = true
 collision_mask = 0
 size = Vector3(10, 1, 10)
 
-[node name="Wall" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, 5)
-material_override = SubResource("StandardMaterial3D_cf12v")
-use_collision = true
-collision_mask = 0
-size = Vector3(0.2, 2, 10)
+[node name="OuterWalls" type="Node3D" parent="World/Static"]
 
-[node name="Wall2" type="CSGBox3D" parent="World/Static" groups=["concrete_material"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 5)
-material_override = SubResource("StandardMaterial3D_cf12v")
-use_collision = true
-collision_mask = 0
-size = Vector3(0.2, 2, 10)
+[node name="Wall800x200x100Concrete" parent="World/Static/OuterWalls" instance=ExtResource("2_bqlwn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1, -0.5)
+
+[node name="Wall200x200x100Concrete" parent="World/Static/OuterWalls" instance=ExtResource("3_27xwa")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 1, -0.5)
+
+[node name="Wall100x200x100Concrete" parent="World/Static/OuterWalls" instance=ExtResource("4_m2qdd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 1, -0.5)
+
+[node name="Wall800x200x100Concrete2" parent="World/Static/OuterWalls" instance=ExtResource("2_bqlwn")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 10.5, 1, 4)
+
+[node name="Wall200x200x100Concrete2" parent="World/Static/OuterWalls" instance=ExtResource("3_27xwa")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 10.5, 1, 9)
+
+[node name="Wall100x200x100Concrete2" parent="World/Static/OuterWalls" instance=ExtResource("4_m2qdd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 1, 10.5)
+
+[node name="Wall800x200x100Concrete3" parent="World/Static/OuterWalls" instance=ExtResource("2_bqlwn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1, 10.5)
+
+[node name="Wall200x200x100Concrete3" parent="World/Static/OuterWalls" instance=ExtResource("3_27xwa")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.0000001, 1, 10.500001)
+
+[node name="Wall100x200x100Concrete3" parent="World/Static/OuterWalls" instance=ExtResource("4_m2qdd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 1, 10.5)
+
+[node name="Wall100x200x100Concrete4" parent="World/Static/OuterWalls" instance=ExtResource("4_m2qdd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 1, -0.5)
+
+[node name="Wall800x200x100Concrete4" parent="World/Static/OuterWalls" instance=ExtResource("2_bqlwn")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.5000002, 1, 6)
+
+[node name="Wall200x200x100Concrete4" parent="World/Static/OuterWalls" instance=ExtResource("3_27xwa")]
+transform = Transform3D(1.3113416e-07, 0, -1, 0, 1, 0, 1, 0, 1.3113416e-07, -0.50000113, 1, 1.0000012)
 
 [node name="Lights" type="Node3D" parent="World"]
 
@@ -58,4 +81,4 @@ environment = SubResource("Environment_pjqxs")
 [node name="Interactables" type="Node3D" parent="World"]
 
 [node name="Portal" parent="World/Interactables" groups=["concrete_material"] instance=ExtResource("3_kc1w1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 1, 9.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 1, 5.5)
