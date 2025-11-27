@@ -859,7 +859,7 @@ class Handshake:
 	
 class Heartbeat:
 	func _init():
-		var _service
+		var service
 		
 	var data = {}
 	
@@ -931,7 +931,7 @@ class ServerMetrics:
 	
 class RequestGranted:
 	func _init():
-		var _service
+		var service
 		
 	var data = {}
 	
@@ -1210,7 +1210,7 @@ class LoginSuccess:
 	
 class LogoutRequest:
 	func _init():
-		var _service
+		var service
 		
 	var data = {}
 	
@@ -1508,6 +1508,11 @@ class SpawnCharacter:
 		service.func_ref = Callable(self, "add_weapons")
 		data[__weapons.tag] = service
 		
+		__is_crouching = PBField.new("is_crouching", PB_DATA_TYPE.BOOL, PB_RULE.OPTIONAL, 11, true, DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL])
+		service = PBServiceField.new()
+		service.field = __is_crouching
+		data[__is_crouching.tag] = service
+		
 	var data = {}
 	
 	var __id: PBField
@@ -1638,6 +1643,19 @@ class SpawnCharacter:
 		var element = WeaponSlot.new()
 		__weapons.value.append(element)
 		return element
+	
+	var __is_crouching: PBField
+	func has_is_crouching() -> bool:
+		if __is_crouching.value != null:
+			return true
+		return false
+	func get_is_crouching() -> bool:
+		return __is_crouching.value
+	func clear_is_crouching() -> void:
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		__is_crouching.value = DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL]
+	func set_is_crouching(value : bool) -> void:
+		__is_crouching.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2150,7 +2168,7 @@ class ReloadWeapon:
 	
 class RaiseWeapon:
 	func _init():
-		var _service
+		var service
 		
 	var data = {}
 	
@@ -2177,7 +2195,7 @@ class RaiseWeapon:
 	
 class LowerWeapon:
 	func _init():
-		var _service
+		var service
 		
 	var data = {}
 	
@@ -2303,7 +2321,7 @@ class FireWeapon:
 	
 class ToggleFireMode:
 	func _init():
-		var _service
+		var service
 		
 	var data = {}
 	

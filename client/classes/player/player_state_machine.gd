@@ -44,6 +44,11 @@ func get_current_state() -> BaseState:
 		return null
 
 
+# Checks if a state exists
+func has_state(state_name: String) -> bool:
+	return states_map.has(state_name)
+
+
 func change_state(new_state_name: String) -> void:
 	# If our state machine is not active, abort
 	if not is_active:

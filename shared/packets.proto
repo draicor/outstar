@@ -49,6 +49,7 @@ message SpawnCharacter { // Sent by the server to spawn a character
   uint64 max_health = 8;
   uint64 current_weapon = 9; // Current equipped weapon by slot
   repeated WeaponSlot weapons = 10; // All weapon slots
+  bool is_crouching = 11;
 }
 // Character movement
 message MoveCharacter { // Sent by the server to move remote characters

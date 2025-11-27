@@ -125,7 +125,8 @@ static func instantiate(
 	server_spawn_rotation: float, # Used to update our model.rotation.y
 	is_my_player_character: bool,
 	server_weapon_slot: int,
-	server_weapon_slots: Array[Dictionary]
+	server_weapon_slots: Array[Dictionary],
+	spawn_is_crouching: bool
 ) -> Player:
 	# Instantiate a new empty player character
 	var player: Player = player_scene.instantiate()
@@ -143,6 +144,8 @@ static func instantiate(
 	# Weapon data
 	player.spawn_weapon_slot = server_weapon_slot
 	player.spawn_weapon_slots = server_weapon_slots
+	# Character state
+	player.is_crouching = spawn_is_crouching
 	
 	return player
 
@@ -170,6 +173,9 @@ func _ready() -> void:
 	# Rotate our character to match the server's rotation
 	model.rotation.y = spawn_rotation
 	
+	# Update the shape in case we spawn crouched
+	update_collision_shapes()
+	
 	# Do this only for my local character
 	if is_local_player:
 		_setup_local_player_components()
@@ -184,6 +190,7 @@ func _ready() -> void:
 	
 	call_deferred("update_weapon_state")
 
+
 # Called a frame later to let the child components catch up
 func update_weapon_state() -> void:
 	# Await an extra frame otherwise it won't work
@@ -195,13 +202,34 @@ func update_weapon_state() -> void:
 	var weapon_type: String = player_equipment.equipped_weapon_type
 	var weapon_state: String = player_equipment.get_weapon_state_by_weapon_type(weapon_type)
 	
-	if weapon_state != "":
-		# Only change state if we are not already in it
-		if player_state_machine.get_current_state_name() != weapon_state:
-			player_state_machine.change_state(weapon_state)
+	if is_crouching:
+		if weapon_type == "unarmed":
+			# Try unarmed crouch state if available
+			if player_state_machine.has_state("crouch_idle"):
+				weapon_state = "crouch_idle"
+			else:
+				# If we don't have a crouch state available, use standing idle
+				weapon_state = "idle"
+		# If we have a weapon equipped and we are crouching
+		else:
+			var crouch_down_state: String = weapon_type + "_crouch_down_idle"
+			# Try weapon crouch state if available
+			if player_state_machine.has_state(crouch_down_state):
+				weapon_state = crouch_down_state
+			else:
+				# Fallback to standing weapon state
+				weapon_state = player_animator.get_idle_state_name()
+	# Standing
 	else:
-		# Unarmed
-		player_state_machine.change_state("idle")
+		weapon_state = player_animator.get_idle_state_name()
+	
+	# If we still don't have a valid state, fallback to basic idle
+	if weapon_state == "" or not player_state_machine.has_state(weapon_state):
+		weapon_state = "idle"
+	
+	# Only change state if we are not already in it
+	if player_state_machine.get_current_state_name() != weapon_state:
+		player_state_machine.change_state(weapon_state)
 
 
 # Helper function for _ready()

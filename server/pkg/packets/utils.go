@@ -133,6 +133,7 @@ func NewSpawnCharacter(id uint64, player *objects.Player) Payload {
 			MaxHealth:     player.GetMaxHealth(),
 			CurrentWeapon: player.GetCurrentWeapon(),
 			Weapons:       convertWeaponsToProto(*player.GetWeapons()),
+			IsCrouching:   player.IsCrouching(),
 		},
 	}
 }

@@ -316,7 +316,8 @@ func _spawn_new_player(player_id: int, spawn_character_packet: Packets.SpawnChar
 		spawn_character_packet.get_rotation_y(),
 		is_my_player_character,
 		spawn_character_packet.get_current_weapon(),
-		weapon_slots
+		weapon_slots,
+		spawn_character_packet.get_is_crouching()
 	)
 	
 	# Add this player to our map of players
