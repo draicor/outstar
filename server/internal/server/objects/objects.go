@@ -247,6 +247,7 @@ func CreatePlayer(
 	// Atributes
 	health uint64,
 	maxHealth uint64,
+	isCrouching bool,
 ) *Player {
 	return &Player{
 		Name:   name,
@@ -265,7 +266,7 @@ func CreatePlayer(
 		currentWeapon: currentWeapon,
 		weapons:       weapons,
 		// Character state
-		isCrouching: false, // Default to standing
+		isCrouching: isCrouching,
 	}
 }
 

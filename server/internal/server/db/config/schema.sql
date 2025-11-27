@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS characters (
   speed INTEGER NOT NULL DEFAULT 1 CHECK (speed BETWEEN 1 and 3), -- Clamp speed
   rotation_y REAL NOT NULL DEFAULT 0.0,
   weapon_slot INTEGER NOT NULL DEFAULT 0 CHECK (weapon_slot BETWEEN 0 and 4), -- Clamp weapon slot
+  is_crouching INTEGER NOT NULL DEFAULT 0, -- 0 = standing, 1 = crouching
   FOREIGN KEY (user_id) REFERENCES users(id) -- 1:1 relationship (only one character per user)
 );
 

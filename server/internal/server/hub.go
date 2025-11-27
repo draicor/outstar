@@ -416,16 +416,17 @@ func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.Us
 
 	// Step 2: Create Character
 	character, err := q.CreateCharacter(ctx, db.CreateCharacterParams{
-		UserID:    user.ID,
-		Gender:    gender,
-		RegionID:  1,             // We could have the player choose his starting location
-		MapID:     1,             // We could have the player choose his starting location
-		X:         0,             // Update this depending on the spawn location?
-		Z:         0,             // Update this depending on the spawn location?
-		Health:    100,           // Health
-		MaxHealth: 100,           // Max Health
-		Speed:     2,             // Create character with speed set to jog
-		RotationY: objects.SOUTH, // Always spawn looking south when creating the character
+		UserID:      user.ID,
+		Gender:      gender,
+		RegionID:    1,             // We could have the player choose his starting location
+		MapID:       1,             // We could have the player choose his starting location
+		X:           0,             // Update this depending on the spawn location?
+		Z:           0,             // Update this depending on the spawn location?
+		Health:      100,           // Health
+		MaxHealth:   100,           // Max Health
+		Speed:       2,             // Create character with speed set to jog
+		RotationY:   objects.SOUTH, // Always spawn looking south when creating the character
+		IsCrouching: 0,             // Default to standing
 		// Weapon data
 	})
 	if err != nil {
@@ -494,18 +495,25 @@ func (h *Hub) SaveCharacter(client Client) error {
 
 	character := client.GetPlayerCharacter()
 
+	// Is the character crouching? Convert bool to int for database
+	isCrouching := int64(0)
+	if character.IsCrouching() {
+		isCrouching = 1
+	}
+
 	// Save character data
 	err = h.queries.UpdateFullCharacterData(ctx, db.UpdateFullCharacterDataParams{
-		RegionID:   int64(character.GetRegionId()),
-		MapID:      int64(character.GetMapId()),
-		X:          int64(character.GetGridPosition().X),
-		Z:          int64(character.GetGridPosition().Z),
-		Health:     int64(character.GetHealth()),
-		MaxHealth:  int64(character.GetMaxHealth()),
-		Speed:      int64(character.GetSpeed()),
-		RotationY:  float64(character.GetRotation()),
-		WeaponSlot: int64(character.GetCurrentWeapon()),
-		ID:         client.GetCharacterId(), // Character ID to find it in the DB
+		RegionID:    int64(character.GetRegionId()),
+		MapID:       int64(character.GetMapId()),
+		X:           int64(character.GetGridPosition().X),
+		Z:           int64(character.GetGridPosition().Z),
+		Health:      int64(character.GetHealth()),
+		MaxHealth:   int64(character.GetMaxHealth()),
+		Speed:       int64(character.GetSpeed()),
+		RotationY:   float64(character.GetRotation()),
+		WeaponSlot:  int64(character.GetCurrentWeapon()),
+		IsCrouching: isCrouching,
+		ID:          client.GetCharacterId(), // Character ID to find it in the DB
 	})
 	if err != nil {
 		return fmt.Errorf("update character data: %w", err)
