@@ -886,12 +886,15 @@ func _process_leave_crouch_action() -> void:
 		if target_state_name != player.player_state_machine.get_current_state_name():
 			player.player_state_machine.change_state(target_state_name)
 	
-	# After leaving crouch, check if we need to move
-	if player.player_movement.grid_destination != player.player_movement.grid_position:
-		# Queue movement to the stored destination
-		queue_move_action(player.player_movement.grid_destination)
-	# Check if we have an interact target
-	elif player.pending_interaction != null:
-		player.handle_pending_interaction()
+	# After leaving crouch
+	# If this is my local player
+	if player.is_local_player:
+		# Check if we have an interact target first
+		if player.pending_interaction != null:
+			player.handle_pending_interaction()
+		# Check if we have a destination set
+		elif player.player_movement.grid_destination != player.player_movement.grid_position:
+			# Queue movement to the stored destination
+			queue_move_action(player.player_movement.grid_destination)
 	
 	complete_action()
