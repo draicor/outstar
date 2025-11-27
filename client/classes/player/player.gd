@@ -137,6 +137,9 @@ func _init() -> void:
 
 # Called once this character has been created and instantiated
 func _ready() -> void:
+	# Give the engine some time to init everything
+	await get_tree().process_frame
+	
 	_initialize_character()
 	
 	# Overwrite our local copy of the grid positions

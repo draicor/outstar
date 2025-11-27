@@ -8,7 +8,9 @@ var current_max_health: int = 0
 
 
 func _ready() -> void:
-	# Wait for the scene to be fully ready
+	# Wait a few frames for the scene to be fully ready
+	await get_tree().process_frame
+	await get_tree().process_frame
 	await get_tree().process_frame
 	
 	# Only connect if we have a valid local player
@@ -16,11 +18,12 @@ func _ready() -> void:
 		Signals.ui_update_health.connect(_on_ui_update_health)
 		Signals.ui_update_max_health.connect(_on_ui_update_max_health)
 		
-		# Wait another frame to ensure everything is ready
-		await get_tree().process_frame
 		var local_player = GameManager.player_character
 		if local_player:
 			initialize(local_player.health, local_player.max_health)
+	
+	else:
+		push_error("Error in _ready() for health_bar.gd, GameManager.player_character not valid.")
 
 
 # Start both bars full, matching the new health value

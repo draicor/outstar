@@ -274,3 +274,12 @@ func NewPlayerDied(attackerId, targetId uint64) Payload {
 		},
 	}
 }
+
+// Sent by both client and server to broadcast crouch state
+func NewCrouchCharacter(isCrouching bool) Payload {
+	return &Packet_CrouchCharacter{
+		CrouchCharacter: &CrouchCharacter{
+			IsCrouching: isCrouching,
+		},
+	}
+}

@@ -121,6 +121,9 @@ message RespawnRequest {
   uint64 x = 2; // Optional: if provided, try to respawn at this position
   uint64 z = 3; // Optional: if provided, try to respawn at this position
 }
+message CrouchCharacter {
+  bool is_crouching = 1; // True if character is crouching
+}
 
 // Main Packet container
 message Packet {
@@ -169,5 +172,7 @@ message Packet {
     PlayerDied player_died = 32; // Server
     // Respawn
     RespawnRequest respawn_request = 33; // Client
+    // Crouch
+    CrouchCharacter crouch_character = 34; // Both
   }
 }

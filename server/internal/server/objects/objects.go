@@ -48,6 +48,8 @@ type Player struct {
 	// Weapon state
 	currentWeapon uint64        // Current weapon slot
 	weapons       []*WeaponSlot // Array of weapon slots
+	// Character state
+	isCrouching bool
 }
 
 // RegionId get/set
@@ -262,6 +264,8 @@ func CreatePlayer(
 		// Equipped Weapon Data
 		currentWeapon: currentWeapon,
 		weapons:       weapons,
+		// Character state
+		isCrouching: false, // Default to standing
 	}
 }
 
@@ -297,4 +301,12 @@ func (player *Player) CalculateRotation(currentCell, nextCell *pathfinding.Cell)
 	case dx < 0 && dz > 0:
 		player.SetRotation(SOUTHWEST)
 	}
+}
+
+func (player *Player) IsCrouching() bool {
+	return player.isCrouching
+}
+
+func (player *Player) SetCrouching(crouching bool) {
+	player.isCrouching = crouching
 }

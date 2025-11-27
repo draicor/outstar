@@ -334,6 +334,10 @@ func _process_lower_weapon_action() -> void:
 		_:
 			push_error("Error in match current_state inside _process_lower_weapon_action()")
 	
+	if animation_type == "":
+		push_error("Error in _process_lower_weapon_action(), animation_type empty")
+		complete_action()
+	
 	await player.player_animator.play_weapon_animation_and_await(
 		animation_type,
 		weapon_type
@@ -687,23 +691,20 @@ func _process_apply_damage_action(data: Dictionary) -> void:
 	# Only process if the target still exists and is alive
 	if GameManager.is_player_valid(target_id):
 		var target_player: Player = GameManager.get_player_by_id(target_id)
-		if target_player.is_alive():
-			# Reduce health for local victim (with HUD update)
-			target_player.decrease_health(damage, true)
-			# Regular damage, reduce health inside _aggregate_damage
-			_aggregate_damage(target_id, damage, damage_position)
-		else:
-			clear_pending_damage_numbers(target_id)
+		if target_player:
+			if target_player.is_alive():
+				# Reduce health for local victim (with HUD update)
+				target_player.decrease_health(damage, true)
+				# Regular damage, reduce health inside _aggregate_damage
+				_aggregate_damage(target_id, damage, damage_position)
+			else:
+				clear_pending_damage_numbers(target_id)
 	
 	complete_action()
 
 
 func _aggregate_damage(target_id: int, damage: int, damage_position: Vector3) -> void:
 	if not GameManager.is_player_valid(target_id):
-		return
-	
-	var target_player: Player = GameManager.get_player_by_id(target_id)
-	if not target_player.is_alive():
 		return
 	
 	# If we already have a pending aggregation for this target
@@ -732,11 +733,9 @@ func _on_damage_aggregation_timeout(target_id: int) -> void:
 	if _damage_aggregation.has(target_id):
 		var aggregate: Dictionary = _damage_aggregation[target_id]
 		
-		# Only process if the target still exists and is still alive
+		# Only process if the target still exists
 		if GameManager.is_player_valid(target_id):
-			var target_player: Player = GameManager.get_player_by_id(target_id)
-			if target_player.is_alive():
-				SfxManager.spawn_damage_number(aggregate.damage, aggregate.position)
+			SfxManager.spawn_damage_number(aggregate.damage, aggregate.position)
 		
 		# Clean up
 		aggregate.timer.queue_free()
@@ -795,11 +794,6 @@ func _process_player_died_action(player_died_packet: Packets.PlayerDied) -> void
 		return
 	
 	var target_player: Player = GameManager.get_player_by_id(target_id)
-	
-	# Clear pending damage numbers and damage actions for this target
-	clear_pending_damage_numbers(target_id)
-	_clear_pending_damage_actions(target_id)
-	
 	target_player.handle_death()
 	
 	complete_action()
@@ -827,9 +821,8 @@ func _clear_pending_damage_actions(target_id: int) -> void:
 
 func _process_enter_crouch_action() -> void:
 	if player.is_local_player:
-		# CAUTION
-		# add enter crouch packet here
-		pass
+		# Report to the server we are entering crouch state
+		player.player_packets.send_crouch_character_packet(true)
 	
 	# Determine animation and next state based on current state and weapon type
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
@@ -863,9 +856,8 @@ func _process_enter_crouch_action() -> void:
 
 func _process_leave_crouch_action() -> void:
 	if player.is_local_player:
-		# CAUTION
-		# add leave crouch packet here
-		pass
+		# Report to the server we are leaving crouch state
+		player.player_packets.send_crouch_character_packet(false)
 	
 	# Determine animation and next state based on current state and weapon type
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
