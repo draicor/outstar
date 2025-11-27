@@ -845,11 +845,13 @@ func _process_enter_crouch_action() -> void:
 		animation_type,
 		weapon_type
 	)
-	
 	if target_state_name != "":
 		# If we are not already in the same state
 		if target_state_name != player.player_state_machine.get_current_state_name():
 			player.player_state_machine.change_state(target_state_name)
+	
+	# Adjust the collision shapes AFTER changing states
+	player.update_collision_shapes()
 	
 	complete_action()
 
@@ -876,15 +878,20 @@ func _process_leave_crouch_action() -> void:
 		"_":
 			push_error("Error in match current_state_name inside _process_leave_crouch_action()")
 	
-	await player.player_animator.play_weapon_animation_and_await(
-		animation_type,
-		weapon_type
-	)
+	if animation_type != "":
+		await player.player_animator.play_weapon_animation_and_await(
+			animation_type,
+			weapon_type
+		)
 	
+	# If target_state_name is valid
 	if target_state_name != "":
 		# If we are not already in the same state
 		if target_state_name != player.player_state_machine.get_current_state_name():
 			player.player_state_machine.change_state(target_state_name)
+	
+	# Adjust the collision shapes AFTER changing states
+	player.update_collision_shapes()
 	
 	# After leaving crouch
 	# If this is my local player

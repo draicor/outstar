@@ -51,6 +51,20 @@ var character: Node = null
 var chat_bubble_icon: Sprite3D
 var skeleton: Skeleton3D = null # Our character's skeleton
 
+# Used to move the collision shapes 3D for the character when changing stances
+var collisions = {
+	"standing": {
+		"player": {"height": 1.8, "position": 0.9},
+		"body": {"height": 1.5, "position": 0.75},
+		"head": {"height": 0.3, "position": 1.65},
+	},
+	"crouching": {
+		"player": {"height": 1.1, "position": 0.55},
+		"body": {"height": 0.90, "position": 0.45},
+		"head": {"height": 0.20, "position": 1.0}
+	}
+}
+
 # Rotation broadcast logic
 const AIM_ROTATION_INTERVAL: float = 1.0 # 1 second timer to update rotation
 var rotation_sync_timer: float = 0.0
@@ -81,6 +95,9 @@ var ui_hud_weapon_slot_signals_connected: bool = false
 @onready var player_equipment: PlayerEquipment = $PlayerEquipment
 @onready var player_packets: PlayerPackets = $PlayerPackets
 @onready var player_actions: PlayerActions = $PlayerActions
+@onready var player_collision_shape: CollisionShape3D = $PlayerCollisionShape
+@onready var head_collision_shape: CollisionShape3D = $HeadArea3D/HeadCollisionShape
+@onready var body_collision_shape: CollisionShape3D = $BodyArea3D/BodyCollisionShape
 
 
 # Called each tick to draw debugging tools on screen
@@ -691,17 +708,25 @@ func handle_death() -> void:
 func handle_respawn() -> void:
 	is_busy = false
 	
+	# Always respawn standing
+	is_crouching = false
+	
+	# Reset the collision shapes for this character
+	update_collision_shapes()
+	
 	if player_state_machine:
 		# Force idle state if not already idling
 		var current_state_name: String = player_state_machine.get_current_state_name()
 		var target_state_name: String = player_animator.get_idle_state_name()
-		# If we are not already in the same state
-		if current_state_name != target_state_name:
-			player_state_machine.change_state(target_state_name)
+		# If the target_state_name is valid
+		if target_state_name != "":
+			# If we are not already in the same state
+			if current_state_name != target_state_name:
+				player_state_machine.change_state(target_state_name)
 	
 	if player_equipment:
 		if player_equipment.equipped_weapon:
-			player_equipment.set_current_ammo(30) # TODO fix this magic number
+			player_equipment.set_current_ammo(30) # CAUTION TODO fix this magic number
 	
 	# Update the HUD for local player
 	if is_local_player:
@@ -723,3 +748,26 @@ func enable_collisions() -> void:
 	
 	# Remove from GameManager's exclude list
 	GameManager.remove_exclude_collision(self)
+
+
+# Updates collision shapes based on stance
+func update_collision_shapes() -> void:
+	var stance = "crouching" if is_crouching else "standing"
+	var player_data: Dictionary = collisions[stance].player
+	var body_data: Dictionary = collisions[stance].body
+	var head_data: Dictionary = collisions[stance].head
+	
+	# Update player collision shape (for cursor collisions)
+	if player_collision_shape and player_collision_shape.shape is CapsuleShape3D:
+		player_collision_shape.shape.height = player_data.height
+		player_collision_shape.position.y = player_data.position
+	
+	# Update body collision shape
+	if body_collision_shape and body_collision_shape.shape is CylinderShape3D:
+		body_collision_shape.shape.height = body_data.height
+		body_collision_shape.position.y = body_data.position
+	
+	# Update head collision shape
+	if head_collision_shape and head_collision_shape.shape is CylinderShape3D:
+		head_collision_shape.shape.height = head_data.height
+		head_collision_shape.position.y = head_data.position
