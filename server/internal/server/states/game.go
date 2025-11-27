@@ -90,6 +90,11 @@ func (state *Game) OnEnter() {
 
 	// Loop over all of the clients in this region
 	state.client.GetRegion().Clients.ForEach(func(id uint64, client server.Client) {
+		// Skip the current client if we already spawned it above
+		if id == state.client.GetId() {
+			return
+		}
+
 		// Create a spawn packet to be sent to our new client
 		updatePlayerPacket := packets.NewSpawnCharacter(id, client.GetPlayerCharacter())
 		state.client.SendPacket(updatePlayerPacket)

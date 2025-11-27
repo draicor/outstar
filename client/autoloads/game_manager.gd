@@ -64,9 +64,11 @@ func is_ui_menu_active() -> bool:
 func set_ui_menu_active(is_active: bool) -> void:
 	ui_menu_active = is_active
 
+
 # Adds a Player to the map by id
 func register_player(player_id: int, player: Player) -> void:
 	_players[player_id] = player
+
 
 # Deletes the player from the map
 func unregister_player(player_id: int) -> void:

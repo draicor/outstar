@@ -276,11 +276,12 @@ func _route_spawn_character_packet(spawn_character_packet: Packets.SpawnCharacte
 	if not player:
 		_spawn_new_player(player_id, spawn_character_packet)
 	else:
-		# Respawn existing player through the packet queue
-		# player.player_packets.add_packet(spawn_character_packet, PlayerPackets.Priority.NORMAL)
-		
-		# CAUTION FIX THIS SHIT
-		player.player_actions.add_action("respawn", spawn_character_packet)
+		# If player is valid
+		if player.player_packets and player.player_actions:
+			# Respawn existing player through the packet queue
+			player.player_packets.add_packet(spawn_character_packet, PlayerPackets.Priority.NORMAL)
+		else:
+			push_error("Error inside _route_spawn_character_packet, player_packets or player_actions not valid")
 
 
 func _spawn_new_player(player_id: int, spawn_character_packet: Packets.SpawnCharacter) -> void:

@@ -859,7 +859,7 @@ class Handshake:
 	
 class Heartbeat:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -931,7 +931,7 @@ class ServerMetrics:
 	
 class RequestGranted:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -1210,7 +1210,7 @@ class LoginSuccess:
 	
 class LogoutRequest:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -2150,7 +2150,7 @@ class ReloadWeapon:
 	
 class RaiseWeapon:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -2177,7 +2177,7 @@ class RaiseWeapon:
 	
 class LowerWeapon:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -2303,7 +2303,7 @@ class FireWeapon:
 	
 class ToggleFireMode:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
