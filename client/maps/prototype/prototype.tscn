@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://jhkvchq2mafw"]
+[gd_scene load_steps=22 format=3 uid="uid://jhkvchq2mafw"]
 
 [ext_resource type="PackedScene" uid="uid://ba5m3juvhpdgd" path="res://objects/static/floor/concrete/floor_1600x100x1600_concrete.tscn" id="1_v0r1i"]
 [ext_resource type="PackedScene" uid="uid://c0kuvlsioaauf" path="res://objects/static/wall/concrete/wall_800x200x20_concrete.tscn" id="2_5a0s2"]
@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" uid="uid://cjjntlo0nxxpy" path="res://objects/static/wall/concrete/wall_corner_40x120x20_concrete.tscn" id="7_yi6ll"]
 [ext_resource type="PackedScene" uid="uid://dkwgcdpvlbqly" path="res://objects/static/wall/concrete/wall_200x60x20_concrete.tscn" id="8_5v5rx"]
 [ext_resource type="PackedScene" uid="uid://dp0hj22vjam2e" path="res://objects/static/wall/concrete/wall_200x120x20_concrete.tscn" id="8_h72x0"]
+[ext_resource type="PackedScene" uid="uid://5oxertlxx8tr" path="res://objects/static/wall/concrete/wall_100x200x20_concrete.tscn" id="18_n47qg"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_vmii6"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -182,3 +183,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0, 0.5)
 
 [node name="TargetDummy3" parent="World/Destructible" instance=ExtResource("5_wq85k")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0, 0.5)
+
+[node name="Wall100x200x20Concrete" parent="." instance=ExtResource("18_n47qg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 1, 6)

@@ -96,22 +96,44 @@ func _initialize_fire_rates() -> void:
 	}
 
 
-# Adds a sphere shape cast to detect if the weapon is inside geometry
+# Adds multiple sphere shapes cast along the barrel to detect if the weapon is inside geometry
 func is_weapon_inside_wall() -> bool:
 	var muzzle_position: Vector3 = muzzle_marker_3d.global_position
-	var shape: SphereShape3D = SphereShape3D.new()
-	shape.radius = 0.05 # Small radius around muzzle
 	
-	var query: PhysicsShapeQueryParameters3D = PhysicsShapeQueryParameters3D.new()
-	query.shape = shape
-	query.transform.origin = muzzle_position
-	query.collision_mask = 1 # Static layer
-	query.collide_with_areas = true
-	query.collide_with_bodies = true
-	query.exclude = GameManager.get_exclude_collision_rids()
+	# Get the direction from muzzle back towards the weapon
+	var backward_direction: Vector3 = muzzle_marker_3d.global_transform.basis.z
 	
-	var results: Array[Dictionary] = get_world_3d().direct_space_state.intersect_shape(query)
-	return results.size() > 0
+	# Check multiple points along the barrel
+	var check_points: int = 4
+	var barrel_length: float = 0.5
+	
+	for i in range(check_points):
+		var check_distance: float = (barrel_length / (check_points - 1)) * i
+		var check_position = muzzle_position + backward_direction * check_distance
+		
+		var shape: SphereShape3D = SphereShape3D.new()
+		shape.radius = 0.04 # Small radius around muzzle
+	
+		var query: PhysicsShapeQueryParameters3D = PhysicsShapeQueryParameters3D.new()
+		query.shape = shape
+		query.transform.origin = check_position
+		query.collision_mask = 1 # Static layer
+		query.collide_with_areas = true
+		query.collide_with_bodies = true
+		query.exclude = GameManager.get_exclude_collision_rids()
+	
+		var results: Array[Dictionary] = get_world_3d().direct_space_state.intersect_shape(query)
+		
+		# Debug visualization
+		#if DebugDraw3D:
+			#var color: Color = Color.RED if results.size() > 0 else Color.GREEN
+			#DebugDraw3D.draw_sphere(check_position, 0.04, color, 0.2)
+		
+		if results.size() > 0:
+			return true
+	
+	# No collision
+	return false
 
 
 func fire(direction: Vector3 = Vector3.ZERO) -> Vector3:

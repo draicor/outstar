@@ -457,13 +457,17 @@ func start_interaction(target: Interactable) -> void:
 	
 	# Check if we are already in range to activate
 	if player_movement.is_in_interaction_range(target):
-		player_state_machine.change_state("interact")
+		# If we are not already in the same state
+		if player_state_machine.get_current_state_name() != "interact":
+			player_state_machine.change_state("interact")
 		return
 	
 	# If we are far away, check if we can reach it
 	# if we can, start moving towards it
 	if player_movement.setup_interaction_movement(player_movement.grid_position, target):
-		player_state_machine.change_state("move")
+		# If we are not already in the same state
+		if player_state_machine.get_current_state_name() != "move":
+			player_state_machine.change_state("move")
 	
 	# If we can't reach it, then forget about it
 	else:
@@ -497,8 +501,15 @@ func execute_interaction() -> void:
 	# Cleanup
 	interaction_target = null
 	is_busy = false
+	
 	# Go into idle state
-	player_state_machine.change_state(player_animator.get_idle_state_name())
+	var current_state_name: String = player_state_machine.get_current_state_name()
+	var target_state_name: String = player_animator.get_idle_state_name()
+	# If the target_state_name is valid
+	if target_state_name != "":
+		# If we are not already in the same state
+		if current_state_name != target_state_name:
+			player_state_machine.change_state(target_state_name)
 
 
 # Called after movement completes, only when we have a pending interaction
@@ -507,7 +518,9 @@ func handle_pending_interaction() -> void:
 	if player_movement.is_in_interaction_range(pending_interaction):
 		interaction_target = pending_interaction
 		pending_interaction = null
-		player_state_machine.change_state("interact")
+		# If we are not already in the same state
+		if player_state_machine.get_current_state_name() != "interact":
+			player_state_machine.change_state("interact")
 		return
 	
 	# We are not in interaction range, so we'll have to trace a path to it
@@ -730,7 +743,9 @@ func handle_death() -> void:
 	
 	# Change to dead state
 	if player_state_machine:
-		player_state_machine.change_state("dead")
+		# If we are not already in the same state
+		if player_state_machine.get_current_state_name() != "dead":
+			player_state_machine.change_state("dead")
 
 
 func handle_respawn() -> void:
