@@ -133,6 +133,7 @@ func NewSpawnCharacter(id uint64, player *objects.Player) Payload {
 			MaxHealth:     player.GetMaxHealth(),
 			CurrentWeapon: player.GetCurrentWeapon(),
 			Weapons:       convertWeaponsToProto(*player.GetWeapons()),
+			IsCrouching:   player.IsCrouching(),
 		},
 	}
 }
@@ -271,6 +272,15 @@ func NewPlayerDied(attackerId, targetId uint64) Payload {
 		PlayerDied: &PlayerDied{
 			AttackerId: attackerId,
 			TargetId:   targetId,
+		},
+	}
+}
+
+// Sent by both client and server to broadcast crouch state
+func NewCrouchCharacter(isCrouching bool) Payload {
+	return &Packet_CrouchCharacter{
+		CrouchCharacter: &CrouchCharacter{
+			IsCrouching: isCrouching,
 		},
 	}
 }

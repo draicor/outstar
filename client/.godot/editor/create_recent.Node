@@ -1,4 +1,7 @@
 Node3D
+MeshInstance3D
+CollisionShape3D
+StaticBody3D
 RifleCrouchAimIdleState
 RifleCrouchDownIdleState
 Button
@@ -9,6 +12,3 @@ HBoxContainer
 VBoxContainer
 CenterContainer
 Timer
-ProgressBar
-DeadState
-PlayerActions

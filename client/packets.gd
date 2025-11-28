@@ -859,7 +859,7 @@ class Handshake:
 	
 class Heartbeat:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -931,7 +931,7 @@ class ServerMetrics:
 	
 class RequestGranted:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -1210,7 +1210,7 @@ class LoginSuccess:
 	
 class LogoutRequest:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -1508,6 +1508,11 @@ class SpawnCharacter:
 		service.func_ref = Callable(self, "add_weapons")
 		data[__weapons.tag] = service
 		
+		__is_crouching = PBField.new("is_crouching", PB_DATA_TYPE.BOOL, PB_RULE.OPTIONAL, 11, true, DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL])
+		service = PBServiceField.new()
+		service.field = __is_crouching
+		data[__is_crouching.tag] = service
+		
 	var data = {}
 	
 	var __id: PBField
@@ -1638,6 +1643,19 @@ class SpawnCharacter:
 		var element = WeaponSlot.new()
 		__weapons.value.append(element)
 		return element
+	
+	var __is_crouching: PBField
+	func has_is_crouching() -> bool:
+		if __is_crouching.value != null:
+			return true
+		return false
+	func get_is_crouching() -> bool:
+		return __is_crouching.value
+	func clear_is_crouching() -> void:
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		__is_crouching.value = DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL]
+	func set_is_crouching(value : bool) -> void:
+		__is_crouching.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)
@@ -2150,7 +2168,7 @@ class ReloadWeapon:
 	
 class RaiseWeapon:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -2177,7 +2195,7 @@ class RaiseWeapon:
 	
 class LowerWeapon:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -2303,7 +2321,7 @@ class FireWeapon:
 	
 class ToggleFireMode:
 	func _init():
-		var service
+		var _service
 		
 	var data = {}
 	
@@ -2868,6 +2886,51 @@ class RespawnRequest:
 			return PB_ERR.PARSE_INCOMPLETE
 		return result
 	
+class CrouchCharacter:
+	func _init():
+		var service
+		
+		__is_crouching = PBField.new("is_crouching", PB_DATA_TYPE.BOOL, PB_RULE.OPTIONAL, 1, true, DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL])
+		service = PBServiceField.new()
+		service.field = __is_crouching
+		data[__is_crouching.tag] = service
+		
+	var data = {}
+	
+	var __is_crouching: PBField
+	func has_is_crouching() -> bool:
+		if __is_crouching.value != null:
+			return true
+		return false
+	func get_is_crouching() -> bool:
+		return __is_crouching.value
+	func clear_is_crouching() -> void:
+		data[1].state = PB_SERVICE_STATE.UNFILLED
+		__is_crouching.value = DEFAULT_VALUES_3[PB_DATA_TYPE.BOOL]
+	func set_is_crouching(value : bool) -> void:
+		__is_crouching.value = value
+	
+	func _to_string() -> String:
+		return PBPacker.message_to_string(data)
+		
+	func to_bytes() -> PackedByteArray:
+		return PBPacker.pack_message(data)
+		
+	func from_bytes(bytes : PackedByteArray, offset : int = 0, limit : int = -1) -> int:
+		var cur_limit = bytes.size()
+		if limit != -1:
+			cur_limit = limit
+		var result = PBPacker.unpack_message(data, bytes, offset, cur_limit)
+		if result == cur_limit:
+			if PBPacker.check_required(data):
+				if limit == -1:
+					return PB_ERR.NO_ERRORS
+			else:
+				return PB_ERR.REQUIRED_FIELDS
+		elif limit == -1 && result > 0:
+			return PB_ERR.PARSE_INCOMPLETE
+		return result
+	
 class Packet:
 	func _init():
 		var service
@@ -3069,6 +3132,12 @@ class Packet:
 		service.func_ref = Callable(self, "new_respawn_request")
 		data[__respawn_request.tag] = service
 		
+		__crouch_character = PBField.new("crouch_character", PB_DATA_TYPE.MESSAGE, PB_RULE.OPTIONAL, 34, true, DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE])
+		service = PBServiceField.new()
+		service.field = __crouch_character
+		service.func_ref = Callable(self, "new_crouch_character")
+		data[__crouch_character.tag] = service
+		
 	var data = {}
 	
 	var __sender_id: PBField
@@ -3158,6 +3227,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__public_message.value = PublicMessage.new()
 		return __public_message.value
 	
@@ -3235,6 +3306,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__handshake.value = Handshake.new()
 		return __handshake.value
 	
@@ -3312,6 +3385,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__heartbeat.value = Heartbeat.new()
 		return __heartbeat.value
 	
@@ -3389,6 +3464,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__server_metrics.value = ServerMetrics.new()
 		return __server_metrics.value
 	
@@ -3466,6 +3543,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__request_granted.value = RequestGranted.new()
 		return __request_granted.value
 	
@@ -3543,6 +3622,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__request_denied.value = RequestDenied.new()
 		return __request_denied.value
 	
@@ -3620,6 +3701,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__login_request.value = LoginRequest.new()
 		return __login_request.value
 	
@@ -3697,6 +3780,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__register_request.value = RegisterRequest.new()
 		return __register_request.value
 	
@@ -3774,6 +3859,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__login_success.value = LoginSuccess.new()
 		return __login_success.value
 	
@@ -3851,6 +3938,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__logout_request.value = LogoutRequest.new()
 		return __logout_request.value
 	
@@ -3928,6 +4017,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__client_entered.value = ClientEntered.new()
 		return __client_entered.value
 	
@@ -4005,6 +4096,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__client_left.value = ClientLeft.new()
 		return __client_left.value
 	
@@ -4082,6 +4175,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__join_region_request.value = JoinRegionRequest.new()
 		return __join_region_request.value
 	
@@ -4159,6 +4254,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__region_data.value = RegionData.new()
 		return __region_data.value
 	
@@ -4236,6 +4333,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__spawn_character.value = SpawnCharacter.new()
 		return __spawn_character.value
 	
@@ -4313,6 +4412,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__move_character.value = MoveCharacter.new()
 		return __move_character.value
 	
@@ -4390,6 +4491,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__rotate_character.value = RotateCharacter.new()
 		return __rotate_character.value
 	
@@ -4467,6 +4570,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__destination.value = Destination.new()
 		return __destination.value
 	
@@ -4544,6 +4649,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__update_speed.value = UpdateSpeed.new()
 		return __update_speed.value
 	
@@ -4621,6 +4728,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__chat_bubble.value = ChatBubble.new()
 		return __chat_bubble.value
 	
@@ -4698,6 +4807,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__switch_weapon.value = SwitchWeapon.new()
 		return __switch_weapon.value
 	
@@ -4775,6 +4886,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__reload_weapon.value = ReloadWeapon.new()
 		return __reload_weapon.value
 	
@@ -4852,6 +4965,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__raise_weapon.value = RaiseWeapon.new()
 		return __raise_weapon.value
 	
@@ -4929,6 +5044,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__lower_weapon.value = LowerWeapon.new()
 		return __lower_weapon.value
 	
@@ -5006,6 +5123,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__fire_weapon.value = FireWeapon.new()
 		return __fire_weapon.value
 	
@@ -5083,6 +5202,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__toggle_fire_mode.value = ToggleFireMode.new()
 		return __toggle_fire_mode.value
 	
@@ -5160,6 +5281,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__start_firing_weapon.value = StartFiringWeapon.new()
 		return __start_firing_weapon.value
 	
@@ -5237,6 +5360,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__stop_firing_weapon.value = StopFiringWeapon.new()
 		return __stop_firing_weapon.value
 	
@@ -5314,6 +5439,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__report_player_damage.value = ReportPlayerDamage.new()
 		return __report_player_damage.value
 	
@@ -5391,6 +5518,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__apply_player_damage.value = ApplyPlayerDamage.new()
 		return __apply_player_damage.value
 	
@@ -5468,6 +5597,8 @@ class Packet:
 		data[32].state = PB_SERVICE_STATE.FILLED
 		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[33].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__player_died.value = PlayerDied.new()
 		return __player_died.value
 	
@@ -5545,8 +5676,89 @@ class Packet:
 		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
 		data[32].state = PB_SERVICE_STATE.UNFILLED
 		data[33].state = PB_SERVICE_STATE.FILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[34].state = PB_SERVICE_STATE.UNFILLED
 		__respawn_request.value = RespawnRequest.new()
 		return __respawn_request.value
+	
+	var __crouch_character: PBField
+	func has_crouch_character() -> bool:
+		if __crouch_character.value != null:
+			return true
+		return false
+	func get_crouch_character() -> CrouchCharacter:
+		return __crouch_character.value
+	func clear_crouch_character() -> void:
+		data[34].state = PB_SERVICE_STATE.UNFILLED
+		__crouch_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+	func new_crouch_character() -> CrouchCharacter:
+		__public_message.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[2].state = PB_SERVICE_STATE.UNFILLED
+		__handshake.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__heartbeat.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[4].state = PB_SERVICE_STATE.UNFILLED
+		__server_metrics.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[5].state = PB_SERVICE_STATE.UNFILLED
+		__request_granted.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		__request_denied.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[7].state = PB_SERVICE_STATE.UNFILLED
+		__login_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[8].state = PB_SERVICE_STATE.UNFILLED
+		__register_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[9].state = PB_SERVICE_STATE.UNFILLED
+		__login_success.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[10].state = PB_SERVICE_STATE.UNFILLED
+		__logout_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[11].state = PB_SERVICE_STATE.UNFILLED
+		__client_entered.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[12].state = PB_SERVICE_STATE.UNFILLED
+		__client_left.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[13].state = PB_SERVICE_STATE.UNFILLED
+		__join_region_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[14].state = PB_SERVICE_STATE.UNFILLED
+		__region_data.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[15].state = PB_SERVICE_STATE.UNFILLED
+		__spawn_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[16].state = PB_SERVICE_STATE.UNFILLED
+		__move_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[17].state = PB_SERVICE_STATE.UNFILLED
+		__rotate_character.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[18].state = PB_SERVICE_STATE.UNFILLED
+		__destination.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[19].state = PB_SERVICE_STATE.UNFILLED
+		__update_speed.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[20].state = PB_SERVICE_STATE.UNFILLED
+		__chat_bubble.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[21].state = PB_SERVICE_STATE.UNFILLED
+		__switch_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[22].state = PB_SERVICE_STATE.UNFILLED
+		__reload_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[23].state = PB_SERVICE_STATE.UNFILLED
+		__raise_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[24].state = PB_SERVICE_STATE.UNFILLED
+		__lower_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[25].state = PB_SERVICE_STATE.UNFILLED
+		__fire_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[26].state = PB_SERVICE_STATE.UNFILLED
+		__toggle_fire_mode.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[27].state = PB_SERVICE_STATE.UNFILLED
+		__start_firing_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[28].state = PB_SERVICE_STATE.UNFILLED
+		__stop_firing_weapon.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[29].state = PB_SERVICE_STATE.UNFILLED
+		__report_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[30].state = PB_SERVICE_STATE.UNFILLED
+		__apply_player_damage.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[31].state = PB_SERVICE_STATE.UNFILLED
+		__player_died.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[32].state = PB_SERVICE_STATE.UNFILLED
+		__respawn_request.value = DEFAULT_VALUES_3[PB_DATA_TYPE.MESSAGE]
+		data[33].state = PB_SERVICE_STATE.UNFILLED
+		data[34].state = PB_SERVICE_STATE.FILLED
+		__crouch_character.value = CrouchCharacter.new()
+		return __crouch_character.value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

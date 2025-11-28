@@ -334,6 +334,10 @@ func _process_lower_weapon_action() -> void:
 		_:
 			push_error("Error in match current_state inside _process_lower_weapon_action()")
 	
+	if animation_type == "":
+		push_error("Error in _process_lower_weapon_action(), animation_type empty")
+		complete_action()
+	
 	await player.player_animator.play_weapon_animation_and_await(
 		animation_type,
 		weapon_type
@@ -414,6 +418,11 @@ func _process_single_fire_action(target: Vector3) -> void:
 		
 		# Check if we can fire regardless of ammo count
 		if not player.can_fire_weapon():
+			complete_action()
+			return
+		
+		# If the muzzle is inside geometry (walls), don't fire
+		if player.player_equipment.equipped_weapon.is_weapon_inside_wall():
 			complete_action()
 			return
 		
@@ -513,6 +522,11 @@ func _process_start_firing_action(ammo: int) -> void:
 	if player.is_local_player:
 		# Check if we can start firing
 		if not player.can_start_firing():
+			complete_action()
+			return
+		
+		# If the muzzle is inside geometry (walls), don't fire
+		if player.player_equipment.equipped_weapon.is_weapon_inside_wall():
 			complete_action()
 			return
 		
@@ -677,23 +691,20 @@ func _process_apply_damage_action(data: Dictionary) -> void:
 	# Only process if the target still exists and is alive
 	if GameManager.is_player_valid(target_id):
 		var target_player: Player = GameManager.get_player_by_id(target_id)
-		if target_player.is_alive():
-			# Reduce health for local victim (with HUD update)
-			target_player.decrease_health(damage, true)
-			# Regular damage, reduce health inside _aggregate_damage
-			_aggregate_damage(target_id, damage, damage_position)
-		else:
-			clear_pending_damage_numbers(target_id)
+		if target_player:
+			if target_player.is_alive():
+				# Reduce health for local victim (with HUD update)
+				target_player.decrease_health(damage, true)
+				# Regular damage, reduce health inside _aggregate_damage
+				_aggregate_damage(target_id, damage, damage_position)
+			else:
+				clear_pending_damage_numbers(target_id)
 	
 	complete_action()
 
 
 func _aggregate_damage(target_id: int, damage: int, damage_position: Vector3) -> void:
 	if not GameManager.is_player_valid(target_id):
-		return
-	
-	var target_player: Player = GameManager.get_player_by_id(target_id)
-	if not target_player.is_alive():
 		return
 	
 	# If we already have a pending aggregation for this target
@@ -722,11 +733,9 @@ func _on_damage_aggregation_timeout(target_id: int) -> void:
 	if _damage_aggregation.has(target_id):
 		var aggregate: Dictionary = _damage_aggregation[target_id]
 		
-		# Only process if the target still exists and is still alive
+		# Only process if the target still exists
 		if GameManager.is_player_valid(target_id):
-			var target_player: Player = GameManager.get_player_by_id(target_id)
-			if target_player.is_alive():
-				SfxManager.spawn_damage_number(aggregate.damage, aggregate.position)
+			SfxManager.spawn_damage_number(aggregate.damage, aggregate.position)
 		
 		# Clean up
 		aggregate.timer.queue_free()
@@ -785,11 +794,6 @@ func _process_player_died_action(player_died_packet: Packets.PlayerDied) -> void
 		return
 	
 	var target_player: Player = GameManager.get_player_by_id(target_id)
-	
-	# Clear pending damage numbers and damage actions for this target
-	clear_pending_damage_numbers(target_id)
-	_clear_pending_damage_actions(target_id)
-	
 	target_player.handle_death()
 	
 	complete_action()
@@ -817,9 +821,8 @@ func _clear_pending_damage_actions(target_id: int) -> void:
 
 func _process_enter_crouch_action() -> void:
 	if player.is_local_player:
-		# CAUTION
-		# add enter crouch packet here
-		pass
+		# Report to the server we are entering crouch state
+		player.player_packets.send_crouch_character_packet(true)
 	
 	# Determine animation and next state based on current state and weapon type
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
@@ -842,20 +845,21 @@ func _process_enter_crouch_action() -> void:
 		animation_type,
 		weapon_type
 	)
-	
 	if target_state_name != "":
 		# If we are not already in the same state
 		if target_state_name != player.player_state_machine.get_current_state_name():
 			player.player_state_machine.change_state(target_state_name)
+	
+	# Adjust the collision shapes AFTER changing states
+	player.update_collision_shapes()
 	
 	complete_action()
 
 
 func _process_leave_crouch_action() -> void:
 	if player.is_local_player:
-		# CAUTION
-		# add leave crouch packet here
-		pass
+		# Report to the server we are leaving crouch state
+		player.player_packets.send_crouch_character_packet(false)
 	
 	# Determine animation and next state based on current state and weapon type
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
@@ -874,22 +878,30 @@ func _process_leave_crouch_action() -> void:
 		"_":
 			push_error("Error in match current_state_name inside _process_leave_crouch_action()")
 	
-	await player.player_animator.play_weapon_animation_and_await(
-		animation_type,
-		weapon_type
-	)
+	if animation_type != "":
+		await player.player_animator.play_weapon_animation_and_await(
+			animation_type,
+			weapon_type
+		)
 	
+	# If target_state_name is valid
 	if target_state_name != "":
 		# If we are not already in the same state
 		if target_state_name != player.player_state_machine.get_current_state_name():
 			player.player_state_machine.change_state(target_state_name)
 	
-	# After leaving crouch, check if we need to move
-	if player.player_movement.grid_destination != player.player_movement.grid_position:
-		# Queue movement to the stored destination
-		queue_move_action(player.player_movement.grid_destination)
-	# Check if we have an interact target
-	elif player.pending_interaction != null:
-		player.handle_pending_interaction()
+	# Adjust the collision shapes AFTER changing states
+	player.update_collision_shapes()
+	
+	# After leaving crouch
+	# If this is my local player
+	if player.is_local_player:
+		# Check if we have an interact target first
+		if player.pending_interaction != null:
+			player.handle_pending_interaction()
+		# Check if we have a destination set
+		elif player.player_movement.grid_destination != player.player_movement.grid_position:
+			# Queue movement to the stored destination
+			queue_move_action(player.player_movement.grid_destination)
 	
 	complete_action()

@@ -1,0 +1,60 @@
+1. Import FBX with everything as default
+2. After importing the armature and animation, check that the pose position and rest position both work fine.
+3. Select the armature in object mode, add -> mesh -> plane.
+4. Select the mesh, control + click to select the armature in the outline window (top right), then control + p to set parent to and select: armature deform with automatic weights. This will bind the plane to the armature.
+5. Edit the animation if you have to in the dope sheet action editor.
+6. Rename the action (animation name).
+7. Select all frames (A), and then file -> export -> FBX.
+8. And use this settings for export:
+- Path Mode Auto
+- Batch Mode Off
+- Include:
+Limit to:
+Selected Objects: unchecked
+Visible Objects: unchecked
+Active Collection: unchecked
+
+Object Types:
+Empty: checked
+Camera: checked
+Lamp: checked
+Armature: checked
+Mesh: checked
+Other: checked
+Custom Properties: unchecked
+
+Transform:
+Scale: 1.00
+Apply Scalings: All Local
+Forward: -Z Forward
+Up: Y Up
+Apply Unit: checked
+Use Space Transform: checked
+Apply Transform: unchecked
+
+Geometry:
+Smoothing: Normals Only
+Export Subdivision Surface: unchecked
+Apply Modifiers: checked
+Loose Edges: unchecked
+Triangulate Faces: unchecked
+Tangent Space: unchecked
+Vertex Colors: sRGB
+Prioritize Active Color: unchecked
+
+Armature:
+Primary Bone Axis: Y Axis
+Secondary Bone Axis: X Axis
+Armature FBX Node Type: Null
+Only Deform Bones: unchecked
+Add Leaf Bones: unchecked
+
+Animation:
+Key All Bones: checked
+NLA Strips: unchecked
+All Actions: checked
+Force Start/End Keying: unchecked
+Sampling Rate: 1.00
+Simplify: 1.00
+
+After export, you can then use mixamo-root plugin and it will get rid of the plane mesh and it will work correctly. We need to add this plane mesh so blender is forced to preserve the rest position data, otherwise it will use the first frame of the pose position as the rest position and it breaks how the animation works.

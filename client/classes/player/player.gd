@@ -51,6 +51,20 @@ var character: Node = null
 var chat_bubble_icon: Sprite3D
 var skeleton: Skeleton3D = null # Our character's skeleton
 
+# Used to move the collision shapes 3D for the character when changing stances
+var collisions = {
+	"standing": {
+		"player": {"height": 1.8, "position": 0.9},
+		"body": {"height": 1.5, "position": 0.75},
+		"head": {"height": 0.3, "position": 1.65},
+	},
+	"crouching": {
+		"player": {"height": 1.1, "position": 0.55},
+		"body": {"height": 0.90, "position": 0.45},
+		"head": {"height": 0.20, "position": 1.0}
+	}
+}
+
 # Rotation broadcast logic
 const AIM_ROTATION_INTERVAL: float = 1.0 # 1 second timer to update rotation
 var rotation_sync_timer: float = 0.0
@@ -81,6 +95,9 @@ var ui_hud_weapon_slot_signals_connected: bool = false
 @onready var player_equipment: PlayerEquipment = $PlayerEquipment
 @onready var player_packets: PlayerPackets = $PlayerPackets
 @onready var player_actions: PlayerActions = $PlayerActions
+@onready var player_collision_shape: CollisionShape3D = $PlayerCollisionShape
+@onready var head_collision_shape: CollisionShape3D = $HeadArea3D/HeadCollisionShape
+@onready var body_collision_shape: CollisionShape3D = $BodyArea3D/BodyCollisionShape
 
 
 # Called each tick to draw debugging tools on screen
@@ -108,7 +125,8 @@ static func instantiate(
 	server_spawn_rotation: float, # Used to update our model.rotation.y
 	is_my_player_character: bool,
 	server_weapon_slot: int,
-	server_weapon_slots: Array[Dictionary]
+	server_weapon_slots: Array[Dictionary],
+	spawn_is_crouching: bool
 ) -> Player:
 	# Instantiate a new empty player character
 	var player: Player = player_scene.instantiate()
@@ -126,6 +144,8 @@ static func instantiate(
 	# Weapon data
 	player.spawn_weapon_slot = server_weapon_slot
 	player.spawn_weapon_slots = server_weapon_slots
+	# Character state
+	player.is_crouching = spawn_is_crouching
 	
 	return player
 
@@ -137,6 +157,9 @@ func _init() -> void:
 
 # Called once this character has been created and instantiated
 func _ready() -> void:
+	# Give the engine some time to init everything
+	await get_tree().process_frame
+	
 	_initialize_character()
 	
 	# Overwrite our local copy of the grid positions
@@ -149,6 +172,9 @@ func _ready() -> void:
 	player_movement.interpolated_position = Utils.map_to_local(spawn_position)
 	# Rotate our character to match the server's rotation
 	model.rotation.y = spawn_rotation
+	
+	# Update the shape in case we spawn crouched
+	update_collision_shapes()
 	
 	# Do this only for my local character
 	if is_local_player:
@@ -164,6 +190,7 @@ func _ready() -> void:
 	
 	call_deferred("update_weapon_state")
 
+
 # Called a frame later to let the child components catch up
 func update_weapon_state() -> void:
 	# Await an extra frame otherwise it won't work
@@ -175,13 +202,34 @@ func update_weapon_state() -> void:
 	var weapon_type: String = player_equipment.equipped_weapon_type
 	var weapon_state: String = player_equipment.get_weapon_state_by_weapon_type(weapon_type)
 	
-	if weapon_state != "":
-		# Only change state if we are not already in it
-		if player_state_machine.get_current_state_name() != weapon_state:
-			player_state_machine.change_state(weapon_state)
+	if is_crouching:
+		if weapon_type == "unarmed":
+			# Try unarmed crouch state if available
+			if player_state_machine.has_state("crouch_idle"):
+				weapon_state = "crouch_idle"
+			else:
+				# If we don't have a crouch state available, use standing idle
+				weapon_state = "idle"
+		# If we have a weapon equipped and we are crouching
+		else:
+			var crouch_down_state: String = weapon_type + "_crouch_down_idle"
+			# Try weapon crouch state if available
+			if player_state_machine.has_state(crouch_down_state):
+				weapon_state = crouch_down_state
+			else:
+				# Fallback to standing weapon state
+				weapon_state = player_animator.get_idle_state_name()
+	# Standing
 	else:
-		# Unarmed
-		player_state_machine.change_state("idle")
+		weapon_state = player_animator.get_idle_state_name()
+	
+	# If we still don't have a valid state, fallback to basic idle
+	if weapon_state == "" or not player_state_machine.has_state(weapon_state):
+		weapon_state = "idle"
+	
+	# Only change state if we are not already in it
+	if player_state_machine.get_current_state_name() != weapon_state:
+		player_state_machine.change_state(weapon_state)
 
 
 # Helper function for _ready()
@@ -409,13 +457,17 @@ func start_interaction(target: Interactable) -> void:
 	
 	# Check if we are already in range to activate
 	if player_movement.is_in_interaction_range(target):
-		player_state_machine.change_state("interact")
+		# If we are not already in the same state
+		if player_state_machine.get_current_state_name() != "interact":
+			player_state_machine.change_state("interact")
 		return
 	
 	# If we are far away, check if we can reach it
 	# if we can, start moving towards it
 	if player_movement.setup_interaction_movement(player_movement.grid_position, target):
-		player_state_machine.change_state("move")
+		# If we are not already in the same state
+		if player_state_machine.get_current_state_name() != "move":
+			player_state_machine.change_state("move")
 	
 	# If we can't reach it, then forget about it
 	else:
@@ -449,8 +501,15 @@ func execute_interaction() -> void:
 	# Cleanup
 	interaction_target = null
 	is_busy = false
+	
 	# Go into idle state
-	player_state_machine.change_state(player_animator.get_idle_state_name())
+	var current_state_name: String = player_state_machine.get_current_state_name()
+	var target_state_name: String = player_animator.get_idle_state_name()
+	# If the target_state_name is valid
+	if target_state_name != "":
+		# If we are not already in the same state
+		if current_state_name != target_state_name:
+			player_state_machine.change_state(target_state_name)
 
 
 # Called after movement completes, only when we have a pending interaction
@@ -459,7 +518,9 @@ func handle_pending_interaction() -> void:
 	if player_movement.is_in_interaction_range(pending_interaction):
 		interaction_target = pending_interaction
 		pending_interaction = null
-		player_state_machine.change_state("interact")
+		# If we are not already in the same state
+		if player_state_machine.get_current_state_name() != "interact":
+			player_state_machine.change_state("interact")
 		return
 	
 	# We are not in interaction range, so we'll have to trace a path to it
@@ -682,23 +743,33 @@ func handle_death() -> void:
 	
 	# Change to dead state
 	if player_state_machine:
-		player_state_machine.change_state("dead")
+		# If we are not already in the same state
+		if player_state_machine.get_current_state_name() != "dead":
+			player_state_machine.change_state("dead")
 
 
 func handle_respawn() -> void:
 	is_busy = false
 	
+	# Always respawn standing
+	is_crouching = false
+	
+	# Reset the collision shapes for this character
+	update_collision_shapes()
+	
 	if player_state_machine:
 		# Force idle state if not already idling
 		var current_state_name: String = player_state_machine.get_current_state_name()
 		var target_state_name: String = player_animator.get_idle_state_name()
-		# If we are not already in the same state
-		if current_state_name != target_state_name:
-			player_state_machine.change_state(target_state_name)
+		# If the target_state_name is valid
+		if target_state_name != "":
+			# If we are not already in the same state
+			if current_state_name != target_state_name:
+				player_state_machine.change_state(target_state_name)
 	
 	if player_equipment:
 		if player_equipment.equipped_weapon:
-			player_equipment.set_current_ammo(30) # TODO fix this magic number
+			player_equipment.set_current_ammo(30) # CAUTION TODO fix this magic number
 	
 	# Update the HUD for local player
 	if is_local_player:
@@ -720,3 +791,26 @@ func enable_collisions() -> void:
 	
 	# Remove from GameManager's exclude list
 	GameManager.remove_exclude_collision(self)
+
+
+# Updates collision shapes based on stance
+func update_collision_shapes() -> void:
+	var stance = "crouching" if is_crouching else "standing"
+	var player_data: Dictionary = collisions[stance].player
+	var body_data: Dictionary = collisions[stance].body
+	var head_data: Dictionary = collisions[stance].head
+	
+	# Update player collision shape (for cursor collisions)
+	if player_collision_shape and player_collision_shape.shape is CapsuleShape3D:
+		player_collision_shape.shape.height = player_data.height
+		player_collision_shape.position.y = player_data.position
+	
+	# Update body collision shape
+	if body_collision_shape and body_collision_shape.shape is CylinderShape3D:
+		body_collision_shape.shape.height = body_data.height
+		body_collision_shape.position.y = body_data.position
+	
+	# Update head collision shape
+	if head_collision_shape and head_collision_shape.shape is CylinderShape3D:
+		head_collision_shape.shape.height = head_data.height
+		head_collision_shape.position.y = head_data.position

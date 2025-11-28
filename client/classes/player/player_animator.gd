@@ -100,19 +100,19 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 			play_rate = 1.3
 		},
 		"down_to_aim": {
-			animation = "rifle/rifle_down_to_aim",
+			animation = "rifle/rifle_down_to_rifle_aim",
 			play_rate = 3.0
 		},
 		"aim_to_down": {
-			animation = "rifle/rifle_aim_to_down",
+			animation = "rifle/rifle_aim_to_rifle_down",
 			play_rate = 3.0
 		},
 		"crouch_down_to_crouch_aim": {
-			animation = "rifle/rifle_crouch_down_to_crouch_aim",
+			animation = "rifle/rifle_crouch_down_to_rifle_crouch_aim",
 			play_rate = 2.0
 		},
 		"crouch_aim_to_crouch_down": {
-			animation = "rifle/rifle_crouch_aim_to_crouch_down",
+			animation = "rifle/rifle_crouch_aim_to_rifle_crouch_down",
 			play_rate = 2.0
 		},
 		"crouch_aim_to_aim": {
@@ -193,12 +193,12 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("rifle/rifle_unequip", "male/male_idle", 0.2)
 	
 	# Blend rifle down to rifle aim
-	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_to_aim", 0.2)
-	animation_player.set_blend_time("rifle/rifle_down_to_aim", "rifle/rifle_aim_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_to_rifle_aim", 0.2)
+	animation_player.set_blend_time("rifle/rifle_down_to_rifle_aim", "rifle/rifle_aim_idle", 0.2)
 	
 	# Blend rifle aim to rifle down
-	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_to_down", 0.2)
-	animation_player.set_blend_time("rifle/rifle_aim_to_down", "rifle/rifle_down_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_to_rifle_down", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_to_rifle_down", "rifle/rifle_down_idle", 0.2)
 	
 	# Blend rifle fire single fast
 	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_fire_single_fast", 0.4)
@@ -232,36 +232,32 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("rifle/rifle_down_run", "rifle/rifle_aim_jog", 0.2)
 	
 	# Blend rifle crouch down to rifle crouch aim
-	animation_player.set_blend_time("rifle/rifle_crouch_down_idle", "rifle/rifle_crouch_down_to_crouch_aim", 0.2)
-	animation_player.set_blend_time("rifle/rifle_crouch_down_to_crouch_aim", "rifle/rifle_crouch_aim_idle", 0.2)
-	
+	animation_player.set_blend_time("rifle/rifle_crouch_down_idle", "rifle/rifle_crouch_down_to_rifle_crouch_aim", 0.1)
+	animation_player.set_blend_time("rifle/rifle_crouch_down_to_rifle_crouch_aim", "rifle/rifle_crouch_aim_idle", 0.1)
 	# Blend rifle crouch aim to rifle crouch down
-	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_to_crouch_down", 0.2)
-	animation_player.set_blend_time("rifle/rifle_crouch_aim_to_crouch_down", "rifle/rifle_crouch_down_idle", 0.2)
-	
-	# Blend rifle crouch reload
-	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_reload_fast", 0.2)
-	animation_player.set_blend_time("rifle/rifle_crouch_aim_reload_fast", "rifle/rifle_crouch_aim_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_to_rifle_crouch_down", 0.1)
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_to_rifle_crouch_down", "rifle/rifle_crouch_down_idle", 0.1)
 	
 	# Blend rifle aim to rifle crouch aim
-	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_to_rifle_crouch_aim", 0.2)
-	animation_player.set_blend_time("rifle/rifle_aim_to_rifle_crouch_aim", "rifle/rifle_crouch_aim_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_to_rifle_crouch_aim", 0.1)
+	animation_player.set_blend_time("rifle/rifle_aim_to_rifle_crouch_aim", "rifle/rifle_crouch_aim_idle", 0.1)
+	# Blend rifle crouch aim to rifle aim
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_to_rifle_aim", 0.1)
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_to_rifle_aim", "rifle/rifle_aim_idle", 0.1)
 	
 	# Blend rifle down to rifle crouch down
-	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_to_rifle_crouch_down", 0.2)
-	animation_player.set_blend_time("rifle/rifle_down_to_rifle_crouch_down", "rifle/rifle_crouch_down_idle", 0.2)
-	
-	# Blend rifle crouch aim to rifle aim
-	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_to_rifle_aim", 0.2)
-	animation_player.set_blend_time("rifle/rifle_crouch_aim_to_rifle_aim", "rifle/rifle_aim_idle", 0.2)
-	
+	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_to_rifle_crouch_down", 0.1)
+	animation_player.set_blend_time("rifle/rifle_down_to_rifle_crouch_down", "rifle/rifle_crouch_down_idle", 0.1)
 	# Blend rifle crouch down to rifle down
-	animation_player.set_blend_time("rifle/rifle_crouch_down_idle", "rifle/rifle_crouch_down_to_rifle_down", 0.2)
-	animation_player.set_blend_time("rifle/rifle_crouch_down_to_rifle_down", "rifle/rifle_down_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_crouch_down_idle", "rifle/rifle_crouch_down_to_rifle_down", 0.1)
+	animation_player.set_blend_time("rifle/rifle_crouch_down_to_rifle_down", "rifle/rifle_down_idle", 0.1)
 	
 	# Blend rifle crouch firing
 	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_fire_single_low_recoil", 0.4)
 	animation_player.set_blend_time("rifle/rifle_crouch_aim_fire_single_low_recoil", "rifle/rifle_crouch_aim_fire_single_low_recoil", 0.2)
+	# Blend rifle crouch reload
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_reload_fast", 0.1)
+	animation_player.set_blend_time("rifle/rifle_crouch_aim_reload_fast", "rifle/rifle_crouch_aim_idle", 0.1)
 
 
 # Plays and awaits until the animation ends, if found

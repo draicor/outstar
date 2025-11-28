@@ -11,22 +11,23 @@ import (
 )
 
 const createCharacter = `-- name: CreateCharacter :one
-INSERT INTO characters (user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING id, user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y, weapon_slot
+INSERT INTO characters (user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y, is_crouching)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y, weapon_slot, is_crouching
 `
 
 type CreateCharacterParams struct {
-	UserID    int64
-	Gender    string
-	RegionID  int64
-	MapID     int64
-	X         int64
-	Z         int64
-	Health    int64
-	MaxHealth int64
-	Speed     int64
-	RotationY float64
+	UserID      int64
+	Gender      string
+	RegionID    int64
+	MapID       int64
+	X           int64
+	Z           int64
+	Health      int64
+	MaxHealth   int64
+	Speed       int64
+	RotationY   float64
+	IsCrouching int64
 }
 
 // Character Operations
@@ -42,6 +43,7 @@ func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams
 		arg.MaxHealth,
 		arg.Speed,
 		arg.RotationY,
+		arg.IsCrouching,
 	)
 	var i Character
 	err := row.Scan(
@@ -57,6 +59,7 @@ func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams
 		&i.Speed,
 		&i.RotationY,
 		&i.WeaponSlot,
+		&i.IsCrouching,
 	)
 	return i, err
 }
@@ -104,7 +107,7 @@ func (q *Queries) DeleteWeaponSlots(ctx context.Context, characterID int64) erro
 }
 
 const getCharacterByID = `-- name: GetCharacterByID :one
-SELECT id, user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y, weapon_slot FROM characters WHERE id = ?
+SELECT id, user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y, weapon_slot, is_crouching FROM characters WHERE id = ?
 `
 
 func (q *Queries) GetCharacterByID(ctx context.Context, id int64) (Character, error) {
@@ -123,12 +126,13 @@ func (q *Queries) GetCharacterByID(ctx context.Context, id int64) (Character, er
 		&i.Speed,
 		&i.RotationY,
 		&i.WeaponSlot,
+		&i.IsCrouching,
 	)
 	return i, err
 }
 
 const getCharacterByUserID = `-- name: GetCharacterByUserID :one
-SELECT id, user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y, weapon_slot FROM characters WHERE user_id = ?
+SELECT id, user_id, gender, region_id, map_id, x, z, health, max_health, speed, rotation_y, weapon_slot, is_crouching FROM characters WHERE user_id = ?
 `
 
 func (q *Queries) GetCharacterByUserID(ctx context.Context, userID int64) (Character, error) {
@@ -147,6 +151,7 @@ func (q *Queries) GetCharacterByUserID(ctx context.Context, userID int64) (Chara
 		&i.Speed,
 		&i.RotationY,
 		&i.WeaponSlot,
+		&i.IsCrouching,
 	)
 	return i, err
 }
@@ -176,7 +181,7 @@ func (q *Queries) GetCharacterPosition(ctx context.Context, id int64) (GetCharac
 
 const getFullCharacterData = `-- name: GetFullCharacterData :one
 SELECT
-  c.id, c.gender, c.region_id, c.map_id, c.x, c.z, c.health, c.max_health, c.speed, c.rotation_y, c.weapon_slot,
+  c.id, c.gender, c.region_id, c.map_id, c.x, c.z, c.health, c.max_health, c.speed, c.rotation_y, c.weapon_slot, c.is_crouching,
   u.username, u.nickname
 FROM characters c
 JOIN users u ON c.user_id = u.id
@@ -184,19 +189,20 @@ WHERE c.id = ?
 `
 
 type GetFullCharacterDataRow struct {
-	ID         int64
-	Gender     string
-	RegionID   int64
-	MapID      int64
-	X          int64
-	Z          int64
-	Health     int64
-	MaxHealth  int64
-	Speed      int64
-	RotationY  float64
-	WeaponSlot int64
-	Username   string
-	Nickname   string
+	ID          int64
+	Gender      string
+	RegionID    int64
+	MapID       int64
+	X           int64
+	Z           int64
+	Health      int64
+	MaxHealth   int64
+	Speed       int64
+	RotationY   float64
+	WeaponSlot  int64
+	IsCrouching int64
+	Username    string
+	Nickname    string
 }
 
 func (q *Queries) GetFullCharacterData(ctx context.Context, id int64) (GetFullCharacterDataRow, error) {
@@ -214,6 +220,7 @@ func (q *Queries) GetFullCharacterData(ctx context.Context, id int64) (GetFullCh
 		&i.Speed,
 		&i.RotationY,
 		&i.WeaponSlot,
+		&i.IsCrouching,
 		&i.Username,
 		&i.Nickname,
 	)
@@ -385,21 +392,22 @@ func (q *Queries) UpdateCharacterStats(ctx context.Context, arg UpdateCharacterS
 const updateFullCharacterData = `-- name: UpdateFullCharacterData :exec
 UPDATE characters
 SET
-  region_id = ?, map_id = ?, x = ?, z = ?, health = ?, max_health = ?, speed = ?, rotation_y = ?, weapon_slot = ?
+  region_id = ?, map_id = ?, x = ?, z = ?, health = ?, max_health = ?, speed = ?, rotation_y = ?, weapon_slot = ?, is_crouching = ?
 WHERE id = ?
 `
 
 type UpdateFullCharacterDataParams struct {
-	RegionID   int64
-	MapID      int64
-	X          int64
-	Z          int64
-	Health     int64
-	MaxHealth  int64
-	Speed      int64
-	RotationY  float64
-	WeaponSlot int64
-	ID         int64
+	RegionID    int64
+	MapID       int64
+	X           int64
+	Z           int64
+	Health      int64
+	MaxHealth   int64
+	Speed       int64
+	RotationY   float64
+	WeaponSlot  int64
+	IsCrouching int64
+	ID          int64
 }
 
 func (q *Queries) UpdateFullCharacterData(ctx context.Context, arg UpdateFullCharacterDataParams) error {
@@ -413,6 +421,7 @@ func (q *Queries) UpdateFullCharacterData(ctx context.Context, arg UpdateFullCha
 		arg.Speed,
 		arg.RotationY,
 		arg.WeaponSlot,
+		arg.IsCrouching,
 		arg.ID,
 	)
 	return err

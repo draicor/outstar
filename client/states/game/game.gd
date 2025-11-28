@@ -110,6 +110,8 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_route_reload_weapon_packet(sender_id, packet.get_reload_weapon())
 	elif packet.has_toggle_fire_mode():
 		_route_toggle_fire_mode_packet(sender_id, packet.get_toggle_fire_mode())
+	elif packet.has_crouch_character():
+		_route_crouch_character_packet(sender_id, packet.get_crouch_character())
 	
 	# IMMEDIATE PACKETS DON'T GO INTO PACKET QUEUE
 	# PACKETS THAT NEED CLIENT_ID INSIDE THE PACKET
@@ -274,8 +276,12 @@ func _route_spawn_character_packet(spawn_character_packet: Packets.SpawnCharacte
 	if not player:
 		_spawn_new_player(player_id, spawn_character_packet)
 	else:
-		# Respawn existing player through the action queue
-		player.player_actions.add_action("respawn", spawn_character_packet)
+		# If player is valid
+		if player.player_packets and player.player_actions:
+			# Respawn existing player through the packet queue
+			player.player_packets.add_packet(spawn_character_packet, PlayerPackets.Priority.NORMAL)
+		else:
+			push_error("Error inside _route_spawn_character_packet, player_packets or player_actions not valid")
 
 
 func _spawn_new_player(player_id: int, spawn_character_packet: Packets.SpawnCharacter) -> void:
@@ -310,10 +316,16 @@ func _spawn_new_player(player_id: int, spawn_character_packet: Packets.SpawnChar
 		spawn_character_packet.get_rotation_y(),
 		is_my_player_character,
 		spawn_character_packet.get_current_weapon(),
-		weapon_slots
+		weapon_slots,
+		spawn_character_packet.get_is_crouching()
 	)
+	
 	# Add this player to our map of players
 	GameManager.register_player(player_id, new_player)
+	
+	# Spawn the player
+	_current_map_scene.add_child(new_player)
+	
 	# Ensure collisions are enabled for newly spawned players
 	new_player.enable_collisions()
 	
@@ -321,9 +333,6 @@ func _spawn_new_player(player_id: int, spawn_character_packet: Packets.SpawnChar
 	if not is_my_player_character:
 		# Add the player to the new position in my local grid
 		RegionManager.set_object(spawn_position, new_player)
-	
-	# Spawn the player
-	_current_map_scene.add_child(new_player)
 
 
 func _handle_region_data_packet(region_data_packet: Packets.RegionData) -> void:
@@ -490,19 +499,8 @@ func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Pack
 	var is_local_victim: bool = (target_id == GameManager.client_id)
 	
 	if is_local_victim:
-		# Local victim - queue damage to maintain action order
-		var attacker: Player = GameManager.get_player_by_id(attacker_id)
-		if attacker:
-			# Create a custom damage action that will be processed in order
-			attacker.player_actions.add_action("apply_damage", {
-				"target_id": apply_damage_packet.get_target_id(),
-				"damage": apply_damage_packet.get_damage(),
-				"damage_type": apply_damage_packet.get_damage_type(),
-				"damage_position": Vector3(
-					apply_damage_packet.get_x(),
-					apply_damage_packet.get_y(),
-					apply_damage_packet.get_z())
-			})
+		# Route the packet to the target player's packet queue
+		target_player.player_packets.add_packet(apply_damage_packet, PlayerPackets.Priority.NORMAL)
 	else:
 		# Local attacker or bystander - process immediately
 		_process_damage_immediately(apply_damage_packet)
@@ -540,12 +538,22 @@ func _route_player_died_packet(player_died_packet: Packets.PlayerDied) -> void:
 	
 	var target: Player = GameManager.get_player_by_id(target_id)
 	if target:
-		# Route through the player target's action queue
-		target.player_actions.add_action("death", player_died_packet)
+		# Route through the player target's packet queue
+		target.player_packets.add_packet(player_died_packet, PlayerPackets.Priority.NORMAL)
+		
+		# target.player_actions.add_action("death", player_died_packet)
 		
 		# If this is our local player, show respawn UI
 		if target_id == GameManager.client_id:
 			_show_respawn_ui()
+
+
+func _route_crouch_character_packet(sender_id: int, crouch_character_packet: Packets.CrouchCharacter) -> void:
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
+		# Send this packet to the queue of this player
+		player.player_packets.add_packet(crouch_character_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _show_respawn_ui() -> void:

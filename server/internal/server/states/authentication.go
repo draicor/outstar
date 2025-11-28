@@ -178,6 +178,8 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 	if health <= 0 || health > maxHealth {
 		health = maxHealth
 	}
+	// Convert database int to bool for crouch state
+	isCrouching := character.IsCrouching != 0
 
 	// Recreate this client's player/character data from the database!
 	state.client.SetPlayerCharacter(objects.CreatePlayer(
@@ -194,6 +196,7 @@ func (state *Authentication) HandleLoginRequest(senderId uint64, payload *packet
 		// Atributes
 		health,
 		maxHealth,
+		isCrouching,
 	))
 
 	state.logger.Printf("%s logged in as %s", username, user.Nickname)

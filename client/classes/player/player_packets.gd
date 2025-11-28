@@ -84,6 +84,14 @@ func get_packet_type(packet: Variant) -> String:
 		packet_type = "ReloadWeapon"
 	elif packet is Packets.ToggleFireMode:
 		packet_type = "ToggleFireMode"
+	elif packet is Packets.CrouchCharacter:
+		packet_type = "CrouchCharacter"
+	elif packet is Packets.ApplyPlayerDamage:
+		packet_type = "ApplyPlayerDamage"
+	elif packet is Packets.SpawnCharacter:
+		packet_type = "SpawnCharacter"
+	elif packet is Packets.PlayerDied:
+		packet_type = "PlayerDied"
 	
 	# Packets that get processed in any state
 	elif packet is Packets.ApplyPlayerDamage:
@@ -321,6 +329,14 @@ func create_respawn_request_packet(region_id: int = 0, desired_position: Vector2
 	return packet
 
 
+# Creates and returns a crouch_character packet
+func create_crouch_character_packet(is_crouching: bool) -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	var crouch_character_packet := packet.new_crouch_character()
+	crouch_character_packet.set_is_crouching(is_crouching)
+	return packet
+
+
 ##################
 # PACKET SENDING #
 ##################
@@ -409,6 +425,12 @@ func send_respawn_request_packet(region_id: int = 0, desired_position: Vector2i 
 	WebSocket.send(packet)
 
 
+# Creates and sends a packet to the server to report character crouch state
+func send_crouch_character_packet(is_crouching: bool) -> void:
+	var packet: Packets.Packet = create_crouch_character_packet(is_crouching)
+	WebSocket.send(packet)
+
+
 #####################
 # PACKET PROCESSING #
 #####################
@@ -429,7 +451,6 @@ func _handle_packet_started(packet: Variant) -> void:
 		_process_fire_weapon_packet(packet)
 	elif packet is Packets.RotateCharacter:
 		_process_rotate_character_packet(packet)
-	
 	elif packet is Packets.UpdateSpeed:
 		_process_update_speed_packet(packet)
 	elif packet is Packets.SwitchWeapon:
@@ -438,6 +459,14 @@ func _handle_packet_started(packet: Variant) -> void:
 		_process_reload_weapon_packet(packet)
 	elif packet is Packets.ToggleFireMode:
 		_process_toggle_fire_mode_packet()
+	elif packet is Packets.CrouchCharacter:
+		_process_crouch_character_packet(packet)
+	elif packet is Packets.ApplyPlayerDamage:
+		_process_apply_player_damage_packet(packet)
+	elif packet is Packets.SpawnCharacter:
+		_process_spawn_character_packet(packet)
+	elif packet is Packets.PlayerDied:
+		_process_player_died_packet(packet)
 	else:
 		complete_packet() # Unknown packet
 
@@ -524,4 +553,38 @@ func process_stop_firing_weapon_packet(packet: Packets.StopFiringWeapon) -> void
 	player.player_actions.add_action("rotate", packet.get_rotation_y())
 	player.player_actions.add_action("stop_firing", packet.get_shots_fired())
 	
+	complete_packet()
+
+
+func _process_crouch_character_packet(packet: Packets.CrouchCharacter) -> void:
+	if packet.get_is_crouching():
+		player.player_actions.add_action("enter_crouch")
+	else:
+		player.player_actions.add_action("leave_crouch")
+	
+	complete_packet()
+
+
+func _process_apply_player_damage_packet(packet: Packets.ApplyPlayerDamage) -> void:
+	var data = {
+		"target_id": packet.get_target_id(),
+		"damage": packet.get_damage(),
+		"damage_type": packet.get_damage_type(),
+		"damage_position": Vector3(
+			packet.get_x(),
+			packet.get_y(),
+			packet.get_z())
+	}
+	route_packet_to_action_queue("apply_damage", data)
+	
+	complete_packet()
+
+
+func _process_spawn_character_packet(packet: Packets.SpawnCharacter) -> void:
+	route_packet_to_action_queue("respawn", packet)
+	complete_packet()
+
+
+func _process_player_died_packet(packet: Packets.PlayerDied) -> void:
+	route_packet_to_action_queue("death", packet)
 	complete_packet()

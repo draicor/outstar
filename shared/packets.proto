@@ -49,6 +49,7 @@ message SpawnCharacter { // Sent by the server to spawn a character
   uint64 max_health = 8;
   uint64 current_weapon = 9; // Current equipped weapon by slot
   repeated WeaponSlot weapons = 10; // All weapon slots
+  bool is_crouching = 11;
 }
 // Character movement
 message MoveCharacter { // Sent by the server to move remote characters
@@ -121,6 +122,9 @@ message RespawnRequest {
   uint64 x = 2; // Optional: if provided, try to respawn at this position
   uint64 z = 3; // Optional: if provided, try to respawn at this position
 }
+message CrouchCharacter {
+  bool is_crouching = 1; // True if character is crouching
+}
 
 // Main Packet container
 message Packet {
@@ -169,5 +173,7 @@ message Packet {
     PlayerDied player_died = 32; // Server
     // Respawn
     RespawnRequest respawn_request = 33; // Client
+    // Crouch
+    CrouchCharacter crouch_character = 34; // Both
   }
 }

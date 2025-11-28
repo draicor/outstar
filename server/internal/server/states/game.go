@@ -90,6 +90,11 @@ func (state *Game) OnEnter() {
 
 	// Loop over all of the clients in this region
 	state.client.GetRegion().Clients.ForEach(func(id uint64, client server.Client) {
+		// Skip the current client if we already spawned it above
+		if id == state.client.GetId() {
+			return
+		}
+
 		// Create a spawn packet to be sent to our new client
 		updatePlayerPacket := packets.NewSpawnCharacter(id, client.GetPlayerCharacter())
 		state.client.SendPacket(updatePlayerPacket)
@@ -268,6 +273,10 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_RespawnRequest:
 			state.HandleRespawnRequest(casted_payload.RespawnRequest)
 
+		// CROUCH CHARACTER
+		case *packets.Packet_CrouchCharacter:
+			state.HandleCrouchCharacter(casted_payload.CrouchCharacter)
+
 		case nil:
 			// Ignore packet if not a valid payload type
 		default:
@@ -368,6 +377,11 @@ func (state *Game) HandleJoinRegionRequest(payload *packets.JoinRegionRequest) {
 	// so we can also see the players that are already connected.
 	// Loop over all of the clients in this region
 	state.client.GetRegion().Clients.ForEach(func(id uint64, client server.Client) {
+		// Skip the current client if we already spawned it above
+		if id == state.client.GetId() {
+			return
+		}
+
 		// Create a spawn packet to be sent to our new client
 		spawnCharacterPacket := packets.NewSpawnCharacter(id, client.GetPlayerCharacter())
 		state.client.SendPacket(spawnCharacterPacket)
@@ -539,25 +553,24 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 	// Apply damage to target
 	targetPlayer.DecreaseHealth(damage)
 
-	// Check if the player is still alive after applying damage
-	if targetPlayer.IsAlive() {
-		// Create apply damage packet and load it
-		applyDamagePacket := packets.NewApplyPlayerDamage(
-			state.client.GetId(),
-			targetId,
-			damage,
-			"bullet",
-			payload.GetX(),
-			payload.GetY(),
-			payload.GetZ(),
-		)
+	// Send the damage packet after applying damage
+	// Create apply damage packet and load it
+	applyDamagePacket := packets.NewApplyPlayerDamage(
+		state.client.GetId(),
+		targetId,
+		damage,
+		"bullet",
+		payload.GetX(),
+		payload.GetY(),
+		payload.GetZ(),
+	)
 
-		// Tell everyone to apply the damage (including the attacker)
-		state.client.SendPacket(applyDamagePacket)
-		state.client.Broadcast(applyDamagePacket)
+	// Tell everyone to apply the damage (including the attacker)
+	state.client.SendPacket(applyDamagePacket)
+	state.client.Broadcast(applyDamagePacket)
 
-		// If the player died
-	} else {
+	// If the player died
+	if !targetPlayer.IsAlive() {
 		// Get the grid where the target died
 		grid := targetClient.GetRegion().GetGrid()
 
@@ -610,4 +623,15 @@ func (state *Game) HandleRespawnRequest(payload *packets.RespawnRequest) {
 	} else {
 		state.logger.Printf("Player %s respawned at region id: %d at position: (%d, %d)", player.Name, regionId, desiredPosition.X, desiredPosition.Z)
 	}
+}
+
+// Handles character crouch state change
+func (state *Game) HandleCrouchCharacter(payload *packets.CrouchCharacter) {
+	isCrouching := payload.GetIsCrouching()
+
+	// Update the player's crouch state in the server
+	state.player.SetCrouching(isCrouching)
+
+	// Broadcast the crouch state to everyone else in the region
+	state.client.Broadcast(packets.NewCrouchCharacter(isCrouching))
 }

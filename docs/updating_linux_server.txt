@@ -2,8 +2,8 @@
 sudo su -
 
 # To upload the server files to linux using powershell:
-scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\mmo-server-linux-arm64-v0.0.3.7 draicor@74.75.158.246:/home/draicor/mmo/server/
-scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\db.sqlite draicor@74.75.158.246:/home/draicor/mmo/server/
+scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\mmo-server-linux-arm64-v0.0.3.9 draicor@74.75.158.246:/home/draicor
+scp C:\Users\Draicor\Documents\Draicor\mmo\server\cmd\db.sqlite draicor@74.75.158.246:/home/draicor
 
 # We access our folder
 cd /home/draicor/mmo/server
