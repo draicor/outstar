@@ -12,6 +12,9 @@ func enter() -> void:
 	player.player_animator.switch_animation("idle")
 	# Set crouching state
 	player.is_crouching = true
+	
+	# Adjust the mouse click distance
+	player.set_mouse_click_distance(player.mouse_distances.idle)
 
 
 # We have to update rotations here so we can rotate towards our targets

@@ -11,6 +11,11 @@ func _init() -> void:
 	state_name = "move"
 
 
+func enter() -> void:
+	# Adjust the mouse click distance
+	player.set_mouse_click_distance(player.mouse_distances.idle)
+
+
 # _physics_process runs at a fixed timestep
 # Movement should be handled here because this runs before _process
 func physics_update(delta: float) -> void:

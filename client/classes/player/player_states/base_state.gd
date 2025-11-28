@@ -39,6 +39,8 @@ func is_weapon_down_idle_state() -> bool:
 	match current_state:
 		"rifle_down_idle":
 			return true
+		"rifle_crouch_down_idle":
+			return true
 		_:
 			return false
 
@@ -48,6 +50,8 @@ func is_weapon_aim_idle_state() -> bool:
 	var current_state: String = player.player_state_machine.get_current_state_name()
 	match current_state:
 		"rifle_aim_idle":
+			return true
+		"rifle_crouch_aim_idle":
 			return true
 		_:
 			return false
@@ -103,6 +107,13 @@ func next_automatic_fire() -> void:
 	player.shots_fired += 1
 	
 	if player.is_local_player:
+		# Check if weapon is inside wall after each shot
+		if player.player_equipment.equipped_weapon.is_weapon_inside_wall():
+			# Weapon is inside wall, immediately queue a stop firing action
+			player.player_actions.queue_stop_firing_action(player.shots_fired)
+			player.dry_fired = false
+			return
+		
 		# If we are still holding the left click, continue firing
 		if Input.is_action_pressed("left_click"):
 			next_automatic_fire()

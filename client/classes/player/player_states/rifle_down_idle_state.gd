@@ -13,6 +13,9 @@ func enter() -> void:
 	# Clear crouching state
 	player.is_crouching = false
 	
+	# Adjust the mouse click distance
+	player.set_mouse_click_distance(player.mouse_distances.idle)
+	
 	# Connect the ui hud signals for my local player character
 	if player.is_local_player:
 		if not player.ui_hud_weapon_slot_signals_connected:

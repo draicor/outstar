@@ -165,7 +165,7 @@ func predict_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 
 
 # Helper function for click movement validation
-func _validate_move_position(pos: Vector2i) -> bool:
+func is_valid_move_position(pos: Vector2i) -> bool:
 	return RegionManager.is_cell_reachable(pos) and RegionManager.is_cell_available(pos)
 
 
@@ -640,8 +640,8 @@ func click_to_move(new_destination: Vector2i) -> void:
 	# If we are in a weapon state, don't move
 	if player.is_in_weapon_state():
 		return
-	# If the new position is not valid, don't move
-	if not _validate_move_position(new_destination):
+	# If the new position is not reachable or not available, don't move
+	if not is_valid_move_position(new_destination):
 		return
 	
 	# Clear any pending interactions

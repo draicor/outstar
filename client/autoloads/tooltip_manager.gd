@@ -31,11 +31,12 @@ func _process(_delta: float) -> void:
 		return
 	
 	# If we are aiming a weapon, don't display the tooltip
-	var player_state: String = GameManager.player_character.player_state_machine.get_current_state_name()
-	if player_state == "rifle_aim_idle":
-		if tooltip.visible:
-			tooltip.hide()
-		return
+	var player_state: BaseState = GameManager.player_character.player_state_machine.get_current_state()
+	if player_state:
+		if player_state.is_weapon_aim_idle_state():
+			if tooltip.visible:
+				tooltip.hide()
+			return
 	
 	if tooltip.visible:
 		tooltip.update_position()

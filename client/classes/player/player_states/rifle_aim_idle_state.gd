@@ -2,7 +2,6 @@ extends BaseState
 class_name RifleAimIdleState
 
 var last_target_point: Vector3 = Vector3.ZERO
-var mouse_captured: bool = false
 
 
 func _init() -> void:
@@ -18,6 +17,9 @@ func enter() -> void:
 	player.dry_fired = false
 	# Clear crouching state
 	player.is_crouching = false
+	
+	# Adjust the mouse click distance
+	player.set_mouse_click_distance(player.mouse_distances.aim)
 	
 	# If this is our local player
 	if player.is_local_player:

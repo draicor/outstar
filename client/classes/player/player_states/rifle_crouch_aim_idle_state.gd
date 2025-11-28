@@ -18,6 +18,9 @@ func enter() -> void:
 	# Set crouching state
 	player.is_crouching = true
 	
+	# Adjust the mouse click distance
+	player.set_mouse_click_distance(player.mouse_distances.aim)
+	
 	# If this is our local player
 	if player.is_local_player:
 		player.set_mouse_cursor("crosshair")
