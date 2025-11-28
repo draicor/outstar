@@ -11,6 +11,8 @@ func enter() -> void:
 	# Switch our locomotion depending on our player's gender
 	player.player_animator.switch_animation_library(player.gender)
 	player.player_animator.switch_animation("idle")
+	# Adjust the mouse click distance
+	player.set_mouse_click_distance(player.mouse_distances.idle)
 	
 	# Connect the ui hud signals for my local player character
 	if player.is_local_player:

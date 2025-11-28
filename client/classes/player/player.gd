@@ -65,6 +65,11 @@ var collisions = {
 	}
 }
 
+var mouse_distances = {
+	"idle": 30.0,
+	"aim": 50.0,
+}
+
 # Rotation broadcast logic
 const AIM_ROTATION_INTERVAL: float = 1.0 # 1 second timer to update rotation
 var rotation_sync_timer: float = 0.0
@@ -230,6 +235,10 @@ func update_weapon_state() -> void:
 	# Only change state if we are not already in it
 	if player_state_machine.get_current_state_name() != weapon_state:
 		player_state_machine.change_state(weapon_state)
+	
+	if player_equipment.get_current_weapon_type() != "unarmed":
+		# Enable the IK immediately for the initial weapon state
+		player_equipment.enable_left_hand_ik()
 
 
 # Helper function for _ready()
@@ -369,6 +378,9 @@ func handle_movement_click(mouse_position: Vector2) -> void:
 	
 	# If we are already there or moving there, ignore
 	if new_destination == player_movement.immediate_grid_destination:
+		return
+	# Validate that the destination cell is reachable and available
+	if not player_movement.is_valid_move_position(new_destination):
 		return
 	
 	# Pathfind and movement setup
@@ -814,3 +826,8 @@ func update_collision_shapes() -> void:
 	if head_collision_shape and head_collision_shape.shape is CylinderShape3D:
 		head_collision_shape.shape.height = head_data.height
 		head_collision_shape.position.y = head_data.position
+
+
+# Used to update the mouse click distance
+func set_mouse_click_distance(new_distance: float) -> void:
+	RAYCAST_DISTANCE = new_distance
