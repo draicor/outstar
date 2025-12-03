@@ -1,0 +1,12 @@
+UNARMED
+unarmed_crouch_idle 1-109 (112)
+unarmed_crouch_idle_to_unarmed_male_idle 1-50 (52)
+unarmed_crouch_walk 1-55 (57) 
+unarmed_female_idle 1-330 (332)
+unarmed_female_jog 1-27 (29)
+unarmed_female_walk 1-42 (43)
+unarmed_male_idle 1-170 (172)
+unarmed_male_idle_to_unarmed_crouch_idle 1-55 (57)
+unarmed_male_jog 1-23 (25)
+unarmed_male_run 1-16 (18)
+unarmed_male_walk 1-35 (37)

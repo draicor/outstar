@@ -12,7 +12,7 @@ const crosshair_cursor = preload("res://assets/textures/ui/circle_02.png")
 # Character model selector
 var character_scenes: Dictionary[String, PackedScene] = {
 	"female": preload("res://objects/characters/female_bot.tscn"),
-	"male": preload("res://objects/characters/male_bot.tscn"),
+	"male": preload("res://objects/characters/male_bot_old.tscn"),
 }
 
 # EXPORTED VARIABLES
