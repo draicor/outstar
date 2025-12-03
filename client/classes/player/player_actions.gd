@@ -337,15 +337,18 @@ func _process_lower_weapon_action() -> void:
 	if animation_type == "":
 		push_error("Error in _process_lower_weapon_action(), animation_type empty")
 		complete_action()
+		return
 	
 	await player.player_animator.play_weapon_animation_and_await(
 		animation_type,
 		weapon_type
 	)
 	
-	# If we are not already in the same state
-	if target_state_name != player.player_state_machine.get_current_state_name():
-		player.player_state_machine.change_state(target_state_name)
+	# If our target state name is not empty
+	if target_state_name != "":
+		# If we are not already in the same state
+		if target_state_name != player.player_state_machine.get_current_state_name():
+			player.player_state_machine.change_state(target_state_name)
 	
 	complete_action()
 

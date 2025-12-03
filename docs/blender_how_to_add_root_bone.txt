@@ -1,0 +1,14 @@
+Select your Armature (the skeleton) in the Outliner or 3D Viewport.
+Press Tab to go into Edit Mode.
+In Edit Mode, deselect all bones (press A until none are selected).
+Place the 3D cursor where you want the root bone — usually below the feet or at the center of the hips.
+Press Shift + A → Armature → Bone.
+This creates a new bone — rename it in the Bone Properties panel (right side) to something like "Root" or "Master".
+Select the head (top) of the new bone and move it to the pelvis/hip area or center below the character.
+Select the tail (end) and position it at the origin.
+Select the mixamorig1Hips bone first, then Shift-select your new Root bone (so Root is active/last selected).
+Press Ctrl + P → Keep Offset.
+This makes the Root the parent of the hips, so moving Root moves the whole skeleton.
+Go to Pose Mode (Ctrl + Tab).
+Select the Root bone and move it (G key) — the entire skeleton + mesh should follow.
+Press Tab again to go back to Object Mode.
