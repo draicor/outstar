@@ -84,7 +84,7 @@ rifle_crouch_aim_reload_fast -> Reload Rifle While In Crouch Position
 
 
 EDITED RIFLE ANIMATIONS
-rifle_aim_to_rifle_down [remove hips_motion] -> Rifle Aiming To Down
+rifle_aim_to_rifle_down [remove hips_motion and reset X and Z to 0 in pose mode] -> Rifle Aiming To Down
 45 frames
 rifle_down_to_rifle_crouch_down -> Rifle Standing to Kneeling
 14 frames, Overdrive 100

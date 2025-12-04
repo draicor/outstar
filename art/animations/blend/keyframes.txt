@@ -1,12 +1,46 @@
 UNARMED
-unarmed_crouch_idle 1-109 (112)
-unarmed_crouch_idle_to_unarmed_male_idle 1-50 (52)
-unarmed_crouch_walk 1-55 (57) 
-unarmed_female_idle 1-330 (332)
-unarmed_female_jog 1-27 (29)
-unarmed_female_walk 1-42 (43)
-unarmed_male_idle 1-170 (172)
-unarmed_male_idle_to_unarmed_crouch_idle 1-55 (57)
-unarmed_male_jog 1-23 (25)
-unarmed_male_run 1-16 (18)
-unarmed_male_walk 1-35 (37)
+unarmed_crouch_idle (112) 1-109
+unarmed_crouch_idle_to_unarmed_male_idle (52) 1-50
+unarmed_crouch_walk (57) 1-55 
+unarmed_female_idle (332) 1-330
+unarmed_female_jog (29) 1-27
+unarmed_female_walk (43) 1-42 CAUTION 1 frame
+unarmed_male_idle (172) 1-170
+unarmed_male_idle_to_unarmed_crouch_idle (57) 1-55
+unarmed_male_jog(25) 1-23
+unarmed_male_run (18) 1-16 
+unarmed_male_walk (37) 1-35
+
+RIFLE
+rifle_aim_death_a (102) 1-101
+rifle_aim_death_b (95) 1-94
+rifle_aim_death_c (95) 1-94
+rifle_aim_death_d (90) 1-89
+rifle_aim_fire_single_fast (10) 1-9
+rifle_aim_fire_single_slow (30) 1-29
+rifle_aim_idle (95) 1-94
+rifle_aim_jog (26) 1-25
+rifle_aim_reload_fast (68) 1-67
+rifle_aim_reload_slow (148) 1-147
+rifle_aim_to_rifle_crouch_aim (18) 1-17
+rifle_aim_to_rifle_down (47) 1-46
+rifle_aim_walk (32) 1-30
+rifle_crouch_aim_fire_single_high_recoil (39) 1-38
+rifle_crouch_aim_fire_single_low_recoil (15) 1-14
+rifle_crouch_aim_fire_single_mid_recoil (23) 1-22
+rifle_crouch_aim_idle (131) 1-130
+rifle_crouch_aim_reload_fast (157) 1-156
+rifle_crouch_aim_reload_slow (208) 1-207
+rifle_crouch_aim_to_rifle_aim (18) 1-17
+rifle_crouch_aim_to_rifle_crouch_down (18) 1-17
+rifle_crouch_death (50) 1-49
+rifle_crouch_down_idle (53) 1-52
+rifle_crouch_down_to_rifle_crouch_aim (18) 1-17
+rifle_crouch_down_to_rifle_down (21) 1-20
+rifle_down_idle (259) 1-258
+rifle_down_run (22) 1-20
+rifle_down_to_rifle_aim (28) 1-27
+rifle_down_to_rifle_crouch_down (16) 1-15
+rifle_down_walk (41) 1-39
+rifle_equip (33) 1-32
+rifle_unequip (37) 1-36

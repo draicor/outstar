@@ -8,17 +8,21 @@ var animation_player: AnimationPlayer # Our player's AnimationPlayer
 
 # Character locomotion
 var locomotion: Dictionary[String, Dictionary] # Depends on the gender of this character
-var female_locomotion: Dictionary[String, Dictionary] = {
-	"idle": {animation = "female/female_idle", play_rate = 1.0},
-	"walk": {animation = "female/female_walk", play_rate = 0.95},
-	"jog": {animation = "female/female_run", play_rate = 0.7},
-	"run": {animation = "female/female_run", play_rate = 0.8}
+var unarmed_female_locomotion: Dictionary[String, Dictionary] = {
+	"idle": {animation = "unarmed/unarmed_female_idle", play_rate = 1.0},
+	"walk": {animation = "unarmed/unarmed_female_walk", play_rate = 1.35},
+	"jog": {animation = "unarmed/unarmed_female_jog", play_rate = 1.2},
+	"run": {animation = "unarmed/unarmed_male_run", play_rate = 1.0}
 }
-var male_locomotion: Dictionary[String, Dictionary] = {
-	"idle": {animation = "male/male_idle", play_rate = 1.0},
-	"walk": {animation = "male/male_walk", play_rate = 1.1},
-	"jog": {animation = "male/male_run", play_rate = 0.7},
-	"run": {animation = "male/male_run", play_rate = 0.9}
+var unarmed_male_locomotion: Dictionary[String, Dictionary] = {
+	"idle": {animation = "unarmed/unarmed_male_idle", play_rate = 1.0},
+	"walk": {animation = "unarmed/unarmed_male_walk", play_rate = 1.35},
+	"jog": {animation = "unarmed/unarmed_male_jog", play_rate = 1.2},
+	"run": {animation = "unarmed/unarmed_male_run", play_rate = 1.0}
+}
+var unarmed_crouch_locomotion: Dictionary[String, Dictionary] = {
+	"idle": {animation = "unarmed/unarmed_crouch_idle", play_rate = 1.0},
+	"walk": {animation = "unarmed/unarmed_crouch_walk", play_rate = 1.0},
 }
 var rifle_down_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "rifle/rifle_down_idle", play_rate = 1.0},
@@ -167,30 +171,52 @@ func _setup_animation_blend_time() -> void:
 		return
 	
 	# Blend female locomotion
-	animation_player.set_blend_time("female/female_idle", "female/female_walk", 0.2)
-	animation_player.set_blend_time("female/female_idle", "female/female_run", 0.05)
-	animation_player.set_blend_time("female/female_walk", "female/female_idle", 0.15)
-	animation_player.set_blend_time("female/female_walk", "female/female_run", 0.15)
-	animation_player.set_blend_time("female/female_run", "female/female_idle", 0.2)
-	animation_player.set_blend_time("female/female_run", "female/female_walk", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_female_idle", "unarmed/unarmed_female_walk", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_female_idle", "unarmed/unarmed_female_jog", 0.05)
+	animation_player.set_blend_time("unarmed/unarmed_female_idle", "unarmed/unarmed_male_run", 0.05)
+	animation_player.set_blend_time("unarmed/unarmed_female_walk", "unarmed/unarmed_female_idle", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_female_walk", "unarmed/unarmed_female_jog", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_female_walk", "unarmed/unarmed_male_run", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_female_jog", "unarmed/unarmed_female_idle", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_female_jog", "unarmed/unarmed_female_walk", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_female_jog", "unarmed/unarmed_male_run", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_female_idle", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_female_walk", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_female_jog", 0.2)
 	
 	# Blend male locomotion
-	animation_player.set_blend_time("male/male_idle", "male/male_walk", 0.2)
-	animation_player.set_blend_time("male/male_idle", "male/male_run", 0.1)
-	animation_player.set_blend_time("male/male_walk", "male/male_idle", 0.15)
-	animation_player.set_blend_time("male/male_walk", "male/male_run", 0.15)
-	animation_player.set_blend_time("male/male_run", "male/male_idle", 0.15)
-	animation_player.set_blend_time("male/male_run", "male/male_walk", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_male_idle", "unarmed/unarmed_male_walk", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_male_idle", "unarmed/unarmed_male_jog", 0.1)
+	animation_player.set_blend_time("unarmed/unarmed_male_idle", "unarmed/unarmed_male_run", 0.1)
+	animation_player.set_blend_time("unarmed/unarmed_male_walk", "unarmed/unarmed_male_idle", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_male_walk", "unarmed/unarmed_male_jog", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_male_walk", "unarmed/unarmed_male_run", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_male_jog", "unarmed/unarmed_male_idle", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_male_jog", "unarmed/unarmed_male_walk", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_male_jog", "unarmed/unarmed_male_run", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_male_idle", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_male_walk", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_male_jog", 0.15)
+	
+	# Blend unarmed crouch locomotion
+	animation_player.set_blend_time("unarmed/unarmed_crouch_idle", "unarmed/unarmed_crouch_walk", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_crouch_walk", "unarmed/unarmed_crouch_idle", 0.2)
+	
+	# Blend crouch transitions
+	animation_player.set_blend_time("unarmed/unarmed_male_idle", "unarmed/unarmed_male_idle_to_unarmed_crouch_idle", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_male_idle_to_unarmed_crouch_idle", "unarmed/unarmed_crouch_idle", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_crouch_idle", "unarmed/unarmed_crouch_idle_to_unarmed_male_idle", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_crouch_idle_to_unarmed_male_idle", "unarmed/unarmed_male_idle", 0.2)
 	
 	# Blend rifle equip
 	animation_player.set_blend_time("rifle/rifle_equip", "rifle/rifle_down_idle", 0.2)
-	animation_player.set_blend_time("female/female_idle", "rifle/rifle_equip", 0.2)
-	animation_player.set_blend_time("male/male_idle", "rifle/rifle_equip", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_female_idle", "rifle/rifle_equip", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_male_idle", "rifle/rifle_equip", 0.2)
 	
 	# Blend rifle unequip
 	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_unequip", 0.2)
-	animation_player.set_blend_time("rifle/rifle_unequip", "female/female_idle", 0.2)
-	animation_player.set_blend_time("rifle/rifle_unequip", "male/male_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_unequip", "unarmed/unarmed_female_idle", 0.2)
+	animation_player.set_blend_time("rifle/rifle_unequip", "unarmed/unarmed_male_idle", 0.2)
 	
 	# Blend rifle down to rifle aim
 	animation_player.set_blend_time("rifle/rifle_down_idle", "rifle/rifle_down_to_rifle_aim", 0.2)
@@ -320,8 +346,9 @@ func update_locomotion_animation(cells_to_move: int) -> void:
 # Returns the idle state name 
 func get_idle_state_name() -> String:
 	match locomotion:
-		female_locomotion: return "idle"
-		male_locomotion: return "idle"
+		unarmed_female_locomotion: return "idle"
+		unarmed_male_locomotion: return "idle"
+		unarmed_crouch_locomotion: return "unarmed_crouch_idle"
 		rifle_down_locomotion: return "rifle_down_idle"
 		rifle_aim_locomotion: return "rifle_down_idle"
 		_:
@@ -349,8 +376,9 @@ func get_animation_library(weapon_type: String, gender: String) -> String:
 # Helper function to update our locomotion dictionary based on equipped items or gender
 func switch_animation_library(animation_library: String) -> void:
 	match animation_library:
-		"male": locomotion = male_locomotion
-		"female": locomotion = female_locomotion
+		"male": locomotion = unarmed_male_locomotion
+		"female": locomotion = unarmed_female_locomotion
+		"unarmed_crouch": locomotion = unarmed_crouch_locomotion
 		"rifle_down": locomotion = rifle_down_locomotion
 		"rifle_aim": locomotion = rifle_aim_locomotion
 		"rifle_crouch_down": locomotion = rifle_crouch_down_locomotion
