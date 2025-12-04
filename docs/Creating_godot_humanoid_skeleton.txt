@@ -1,0 +1,58 @@
+https://docs.godotengine.org/en/stable/classes/class_skeletonprofilehumanoid.html#class-skeletonprofilehumanoid
+
+Root
+└─ Hips
+    ├─ LeftUpperLeg
+    │  └─ LeftLowerLeg
+    │     └─ LeftFoot
+    │        └─ LeftToes
+    ├─ RightUpperLeg
+    │  └─ RightLowerLeg
+    │     └─ RightFoot
+    │        └─ RightToes
+    └─ Spine
+        └─ Chest
+            └─ UpperChest
+                ├─ Neck
+                │   └─ Head
+                │       ├─ Jaw
+                │       ├─ LeftEye
+                │       └─ RightEye
+                ├─ LeftShoulder
+                │  └─ LeftUpperArm
+                │     └─ LeftLowerArm
+                │        └─ LeftHand
+                │           ├─ LeftThumbMetacarpal
+                │           │  └─ LeftThumbProximal
+                │           │    └─ LeftThumbDistal
+                │           ├─ LeftIndexProximal
+                │           │  └─ LeftIndexIntermediate
+                │           │    └─ LeftIndexDistal
+                │           ├─ LeftMiddleProximal
+                │           │  └─ LeftMiddleIntermediate
+                │           │    └─ LeftMiddleDistal
+                │           ├─ LeftRingProximal
+                │           │  └─ LeftRingIntermediate
+                │           │    └─ LeftRingDistal
+                │           └─ LeftLittleProximal
+                │              └─ LeftLittleIntermediate
+                │                └─ LeftLittleDistal
+                └─ RightShoulder
+                   └─ RightUpperArm
+                      └─ RightLowerArm
+                         └─ RightHand
+                            ├─ RightThumbMetacarpal
+                            │  └─ RightThumbProximal
+                            │     └─ RightThumbDistal
+                            ├─ RightIndexProximal
+                            │  └─ RightIndexIntermediate
+                            │     └─ RightIndexDistal
+                            ├─ RightMiddleProximal
+                            │  └─ RightMiddleIntermediate
+                            │     └─ RightMiddleDistal
+                            ├─ RightRingProximal
+                            │  └─ RightRingIntermediate
+                            │     └─ RightRingDistal
+                            └─ RightLittleProximal
+                               └─ RightLittleIntermediate
+                                 └─ RightLittleDistal

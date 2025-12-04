@@ -1,0 +1,62 @@
+I downloaded the female bot skeletal mesh from mixamo and edited in Blender to rename the bones and add the root bone.
+
+Exported that female bot with the godot skeleton as FBX and imported it into unreal engine 5.4
+
+Also exported the default female bot skeletal mesh from mixamo as FBX too.
+
+Imported into unreal the mixamo animations for the default mixamo skeleton.
+
+Created a retargeter from mixamo to the new Godot skeleton.
+Created a retargeter from UE5 Manny to the new Godot Skeleton.
+
+After retargeting the animations to the Godot skeleton inside unreal engine, I exported the animations as FBX.
+
+When importing into blender, the animations are all wrong (bad scale and bad forward rotation).
+I have to import each animation as a separate FBX, rename the action name (anim name) and make sure the shield icon (fake user) is active so blender doesn't delete the action when the armature gets deleted.
+After each animation that I import, I delete one of the armatures so only one remains at all times.
+
+To fix the rotation and scale, I imported the female bot with the Godot skeleton as FBX into the same blender project.
+
+In pose mode, I created a bone constraint for each bone (location constraint and rotation constraint per bone) to follow the armature of the animations exported from unreal.
+I selected the corrupted armature as the target and for the bone I selected the same bone as the one in my clean armature.
+
+I then created a Custom Property on the Godot armature, called enable_constraints as a boolean with a default value of true.
+When TRUE, it enables the bone constraints in the armature, forcing the clean godot skeleton to mimic the corrupted godot skeleton from unreal export.
+
+In pose mode, I select each constraint, right click the eye icon and select Add driver, with these settings:
+
+Driver: enabled
+Type: Scripted Expression
+Expression: var
+Use Self: disabled
+Input variable: var
+Prop: Godot
+Path: ["enable_constraints"]
+
+The icon turned purple, to indicate it has a driver active.
+I then right clicked the icon and selected copy driver.
+I went and pasted that same driver on each bone constraint the clean Godot armature had.
+
+Now I have a master switch to turn on/off the bone constraints in my clean armature, we'll need this because we can't export the animations with those bone constraints active.
+
+Now, with the animations added to the project to the corrupted armature (the one from unreal engine), I can then activate the enable_contraints on the clean armature, and change the action (animation) from the corrupted armature and both armatures will move exactly the same, the only difference is the clean armature has the correct scale and rotation.
+
+Finally, in pose mode for the clean armature (Godot), I select all bones, F3 and bake action, with the animation/action already selected on the corrupted armature, we need to type the end frame for each action and this options selected:
+only selected bones: true
+visual keying: true
+clear constraints: FALSE
+clear parents: FALSE
+overwrite current action: FALSE
+clean curves: FALSE
+bake data: pose
+channels:
+Location: true
+Rotation: true
+Scale: true
+B-Bone: FALSE (unless you have bendy bones)
+Custom Properties: FALSE
+
+After baking the action, rename the action and activate the shield (fake user) so blender doesn't delete this action.
+
+
+

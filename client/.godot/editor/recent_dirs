@@ -1,3 +1,5 @@
+res://assets/animations
+res://objects/characters
 C:/Users/Draicor/Documents/Draicor/mmo/client/bin/windows
 res://components/health_bar
 C:/Users/Draicor/Documents/Draicor/mmo/client/bin/android
@@ -11,11 +13,9 @@ res://sfx
 res://assets/shaders
 res://classes/sfx
 res://
-res://assets/animations
 res://components/chat_bubble
 C:/Users/Draicor/Documents/Draicor/mmo/client/bin
 res://assets/icons
-res://objects/characters
 res://components/hud
 res://materials
 res://maps/prototype
