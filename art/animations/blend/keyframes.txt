@@ -52,17 +52,24 @@ SHOTGUN
 shotgun_aim_fire (40) 1-38
 shotgun_aim_idle (134) 1-132 loop
 shotgun_aim_reload (74) 1-72
+shotgun_aim_to_shotgun_crouch_aim (47) 1-46
 shotgun_aim_to_shotgun_down (47) 1-46
 shotgun_aim_walk (37) 1-35 loop
 shotgun_crouch_aim_fire (40) 1-39
 shotgun_crouch_aim_idle (167) 1-165 loop
+shotgun_crouch_aim_reload (74)	1-72
+shotgun_crouch_aim_to_shotgun_aim (47) 1-46
 shotgun_crouch_aim_to_shotgun_crouch_down (47) 1-45
 shotgun_crouch_down_idle (134) 1-132 loop
 shotgun_crouch_down_to_shotgun_crouch_aim (47) 1-45
 shotgun_crouch_down_to_shotgun_down (32) 1-31
+shotgun_crouch_down_walk (32) 1-30 loop
 shotgun_down_idle (134) 1-132 loop
 shotgun_down_jog (22) 1-20 loop
 shotgun_down_run (16) 1-14 loop
 shotgun_down_to_shotgun_aim (30) 1-29
 shotgun_down_to_shotgun_crouch_down (32) 1-31
 shotgun_down_walk (33) 1-31 loop
+
+
+
