@@ -15,6 +15,12 @@ func enter() -> void:
 	
 	# Adjust the mouse click distance
 	player.set_mouse_click_distance(player.mouse_distances.idle)
+	
+	# Connect the ui hud signals for my local player character
+	if player.is_local_player:
+		if not player.ui_hud_weapon_slot_signals_connected:
+			Signals.ui_hud_weapon_slot.connect(player.player_actions.queue_switch_weapon_action)
+			player.ui_hud_weapon_slot_signals_connected = true
 
 
 # We have to update rotations here so we can rotate towards our targets

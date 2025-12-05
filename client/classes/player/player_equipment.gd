@@ -17,7 +17,7 @@ var weapon_types: Dictionary[String, String] = {
 	"akm_rifle": "rifle",
 }
 var weapon_states: Dictionary[String, String] = {
-	"unarmed": "idle",
+	"unarmed": "unarmed_idle",
 	"rifle": "rifle_down_idle",
 }
 

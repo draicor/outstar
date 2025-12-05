@@ -393,7 +393,7 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	# Enable aim rotation after reload
 	player.is_aim_rotating = true
 	
-	# Play the appropriate  idle animation
+	# Play the appropriate idle animation
 	player.player_animator.switch_animation("idle")
 	# Update local state
 	player.player_equipment.reload_equipped_weapon(amount)
@@ -841,13 +841,19 @@ func _process_enter_crouch_action() -> void:
 		"rifle_down_idle":
 			animation_type = "down_to_crouch_down"
 			target_state_name = "rifle_crouch_down_idle"
+		"unarmed_idle":
+			animation_type = "down_to_crouch_down"
+			target_state_name = "unarmed_crouch_idle"
 		"_":
 			push_error("Error in match current_state_name inside _process_enter_crouch_action()")
+			return
 	
-	await player.player_animator.play_weapon_animation_and_await(
-		animation_type,
-		weapon_type
-	)
+	if animation_type != "":
+		await player.player_animator.play_weapon_animation_and_await(
+			animation_type,
+			weapon_type
+		)
+	
 	if target_state_name != "":
 		# If we are not already in the same state
 		if target_state_name != player.player_state_machine.get_current_state_name():
@@ -878,8 +884,12 @@ func _process_leave_crouch_action() -> void:
 		"rifle_crouch_down_idle":
 			animation_type = "crouch_down_to_down"
 			target_state_name = "rifle_down_idle"
+		"unarmed_crouch_idle":
+			animation_type = "crouch_down_to_down"
+			target_state_name = "unarmed_idle"
 		"_":
 			push_error("Error in match current_state_name inside _process_leave_crouch_action()")
+			return
 	
 	if animation_type != "":
 		await player.player_animator.play_weapon_animation_and_await(
