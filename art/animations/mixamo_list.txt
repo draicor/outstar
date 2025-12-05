@@ -139,7 +139,7 @@ pistol_kneel_idle_to_pistol_idle -> Pistol Kneel To Stand (#2, 41 frames), Arm-S
 SHOTGUN LOCOMOTION PACK (UNREAL)
 SHOTGUN STANDING
 shotgun_down_idle -> anim_shotgun_stand_idle
-shotgun_down_walk -> anim_shotgun_walk_fwd_loop
+shotgun_down_walk -> anim_shotgun_walk_fwd_loop (120 fps, needs reimport)
 shotgun_down_jog -> anim_shotgun_jog_fwd_loop
 shotgun_down_run -> anim_shotgun_sprint_loop
 shotgun_aim_idle -> anim_shotgun_aim_idle
@@ -151,7 +151,7 @@ shotgun_aim_reload -> anim_shotgun_aim_reload
 shotgun_equip -> NOT NEEDED
 shotgun_unequip -> NOT NEEDED
 shotgun_aim_to_shotgun_down -> anim_shotgun_aim_idle_to_stand_idle
-shotgun_down_to_shotgun_aim -> anim_shotgun_stand_idle_to_aim_idle
+shotgun_down_to_shotgun_aim -> anim_shotgun_stand_idle_to_aim_idle (120 fps, needs reimport)
 
 SHOTGUN CROUCH
 shotgun_crouch_down_idle -> anim_shotgun_crouch_idle
