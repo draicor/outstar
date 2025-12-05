@@ -134,8 +134,7 @@ pistol_kneel_idle -> Pistol Kneeling Idle (#1, 114 frames), Arm-Space 56
 pistol_idle_to_pistol_kneel_idle -> Pistol Stand To Kneel (#4, 30 frames), Arm-Space 56
 pistol_kneel_idle_to_pistol_idle -> Pistol Kneel To Stand (#2, 41 frames), Arm-Space 56
 
-
-
+-------------------------------------------------------------
 SHOTGUN LOCOMOTION PACK (UNREAL)
 SHOTGUN STANDING
 shotgun_down_idle -> anim_shotgun_stand_idle
@@ -159,19 +158,17 @@ shotgun_crouch_aim_idle -> anim_shotgun_crouch_aim_idle
 shotgun_crouch_aim_to_shotgun_crouch_down -> anim_shotgun_crouch_aim_idle_to_crouch_idle
 shotgun_crouch_down_to_shotgun_crouch_aim -> anim_shotgun_crouch_idle_to_crouch_aim_idle
 shotgun_down_to_shotgun_crouch_down -> anim_shotgun_stand_idle_to_crouch
-shotgun_aim_to_shotgun_crouch_aim -> MISSING
-shotgun_crouch_aim_to_shotgun_aim -> MISSING
+
+shotgun_aim_to_shotgun_crouch_aim -> anim_shotgun_aim_idle_to_crouch_aim_idle
+shotgun_crouch_aim_to_shotgun_aim -> anim_shotgun_crouch_aim_idle_to_aim_idle
+
 shotgun_crouch_down_to_shotgun_down -> anim_shotgun_crouch_idle_to_stand
 shotgun_crouch_aim_fire -> anim_shotgun_crouch_aim_fire
-shotgun_crouch_aim_reload -> MISSING
 
+shotgun_crouch_aim_reload -> anim_shotgun_crouch_aim_reload
+shotgun_crouch_down_walk -> anim_shotgun_crouch_fwd_loop
 
-REQUESTED MandB for these 3 to complete the shotgun pack:
-anim_shotgun_crouch_aim_idle_to_aim_idle
-anim_shotgun_aim_idle_to_crouch_aim_idle
-anim_shotgun_crouch_aim_reload
-
-
+-------------------------------------------------------------
 MOCAP CORE MOTION
 UNARMED FEMALE
 unarmed_female_idle -> af_Stand_Idle_01
