@@ -19,11 +19,13 @@ var _is_processing: bool = false
 
 
 const IDLE_STATES: Array[String] = [
-	"idle",
+	"unarmed_idle",
+	"unarmed_crouch_idle",
 	"rifle_down_idle",
 ]
 const MOVE_STATES: Array[String] = [
-	"idle",
+	"unarmed_idle",
+	"unarmed_crouch_idle",
 	"move",
 	"rifle_down_idle",
 ]

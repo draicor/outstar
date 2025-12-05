@@ -1,12 +1,13 @@
-[gd_scene load_steps=21 format=3 uid="uid://xgut27qtlpbd"]
+[gd_scene load_steps=22 format=3 uid="uid://xgut27qtlpbd"]
 
 [ext_resource type="Script" uid="uid://bflh4x8wu5ha6" path="res://classes/player/player.gd" id="1_jpa1g"]
 [ext_resource type="PackedScene" uid="uid://2gtaxxvwtitn" path="res://components/chat_bubble/chat_bubble_manager.tscn" id="2_634de"]
 [ext_resource type="Script" uid="uid://pj5y64im6vua" path="res://classes/player/player_movement.gd" id="3_45urx"]
 [ext_resource type="Script" uid="uid://ckjkgvmrct0fl" path="res://classes/player/player_state_machine.gd" id="3_iula3"]
-[ext_resource type="Script" uid="uid://dvxu1h32y12r4" path="res://classes/player/player_states/idle_state.gd" id="4_s60wy"]
+[ext_resource type="Script" uid="uid://dvxu1h32y12r4" path="res://classes/player/player_states/unarmed_idle_state.gd" id="4_s60wy"]
 [ext_resource type="Script" uid="uid://ib2ghq7y4gdb" path="res://classes/player/player_states/move_state.gd" id="5_td0ib"]
 [ext_resource type="Script" uid="uid://dcb11p82v1h66" path="res://classes/player/player_states/interact_state.gd" id="6_6725j"]
+[ext_resource type="Script" uid="uid://chawfigbbwn45" path="res://classes/player/player_states/unarmed_crouch_idle_state.gd" id="6_xlkbi"]
 [ext_resource type="Script" uid="uid://bhb23oshl2yxq" path="res://classes/player/player_states/rifle_down_idle_state.gd" id="7_6725j"]
 [ext_resource type="Script" uid="uid://dweks61qqwx50" path="res://classes/player/player_animator.gd" id="7_td0ib"]
 [ext_resource type="Script" uid="uid://dnyl6g0hdrkme" path="res://classes/player/player_states/rifle_aim_idle_state.gd" id="8_4ka5w"]
@@ -78,9 +79,13 @@ metadata/_custom_type_script = "uid://pj5y64im6vua"
 script = ExtResource("3_iula3")
 metadata/_custom_type_script = "uid://ckjkgvmrct0fl"
 
-[node name="IdleState" type="Node" parent="PlayerStateMachine"]
+[node name="UnarmedIdleState" type="Node" parent="PlayerStateMachine"]
 script = ExtResource("4_s60wy")
 metadata/_custom_type_script = "uid://dvxu1h32y12r4"
+
+[node name="UnarmedCrouchIdleState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("6_xlkbi")
+metadata/_custom_type_script = "uid://chawfigbbwn45"
 
 [node name="MoveState" type="Node" parent="PlayerStateMachine"]
 script = ExtResource("5_td0ib")
@@ -90,6 +95,10 @@ metadata/_custom_type_script = "uid://ib2ghq7y4gdb"
 script = ExtResource("6_6725j")
 metadata/_custom_type_script = "uid://dcb11p82v1h66"
 
+[node name="DeadState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("10_ylcck")
+metadata/_custom_type_script = "uid://hbfve37uavsw"
+
 [node name="RifleDownIdleState" type="Node" parent="PlayerStateMachine"]
 script = ExtResource("7_6725j")
 metadata/_custom_type_script = "uid://bhb23oshl2yxq"
@@ -97,10 +106,6 @@ metadata/_custom_type_script = "uid://bhb23oshl2yxq"
 [node name="RifleAimIdleState" type="Node" parent="PlayerStateMachine"]
 script = ExtResource("8_4ka5w")
 metadata/_custom_type_script = "uid://dnyl6g0hdrkme"
-
-[node name="DeadState" type="Node" parent="PlayerStateMachine"]
-script = ExtResource("10_ylcck")
-metadata/_custom_type_script = "uid://hbfve37uavsw"
 
 [node name="RifleCrouchDownIdleState" type="Node" parent="PlayerStateMachine"]
 script = ExtResource("11_dthqj")

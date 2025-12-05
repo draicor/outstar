@@ -86,6 +86,17 @@ var animation_events: Dictionary[String, Array] = {
 }
 
 var weapon_animations: Dictionary[String, Dictionary] = {
+	"unarmed": {
+		"down_to_crouch_down": {
+			animation = "unarmed/unarmed_male_idle_to_unarmed_crouch_idle",
+			play_rate = 2.5
+		},
+		"crouch_down_to_down": {
+			animation = "unarmed/unarmed_crouch_idle_to_unarmed_male_idle",
+			play_rate = 2.5
+		},
+		# NOTE: equip and unequip animations for unarmed would just be transitions
+	},
 	"rifle": {
 		"equip": {
 			animation = "rifle/rifle_equip",
@@ -346,8 +357,8 @@ func update_locomotion_animation(cells_to_move: int) -> void:
 # Returns the idle state name 
 func get_idle_state_name() -> String:
 	match locomotion:
-		unarmed_female_locomotion: return "idle"
-		unarmed_male_locomotion: return "idle"
+		unarmed_female_locomotion: return "unarmed_idle"
+		unarmed_male_locomotion: return "unarmed_idle"
 		unarmed_crouch_locomotion: return "unarmed_crouch_idle"
 		rifle_down_locomotion: return "rifle_down_idle"
 		rifle_aim_locomotion: return "rifle_down_idle"

@@ -210,11 +210,11 @@ func update_weapon_state() -> void:
 	if is_crouching:
 		if weapon_type == "unarmed":
 			# Try unarmed crouch state if available
-			if player_state_machine.has_state("crouch_idle"):
-				weapon_state = "crouch_idle"
+			if player_state_machine.has_state("unarmed_crouch_idle"):
+				weapon_state = "unarmed_crouch_idle"
 			else:
 				# If we don't have a crouch state available, use standing idle
-				weapon_state = "idle"
+				weapon_state = "unarmed_idle"
 		# If we have a weapon equipped and we are crouching
 		else:
 			var crouch_down_state: String = weapon_type + "_crouch_down_idle"
@@ -230,7 +230,7 @@ func update_weapon_state() -> void:
 	
 	# If we still don't have a valid state, fallback to basic idle
 	if weapon_state == "" or not player_state_machine.has_state(weapon_state):
-		weapon_state = "idle"
+		weapon_state = "unarmed_idle"
 	
 	# Only change state if we are not already in it
 	if player_state_machine.get_current_state_name() != weapon_state:
@@ -609,6 +609,10 @@ func can_raise_weapon() -> bool:
 	var weapon_type: String = player_equipment.get_current_weapon_type()
 	var current_state_name: String = player_state_machine.get_current_state_name()
 	
+	# If unarmed, we don't have raise/lower states, so return false
+	if weapon_type == "unarmed":
+		return false
+	
 	# Valid states for raising weapon: weapon_down_idle OR weapon_crouch_down_idle
 	var valid_raise_states: Array[String] = [
 		weapon_type + "_down_idle",
@@ -625,6 +629,10 @@ func can_lower_weapon() -> bool:
 	# Check if we are in the right player state
 	var weapon_type: String = player_equipment.get_current_weapon_type()
 	var current_state_name: String = player_state_machine.get_current_state_name()
+	
+	# If unarmed, we don't have raise/lower states, so return false
+	if weapon_type == "unarmed":
+		return false
 	
 	# Valid states for lowering weapon: weapon_aim_idle OR weapon_crouch_aim_idle
 	var valid_lower_states: Array[String] = [
@@ -770,7 +778,7 @@ func handle_respawn() -> void:
 	update_collision_shapes()
 	
 	if player_state_machine:
-		# Force idle state if not already idling
+		# Force unarmed_idle state if not already idling
 		var current_state_name: String = player_state_machine.get_current_state_name()
 		var target_state_name: String = player_animator.get_idle_state_name()
 		# If the target_state_name is valid
