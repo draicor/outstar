@@ -1,0 +1,49 @@
+Remington870 Shotgun Settings:
+In blender, the model is positive Z-up and facing negative Y.
+Exported as GBL as a single mesh named Mesh.
+Exported at the proper scale from blender.
+Object origin should be at the weapon trigger.
+Object origin should be at world origin in blender too.
+
+
+Mesh Position:
+x: -0.01m
+y: 0.14m
+z: 0.05m
+
+Mesh Rotation:
+x: -90.0°
+y: -90.0°
+z: 0.0°
+
+LeftHandMarker3D as child of the weapon root node:
+LeftHandMarker3D Position:
+x: -0.006m
+y: 0.428m
+z: 0.09m
+
+LeftHandMarker3D Rotation:
+x: -7.1°
+y: 95.4°
+z: -45.3°
+
+MuzzleMarker3D as child of weapon root node:
+MuzzleMarker3D Position:
+x: 0.058m
+y: 0.776m
+z: 0.049m
+
+MuzzleMarker3D Rotation:
+x: 88.2°
+y: 0.0°
+z: 0.0°
+
+ProjectileMuzzleFlash as child of MuzzleMarker3D:
+ProjectileMuzzleFlash Rotation:
+x: 0.0°
+y: -176.5°
+z: 0.0°
+
+root_bone: LeftShoulder
+tip_bone: LeftHand
+

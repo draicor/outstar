@@ -1,0 +1,49 @@
+AKM Rifle Settings:
+In blender, the model is positive Z-up and facing negative Y.
+Exported as GBL as a single mesh named Mesh.
+Exported at the proper scale from blender.
+Object origin should be at the weapon trigger.
+Object origin should be at world origin in blender too.
+
+
+Mesh Position:
+x: 0.014m
+y: 0.133m
+z: 0.03m
+
+Mesh Rotation:
+x: -83.5°
+y: -90.0°
+z: 3.5°
+
+LeftHandMarker3D as child of the weapon root node:
+LeftHandMarker3D Position:
+x: 0.017m
+y: 0.3m
+z: 0.087m
+
+LeftHandMarker3D Rotation:
+x: -1.5°
+y: 112.5°
+z: -70.8°
+
+MuzzleMarker3D as child of weapon root node:
+MuzzleMarker3D Position:
+x: 0.011m
+y: 0.682m
+z: 0.026m
+
+MuzzleMarker3D Rotation:
+x: 88.2°
+y: 0.0°
+z: 0.0°
+
+ProjectileMuzzleFlash as child of MuzzleMarker3D:
+ProjectileMuzzleFlash Rotation:
+x: 0.0°
+y: -176.5°
+z: 0.0°
+
+root_bone: LeftShoulder
+tip_bone: LeftHand
+
