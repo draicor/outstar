@@ -10,9 +10,9 @@ unarmed_female_jog (29) 1-27 loop
 unarmed_female_walk (43) 1-42 loop
 unarmed_male_idle (172) 1-170 loop
 unarmed_male_idle_to_unarmed_crouch_idle (57) 1-55 [Cropped the first 15 frames to make it more responsive] 1-42
-unarmed_male_jog(25) 1-23 loop
-unarmed_male_run (18) 1-16  loop
+unarmed_male_jog (25) 1-23 loop
 unarmed_male_walk (37) 1-35 loop
+unarmed_run (20) 1-18 loop
 
 RIFLE
 rifle_aim_death_a (102) 1-101

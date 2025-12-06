@@ -4,35 +4,17 @@ How to export from Mixamo to Godot and use Animation Libraries
 https://www.youtube.com/watch?v=61WEupW4Eow
 How to remove root motion from Mixamo animations in blender
 
-FEMALE
-female_idle -> Standing Idle
-250 frames [female bot thumbnail]
-female_walk -> Feminine Walk Forward
-29 frames
-female_jog -> Same female_run animation but slowed down
-female_run -> Medium Speed Running
-17 frames
 
-female_texting_idle -> Standing Texting On Phone
-556 frames, SPLIT INTO 3 animations (start, loop & end)
-female_texting_walk -> Female Walking And Texting On Phone
-99 frames
+UNARMED
+unarmed_run -> Running Forward
+18 frames
 
 
-MALE
-male_idle -> Standing Idle
-250 frames [male bot thumbnail]
-male_walk -> Standard Walk
-35 frames
-male_jog -> Male Weighted Run
-25->24 frames, Speed 75
-male_run -> Running With Intention
-21 frames
-
+PHONE
 male_texting_idle -> Texting On A Smart Phone While Standing
 707 frames, SPLIT INTO 3 animations (start, loop & end)
-male_texting_walk -> Male Walking While Texting On A Smartphone
-120 frames
+female_texting_idle -> Standing Texting On Phone
+556 frames, SPLIT INTO 3 animations (start, loop & end)
 
 
 RIFLE

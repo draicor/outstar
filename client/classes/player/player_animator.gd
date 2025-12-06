@@ -12,13 +12,13 @@ var unarmed_female_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "unarmed/unarmed_female_idle", play_rate = 1.0},
 	"walk": {animation = "unarmed/unarmed_female_walk", play_rate = 1.35},
 	"jog": {animation = "unarmed/unarmed_female_jog", play_rate = 1.2},
-	"run": {animation = "unarmed/unarmed_male_run", play_rate = 1.0}
+	"run": {animation = "unarmed/unarmed_run", play_rate = 1.0}
 }
 var unarmed_male_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "unarmed/unarmed_male_idle", play_rate = 1.0},
 	"walk": {animation = "unarmed/unarmed_male_walk", play_rate = 1.35},
 	"jog": {animation = "unarmed/unarmed_male_jog", play_rate = 1.2},
-	"run": {animation = "unarmed/unarmed_male_run", play_rate = 1.0}
+	"run": {animation = "unarmed/unarmed_run", play_rate = 1.0}
 }
 var unarmed_crouch_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "unarmed/unarmed_crouch_idle", play_rate = 1.0},
@@ -184,30 +184,30 @@ func _setup_animation_blend_time() -> void:
 	# Blend female locomotion
 	animation_player.set_blend_time("unarmed/unarmed_female_idle", "unarmed/unarmed_female_walk", 0.2)
 	animation_player.set_blend_time("unarmed/unarmed_female_idle", "unarmed/unarmed_female_jog", 0.05)
-	animation_player.set_blend_time("unarmed/unarmed_female_idle", "unarmed/unarmed_male_run", 0.05)
+	animation_player.set_blend_time("unarmed/unarmed_female_idle", "unarmed/unarmed_run", 0.05)
 	animation_player.set_blend_time("unarmed/unarmed_female_walk", "unarmed/unarmed_female_idle", 0.15)
 	animation_player.set_blend_time("unarmed/unarmed_female_walk", "unarmed/unarmed_female_jog", 0.15)
-	animation_player.set_blend_time("unarmed/unarmed_female_walk", "unarmed/unarmed_male_run", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_female_walk", "unarmed/unarmed_run", 0.15)
 	animation_player.set_blend_time("unarmed/unarmed_female_jog", "unarmed/unarmed_female_idle", 0.2)
 	animation_player.set_blend_time("unarmed/unarmed_female_jog", "unarmed/unarmed_female_walk", 0.2)
-	animation_player.set_blend_time("unarmed/unarmed_female_jog", "unarmed/unarmed_male_run", 0.2)
-	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_female_idle", 0.2)
-	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_female_walk", 0.2)
-	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_female_jog", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_female_jog", "unarmed/unarmed_run", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_run", "unarmed/unarmed_female_idle", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_run", "unarmed/unarmed_female_walk", 0.2)
+	animation_player.set_blend_time("unarmed/unarmed_run", "unarmed/unarmed_female_jog", 0.2)
 	
 	# Blend male locomotion
 	animation_player.set_blend_time("unarmed/unarmed_male_idle", "unarmed/unarmed_male_walk", 0.2)
 	animation_player.set_blend_time("unarmed/unarmed_male_idle", "unarmed/unarmed_male_jog", 0.1)
-	animation_player.set_blend_time("unarmed/unarmed_male_idle", "unarmed/unarmed_male_run", 0.1)
+	animation_player.set_blend_time("unarmed/unarmed_male_idle", "unarmed/unarmed_run", 0.1)
 	animation_player.set_blend_time("unarmed/unarmed_male_walk", "unarmed/unarmed_male_idle", 0.15)
 	animation_player.set_blend_time("unarmed/unarmed_male_walk", "unarmed/unarmed_male_jog", 0.15)
-	animation_player.set_blend_time("unarmed/unarmed_male_walk", "unarmed/unarmed_male_run", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_male_walk", "unarmed/unarmed_run", 0.15)
 	animation_player.set_blend_time("unarmed/unarmed_male_jog", "unarmed/unarmed_male_idle", 0.15)
 	animation_player.set_blend_time("unarmed/unarmed_male_jog", "unarmed/unarmed_male_walk", 0.15)
-	animation_player.set_blend_time("unarmed/unarmed_male_jog", "unarmed/unarmed_male_run", 0.15)
-	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_male_idle", 0.15)
-	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_male_walk", 0.15)
-	animation_player.set_blend_time("unarmed/unarmed_male_run", "unarmed/unarmed_male_jog", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_male_jog", "unarmed/unarmed_run", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_run", "unarmed/unarmed_male_idle", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_run", "unarmed/unarmed_male_walk", 0.15)
+	animation_player.set_blend_time("unarmed/unarmed_run", "unarmed/unarmed_male_jog", 0.15)
 	
 	# Blend unarmed crouch locomotion
 	animation_player.set_blend_time("unarmed/unarmed_crouch_idle", "unarmed/unarmed_crouch_walk", 0.2)
