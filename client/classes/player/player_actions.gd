@@ -281,12 +281,12 @@ func _process_raise_weapon_action() -> void:
 	var target_state_name: String
 	
 	match current_state_name:
-		"rifle_down_idle":
+		"rifle_down_idle", "shotgun_down_idle":
 			animation_type = "down_to_aim"
-			target_state_name = "rifle_aim_idle"
-		"rifle_crouch_down_idle":
+			target_state_name = weapon_type + "_aim_idle"
+		"rifle_crouch_down_idle", "shotgun_crouch_down_idle":
 			animation_type = "crouch_down_to_crouch_aim"
-			target_state_name = "rifle_crouch_aim_idle"
+			target_state_name = weapon_type + "_crouch_aim_idle"
 		_:
 			push_error("Error in match current_state_name inside _process_raise_weapon_action()")
 	
@@ -325,12 +325,12 @@ func _process_lower_weapon_action() -> void:
 	var target_state_name: String
 	
 	match current_state:
-		"rifle_aim_idle":
+		"rifle_aim_idle", "shotgun_aim_idle":
 			animation_type = "aim_to_down"
-			target_state_name = "rifle_down_idle"
-		"rifle_crouch_aim_idle":
+			target_state_name = weapon_type + "_down_idle"
+		"rifle_crouch_aim_idle", "shotgun_crouch_aim_idle":
 			animation_type = "crouch_aim_to_crouch_down"
-			target_state_name = "rifle_crouch_down_idle"
+			target_state_name = weapon_type + "_crouch_down_idle"
 		_:
 			push_error("Error in match current_state inside _process_lower_weapon_action()")
 	
@@ -378,9 +378,9 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	# Determine reload animation based on state
 	var reload_animation: String
 	match current_state_name:
-		"rifle_aim_idle":
+		"rifle_aim_idle", "shotgun_aim_idle":
 			reload_animation = "reload"
-		"rifle_crouch_aim_idle":
+		"rifle_crouch_aim_idle", "shotgun_crouch_aim_idle":
 			reload_animation = "crouch_reload"
 		"_":
 			push_error("Error in match current_state_name inside _process_reload_weapon_action()")
@@ -835,15 +835,17 @@ func _process_enter_crouch_action() -> void:
 	
 	# Determine target crouch state based on current state
 	match current_state_name:
-		"rifle_aim_idle":
-			animation_type = "aim_to_crouch_aim"
-			target_state_name = "rifle_crouch_aim_idle"
-		"rifle_down_idle":
-			animation_type = "down_to_crouch_down"
-			target_state_name = "rifle_crouch_down_idle"
 		"unarmed_idle":
 			animation_type = "down_to_crouch_down"
 			target_state_name = "unarmed_crouch_idle"
+		# WEAPON DOWN TO WEAPON CROUCH DOWN
+		"rifle_down_idle", "shotgun_down_idle":
+			animation_type = "down_to_crouch_down"
+			target_state_name = weapon_type + "_crouch_down_idle"
+		# WEAPON AIM TO WEAPON CROUCH AIM
+		"rifle_aim_idle", "shotgun_aim_idle":
+			animation_type = "aim_to_crouch_aim"
+			target_state_name = weapon_type + "_crouch_aim_idle"
 		"_":
 			push_error("Error in match current_state_name inside _process_enter_crouch_action()")
 			return
@@ -878,15 +880,17 @@ func _process_leave_crouch_action() -> void:
 	
 	# Determine target crouch state based on current state
 	match current_state_name:
-		"rifle_crouch_aim_idle":
-			animation_type = "crouch_aim_to_aim"
-			target_state_name = "rifle_aim_idle"
-		"rifle_crouch_down_idle":
-			animation_type = "crouch_down_to_down"
-			target_state_name = "rifle_down_idle"
 		"unarmed_crouch_idle":
 			animation_type = "crouch_down_to_down"
 			target_state_name = "unarmed_idle"
+		# WEAPON CROUCH DOWN TO WEAPON DOWN
+		"rifle_crouch_down_idle", "shotgun_crouch_down_idle":
+			animation_type = "crouch_down_to_down"
+			target_state_name = weapon_type + "_down_idle"
+		# WEAPON CROUCH AIM TO WEAPON AIM
+		"rifle_crouch_aim_idle", "shotgun_crouch_aim_idle":
+			animation_type = "crouch_aim_to_aim"
+			target_state_name = weapon_type + "_aim_idle"
 		"_":
 			push_error("Error in match current_state_name inside _process_leave_crouch_action()")
 			return

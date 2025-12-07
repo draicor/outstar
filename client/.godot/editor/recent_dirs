@@ -1,3 +1,5 @@
+res://classes/weapons
+res://objects/weapons
 C:/Users/Draicor/Documents/Draicor/mmo/client/bin/windows
 res://assets/animations
 res://objects/characters
@@ -6,8 +8,6 @@ C:/Users/Draicor/Documents/Draicor/mmo/client/bin/android
 C:/Program Files/Eclipse Adoptium/jdk-17.0.17.10-hotspot
 res://autoloads
 C:/Users/Draicor/Documents/Draicor/mmo/client/bin/linux
-res://classes/weapons
-res://objects/weapons
 res://objects/destructible
 res://sfx
 res://assets/shaders

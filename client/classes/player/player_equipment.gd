@@ -10,15 +10,18 @@ var weapon_scenes: Dictionary[String, PackedScene] = {
 	"unarmed": null,
 	"m16_rifle": preload("res://objects/weapons/m16_rifle.tscn"),
 	"akm_rifle": preload("res://objects/weapons/akm_rifle.tscn"),
+	"remington870_shotgun": preload("res://objects/weapons/remington870_shotgun.tscn"),
 }
 var weapon_types: Dictionary[String, String] = {
 	"unarmed": "unarmed",
 	"m16_rifle": "rifle",
 	"akm_rifle": "rifle",
+	"remington870_shotgun": "shotgun",
 }
 var weapon_states: Dictionary[String, String] = {
 	"unarmed": "unarmed_idle",
 	"rifle": "rifle_down_idle",
+	"shotgun": "shotgun_down_idle",
 }
 
 # Player variables
@@ -253,6 +256,7 @@ func add_weapon_to_slot(slot: int, weapon_name: String, ammo: int = 0, fire_mode
 		"unarmed": weapon_slots[slot]["display_name"] = "Unarmed"
 		"akm_rifle": weapon_slots[slot]["display_name"] = "AKM Rifle"
 		"m16_rifle": weapon_slots[slot]["display_name"] = "M16 Rifle"
+		"remington870_shotgun": weapon_slots[slot]["display_name"] = "Remington 870 Shotgun"
 		_: weapon_slots[slot]["display_name"] = "Unknown Weapon"
 	
 	# Set initial ammo
@@ -364,6 +368,8 @@ func reload_equipped_weapon(amount: int) -> void:
 	match weapon_name:
 		"m16_rifle", "akm_rifle":
 			set_current_ammo(amount)
+		"remington870_shotgun":
+			set_current_ammo(amount)
 		_:
 			return
 
@@ -373,5 +379,7 @@ func get_current_weapon_max_ammo() -> int:
 	match weapon_name:
 		"m16_rifle", "akm_rifle":
 			return 30
+		"remington870_shotgun":
+			return 6
 		_:
 			return 0

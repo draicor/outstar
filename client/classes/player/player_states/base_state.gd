@@ -37,9 +37,8 @@ func broadcast_rotation_if_changed():
 func is_weapon_down_idle_state() -> bool:
 	var current_state: String = player.player_state_machine.get_current_state_name()
 	match current_state:
-		"rifle_down_idle":
-			return true
-		"rifle_crouch_down_idle":
+		"rifle_down_idle", "rifle_crouch_down_idle",\
+		"shotgun_down_idle", "shotgun_crouch_down_idle":
 			return true
 		_:
 			return false
@@ -49,9 +48,8 @@ func is_weapon_down_idle_state() -> bool:
 func is_weapon_aim_idle_state() -> bool:
 	var current_state: String = player.player_state_machine.get_current_state_name()
 	match current_state:
-		"rifle_aim_idle":
-			return true
-		"rifle_crouch_aim_idle":
+		"rifle_aim_idle", "rifle_crouch_aim_idle",\
+		"shotgun_aim_idle", "shotgun_crouch_aim_idle":
 			return true
 		_:
 			return false

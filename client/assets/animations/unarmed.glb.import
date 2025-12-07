@@ -14431,7 +14431,7 @@ _subresources={
 "slice_99/start_frame": 0,
 "slices/amount": 0
 },
-"unarmed_male_run": {
+"unarmed_male_walk": {
 "save_to_file/enabled": false,
 "save_to_file/fallback_path": "",
 "save_to_file/keep_custom_tracks": "",
@@ -16487,7 +16487,7 @@ _subresources={
 "slice_99/start_frame": 0,
 "slices/amount": 0
 },
-"unarmed_male_walk": {
+"unarmed_run": {
 "save_to_file/enabled": false,
 "save_to_file/fallback_path": "",
 "save_to_file/keep_custom_tracks": "",

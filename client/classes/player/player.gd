@@ -226,7 +226,18 @@ func update_weapon_state() -> void:
 				weapon_state = player_animator.get_idle_state_name()
 	# Standing
 	else:
-		weapon_state = player_animator.get_idle_state_name()
+		# If we have a weapon equipped
+		if weapon_type != "unarmed":
+			var down_state: String = weapon_type + "_down_idle"
+			# Try weapon down state if available
+			if player_state_machine.has_state(down_state):
+				weapon_state = down_state
+			else:
+				# Fallback to unarmed
+				push_error("Error inside player.update_weapon_state(), weapon_down_state not available for :", weapon_type)
+				weapon_state = "unarmed_idle"
+		else:
+			weapon_state = "unarmed_idle"
 	
 	# If we still don't have a valid state, fallback to basic idle
 	if weapon_state == "" or not player_state_machine.has_state(weapon_state):

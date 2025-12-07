@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://xgut27qtlpbd"]
+[gd_scene load_steps=26 format=3 uid="uid://xgut27qtlpbd"]
 
 [ext_resource type="Script" uid="uid://bflh4x8wu5ha6" path="res://classes/player/player.gd" id="1_jpa1g"]
 [ext_resource type="PackedScene" uid="uid://2gtaxxvwtitn" path="res://components/chat_bubble/chat_bubble_manager.tscn" id="2_634de"]
@@ -18,6 +18,10 @@
 [ext_resource type="Script" uid="uid://b386r8xhr3g43" path="res://classes/player/player_states/rifle_crouch_aim_idle_state.gd" id="12_xlkbi"]
 [ext_resource type="Script" uid="uid://bj3ahj1d4q5pq" path="res://classes/player/player_packets.gd" id="13_c34wb"]
 [ext_resource type="Script" uid="uid://bscnqm2gbffuw" path="res://classes/player/player_actions.gd" id="14_45rsp"]
+[ext_resource type="Script" uid="uid://uvqggsm0x0fw" path="res://classes/player/player_states/shotgun_down_idle_state.gd" id="14_u8bnf"]
+[ext_resource type="Script" uid="uid://c1ie5yeuqgn3p" path="res://classes/player/player_states/shotgun_aim_idle_state.gd" id="15_lc6id"]
+[ext_resource type="Script" uid="uid://cqa13pehbtbr5" path="res://classes/player/player_states/shotgun_crouch_down_idle_state.gd" id="16_tmow5"]
+[ext_resource type="Script" uid="uid://c17ocxv58o88s" path="res://classes/player/player_states/shotgun_crouch_aim_idle_state.gd" id="17_r5k7d"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_dthqj"]
 resource_local_to_scene = true
@@ -114,6 +118,22 @@ metadata/_custom_type_script = "uid://11vyhkx2sqk4"
 [node name="RifleCrouchAimIdleState" type="Node" parent="PlayerStateMachine"]
 script = ExtResource("12_xlkbi")
 metadata/_custom_type_script = "uid://b386r8xhr3g43"
+
+[node name="ShotgunDownIdleState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("14_u8bnf")
+metadata/_custom_type_script = "uid://uvqggsm0x0fw"
+
+[node name="ShotgunAimIdleState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("15_lc6id")
+metadata/_custom_type_script = "uid://c1ie5yeuqgn3p"
+
+[node name="ShotgunCrouchDownIdleState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("16_tmow5")
+metadata/_custom_type_script = "uid://cqa13pehbtbr5"
+
+[node name="ShotgunCrouchAimIdleState" type="Node" parent="PlayerStateMachine"]
+script = ExtResource("17_r5k7d")
+metadata/_custom_type_script = "uid://c17ocxv58o88s"
 
 [node name="PlayerAnimator" type="Node" parent="."]
 script = ExtResource("7_td0ib")

@@ -446,7 +446,7 @@ func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.Us
 		{WeaponName: "unarmed", WeaponType: "unarmed", DisplayName: "Empty", Ammo: 0, FireMode: 0},
 		{WeaponName: "akm_rifle", WeaponType: "rifle", DisplayName: "AKM Rifle", Ammo: 30, FireMode: 0},
 		{WeaponName: "m16_rifle", WeaponType: "rifle", DisplayName: "M16 Rifle", Ammo: 30, FireMode: 0},
-		{WeaponName: "unarmed", WeaponType: "unarmed", DisplayName: "Empty", Ammo: 0, FireMode: 0},
+		{WeaponName: "remington870_shotgun", WeaponType: "shotgun", DisplayName: "Remington 870 Shotgun", Ammo: 6, FireMode: 0},
 		{WeaponName: "unarmed", WeaponType: "unarmed", DisplayName: "Empty", Ammo: 0, FireMode: 0},
 	}
 
