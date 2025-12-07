@@ -18,11 +18,11 @@ var ShotgunType: Dictionary[Shotguns, String] = {
 @export var weapon_max_distance: float = 25.0 # meters
 
 # Recoil stats
-@export var spread_angle: float = 15.0 # degrees of spread
+@export var spread_angle: float = 5.0 # degrees of spread
 @export var pellet_count: int = 9 # Number of pellets per shot
-@export var horizontal_recoil: float = 2.0
-@export var vertical_recoil: float = 3.0
-@export var lower_vertical_recoil: float = 4.5
+@export var horizontal_recoil: float = 0.5
+@export var vertical_recoil: float = 0.5
+@export var lower_vertical_recoil: float = 0.5 # 3.0
 var min_yaw_recoil: float
 var max_yaw_recoil: float
 var min_pitch_recoil: float
@@ -116,9 +116,9 @@ func is_weapon_inside_wall() -> bool:
 		var results: Array[Dictionary] = get_world_3d().direct_space_state.intersect_shape(query)
 		
 		# Debug visualization
-		#if DebugDraw3D:
-			#var color: Color = Color.RED if results.size() > 0 else Color.GREEN
-			#DebugDraw3D.draw_sphere(check_position, 0.04, color, 0.2)
+		if debug:
+			var color: Color = Color.RED if results.size() > 0 else Color.GREEN
+			DebugDraw3D.draw_sphere(check_position, 0.04, color, 0.2)
 		
 		if results.size() > 0:
 			return true

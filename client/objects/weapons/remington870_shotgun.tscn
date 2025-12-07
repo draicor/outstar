@@ -6,16 +6,15 @@
 
 [node name="remington870_shotgun" instance=ExtResource("1_np8d2")]
 script = ExtResource("2_3nsi8")
-debug = true
 
 [node name="Mesh" parent="." index="0"]
-transform = Transform3D(-4.371139e-08, 1, 4.371139e-08, 0, -4.371139e-08, 1, 1, 4.371139e-08, 1.9106855e-15, -0.01, 0.14, 0.05)
+transform = Transform3D(3.3993274e-05, 0.9999981, -0.0019481423, -0.034845077, 0.0019481439, 0.99939084, 0.99939275, 3.3903867e-05, 0.034845077, -0.01, 0.14, 0.05)
 
 [node name="LeftHandMarker3D" type="Marker3D" parent="." index="1"]
-transform = Transform3D(-0.00643824, -0.0185256, 0.043588, -0.0590028, 0.0164894, 0.00123543, -0.0195807, -0.0435965, -0.0180547, 0.021, 0.394729, 0.102589086)
+transform = Transform3D(0.021270685, -0.15344688, 0.9879279, -0.70534897, 0.698001, 0.123601474, -0.708541, -0.69946307, -0.09338665, -0.008, 0.428, 0.108)
 
 [node name="MuzzleMarker3D" type="Marker3D" parent="." index="2"]
-transform = Transform3D(1, 0, 0, 0, 0.0314107, -0.999507, 0, 0.999507, 0.0314107, 0.05755561, 0.7759671, 0.04907331)
+transform = Transform3D(1, 0, 0, 0, -0.05233594, -0.9986295, 0, 0.9986295, -0.05233594, 0.05755561, 0.7742262, 0.07186699)
 
 [node name="ProjectileMuzzleFlash" parent="MuzzleMarker3D" index="0" instance=ExtResource("3_eo6jo")]
-transform = Transform3D(-0.998135, 0, -0.0610486, 0, 1, -7.45058e-09, 0.0610486, 0, -0.998135, 0, 0, 0)
+transform = Transform3D(-0.9981348, 0, -0.061048582, 0, 1, 0, 0.061048582, 0, -0.9981348, 0, 0, 0)

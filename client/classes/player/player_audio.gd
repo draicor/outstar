@@ -2,6 +2,7 @@ extends Node3D
 class_name PlayerAudio
 
 # WEAPONS #
+# RIFLE #
 # M16 rifle sounds
 const M16_RIFLE_CHARGING_HANDLE = preload("res://assets/sounds/sfx/rifle/m16_rifle/m16_rifle_charging_handle.wav")
 const M16_RIFLE_DRY_FIRE_SINGLE = preload("res://assets/sounds/sfx/rifle/m16_rifle/m16_rifle_dry_fire_single.wav")
@@ -16,6 +17,12 @@ const AKM_RIFLE_FIRE_MODE_SELECTOR = preload("res://assets/sounds/sfx/rifle/akm_
 const AKM_RIFLE_FIRE_SINGLE = preload("res://assets/sounds/sfx/rifle/akm_rifle/akm_rifle_fire_single.wav")
 const AKM_RIFLE_INSERT_MAGAZINE = preload("res://assets/sounds/sfx/rifle/akm_rifle/akm_rifle_insert_magazine.wav")
 const AKM_RIFLE_REMOVE_MAGAZINE = preload("res://assets/sounds/sfx/rifle/akm_rifle/akm_rifle_remove_magazine.wav")
+# SHOTGUN #
+# REMINGTON870 shotgun sounds
+const REMINGTON870_SHOTGUN_COCK = preload("res://assets/sounds/sfx/shotgun/remington870_shotgun/remington870_shotgun_cock.wav")
+const REMINGTON870_SHOTGUN_DRY_FIRE = preload("res://assets/sounds/sfx/shotgun/remington870_shotgun/remington870_shotgun_dry_fire.wav")
+const REMINGTON870_SHOTGUN_FIRE = preload("res://assets/sounds/sfx/shotgun/remington870_shotgun/remington870_shotgun_fire.wav")
+const REMINGTON870_SHOTGUN_LOAD_BULLET = preload("res://assets/sounds/sfx/shotgun/remington870_shotgun/remington870_shotgun_load_bullet.wav")
 
 # Internal variables
 var player: Player = null # Our parent node
@@ -23,13 +30,16 @@ var player: Player = null # Our parent node
 # AudioStreamPlayer3D pools
 var current_weapon_fire_single_audio_pool: Array[AudioStreamPlayer3D] = []
 var current_weapon_dry_fire_single_audio_pool: Array[AudioStreamPlayer3D] = []
+var current_weapon_load_bullet_single_audio_pool: Array[AudioStreamPlayer3D] = []
 # Audio Pool Indexes
 var current_weapon_fire_single_index: int = 0
 var current_weapon_dry_fire_single_index: int = 0
-# AudioStreamPlayer3D reload audio players
+var current_weapon_load_bullet_single_index: int = 0
+# AudioStreamPlayer3D audio players
 var remove_magazine_audio_player_3d: AudioStreamPlayer3D
 var insert_magazine_audio_player_3d: AudioStreamPlayer3D
 var charging_handle_audio_player_3d: AudioStreamPlayer3D
+var shotgun_cock_audio_player_3d: AudioStreamPlayer3D
 # AudioStreamPlayer mode selector audio player
 var fire_mode_selector_audio_player: AudioStreamPlayer3D
 
@@ -48,6 +58,10 @@ const M16_RIFLE_DRY_FIRE_VOLUME: float = -9.0 # Base volume in DB
 # AKM RIFLE Setup
 const AKM_RIFLE_FIRE_VOLUME: float = -6.0 # Base volume in DB
 const AKM_RIFLE_DRY_FIRE_VOLUME: float = -13.0 # Base volume in DB
+# REMINGTON870 SHOTGUN Setup
+const REMINGTON870_SHOTGUN_FIRE_VOLUME: float = -6.0 # Base volume in DB
+const REMINGTON870_SHOTGUN_DRY_FIRE_VOLUME: float = -5.0 # Base volume in DB
+const REMINGTON870_SHOTGUN_LOAD_BULLET_VOLUME: float = 8.0 # Base volume in DB
 
 
 func _ready() -> void:
@@ -64,6 +78,8 @@ func setup_weapon_audio_players(weapon_name: String) -> void:
 			_initialize_m16_weapon_audio_players()
 		"akm_rifle":
 			_initialize_akm_weapon_audio_players()
+		"remington870_shotgun":
+			_initialize_remington870_weapon_audio_players()
 		"_":
 			push_error("Error trying to setup %s sounds" % weapon_name)
 
@@ -135,6 +151,47 @@ func _initialize_akm_weapon_audio_players() -> void:
 	charging_handle_audio_player_3d = create_single_audio_player_3d(AKM_RIFLE_CHARGING_HANDLE, 15.0, SOUND_DISTANCE_LOW, "SFX")
 	# Create fire mode selector audio player
 	fire_mode_selector_audio_player = create_single_audio_player_3d(AKM_RIFLE_FIRE_MODE_SELECTOR, -3.0, SOUND_DISTANCE_LOW, "SFX")
+	# Reset indexes
+	current_weapon_fire_single_index = 0
+	current_weapon_dry_fire_single_index = 0
+
+
+func _initialize_remington870_weapon_audio_players() -> void:
+	# Clear the active audio pool
+	current_weapon_fire_single_audio_pool.clear()
+	current_weapon_dry_fire_single_audio_pool.clear()
+	
+	# Create pools of audio players
+	for i in POOL_SIZE:
+		# Weapon single fire sound pool
+		var weapon_fire_single_audio_player: AudioStreamPlayer3D = create_single_audio_player_3d(
+			REMINGTON870_SHOTGUN_FIRE,
+			REMINGTON870_SHOTGUN_FIRE_VOLUME,
+			SOUND_DISTANCE_VERY_HIGH,
+			"SFX"
+		)
+		current_weapon_fire_single_audio_pool.append(weapon_fire_single_audio_player)
+		
+		# Weapon single dry fire sound pool
+		var weapon_dry_fire_single_audio_player: AudioStreamPlayer3D = create_single_audio_player_3d(
+			REMINGTON870_SHOTGUN_DRY_FIRE,
+			REMINGTON870_SHOTGUN_DRY_FIRE_VOLUME,
+			SOUND_DISTANCE_HIGH,
+			"SFX"
+		)
+		current_weapon_dry_fire_single_audio_pool.append(weapon_dry_fire_single_audio_player)
+		
+		# Weapon load bullet sound pool
+		var weapon_load_bullet_single_audio_player: AudioStreamPlayer3D = create_single_audio_player_3d(
+			REMINGTON870_SHOTGUN_LOAD_BULLET,
+			REMINGTON870_SHOTGUN_LOAD_BULLET_VOLUME,
+			SOUND_DISTANCE_LOW,
+			"SFX"
+		)
+		current_weapon_load_bullet_single_audio_pool.append(weapon_load_bullet_single_audio_player)
+	
+	# Create reload audio players
+	shotgun_cock_audio_player_3d = create_single_audio_player_3d(REMINGTON870_SHOTGUN_COCK, 8.0, SOUND_DISTANCE_MID, "SFX")
 	# Reset indexes
 	current_weapon_fire_single_index = 0
 	current_weapon_dry_fire_single_index = 0
@@ -222,3 +279,16 @@ func play_weapon_fire_mode_selector() -> void:
 	
 	fire_mode_selector_audio_player.pitch_scale = randf_range(0.95, 1.05)
 	fire_mode_selector_audio_player.play()
+
+
+func play_weapon_load_bullet() -> void:
+	play_sound_3d_from_pool(current_weapon_load_bullet_single_audio_pool, current_weapon_load_bullet_single_index)
+	current_weapon_load_bullet_single_index = (current_weapon_load_bullet_single_index + 1) % POOL_SIZE
+
+
+func play_weapon_shotgun_cock() -> void:
+	if shotgun_cock_audio_player_3d.playing:
+		return # Don't interrupt ongoing sound
+	
+	shotgun_cock_audio_player_3d.pitch_scale = randf_range(0.95, 1.05)
+	shotgun_cock_audio_player_3d.play()
