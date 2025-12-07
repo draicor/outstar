@@ -42,6 +42,23 @@ var rifle_crouch_down_locomotion: Dictionary[String, Dictionary] = {
 var rifle_crouch_aim_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "rifle/rifle_crouch_aim_idle", play_rate = 1.0},
 }
+var shotgun_down_locomotion: Dictionary[String, Dictionary] = {
+	"idle": {animation = "shotgun/shotgun_down_idle", play_rate = 1.0},
+	"walk": {animation = "shotgun/shotgun_down_walk", play_rate = 1.0},
+	"jog": {animation = "shotgun/shotgun_down_jog", play_rate = 1.0},
+	"run": {animation = "shotgun/shotgun_down_run", play_rate = 1.0},
+}
+var shotgun_aim_locomotion: Dictionary[String, Dictionary] = {
+	"idle": {animation = "shotgun/shotgun_aim_idle", play_rate = 1.0},
+	"walk": {animation = "shotgun/shotgun_aim_walk", play_rate = 1.0},
+}
+var shotgun_crouch_down_locomotion: Dictionary[String, Dictionary] = {
+	"idle": {animation = "shotgun/shotgun_crouch_down_idle", play_rate = 1.0},
+	"walk": {animation = "shotgun/shotgun_crouch_down_walk", play_rate = 1.0},
+}
+var shotgun_crouch_aim_locomotion: Dictionary[String, Dictionary] = {
+	"idle": {animation = "shotgun/shotgun_crouch_aim_idle", play_rate = 1.0},
+}
 
 # Animation events (timing for each animation)
 var current_animation: String = ""
@@ -147,6 +164,56 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 			play_rate = 1.3
 		},
 	},
+	"shotgun": {
+		"equip": {
+			animation = "rifle/rifle_equip", # NOTE using rifle equip for now
+			play_rate = 1.0
+		},
+		"unequip": {
+			animation = "rifle/rifle_unequip", # NOTE using rifle equip for now
+			play_rate = 1.0
+		},
+		"reload": {
+			animation = "shotgun/shotgun_aim_reload",
+			play_rate = 1.0
+		},
+		"crouch_reload": {
+			animation = "shotgun/shotgun_crouch_aim_reload",
+			play_rate = 1.0
+		},
+		"down_to_aim": {
+			animation = "shotgun/shotgun_down_to_shotgun_aim",
+			play_rate = 3.0
+		},
+		"aim_to_down": {
+			animation = "shotgun/shotgun_aim_to_shotgun_down",
+			play_rate = 3.0
+		},
+		"crouch_down_to_crouch_aim": {
+			animation = "shotgun/shotgun_crouch_down_to_shotgun_crouch_aim",
+			play_rate = 2.0
+		},
+		"crouch_aim_to_crouch_down": {
+			animation = "shotgun/shotgun_crouch_aim_to_shotgun_crouch_down",
+			play_rate = 2.0
+		},
+		"crouch_aim_to_aim": {
+			animation = "shotgun/shotgun_crouch_aim_to_shotgun_aim",
+			play_rate = 1.0
+		},
+		"crouch_down_to_down": {
+			animation = "shotgun/shotgun_crouch_down_to_shotgun_down", 
+			play_rate = 1.3
+		},
+		"aim_to_crouch_aim": {
+			animation = "shotgun/shotgun_aim_to_shotgun_crouch_aim",
+			play_rate = 1.0
+		},
+		"down_to_crouch_down": {
+			animation = "shotgun/shotgun_down_to_shotgun_crouch_down",
+			play_rate = 1.3
+		},
+	}
 	# Add more weapon types here
 }
 
@@ -162,7 +229,7 @@ func _ready() -> void:
 	switch_animation_library(player.gender)
 	animation_player = player.find_child("AnimationPlayer", true, false)
 	
-	_setup_animation_blend_time()
+	_setup_animation_blend_times()
 	
 	# Connect to animation player signals to check every frame to call anim events
 	animation_player.connect("animation_started", _on_animation_started)
@@ -176,11 +243,18 @@ func _process(_delta: float) -> void:
 
 
 # Helper function to properly setup animation blend times
-func _setup_animation_blend_time() -> void:
+func _setup_animation_blend_times() -> void:
 	if not animation_player:
 		push_error("AnimationPlayer not set")
 		return
 	
+	_setup_unarmed_animation_blend_times()
+	_setup_rifle_animation_blend_times()
+	_setup_shotgun_animation_blend_times()
+
+
+# Helper function for unarmed blend times
+func _setup_unarmed_animation_blend_times() -> void:
 	# Blend female locomotion
 	animation_player.set_blend_time("unarmed/unarmed_female_idle", "unarmed/unarmed_female_walk", 0.2)
 	animation_player.set_blend_time("unarmed/unarmed_female_idle", "unarmed/unarmed_female_jog", 0.05)
@@ -218,7 +292,10 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("unarmed/unarmed_male_idle_to_unarmed_crouch_idle", "unarmed/unarmed_crouch_idle", 0.2)
 	animation_player.set_blend_time("unarmed/unarmed_crouch_idle", "unarmed/unarmed_crouch_idle_to_unarmed_male_idle", 0.2)
 	animation_player.set_blend_time("unarmed/unarmed_crouch_idle_to_unarmed_male_idle", "unarmed/unarmed_male_idle", 0.2)
-	
+
+
+# Helper function for rifle blend times
+func _setup_rifle_animation_blend_times() -> void:
 	# Blend rifle equip
 	animation_player.set_blend_time("rifle/rifle_equip", "rifle/rifle_down_idle", 0.2)
 	animation_player.set_blend_time("unarmed/unarmed_female_idle", "rifle/rifle_equip", 0.2)
@@ -241,7 +318,6 @@ func _setup_animation_blend_time() -> void:
 	animation_player.set_blend_time("rifle/rifle_aim_idle", "rifle/rifle_aim_fire_single_fast", 0.4)
 	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_fire_single_fast", 0.2)
 	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_walk", 0.2)
-	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_jog", 0.2)
 	animation_player.set_blend_time("rifle/rifle_aim_fire_single_fast", "rifle/rifle_aim_jog", 0.2)
 	
 	# Blend rifle down locomotion
@@ -295,6 +371,77 @@ func _setup_animation_blend_time() -> void:
 	# Blend rifle crouch reload
 	animation_player.set_blend_time("rifle/rifle_crouch_aim_idle", "rifle/rifle_crouch_aim_reload_fast", 0.1)
 	animation_player.set_blend_time("rifle/rifle_crouch_aim_reload_fast", "rifle/rifle_crouch_aim_idle", 0.1)
+
+
+# Helper function for shotgun blend times
+func _setup_shotgun_animation_blend_times() -> void:
+	# Blend shotgun equip
+	animation_player.set_blend_time("rifle/rifle_equip", "shotgun/shotgun_down_idle", 0.4)
+	
+	# Blend shotgun unequip
+	animation_player.set_blend_time("shotgun/shotgun_down_idle", "rifle/rifle_unequip", 0.2)
+	
+	# Blend shotgun down locomotion
+	animation_player.set_blend_time("shotgun/shotgun_down_idle", "shotgun/shotgun_down_walk", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_down_idle", "shotgun/shotgun_down_jog", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_down_idle", "shotgun/shotgun_down_run", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_down_walk", "shotgun/shotgun_down_idle", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_down_walk", "shotgun/shotgun_down_jog", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_down_walk", "shotgun/shotgun_down_run", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_down_jog", "shotgun/shotgun_down_idle", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_down_jog", "shotgun/shotgun_down_walk", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_down_jog", "shotgun/shotgun_down_run", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_down_run", "shotgun/shotgun_down_idle", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_down_run", "shotgun/shotgun_down_walk", 0.3)
+	animation_player.set_blend_time("shotgun/shotgun_down_run", "shotgun/shotgun_down_jog", 0.2)
+	
+	# Blend shotgun aim locomotion
+	animation_player.set_blend_time("shotgun/shotgun_aim_idle", "shotgun/shotgun_aim_walk", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_aim_walk", "shotgun/shotgun_aim_idle", 0.2)
+	
+	# Blend shotgun down and aim locomotions (transitions between down and aim states)
+	animation_player.set_blend_time("shotgun/shotgun_aim_idle", "shotgun/shotgun_down_run", 0.25)
+	animation_player.set_blend_time("shotgun/shotgun_aim_walk", "shotgun/shotgun_down_run", 0.3)
+	animation_player.set_blend_time("shotgun/shotgun_down_run", "shotgun/shotgun_aim_idle", 0.15)
+	animation_player.set_blend_time("shotgun/shotgun_down_run", "shotgun/shotgun_aim_walk", 0.2)
+	
+	# Blend shotgun down to aim and aim to down transitions
+	animation_player.set_blend_time("shotgun/shotgun_down_idle", "shotgun/shotgun_down_to_shotgun_aim", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_down_to_shotgun_aim", "shotgun/shotgun_aim_idle", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_aim_idle", "shotgun/shotgun_aim_to_shotgun_down", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_aim_to_shotgun_down", "shotgun/shotgun_down_idle", 0.2)
+	
+	# Blend shotgun crouch down to crouch aim and back
+	animation_player.set_blend_time("shotgun/shotgun_crouch_down_idle", "shotgun/shotgun_crouch_down_to_shotgun_crouch_aim", 0.1)
+	animation_player.set_blend_time("shotgun/shotgun_crouch_down_to_shotgun_crouch_aim", "shotgun/shotgun_crouch_aim_idle", 0.1)
+	animation_player.set_blend_time("shotgun/shotgun_crouch_aim_idle", "shotgun/shotgun_crouch_aim_to_shotgun_crouch_down", 0.1)
+	animation_player.set_blend_time("shotgun/shotgun_crouch_aim_to_shotgun_crouch_down", "shotgun/shotgun_crouch_down_idle", 0.1)
+	
+	# Blend shotgun aim to crouch aim and back
+	animation_player.set_blend_time("shotgun/shotgun_aim_idle", "shotgun/shotgun_aim_to_shotgun_crouch_aim", 0.1)
+	animation_player.set_blend_time("shotgun/shotgun_aim_to_shotgun_crouch_aim", "shotgun/shotgun_crouch_aim_idle", 0.1)
+	animation_player.set_blend_time("shotgun/shotgun_crouch_aim_idle", "shotgun/shotgun_crouch_aim_to_shotgun_aim", 0.1)
+	animation_player.set_blend_time("shotgun/shotgun_crouch_aim_to_shotgun_aim", "shotgun/shotgun_aim_idle", 0.1)
+	
+	# Blend shotgun down to crouch down and back
+	animation_player.set_blend_time("shotgun/shotgun_down_idle", "shotgun/shotgun_down_to_shotgun_crouch_down", 0.1)
+	animation_player.set_blend_time("shotgun/shotgun_down_to_shotgun_crouch_down", "shotgun/shotgun_crouch_down_idle", 0.1)
+	animation_player.set_blend_time("shotgun/shotgun_crouch_down_idle", "shotgun/shotgun_crouch_down_to_shotgun_down", 0.1)
+	animation_player.set_blend_time("shotgun/shotgun_crouch_down_to_shotgun_down", "shotgun/shotgun_down_idle", 0.1)
+	
+	# Blend shotgun fire
+	animation_player.set_blend_time("shotgun/shotgun_aim_idle", "shotgun/shotgun_aim_fire", 0.4)
+	animation_player.set_blend_time("shotgun/shotgun_aim_fire", "shotgun/shotgun_aim_fire", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_aim_fire", "shotgun/shotgun_aim_walk", 0.2)
+	
+	# Blend shotgun crouch firing
+	animation_player.set_blend_time("shotgun/shotgun_crouch_aim_idle", "shotgun/shotgun_crouch_aim_fire", 0.4)
+	animation_player.set_blend_time("shotgun/shotgun_crouch_aim_fire", "shotgun/shotgun_crouch_aim_fire", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_crouch_aim_fire", "shotgun/shotgun_crouch_aim_idle", 0.2)
+	
+	# Blend shotgun crouch down locomotion
+	animation_player.set_blend_time("shotgun/shotgun_crouch_down_idle", "shotgun/shotgun_crouch_down_walk", 0.2)
+	animation_player.set_blend_time("shotgun/shotgun_crouch_down_walk", "shotgun/shotgun_crouch_down_idle", 0.2)
 
 
 # Plays and awaits until the animation ends, if found
@@ -361,7 +508,9 @@ func get_idle_state_name() -> String:
 		unarmed_male_locomotion: return "unarmed_idle"
 		unarmed_crouch_locomotion: return "unarmed_crouch_idle"
 		rifle_down_locomotion: return "rifle_down_idle"
-		rifle_aim_locomotion: return "rifle_down_idle"
+		rifle_crouch_down_locomotion: return "rifle_crouch_down_idle"
+		shotgun_down_locomotion: return "shotgun_down_idle"
+		shotgun_crouch_down_locomotion: return "shotgun_crouch_down_idle"
 		_:
 			return ""
 
@@ -370,6 +519,9 @@ func get_idle_state_name() -> String:
 func get_aim_state_name() -> String:
 	match locomotion:
 		rifle_aim_locomotion: return "rifle_aim_idle"
+		rifle_crouch_aim_locomotion: return "rifle_crouch_aim_idle"
+		shotgun_aim_locomotion: return "shotgun_aim_idle"
+		shotgun_crouch_aim_locomotion: return "shotgun_crouch_aim_idle"
 		_:
 			push_error("Error in get_aim_state_name, can't find ", locomotion)
 			return get_idle_state_name()
@@ -380,6 +532,8 @@ func get_animation_library(weapon_type: String, gender: String) -> String:
 	match weapon_type:
 		"rifle":
 			return "rifle_down"
+		"shotgun":
+			return "shotgun_down"
 		_:
 			return gender # Fallback to gender animation
 
@@ -394,6 +548,10 @@ func switch_animation_library(animation_library: String) -> void:
 		"rifle_aim": locomotion = rifle_aim_locomotion
 		"rifle_crouch_down": locomotion = rifle_crouch_down_locomotion
 		"rifle_crouch_aim": locomotion = rifle_crouch_aim_locomotion
+		"shotgun_down": locomotion = shotgun_down_locomotion
+		"shotgun_aim": locomotion = shotgun_aim_locomotion
+		"shotgun_crouch_down": locomotion = shotgun_crouch_down_locomotion
+		"shotgun_crouch_aim": locomotion = shotgun_crouch_aim_locomotion
 		_: push_error("Library name not valid")
 
 
