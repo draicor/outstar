@@ -120,8 +120,8 @@ func queue_toggle_fire_mode_action() -> void:
 func queue_switch_weapon_action(slot: int) -> void:
 	add_action("switch_weapon", slot)
 
-func queue_rotate_action(rotation_y: float) -> void:
-	add_action("rotate", rotation_y)
+func queue_rotate_action(packet: Packets.RotateCharacter) -> void:
+	add_action("rotate", packet)
 
 func queue_enter_crouch_action() -> void:
 	add_action("enter_crouch")
@@ -322,12 +322,9 @@ func _process_lower_weapon_action() -> void:
 			animation_type = "crouch_aim_to_crouch_down"
 			target_state_name = weapon_type + "_crouch_down_idle"
 		_:
-			push_error("Error in match current_state inside _process_lower_weapon_action()")
-	
-	if animation_type == "":
-		push_error("Error in _process_lower_weapon_action(), animation_type empty for weapon_type: ", weapon_type, " in current_state: ", current_state, ", target_state: ", target_state_name)
-		complete_action()
-		return
+			push_error("Error in match current_state inside _process_lower_weapon_action(), current_state: ", current_state, ", weapon_type: ", weapon_type)
+			complete_action()
+			return
 	
 	await player.player_animator.play_weapon_animation_and_await(
 		animation_type,
@@ -419,8 +416,18 @@ func _process_single_fire_action(target: Vector3) -> void:
 			complete_action()
 			return
 		
+		# Calculate recoil first and get the actual hit position
+		var hit_position = player.player_equipment.calculate_weapon_hit_position(target)
+		# Store the next hit position in our player equipment
+		player.player_equipment.set_next_hit_position(hit_position)
+		
 		# After local validation, we send the packet
-		player.player_packets.send_fire_weapon_packet(target, player.player_movement.rotation_target)
+		player.player_packets.send_fire_weapon_packet(hit_position)
+	
+	# Remote players
+	else:
+		# Store the hit position that came from the server (with recoil already applied)
+		player.player_equipment.set_next_hit_position(target)
 	
 	# Perform local actions
 	# Get weapon data
@@ -536,18 +543,21 @@ func _ensure_weapon_raised() -> void:
 			player.player_state_machine.change_state(target_state_name)
 
 
-func _process_rotate_action(rotation_y: float) -> void:
+func _process_rotate_action(packet: Packets.RotateCharacter) -> void:
+	var rotation_y: float = packet.get_rotation_y()
+	var await_rotation: bool = packet.get_await_rotation()
+	
 	# Set the rotation target
 	player.player_movement.rotation_target = rotation_y
 	player.player_movement.is_rotating = true
 	
-	# Wait for the rotation to complete
-	var rotation_threshold = 0.1 # Radians (about 6 degrees)
-	while abs(player.model.rotation.y - rotation_y) > rotation_threshold:
-		await get_tree().process_frame
+	if await_rotation:
+		# Wait for the rotation to complete
+		var rotation_threshold = 0.1 # Radians (about 6 degrees)
+		while abs(player.model.rotation.y - rotation_y) > rotation_threshold:
+			await get_tree().process_frame
 	
-	# CAUTION
-	# We don't send packets from this action since we are sending them from base_state.gd
+	# NOTE We don't send packets from this action since we are sending them from base_state.gd
 	
 	complete_action()
 

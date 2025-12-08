@@ -484,15 +484,16 @@ func (state *Game) HandleLowerWeapon() {
 func (state *Game) HandleRotateCharacter(payload *packets.RotateCharacter) {
 	// Get the rotation from the packet
 	newRotation := payload.GetRotationY()
+	awaitRotation := payload.GetAwaitRotation()
 	// Overwrite this character's rotation
 	state.player.SetRotation(newRotation)
 	// Broadcast to everyone in the region
-	state.client.Broadcast(packets.NewRotateCharacter(newRotation))
+	state.client.Broadcast(packets.NewRotateCharacter(newRotation, awaitRotation))
 }
 
 func (state *Game) HandleFireWeapon(payload *packets.FireWeapon) {
-	// Get the target position and attacker's rotation from the packet and broadcast to everyone in the region
-	state.client.Broadcast(packets.NewFireWeapon(payload.GetX(), payload.GetY(), payload.GetZ(), payload.GetRotationY()))
+	// Get the hit position from the packet and broadcast to everyone in the region
+	state.client.Broadcast(packets.NewFireWeapon(payload.GetX(), payload.GetY(), payload.GetZ()))
 }
 
 func (state *Game) HandleToggleFireMode(payload *packets.ToggleFireMode) {

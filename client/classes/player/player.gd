@@ -71,7 +71,7 @@ var mouse_distances = {
 }
 
 # Rotation broadcast logic
-const AIM_ROTATION_INTERVAL: float = 1.0 # 1 second timer to update rotation
+const AIM_ROTATION_INTERVAL: float = 0.1 # Timer to update rotation if aiming
 var rotation_sync_timer: float = 0.0
 var last_sent_rotation: float = 0.0
 var rotation_timer_interval: float = AIM_ROTATION_INTERVAL

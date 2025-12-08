@@ -36,6 +36,9 @@ var equipped_weapon_type: String = "unarmed" # Used to switch states and animati
 var equipped_weapon = null # Instantiated scene of our weapon
 var max_correction_angle: float = deg_to_rad(5.0) # 5 degrees deviation
 
+# Hit position
+var next_hit_position: Vector3 = Vector3.ZERO
+
 
 func _ready() -> void:
 	# Wait for parent to be ready, then store a reference to it
@@ -187,13 +190,25 @@ func can_fire_weapon() -> bool:
 	return get_current_ammo() > 0
 
 
+func calculate_weapon_hit_position(target_position: Vector3) -> Vector3:
+	if not equipped_weapon:
+		return Vector3.ZERO
+	
+	# Calculate weapon direction for the target
+	calculate_weapon_direction(target_position)
+	
+	# Get the hit position after recoil
+	var hit_position = equipped_weapon.calculate_hit_position()
+	return hit_position
+
+
 # Fires the actual weapon (the fire animation is already playing here)
 func weapon_fire() -> void:
 	# If we don't have a weapon equipped or we do but we can't fire it
 	if not equipped_weapon or not can_fire_weapon():
 		return
 	
-	equipped_weapon.fire() # NOTE this returns the hit_position but we are not using it yet
+	equipped_weapon.fire(next_hit_position)
 	decrement_ammo() # locally
 
 
@@ -383,3 +398,8 @@ func get_current_weapon_max_ammo() -> int:
 			return 6
 		_:
 			return 0
+
+
+# Used to store where the next bullet hit
+func set_next_hit_position(position: Vector3) -> void:
+	next_hit_position = position

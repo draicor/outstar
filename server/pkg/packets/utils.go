@@ -153,10 +153,11 @@ func NewMoveCharacter(player *objects.Player) Payload {
 }
 
 // Sent by both server and client to update a character's model.y rotation
-func NewRotateCharacter(rotationY float64) Payload {
+func NewRotateCharacter(rotationY float64, awaitRotation bool) Payload {
 	return &Packet_RotateCharacter{
 		RotateCharacter: &RotateCharacter{
-			RotationY: rotationY,
+			RotationY:     rotationY,
+			AwaitRotation: awaitRotation,
 		},
 	}
 }
@@ -213,13 +214,12 @@ func NewLowerWeapon() Payload {
 }
 
 // Sent by the client to fire the equipped weapon towards the direction specified
-func NewFireWeapon(dirX, dirY, dirZ float32, rotationY float64) Payload {
+func NewFireWeapon(dirX, dirY, dirZ float32) Payload {
 	return &Packet_FireWeapon{
 		FireWeapon: &FireWeapon{
-			X:         dirX,
-			Y:         dirY,
-			Z:         dirZ,
-			RotationY: rotationY,
+			X: dirX,
+			Y: dirY,
+			Z: dirZ,
 		},
 	}
 }

@@ -30,7 +30,8 @@ func broadcast_rotation_if_changed():
 	var current_rotation: float = player.model.rotation.y
 	if abs(current_rotation - player.last_sent_rotation) >= player.ROTATION_CHANGE_THRESHOLD:
 		player.last_sent_rotation = current_rotation
-		player.player_packets.send_rotate_character_packet(current_rotation)
+		# Send a non-blocking rotation packet
+		player.player_packets.send_rotate_character_packet(current_rotation, false)
 
 
 # Returns true if this character has its weapon down

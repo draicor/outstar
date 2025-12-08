@@ -136,7 +136,7 @@ func is_weapon_inside_wall() -> bool:
 	return false
 
 
-func fire(direction: Vector3 = Vector3.ZERO) -> Vector3:
+func calculate_hit_position(direction: Vector3 = Vector3.ZERO) -> Vector3:
 	# Get weapon muzzle position
 	var muzzle_position: Vector3 = muzzle_marker_3d.global_position
 	
@@ -151,6 +151,15 @@ func fire(direction: Vector3 = Vector3.ZERO) -> Vector3:
 	var hit: Dictionary = weapon_raycast(muzzle_position, target)
 	var hit_position: Vector3 = hit.position if hit else muzzle_position + target * weapon_max_distance
 	
+	return hit_position
+
+
+func fire(hit_position: Vector3 = Vector3.ZERO) -> void:
+	# Get weapon muzzle position
+	var muzzle_position: Vector3 = muzzle_marker_3d.global_position
+	
+	# We already have the hit position, so we don't need to calculate recoil again
+	
 	# We already checked if we can fire in player_equipment.weapon_fire()
 	projectile_muzzle_flash.restart()
 	# Add the bullet tracer
@@ -159,14 +168,16 @@ func fire(direction: Vector3 = Vector3.ZERO) -> Vector3:
 	tracer.initialize(muzzle_position, hit_position)
 	
 	if debug:
-		var debug_color = Color.GREEN if hit else Color.RED
+		var debug_color = Color.GREEN
 		DebugDraw3D.draw_line(muzzle_position, hit_position, debug_color, debug_duration)
+	
+	# We don't know what it hit, so we do a raycast to see what we hit
+	var direction = (hit_position - muzzle_position).normalized()
+	var hit: Dictionary = weapon_raycast(muzzle_position, direction)
 	
 	if hit:
 		# Check what kind of target we hit
 		_process_hit(hit)
-	
-	return hit_position # <-- CAUTION not being used yet
 
 
 func weapon_raycast(origin: Vector3, direction: Vector3) -> Dictionary:

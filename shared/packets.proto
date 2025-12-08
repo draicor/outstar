@@ -55,8 +55,9 @@ message SpawnCharacter { // Sent by the server to spawn a character
 message MoveCharacter { // Sent by the server to move remote characters
   Position position = 1;
 }
-message RotateCharacter { // Sent by the server to rotate remote characters
+message RotateCharacter { // Sent to rotate our character
   double rotation_y = 1;
+  bool await_rotation =2;
 }
 // Target Destination sent by the client (Ignores Y axis (vertical))
 message Destination { uint64 x = 1; uint64 z = 2; }
@@ -82,11 +83,10 @@ message ReloadWeapon {
 }
 message RaiseWeapon {}
 message LowerWeapon {}
-message FireWeapon { // We pass the target position and the shooter's rotation
+message FireWeapon { // We pass the hit position
   float x = 1;
   float y = 2;
   float z = 3;
-  double rotation_y = 4;
 }
 message ToggleFireMode {}
 message ReportPlayerDamage {

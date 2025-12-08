@@ -33,7 +33,6 @@ func enter() -> void:
 func exit() -> void:
 	# If this is our local player
 	if player.is_local_player:
-		broadcast_rotation_if_changed()
 		player.set_mouse_cursor("default")
 		# Restore the camera rotation step to default
 		player.camera.ROTATION_STEP = player.camera.BASE_ROTATION_STEP
@@ -87,6 +86,7 @@ func update(_delta: float) -> void:
 	
 	# Handle lower weapon (release right click) - transition to crouch down state
 	if not Input.is_action_pressed("right_click"):
+		broadcast_rotation_if_changed()
 		player.player_actions.queue_lower_weapon_action()
 		return
 	

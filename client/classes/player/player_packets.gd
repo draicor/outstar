@@ -264,23 +264,22 @@ func create_lower_weapon_packet() -> Packets.Packet:
 
 
 # Creates and returns a rotate_character packet
-func create_rotate_character_packet(rotation_y: float) -> Packets.Packet:
+func create_rotate_character_packet(rotation_y: float, await_rotation: bool = true) -> Packets.Packet:
 	var packet: Packets.Packet = Packets.Packet.new()
 	var rotate_character_packet := packet.new_rotate_character()
 	rotate_character_packet.set_rotation_y(rotation_y)
+	rotate_character_packet.set_await_rotation(await_rotation)
 	return packet
 
 
 # Creates and returns a fire_weapon packet
-func create_fire_weapon_packet(target: Vector3, rotation_y: float) -> Packets.Packet:
+func create_fire_weapon_packet(target: Vector3) -> Packets.Packet:
 	var packet: Packets.Packet = Packets.Packet.new()
 	var fire_weapon_packet := packet.new_fire_weapon()
 	# Set target
 	fire_weapon_packet.set_x(target.x)
 	fire_weapon_packet.set_y(target.y)
 	fire_weapon_packet.set_z(target.z)
-	# Set shooter's rotation
-	fire_weapon_packet.set_rotation_y(rotation_y)
 	return packet
 
 
@@ -366,14 +365,14 @@ func send_lower_weapon_packet() -> void:
 
 
 # Creates and sends a packet to the server to inform we rotated
-func send_rotate_character_packet(rotation_y: float) -> void:
-	var packet: Packets.Packet = create_rotate_character_packet(rotation_y)
+func send_rotate_character_packet(rotation_y: float, await_rotation: bool = true) -> void:
+	var packet: Packets.Packet = create_rotate_character_packet(rotation_y, await_rotation)
 	WebSocket.send(packet)
 
 
 # Creates and sends a packet to the server to inform we fired our weapon
-func send_fire_weapon_packet(target: Vector3, rotation_y: float) -> void:
-	var packet: Packets.Packet = create_fire_weapon_packet(target, rotation_y)
+func send_fire_weapon_packet(target: Vector3) -> void:
+	var packet: Packets.Packet = create_fire_weapon_packet(target)
 	WebSocket.send(packet)
 
 
@@ -493,16 +492,13 @@ func _process_lower_weapon_packet() -> void:
 
 
 func _process_rotate_character_packet(packet: Packets.RotateCharacter) -> void:
-	route_packet_to_action_queue("rotate", packet.get_rotation_y())
+	route_packet_to_action_queue("rotate", packet)
 
 
 func _process_fire_weapon_packet(packet: Packets.FireWeapon) -> void:
-	# Extract target position and rotation from the packet
+	# Extract hit position from the packet
 	var target: Vector3 = Vector3(packet.get_x(), packet.get_y(), packet.get_z())
-	var rotation_y: float = packet.get_rotation_y()
 	
-	# For fire actions, we need to queue both rotation and fire actions
-	player.player_actions.add_action("rotate", rotation_y)
 	player.player_actions.add_action("single_fire", target)
 	
 	complete_packet()
