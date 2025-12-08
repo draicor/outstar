@@ -259,14 +259,6 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_ToggleFireMode:
 			state.HandleToggleFireMode(casted_payload.ToggleFireMode)
 
-		// START FIRING WEAPON
-		case *packets.Packet_StartFiringWeapon:
-			state.HandleStartFiringWeapon(casted_payload.StartFiringWeapon)
-
-		// STOP FIRING WEAPON
-		case *packets.Packet_StopFiringWeapon:
-			state.HandleStopFiringWeapon(casted_payload.StopFiringWeapon)
-
 		// REPORT PLAYER DAMAGE
 		case *packets.Packet_ReportPlayerDamage:
 			state.HandleReportPlayerDamage(casted_payload.ReportPlayerDamage)
@@ -510,16 +502,6 @@ func (state *Game) HandleToggleFireMode(payload *packets.ToggleFireMode) {
 	state.client.Broadcast(packets.NewToggleFireMode())
 }
 
-func (state *Game) HandleStartFiringWeapon(payload *packets.StartFiringWeapon) {
-	// Get the attacker's rotation and available ammo from the packet and broadcast to everyone in the region
-	state.client.Broadcast(packets.NewStartFiringWeapon(payload.GetRotationY(), payload.GetAmmo()))
-}
-
-func (state *Game) HandleStopFiringWeapon(payload *packets.StopFiringWeapon) {
-	// Get the attacker's rotation and how many shots were fired from the packet and broadcast to everyone in the region
-	state.client.Broadcast(packets.NewStopFiringWeapon(payload.GetRotationY(), payload.GetShotsFired()))
-}
-
 func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage) {
 	// Validate the target exists
 	targetId := payload.GetTargetId()
@@ -546,9 +528,10 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 
 	// Calculate damage based on weapon name
 	var damage uint64 = getWeaponDamage(attackerWeapon.WeaponName)
+	var isCritical bool = payload.GetIsCritical()
 
 	// If was critical damage, then do double damage
-	if payload.GetIsCritical() {
+	if isCritical {
 		damage = damage * 2
 	}
 
@@ -562,6 +545,7 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 		targetId,
 		damage,
 		"bullet",
+		isCritical,
 		payload.GetX(),
 		payload.GetY(),
 		payload.GetZ(),

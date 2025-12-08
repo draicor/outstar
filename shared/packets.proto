@@ -89,14 +89,6 @@ message FireWeapon { // We pass the target position and the shooter's rotation
   double rotation_y = 4;
 }
 message ToggleFireMode {}
-message StartFiringWeapon {
-  double rotation_y = 1;
-  uint64 ammo = 2;
-}
-message StopFiringWeapon {
-  double rotation_y = 1;
-  uint64 shots_fired = 2; // Amount of shots fired
-}
 message ReportPlayerDamage {
   uint64 target_id = 1; // ID of the player that got hit
   float x = 2; // X hit position
@@ -109,9 +101,10 @@ message ApplyPlayerDamage {
   uint64 target_id = 2; // So everyone can reduce the health of this player on this screens
   uint64 damage = 3; // The damage number to apply
   string damage_type = 4; // If we want to draw different damage colors/effects
-  float x = 5; // X hit position
-  float y = 6; // Y hit position
-  float z = 7; // Z hit position
+  bool is_critical = 5; // Critical damage (usually headshots)
+  float x = 6; // X hit position
+  float y = 7; // Y hit position
+  float z = 8; // Z hit position
 }
 message PlayerDied {
   uint64 attacker_id = 1; // ID of the player that killed them (0 if environment death)
@@ -163,17 +156,14 @@ message Packet {
     LowerWeapon lower_weapon = 25; // Both
     FireWeapon fire_weapon = 26; // Both
     ToggleFireMode toggle_fire_mode = 27; // Both
-    // Full automatic weapon firing mode
-    StartFiringWeapon start_firing_weapon = 28; // Both
-    StopFiringWeapon stop_firing_weapon = 29; // Both
     // Damage
-    ReportPlayerDamage report_player_damage = 30; // Client
-    ApplyPlayerDamage apply_player_damage = 31; // Server
+    ReportPlayerDamage report_player_damage = 28; // Client
+    ApplyPlayerDamage apply_player_damage = 29; // Server
     // Death
-    PlayerDied player_died = 32; // Server
+    PlayerDied player_died = 30; // Server
     // Respawn
-    RespawnRequest respawn_request = 33; // Client
+    RespawnRequest respawn_request = 31; // Client
     // Crouch
-    CrouchCharacter crouch_character = 34; // Both
+    CrouchCharacter crouch_character = 32; // Both
   }
 }

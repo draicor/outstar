@@ -86,10 +86,6 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_route_move_character_packet(sender_id, packet.get_move_character())
 	elif packet.has_raise_weapon():
 		_route_raise_weapon_packet(sender_id, packet.get_raise_weapon())
-	elif packet.has_start_firing_weapon():
-		_route_start_firing_weapon_packet(sender_id, packet.get_start_firing_weapon())
-	elif packet.has_stop_firing_weapon():
-		_route_stop_firing_weapon_packet(sender_id, packet.get_stop_firing_weapon())
 	elif packet.has_fire_weapon():
 		_route_fire_weapon_packet(sender_id, packet.get_fire_weapon())
 	elif packet.has_rotate_character():
@@ -458,22 +454,6 @@ func _route_toggle_fire_mode_packet(sender_id: int, toggle_fire_mode_packet: Pac
 	if player:
 		# Send this packet to the queue of this player
 		player.player_packets.add_packet(toggle_fire_mode_packet, PlayerPackets.Priority.NORMAL)
-
-
-func _route_start_firing_weapon_packet(sender_id: int, start_firing_weapon_packet: Packets.StartFiringWeapon) -> void:
-	# Attempt to retrieve the player character object
-	var player: Player = GameManager.get_player_by_id(sender_id)
-	if player:
-		# Send this packet to the queue of this player
-		player.player_packets.add_packet(start_firing_weapon_packet, PlayerPackets.Priority.NORMAL)
-
-
-func _route_stop_firing_weapon_packet(sender_id: int, stop_firing_weapon_packet: Packets.StopFiringWeapon) -> void:
-	# Attempt to retrieve the player character object
-	var player: Player = GameManager.get_player_by_id(sender_id)
-	if player:
-		# Send this packet to the queue of this player
-		player.player_packets.add_packet(stop_firing_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Packets.ApplyPlayerDamage) -> void:

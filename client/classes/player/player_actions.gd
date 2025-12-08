@@ -73,10 +73,6 @@ func process_next_action() -> void:
 			_process_lower_weapon_action()
 		"single_fire":
 			_process_single_fire_action(_current_action.action_data)
-		"start_firing":
-			_process_start_firing_action(_current_action.action_data)
-		"stop_firing":
-			_process_stop_firing_action(_current_action.action_data)
 		"reload_weapon":
 			_process_reload_weapon_action(_current_action.action_data)
 		"toggle_fire_mode":
@@ -114,12 +110,6 @@ func queue_lower_weapon_action() -> void:
 
 func queue_single_fire_action(target: Vector3) -> void:
 	add_action("single_fire", target)
-
-func queue_start_firing_action(ammo: int) -> void:
-	add_action("start_firing", ammo)
-
-func queue_stop_firing_action(server_shots_fired: int) -> void:
-	add_action("stop_firing", server_shots_fired)
 
 func queue_reload_weapon_action(amount: int) -> void:
 	add_action("reload_weapon", {"amount": amount})
@@ -335,7 +325,7 @@ func _process_lower_weapon_action() -> void:
 			push_error("Error in match current_state inside _process_lower_weapon_action()")
 	
 	if animation_type == "":
-		push_error("Error in _process_lower_weapon_action(), animation_type empty")
+		push_error("Error in _process_lower_weapon_action(), animation_type empty for weapon_type: ", weapon_type, " in current_state: ", current_state, ", target_state: ", target_state_name)
 		complete_action()
 		return
 	
@@ -516,129 +506,6 @@ func _process_switch_weapon_action(slot: int) -> void:
 	# If we are not already in the same state (switching from one rifle to another rifle for example)
 	if target_state_name != player.player_state_machine.get_current_state_name():
 		player.player_state_machine.change_state(target_state_name)
-	
-	complete_action()
-
-
-func _process_start_firing_action(ammo: int) -> void:
-	# Only validate local player
-	if player.is_local_player:
-		# Check if we can start firing
-		if not player.can_start_firing():
-			complete_action()
-			return
-		
-		# If the muzzle is inside geometry (walls), don't fire
-		if player.player_equipment.equipped_weapon.is_weapon_inside_wall():
-			complete_action()
-			return
-		
-		# After local validation, we send the packet
-		player.player_packets.send_start_firing_weapon_packet(
-			player.player_movement.rotation_target,
-			player.player_equipment.get_current_ammo()
-		)
-	
-	# Get the current state
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	if not current_state:
-		complete_action()
-		return
-	
-	# If we are in a weapon down state, we need to raise the weapon first
-	if current_state.is_weapon_down_idle_state():
-		# Queue a raise weapon action first
-		add_action("raise_weapon")
-		# Requeue the start firing action
-		add_action("start_firing", ammo)
-		complete_action()
-		return
-	
-	if not player.is_local_player:
-		player.player_equipment.set_current_ammo(ammo)
-	
-	# Perform local actions
-	player.shots_fired = 0
-	player.is_auto_firing = true
-	
-	# For remote players, we need to track the expected shot count
-	if not player.is_local_player:
-		player.expected_shots_fired = -1 # Unknown until we get stop_firing
-	
-	# Start firing immediately
-	current_state.next_automatic_fire()
-	
-	# Wait one frame to ensure the automatic firing loop has started
-	await get_tree().process_frame
-	
-	complete_action()
-
-
-func _process_stop_firing_action(server_shots_fired: int) -> void:
-	# Get the current state
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	if not current_state:
-		complete_action()
-		return
-	
-	# Only validate local player
-	if player.is_local_player:
-		# Check if we are firing, if not, abort
-		if not player.is_auto_firing:
-			complete_action()
-			return
-		
-		# After local validation, we send the packet
-		player.player_packets.send_stop_firing_weapon_packet(
-			player.player_movement.rotation_target,
-			player.shots_fired
-		)
-		
-		player.is_auto_firing = false
-		player.dry_fired = false
-	
-	# For remote players
-	if not player.is_local_player:
-		# Store the server's shot count
-		player.expected_shots_fired = server_shots_fired
-		
-		# Stop any current firing loop
-		player.is_auto_firing = false
-		
-		# If we've already fired more shots than the server says, reimburse ammo
-		if player.shots_fired > player.expected_shots_fired:
-			var ammo_difference: int = player.shots_fired - player.expected_shots_fired
-			var ammo_to_reimburse: int = player.player_equipment.get_current_ammo() + ammo_difference
-			# Reimburse the ammo
-			player.player_equipment.set_current_ammo(ammo_to_reimburse)
-			player.shots_fired = player.expected_shots_fired
-		
-		# If we haven't fired enough shots, fire them now
-		elif player.shots_fired < player.expected_shots_fired:
-			var shots_to_fire = player.expected_shots_fired - player.shots_fired
-			
-			# Ensure we're in the weapon aim state
-			if not player.is_in_weapon_aim_state():
-				await _ensure_weapon_raised()
-			
-			# We'll assume we're in the right state here
-			# Fire all remaining shots
-			for i in range(shots_to_fire):
-				# Fire one shot
-				var weapon = player.player_equipment.equipped_weapon
-				var anim_name: String = weapon.get_animation()
-				var play_rate: float = weapon.get_animation_play_rate()
-			
-				# Check ammo for this shot
-				var has_ammo: bool = player.player_equipment.can_fire_weapon()
-				if not has_ammo:
-					play_rate = weapon.semi_fire_rate
-				
-				await player.player_animator.play_animation_and_await(anim_name, play_rate)
-				player.shots_fired += 1
-		
-		# Reset count for next time
-		player.expected_shots_fired = -1
 	
 	complete_action()
 

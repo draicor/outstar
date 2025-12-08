@@ -231,34 +231,15 @@ func NewToggleFireMode() Payload {
 	}
 }
 
-// Sent by the client to initiate full auto weapon fire
-func NewStartFiringWeapon(rotationY float64, ammo uint64) Payload {
-	return &Packet_StartFiringWeapon{
-		StartFiringWeapon: &StartFiringWeapon{
-			RotationY: rotationY,
-			Ammo:      ammo,
-		},
-	}
-}
-
-// Sent by the client to cease full auto weapon fire
-func NewStopFiringWeapon(rotationY float64, shotsFired uint64) Payload {
-	return &Packet_StopFiringWeapon{
-		StopFiringWeapon: &StopFiringWeapon{
-			RotationY:  rotationY,
-			ShotsFired: shotsFired,
-		},
-	}
-}
-
 // Sent by the server to report a player got damaged
-func NewApplyPlayerDamage(attackerId, targetId, damage uint64, damage_type string, x, y, z float32) Payload {
+func NewApplyPlayerDamage(attackerId, targetId, damage uint64, damageType string, isCritical bool, x, y, z float32) Payload {
 	return &Packet_ApplyPlayerDamage{
 		ApplyPlayerDamage: &ApplyPlayerDamage{
 			AttackerId: attackerId,
 			TargetId:   targetId,
 			Damage:     damage,
-			DamageType: damage_type,
+			DamageType: damageType,
+			IsCritical: isCritical,
 			X:          x,
 			Y:          y,
 			Z:          z,

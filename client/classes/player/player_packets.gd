@@ -78,10 +78,6 @@ func get_packet_type(packet: Variant) -> String:
 		packet_type = "LowerWeapon"
 	elif packet is Packets.RaiseWeapon:
 		packet_type = "RaiseWeapon"
-	elif packet is Packets.StartFiringWeapon:
-		packet_type = "StartFiringWeapon"
-	elif packet is Packets.StopFiringWeapon:
-		packet_type = "StopFiringWeapon"
 	elif packet is Packets.FireWeapon:
 		packet_type = "FireWeapon"
 	elif packet is Packets.RotateCharacter:
@@ -295,24 +291,6 @@ func create_toggle_fire_mode_packet() -> Packets.Packet:
 	return packet
 
 
-# Creates and returns a start_firing_weapon packet
-func create_start_firing_weapon_packet(rotation_y: float, ammo: int) -> Packets.Packet:
-	var packet: Packets.Packet = Packets.Packet.new()
-	var start_firing_weapon_packet := packet.new_start_firing_weapon()
-	start_firing_weapon_packet.set_rotation_y(rotation_y)
-	start_firing_weapon_packet.set_ammo(ammo)
-	return packet
-
-
-# Creates and returns a stop_firing_weapon packet
-func create_stop_firing_weapon_packet(rotation_y: float, shots_fired: int) -> Packets.Packet:
-	var packet: Packets.Packet = Packets.Packet.new()
-	var stop_firing_weapon_packet := packet.new_stop_firing_weapon()
-	stop_firing_weapon_packet.set_rotation_y(rotation_y)
-	stop_firing_weapon_packet.set_shots_fired(shots_fired)
-	return packet
-
-
 # Creates and returns a report_player_damage packet
 func create_report_player_damage_packet(target_id: int, hit_position: Vector3, is_critical: bool) -> Packets.Packet:
 	var packet: Packets.Packet = Packets.Packet.new()
@@ -405,18 +383,6 @@ func send_toggle_fire_mode_packet() -> void:
 	WebSocket.send(packet)
 
 
-# Creates and sends a packet to the server to inform we started firing
-func send_start_firing_weapon_packet(rotation_y: float, ammo: int) -> void:
-	var packet: Packets.Packet = create_start_firing_weapon_packet(rotation_y, ammo)
-	WebSocket.send(packet)
-
-
-# Creates and sends a packet to the server to inform we stopped firing
-func send_stop_firing_weapon_packet(rotation_y: float, shots_fired: int) -> void:
-	var packet: Packets.Packet = create_stop_firing_weapon_packet(rotation_y, shots_fired)
-	WebSocket.send(packet)
-
-
 # Creates and sends a packet to the server to inform we shot a player
 func send_report_player_damage_packet(target_id: int, hit_position: Vector3, is_critical: bool) -> void:
 	var packet: Packets.Packet = create_report_player_damage_packet(target_id, hit_position, is_critical)
@@ -453,10 +419,6 @@ func _handle_packet_started(packet: Variant) -> void:
 		_process_lower_weapon_packet()
 	elif packet is Packets.RaiseWeapon:
 		_process_raise_weapon_packet()
-	elif packet is Packets.StartFiringWeapon:
-		_process_start_firing_weapon_packet(packet)
-	elif packet is Packets.StopFiringWeapon:
-		process_stop_firing_weapon_packet(packet)
 	elif packet is Packets.FireWeapon:
 		_process_fire_weapon_packet(packet)
 	elif packet is Packets.RotateCharacter:
@@ -548,22 +510,6 @@ func _process_fire_weapon_packet(packet: Packets.FireWeapon) -> void:
 
 func _process_toggle_fire_mode_packet() -> void:
 	route_packet_to_action_queue("toggle_fire_mode")
-
-
-func _process_start_firing_weapon_packet(packet: Packets.StartFiringWeapon) -> void:
-	# We queue rotation before queuing start firing action
-	player.player_actions.add_action("rotate", packet.get_rotation_y())
-	player.player_actions.add_action("start_firing", packet.get_ammo())
-	
-	complete_packet()
-
-
-func process_stop_firing_weapon_packet(packet: Packets.StopFiringWeapon) -> void:
-	# We queue rotation before queueing stop firing action
-	player.player_actions.add_action("rotate", packet.get_rotation_y())
-	player.player_actions.add_action("stop_firing", packet.get_shots_fired())
-	
-	complete_packet()
 
 
 func _process_crouch_character_packet(packet: Packets.CrouchCharacter) -> void:
