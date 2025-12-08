@@ -127,7 +127,7 @@ func is_weapon_inside_wall() -> bool:
 	return false
 
 
-func fire(direction: Vector3 = Vector3.ZERO) -> Vector3:
+func calculate_hit_positions(direction: Vector3 = Vector3.ZERO) -> Array[Vector3]:
 	# Get weapon muzzle position
 	var muzzle_position: Vector3 = muzzle_marker_3d.global_position
 	
@@ -137,31 +137,36 @@ func fire(direction: Vector3 = Vector3.ZERO) -> Vector3:
 		target_direction = -muzzle_marker_3d.global_transform.basis.z
 	
 	var main_target: Vector3 = _apply_recoil(target_direction)
-	var hit_position: Vector3 = muzzle_position + main_target * weapon_max_distance
+	var hit_positions: Array[Vector3] = []
 	
-	# We already checked if we can fire in player_equipment.weapon_fire()
-	projectile_muzzle_flash.restart()
-	
-	# Fire multiple pellets
+	# Calculate hit positions for all pellets
 	for i in range(pellet_count):
 		var pellet_direction: Vector3 = _get_pellet_direction(main_target)
 		var hit: Dictionary = weapon_raycast(muzzle_position, pellet_direction)
 		var pellet_hit_position: Vector3 = hit.position if hit else muzzle_position + pellet_direction * weapon_max_distance
-		
-		# Add the bullet tracer
-		var tracer := BULLET_TRACER.instantiate()
-		get_tree().current_scene.add_child(tracer)
-		tracer.initialize(muzzle_position, pellet_hit_position)
-		
-		if debug:
-			var debug_color = Color.GREEN if hit else Color.RED
-			DebugDraw3D.draw_line(muzzle_position, pellet_hit_position, debug_color, debug_duration)
+		hit_positions.append(pellet_hit_position)
 	
-		if hit:
-			# Check what kind of target we hit
-			_process_hit(hit)
+	return hit_positions
+
+
+func fire(hit_positions: Array[Vector3]) -> void:
+	# Get weapon muzzle position
+	var muzzle_position: Vector3 = muzzle_marker_3d.global_position
 	
-	return hit_position # <-- CAUTION not being used yet
+	# We already checked if we can fire in player_equipment.weapon_fire()
+	projectile_muzzle_flash.restart()
+	
+	# Fire tracers for each hit position
+	if hit_positions.size() > 0:
+		for hit_position in hit_positions:
+			# Add the bullet tracer
+			var tracer := BULLET_TRACER.instantiate()
+			get_tree().current_scene.add_child(tracer)
+			tracer.initialize(muzzle_position, hit_position)
+			
+			if debug:
+				var debug_color = Color.GREEN
+				DebugDraw3D.draw_line(muzzle_position, hit_position, debug_color, debug_duration)
 
 
 func weapon_raycast(origin: Vector3, direction: Vector3) -> Dictionary:
@@ -284,46 +289,53 @@ func _get_player_from_collider(collider: Object) -> Player:
 	return node as Player
 
 
-func _process_hit(hit: Dictionary) -> void:
-	var collider = hit.get("collider")
+# Process hits and group them by target
+func process_hits_for_damage(hit_positions: Array[Vector3]) -> Dictionary:
+	var muzzle_position: Vector3 = muzzle_marker_3d.global_position
+	var hits_by_target: Dictionary = {} # target_id -> array of hits
 	
-	# If we hit a Player
-	if collider and (collider.is_in_group("body_material") or collider.is_in_group("headshot_material")):
-		# Try to find the player node from the collider
-		var hit_player = _get_player_from_collider(collider)
-		if hit_player:
-			# If the player is not alive, ignore
-			# Check here, so this ignores for all players
-			if not hit_player.is_alive():
-				return
-			
-			# Check if this weapon belongs to the local player
-			var owner_player = get_weapon_owner()
-			if owner_player and owner_player.is_local_player:
-				# We check if this was a headshot or not
-				var is_critical: bool = false
-				if collider.is_in_group("headshot_material"):
-					is_critical = true
-				
-				# Report to server
-				owner_player.player_packets.send_report_player_damage_packet(
-					hit_player.player_id,
-					hit.position,
-					is_critical
-				)
+	for hit_position in hit_positions:
+		# We need to raycast to see what we hit at each position
+		var direction: Vector3 = (hit_position -muzzle_position).normalized()
+		var hit: Dictionary = weapon_raycast(muzzle_position, direction)
 		
-		# CAUTION
-		# else:
-		# Add here the code to report damage to destructibles!
+		if hit:
+			var collider = hit.get("collider")
+			
+			# If we hit a Player
+			if collider and (collider.is_in_group("body_material") or collider.is_in_group("headshot_material")):
+				# Try to find the player node from the collider
+				var hit_player = _get_player_from_collider(collider)
+				# If we found the player and is still alive
+				if hit_player and hit_player.is_alive():
+					# We check if this was a headshot or not
+					var is_critical: bool = false
+					if collider.is_in_group("headshot_material"):
+						is_critical = true
+					
+					# Store hit in dictionary
+					var target_id: int = hit_player.player_id
+					if not hits_by_target.has(target_id):
+						hits_by_target[target_id] = []
+					
+					hits_by_target[target_id].append({
+						"position": hit.position,
+						"is_critical": is_critical
+					})
+			
+			# elif:
+			# Add here the code to report damage to destructibles!
+			
+			# Play impact and sound effects
+			if collider and collider.is_in_group("body_material"):
+				SfxManager.spawn_projectile_impact_body(hit.position, hit.normal)
+				AudioManager.play_bullet_impact_body(hit.position)
+			elif collider and collider.is_in_group("headshot_material"):
+				SfxManager.spawn_projectile_impact_headshot(hit.position, hit.normal)
+				AudioManager.play_bullet_impact_headshot(hit.position)
+			elif collider and collider.is_in_group("concrete_material"):
+				SfxManager.spawn_projectile_impact_decal(hit.position, hit.normal, collider, "concrete_material")
+				SfxManager.spawn_projectile_impact_concrete(hit.position, hit.normal)
+				AudioManager.play_bullet_impact_concrete(hit.position)
 	
-	# Play impact and sound effects
-	if collider and collider.is_in_group("body_material"):
-		SfxManager.spawn_projectile_impact_body(hit.position, hit.normal)
-		AudioManager.play_bullet_impact_body(hit.position)
-	elif collider and collider.is_in_group("headshot_material"):
-		SfxManager.spawn_projectile_impact_headshot(hit.position, hit.normal)
-		AudioManager.play_bullet_impact_headshot(hit.position)
-	elif collider and collider.is_in_group("concrete_material"):
-		SfxManager.spawn_projectile_impact_decal(hit.position, hit.normal, collider, "concrete_material")
-		SfxManager.spawn_projectile_impact_concrete(hit.position, hit.normal)
-		AudioManager.play_bullet_impact_concrete(hit.position)
+	return hits_by_target

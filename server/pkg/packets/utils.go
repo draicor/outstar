@@ -214,12 +214,19 @@ func NewLowerWeapon() Payload {
 }
 
 // Sent by the client to fire the equipped weapon towards the direction specified
-func NewFireWeapon(dirX, dirY, dirZ float32) Payload {
+func NewFireWeapon(hit *Hit) Payload {
 	return &Packet_FireWeapon{
 		FireWeapon: &FireWeapon{
-			X: dirX,
-			Y: dirY,
-			Z: dirZ,
+			Hit: hit,
+		},
+	}
+}
+
+// Sent by the client to fire the equipped weapon towards the direction specified with multiple hits
+func NewFireWeaponMultiple(hits []*Hit) Payload {
+	return &Packet_FireWeaponMultiple{
+		FireWeaponMultiple: &FireWeaponMultiple{
+			Hits: hits,
 		},
 	}
 }
@@ -232,7 +239,7 @@ func NewToggleFireMode() Payload {
 }
 
 // Sent by the server to report a player got damaged
-func NewApplyPlayerDamage(attackerId, targetId, damage uint64, damageType string, isCritical bool, x, y, z float32) Payload {
+func NewApplyPlayerDamage(attackerId, targetId, damage uint64, damageType string, isCritical bool) Payload {
 	return &Packet_ApplyPlayerDamage{
 		ApplyPlayerDamage: &ApplyPlayerDamage{
 			AttackerId: attackerId,
@@ -240,9 +247,6 @@ func NewApplyPlayerDamage(attackerId, targetId, damage uint64, damageType string
 			Damage:     damage,
 			DamageType: damageType,
 			IsCritical: isCritical,
-			X:          x,
-			Y:          y,
-			Z:          z,
 		},
 	}
 }

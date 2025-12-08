@@ -276,10 +276,26 @@ func create_rotate_character_packet(rotation_y: float, await_rotation: bool = tr
 func create_fire_weapon_packet(target: Vector3) -> Packets.Packet:
 	var packet: Packets.Packet = Packets.Packet.new()
 	var fire_weapon_packet := packet.new_fire_weapon()
-	# Set target
-	fire_weapon_packet.set_x(target.x)
-	fire_weapon_packet.set_y(target.y)
-	fire_weapon_packet.set_z(target.z)
+	var hit := fire_weapon_packet.new_hit()
+	# Set target hit
+	hit.set_x(target.x)
+	hit.set_y(target.y)
+	hit.set_z(target.z)
+	
+	return packet
+
+
+func create_fire_weapon_multiple_packet(hits: Array[Vector3]) -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	var fire_weapon_multiple_packet := packet.new_fire_weapon_multiple()
+	var hits_packet
+	
+	for hit in hits:
+		hits_packet = fire_weapon_multiple_packet.add_hits()
+		hits_packet.set_x(hit.x)
+		hits_packet.set_y(hit.y)
+		hits_packet.set_z(hit.z)
+	
 	return packet
 
 
@@ -295,10 +311,33 @@ func create_report_player_damage_packet(target_id: int, hit_position: Vector3, i
 	var packet: Packets.Packet = Packets.Packet.new()
 	var report_player_damage_packet := packet.new_report_player_damage()
 	report_player_damage_packet.set_target_id(target_id)
-	report_player_damage_packet.set_x(hit_position.x)
-	report_player_damage_packet.set_y(hit_position.y)
-	report_player_damage_packet.set_z(hit_position.z)
-	report_player_damage_packet.set_is_critical(is_critical)
+	
+	# Create a new repeated field and save a ref to it
+	var hit := report_player_damage_packet.add_hits()
+	hit.set_x(hit_position.x)
+	hit.set_y(hit_position.y)
+	hit.set_z(hit_position.z)
+	hit.set_is_critical(is_critical)
+	
+	return packet
+
+
+# Creates and returns a report_player_damage packet
+func create_report_player_damage_multiple_packet(target_id: int, hits: Array) -> Packets.Packet:
+	var packet: Packets.Packet = Packets.Packet.new()
+	var report_player_damage_packet := packet.new_report_player_damage()
+	report_player_damage_packet.set_target_id(target_id)
+	
+	var hits_packet = []
+	for hit in hits:
+		# Create a new repeated field for each hit and save a ref to it
+		var hit_packet := report_player_damage_packet.add_hits()
+		hit_packet.set_x(hit.position.x)
+		hit_packet.set_y(hit.position.y)
+		hit_packet.set_z(hit.position.z)
+		hit_packet.set_is_critical(hit.is_critical)
+		hits_packet.append(hit_packet)
+	
 	return packet
 
 
@@ -371,8 +410,13 @@ func send_rotate_character_packet(rotation_y: float, await_rotation: bool = true
 
 
 # Creates and sends a packet to the server to inform we fired our weapon
-func send_fire_weapon_packet(target: Vector3) -> void:
+func send_fire_weapon_packet(target: Vector3 = Vector3.ZERO) -> void:
 	var packet: Packets.Packet = create_fire_weapon_packet(target)
+	WebSocket.send(packet)
+
+
+func send_fire_weapon_multiple_packet(hits: Array[Vector3]) -> void:
+	var packet: Packets.Packet = create_fire_weapon_multiple_packet(hits)
 	WebSocket.send(packet)
 
 
@@ -385,6 +429,11 @@ func send_toggle_fire_mode_packet() -> void:
 # Creates and sends a packet to the server to inform we shot a player
 func send_report_player_damage_packet(target_id: int, hit_position: Vector3, is_critical: bool) -> void:
 	var packet: Packets.Packet = create_report_player_damage_packet(target_id, hit_position, is_critical)
+	WebSocket.send(packet)
+
+
+func send_report_player_damage_multiple_packet(target_id: int, hits: Array) -> void:
+	var packet: Packets.Packet = create_report_player_damage_multiple_packet(target_id, hits)
 	WebSocket.send(packet)
 
 
@@ -420,6 +469,8 @@ func _handle_packet_started(packet: Variant) -> void:
 		_process_raise_weapon_packet()
 	elif packet is Packets.FireWeapon:
 		_process_fire_weapon_packet(packet)
+	elif packet is Packets.FireWeaponMultiple:
+		_process_fire_weapon_multiple_packet(packet)
 	elif packet is Packets.RotateCharacter:
 		_process_rotate_character_packet(packet)
 	elif packet is Packets.UpdateSpeed:
@@ -497,9 +548,28 @@ func _process_rotate_character_packet(packet: Packets.RotateCharacter) -> void:
 
 func _process_fire_weapon_packet(packet: Packets.FireWeapon) -> void:
 	# Extract hit position from the packet
-	var target: Vector3 = Vector3(packet.get_x(), packet.get_y(), packet.get_z())
+	var hit_position = packet.get_hit()
+	var target_hit: Vector3 = Vector3(hit_position.get_x(), hit_position.get_y(), hit_position.get_z())
 	
-	player.player_actions.add_action("single_fire", target)
+	player.player_actions.add_action("single_fire", target_hit)
+	
+	complete_packet()
+
+
+func _process_fire_weapon_multiple_packet(packet: Packets.FireWeaponMultiple) -> void:
+	# Extract hits from the packet
+	var hits = packet.get_hits()
+	var hit_positions: Array[Vector3] = []
+	
+	for hit in hits:
+		hit_positions.append(Vector3(hit.get_x(), hit.get_y(), hit.get_z()))
+	
+	if hit_positions.size() > 0:
+		# Store all hit positions for shotgun firing
+		player.player_equipment.set_next_hit_positions(hit_positions)
+		
+		# Add multiple fire action
+		player.player_actions.add_action("multiple_fire", hit_positions)
 	
 	complete_packet()
 
@@ -519,13 +589,11 @@ func _process_crouch_character_packet(packet: Packets.CrouchCharacter) -> void:
 
 func _process_apply_player_damage_packet(packet: Packets.ApplyPlayerDamage) -> void:
 	var data = {
+		"attacker_id": packet.get_attacker_id(),
 		"target_id": packet.get_target_id(),
 		"damage": packet.get_damage(),
 		"damage_type": packet.get_damage_type(),
-		"damage_position": Vector3(
-			packet.get_x(),
-			packet.get_y(),
-			packet.get_z())
+		"is_critical": packet.get_is_critical(),
 	}
 	route_packet_to_action_queue("apply_damage", data)
 	

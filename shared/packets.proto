@@ -7,8 +7,18 @@ package packets;
 option go_package = "pkg/packets";
 
 // PACKET TYPES
-// Building blocks
-message Position { uint64 x = 1; uint64 z = 2; } // Used by other packets
+// Building blocks used by other packets
+message Position {
+  uint64 x = 1;
+  uint64 z = 2;
+}
+message Hit {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+  bool is_critical = 4;
+}
+
 // Chat
 message PublicMessage { string nickname = 1; string text = 2; } // Sent by client to communicate with other clients in the area
 // Connection
@@ -83,18 +93,16 @@ message ReloadWeapon {
 }
 message RaiseWeapon {}
 message LowerWeapon {}
-message FireWeapon { // We pass the hit position
-  float x = 1;
-  float y = 2;
-  float z = 3;
+message FireWeapon {
+  Hit hit = 1; // Single hit position (pistols, rifles, etc)
+}
+message FireWeaponMultiple {
+  repeated Hit hits = 1; // Multiple hit positions (shotguns, etc)
 }
 message ToggleFireMode {}
 message ReportPlayerDamage {
   uint64 target_id = 1; // ID of the player that got hit
-  float x = 2; // X hit position
-  float y = 3; // Y hit position
-  float z = 4; // Z hit position
-  bool is_critical = 5; // Critical damage (usually headshots)
+  repeated Hit hits = 2; // Multiple hits to the same target
 }
 message ApplyPlayerDamage {
   uint64 attacker_id = 1; // In case we want to draw a marker with the attacker's direction in the target's screen
@@ -102,9 +110,6 @@ message ApplyPlayerDamage {
   uint64 damage = 3; // The damage number to apply
   string damage_type = 4; // If we want to draw different damage colors/effects
   bool is_critical = 5; // Critical damage (usually headshots)
-  float x = 6; // X hit position
-  float y = 7; // Y hit position
-  float z = 8; // Z hit position
 }
 message PlayerDied {
   uint64 attacker_id = 1; // ID of the player that killed them (0 if environment death)
@@ -155,15 +160,16 @@ message Packet {
     RaiseWeapon raise_weapon = 24; // Both
     LowerWeapon lower_weapon = 25; // Both
     FireWeapon fire_weapon = 26; // Both
-    ToggleFireMode toggle_fire_mode = 27; // Both
+    FireWeaponMultiple fire_weapon_multiple = 27; // Both
+    ToggleFireMode toggle_fire_mode = 28; // Both
     // Damage
-    ReportPlayerDamage report_player_damage = 28; // Client
-    ApplyPlayerDamage apply_player_damage = 29; // Server
+    ReportPlayerDamage report_player_damage = 29; // Client
+    ApplyPlayerDamage apply_player_damage = 30; // Server
     // Death
-    PlayerDied player_died = 30; // Server
+    PlayerDied player_died = 31; // Server
     // Respawn
-    RespawnRequest respawn_request = 31; // Client
+    RespawnRequest respawn_request = 32; // Client
     // Crouch
-    CrouchCharacter crouch_character = 32; // Both
+    CrouchCharacter crouch_character = 33; // Both
   }
 }

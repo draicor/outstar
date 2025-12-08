@@ -18,6 +18,7 @@ var character_scenes: Dictionary[String, PackedScene] = {
 # EXPORTED VARIABLES
 @export var RAYCAST_DISTANCE: float = 40 # meters
 @export var CHAT_BUBBLE_OFFSET: Vector3 = Vector3(0, 0.4, 0)
+@export var DAMAGE_ORIGIN: float = 1.8 # meters from the ground up
 
 # Spawn data
 var player_id: int

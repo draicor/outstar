@@ -91,7 +91,7 @@ func update(_delta: float) -> void:
 	if Input.is_action_pressed("left_click") and not player.is_mouse_over_ui:
 		# Fire weapon
 		var target: Vector3 = player.get_mouse_world_position()
-		player.player_actions.queue_single_fire_action(target)
+		player.player_actions.queue_multiple_fire_action([target])
 
 
 # One-time inputs
