@@ -18,6 +18,7 @@ var character_scenes: Dictionary[String, PackedScene] = {
 # EXPORTED VARIABLES
 @export var RAYCAST_DISTANCE: float = 40 # meters
 @export var CHAT_BUBBLE_OFFSET: Vector3 = Vector3(0, 0.4, 0)
+@export var DAMAGE_ORIGIN: float = 1.8 # meters from the ground up
 
 # Spawn data
 var player_id: int
@@ -71,7 +72,7 @@ var mouse_distances = {
 }
 
 # Rotation broadcast logic
-const AIM_ROTATION_INTERVAL: float = 1.0 # 1 second timer to update rotation
+const AIM_ROTATION_INTERVAL: float = 0.1 # Timer to update rotation if aiming
 var rotation_sync_timer: float = 0.0
 var last_sent_rotation: float = 0.0
 var rotation_timer_interval: float = AIM_ROTATION_INTERVAL
@@ -80,11 +81,6 @@ var is_aim_rotating: bool = false
 
 # Weapon firing logic
 var dry_fired: bool = false
-# Firearm automatic firing
-var is_auto_firing: bool = false
-var is_trying_to_syncronize: bool = false
-var shots_fired: int = 0
-var expected_shots_fired: int = -1
 
 # Signals
 var ui_hud_weapon_slot_signals_connected: bool = false
@@ -722,10 +718,6 @@ func can_start_firing() -> bool:
 	# If not in a weapon state
 	var current_state_name: String = player_state_machine.get_current_state_name()
 	if not current_state_name in player_packets.WEAPON_STATES:
-		return false
-	
-	# If already firing
-	if is_auto_firing:
 		return false
 	
 	# If weapon is in semi-auto fire mode

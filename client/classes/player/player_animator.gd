@@ -8,6 +8,7 @@ var animation_player: AnimationPlayer # Our player's AnimationPlayer
 
 # Character locomotion
 var locomotion: Dictionary[String, Dictionary] # Depends on the gender of this character
+# UNARMED
 var unarmed_female_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "unarmed/unarmed_female_idle", play_rate = 1.0},
 	"walk": {animation = "unarmed/unarmed_female_walk", play_rate = 1.35},
@@ -24,6 +25,7 @@ var unarmed_crouch_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "unarmed/unarmed_crouch_idle", play_rate = 1.0},
 	"walk": {animation = "unarmed/unarmed_crouch_walk", play_rate = 1.0},
 }
+# RIFLE
 var rifle_down_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "rifle/rifle_down_idle", play_rate = 1.0},
 	"walk": {animation = "rifle/rifle_down_walk", play_rate = 1.25},
@@ -42,11 +44,12 @@ var rifle_crouch_down_locomotion: Dictionary[String, Dictionary] = {
 var rifle_crouch_aim_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "rifle/rifle_crouch_aim_idle", play_rate = 1.0},
 }
+# SHOTGUN
 var shotgun_down_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "shotgun/shotgun_down_idle", play_rate = 1.0},
-	"walk": {animation = "shotgun/shotgun_down_walk", play_rate = 1.0},
-	"jog": {animation = "shotgun/shotgun_down_jog", play_rate = 1.0},
-	"run": {animation = "shotgun/shotgun_down_run", play_rate = 1.0},
+	"walk": {animation = "shotgun/shotgun_down_walk", play_rate = 1.15},
+	"jog": {animation = "shotgun/shotgun_down_jog", play_rate = 0.9},
+	"run": {animation = "shotgun/shotgun_down_run", play_rate = 0.65},
 }
 var shotgun_aim_locomotion: Dictionary[String, Dictionary] = {
 	"idle": {animation = "shotgun/shotgun_aim_idle", play_rate = 1.0},
@@ -72,6 +75,7 @@ var triggered_events: Dictionary = {}
 # the downside of this is that we can't pass an argument, so we must create a unique,
 # sound method for every different sound we want to call from player_audio.gd
 var animation_events: Dictionary[String, Array] = {
+	# RIFLE
 	"rifle/rifle_aim_fire_single_fast": [
 		{"time": 0.05, "method": "_call_player_audio_method", "args": ["play_weapon_fire_single"]}, # Has to fire BEFORE decrement ammo
 		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["weapon_fire"]},
@@ -99,6 +103,37 @@ var animation_events: Dictionary[String, Array] = {
 	],
 	"rifle/rifle_unequip": [
 		{"time": 0.0, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
+	],
+	# SHOTGUN
+	"shotgun/shotgun_aim_fire": [
+		{"time": 0.05, "method": "_call_player_audio_method", "args": ["play_weapon_fire_single"]}, # Has to fire BEFORE decrement ammo
+		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["weapon_fire"]},
+		{"time": 0.6, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
+		{"time": 0.65, "method": "_call_player_audio_method", "args": ["play_weapon_shotgun_cock"]},
+		{"time": 1.0, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
+	],
+	"shotgun/shotgun_crouch_aim_fire": [
+		{"time": 0.05, "method": "_call_player_audio_method", "args": ["play_weapon_fire_single"]}, # Has to fire BEFORE decrement ammo
+		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["weapon_fire"]},
+		{"time": 0.6, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
+		{"time": 0.65, "method": "_call_player_audio_method", "args": ["play_weapon_shotgun_cock"]},
+		{"time": 1.0, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
+	],
+	"shotgun/shotgun_aim_reload": [
+		{"time": 0.05, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
+		{"time": 0.80, "method": "_call_player_audio_method", "args": ["play_weapon_load_bullet"]},
+		{"time": 1.05, "method": "_call_player_audio_method", "args": ["play_weapon_load_bullet"]},
+		{"time": 1.41, "method": "_call_player_audio_method", "args": ["play_weapon_load_bullet"]},
+		{"time": 1.78, "method": "_call_player_audio_method", "args": ["play_weapon_load_bullet"]},
+		{"time": 2.2, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
+	],
+	"shotgun/shotgun_crouch_aim_reload": [
+		{"time": 0.05, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
+		{"time": 0.80, "method": "_call_player_audio_method", "args": ["play_weapon_load_bullet"]},
+		{"time": 1.05, "method": "_call_player_audio_method", "args": ["play_weapon_load_bullet"]},
+		{"time": 1.42, "method": "_call_player_audio_method", "args": ["play_weapon_load_bullet"]},
+		{"time": 1.78, "method": "_call_player_audio_method", "args": ["play_weapon_load_bullet"]},
+		{"time": 2.2, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
 	],
 }
 
@@ -175,43 +210,43 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 		},
 		"reload": {
 			animation = "shotgun/shotgun_aim_reload",
-			play_rate = 1.0
+			play_rate = 0.9
 		},
 		"crouch_reload": {
 			animation = "shotgun/shotgun_crouch_aim_reload",
-			play_rate = 1.0
+			play_rate = 0.9
 		},
 		"down_to_aim": {
 			animation = "shotgun/shotgun_down_to_shotgun_aim",
-			play_rate = 3.0
+			play_rate = 3.2
 		},
 		"aim_to_down": {
 			animation = "shotgun/shotgun_aim_to_shotgun_down",
-			play_rate = 3.0
+			play_rate = 3.2
 		},
 		"crouch_down_to_crouch_aim": {
 			animation = "shotgun/shotgun_crouch_down_to_shotgun_crouch_aim",
-			play_rate = 2.0
+			play_rate = 3.2
 		},
 		"crouch_aim_to_crouch_down": {
 			animation = "shotgun/shotgun_crouch_aim_to_shotgun_crouch_down",
-			play_rate = 2.0
+			play_rate = 3.2
 		},
 		"crouch_aim_to_aim": {
 			animation = "shotgun/shotgun_crouch_aim_to_shotgun_aim",
-			play_rate = 1.0
+			play_rate = 2.5
 		},
 		"crouch_down_to_down": {
 			animation = "shotgun/shotgun_crouch_down_to_shotgun_down", 
-			play_rate = 1.3
+			play_rate = 2.0
 		},
 		"aim_to_crouch_aim": {
 			animation = "shotgun/shotgun_aim_to_shotgun_crouch_aim",
-			play_rate = 1.0
+			play_rate = 2.5
 		},
 		"down_to_crouch_down": {
 			animation = "shotgun/shotgun_down_to_shotgun_crouch_down",
-			play_rate = 1.3
+			play_rate = 2.0
 		},
 	}
 	# Add more weapon types here

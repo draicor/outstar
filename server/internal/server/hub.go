@@ -15,6 +15,9 @@ import (
 	"time"
 )
 
+const serverTick int = 30 // Server process max 30 packets per second per player (30 Hz)
+const packetsPerClient int = 5
+
 var createUserMutex sync.Mutex
 
 // The hub is the entry point for all connected clients and the only go routine
@@ -113,8 +116,7 @@ func (h *Hub) Start() {
 	// TO IMPLEMENT -> Adding static obstacles to the current map
 	// add obstacles [20, 33] = "stone_column", rotate it by 30°
 
-	// Create a ticker that ticks every 0.2 seconds
-	serverTick := 5 // Max 5 packets per second (5 Hz)
+	// Create a ticker that ticks every X seconds
 	ticker := time.NewTicker(time.Second / time.Duration(serverTick))
 	defer ticker.Stop()
 
@@ -148,14 +150,20 @@ func (h *Hub) Start() {
 				}
 			})
 
-		// Process one packet per client per tick from the client's processing channel
+		// Process packets from the client's processing channel
 		case <-ticker.C:
 			h.Clients.ForEach(func(id uint64, client Client) {
-				select {
-				case packet := <-client.GetProcessingChannel():
-					client.ProcessPacket(packet.SenderId, packet.Payload)
-				default:
-					// If no packet is available, then skip to the next client
+
+			ClientLoop: // Label for the outer loop to break out of it
+				// Process up to max packets per client per tick to prevent starvation
+				for i := 0; i < packetsPerClient; i++ {
+					select {
+					case packet := <-client.GetProcessingChannel():
+						client.ProcessPacket(packet.SenderId, packet.Payload)
+					default:
+						// If no packet is available, then skip to the next client
+						break ClientLoop
+					}
 				}
 			})
 		}

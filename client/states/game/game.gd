@@ -86,12 +86,10 @@ func _on_websocket_packet_received(packet: Packets.Packet) -> void:
 		_route_move_character_packet(sender_id, packet.get_move_character())
 	elif packet.has_raise_weapon():
 		_route_raise_weapon_packet(sender_id, packet.get_raise_weapon())
-	elif packet.has_start_firing_weapon():
-		_route_start_firing_weapon_packet(sender_id, packet.get_start_firing_weapon())
-	elif packet.has_stop_firing_weapon():
-		_route_stop_firing_weapon_packet(sender_id, packet.get_stop_firing_weapon())
 	elif packet.has_fire_weapon():
 		_route_fire_weapon_packet(sender_id, packet.get_fire_weapon())
+	elif packet.has_fire_weapon_multiple():
+		_route_fire_weapon_multiple_packet(sender_id, packet.get_fire_weapon_multiple())
 	elif packet.has_rotate_character():
 		_route_rotate_character_packet(sender_id, packet.get_rotate_character())
 	elif packet.has_player_died():
@@ -452,28 +450,20 @@ func _route_fire_weapon_packet(sender_id: int, fire_weapon_packet: Packets.FireW
 		player.player_packets.add_packet(fire_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
+func _route_fire_weapon_multiple_packet(sender_id: int, fire_weapon_multiple_packet: Packets.FireWeaponMultiple) -> void:
+	# Attempt to retrieve the player character object
+	var player: Player = GameManager.get_player_by_id(sender_id)
+	if player:
+		# Send this packet to the queue of this player
+		player.player_packets.add_packet(fire_weapon_multiple_packet, PlayerPackets.Priority.NORMAL)
+
+
 func _route_toggle_fire_mode_packet(sender_id: int, toggle_fire_mode_packet: Packets.ToggleFireMode) -> void:
 	# Attempt to retrieve the player character object
 	var player: Player = GameManager.get_player_by_id(sender_id)
 	if player:
 		# Send this packet to the queue of this player
 		player.player_packets.add_packet(toggle_fire_mode_packet, PlayerPackets.Priority.NORMAL)
-
-
-func _route_start_firing_weapon_packet(sender_id: int, start_firing_weapon_packet: Packets.StartFiringWeapon) -> void:
-	# Attempt to retrieve the player character object
-	var player: Player = GameManager.get_player_by_id(sender_id)
-	if player:
-		# Send this packet to the queue of this player
-		player.player_packets.add_packet(start_firing_weapon_packet, PlayerPackets.Priority.NORMAL)
-
-
-func _route_stop_firing_weapon_packet(sender_id: int, stop_firing_weapon_packet: Packets.StopFiringWeapon) -> void:
-	# Attempt to retrieve the player character object
-	var player: Player = GameManager.get_player_by_id(sender_id)
-	if player:
-		# Send this packet to the queue of this player
-		player.player_packets.add_packet(stop_firing_weapon_packet, PlayerPackets.Priority.NORMAL)
 
 
 func _route_apply_player_damage_packet(sender_id: int, apply_damage_packet: Packets.ApplyPlayerDamage) -> void:
@@ -526,7 +516,10 @@ func _process_damage_immediately(apply_damage_packet: Packets.ApplyPlayerDamage)
 	# Get the rest of the data from the packet
 	var damage: int = apply_damage_packet.get_damage()
 	# var damage_type: String = apply_damage_packet.get_damage_type()
-	var damage_position: Vector3 = Vector3(apply_damage_packet.get_x(), apply_damage_packet.get_y(), apply_damage_packet.get_z())
+	
+	# Get the target's world position and spawn the damage there
+	var damage_position: Vector3 = Vector3(target_player.position)
+	damage_position.y += target_player.DAMAGE_ORIGIN
 	
 	SfxManager.spawn_damage_number(damage, damage_position)
 

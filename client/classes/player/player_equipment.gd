@@ -36,6 +36,9 @@ var equipped_weapon_type: String = "unarmed" # Used to switch states and animati
 var equipped_weapon = null # Instantiated scene of our weapon
 var max_correction_angle: float = deg_to_rad(5.0) # 5 degrees deviation
 
+# Hit position
+var _next_hit_positions: Array[Vector3] = []
+
 
 func _ready() -> void:
 	# Wait for parent to be ready, then store a reference to it
@@ -187,14 +190,32 @@ func can_fire_weapon() -> bool:
 	return get_current_ammo() > 0
 
 
+func calculate_weapon_hit_positions(target_position: Vector3) -> Array[Vector3]:
+	if not equipped_weapon:
+		return []
+	
+	# Calculate weapon direction for the target
+	calculate_weapon_direction(target_position)
+	
+	# Get the hit positions after recoil
+	return equipped_weapon.calculate_hit_positions()
+
+
 # Fires the actual weapon (the fire animation is already playing here)
 func weapon_fire() -> void:
 	# If we don't have a weapon equipped or we do but we can't fire it
 	if not equipped_weapon or not can_fire_weapon():
 		return
 	
-	equipped_weapon.fire() # NOTE this returns the hit_position but we are not using it yet
-	decrement_ammo() # locally
+	# Get next hit positions (array)
+	var hit_positions: Array[Vector3] = get_next_hit_positions()
+	
+	if hit_positions.size() > 0:
+		# Fire with the pre-calculated hit positions
+		equipped_weapon.fire(hit_positions)
+		decrement_ammo() # locally
+	else:
+		push_error("Error inside weapon_fire(), hit_positions.size() was empty")
 
 
 # Returns the muzzle position for firearms
@@ -383,3 +404,23 @@ func get_current_weapon_max_ammo() -> int:
 			return 6
 		_:
 			return 0
+
+
+func set_next_hit_positions(positions: Array[Vector3]) -> void:
+	_next_hit_positions = positions
+
+
+func get_next_hit_positions() -> Array[Vector3]:
+	return _next_hit_positions
+
+
+# Process hits for damage reporting
+func process_hits_for_damage() -> Dictionary:
+	if not equipped_weapon:
+		return {}
+	
+	var hit_positions = get_next_hit_positions()
+	if hit_positions.size() == 0:
+		return {}
+	
+	return equipped_weapon.process_hits_for_damage(hit_positions)

@@ -33,7 +33,6 @@ func enter() -> void:
 func exit() -> void:
 	# If this is our local player
 	if player.is_local_player:
-		broadcast_rotation_if_changed()
 		player.set_mouse_cursor("default")
 		# Restore the camera rotation step to default
 		player.camera.ROTATION_STEP = player.camera.BASE_ROTATION_STEP
@@ -87,34 +86,21 @@ func update(_delta: float) -> void:
 	
 	# Handle lower weapon (release right click) - transition to crouch down state
 	if not Input.is_action_pressed("right_click"):
+		broadcast_rotation_if_changed()
 		player.player_actions.queue_lower_weapon_action()
 		return
 	
 	# Fire rifle if mouse isn't over the UI
 	if Input.is_action_pressed("left_click") and not player.is_mouse_over_ui:
-		# If we are still auto firing, prevent restarting it
-		if player.is_auto_firing:
-			return
-		
-		if player.player_equipment.get_fire_mode() == 1: # Automatic mode
-			player.player_actions.queue_start_firing_action(
-				player.player_equipment.get_current_ammo()
-			)
-		else: # Single fire mode
-			var target: Vector3 = player.get_mouse_world_position()
-			player.player_actions.queue_single_fire_action(target)
-		
-		return
+		# Fire weapon
+		var target: Vector3 = player.get_mouse_world_position()
+		player.player_actions.queue_single_fire_action(target)
 
 
 # One-time inputs
 func handle_input(event: InputEvent) -> void:
 	if ignore_input():
 		return
-	
-	# Track trigger release
-	if event.is_action_pressed("left_click"):
-		player.player_actions.queue_stop_firing_action(player.shots_fired)
 	
 	# Reload rifle
 	elif event.is_action_pressed("weapon_reload"):

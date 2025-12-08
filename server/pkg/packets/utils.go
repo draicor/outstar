@@ -153,10 +153,11 @@ func NewMoveCharacter(player *objects.Player) Payload {
 }
 
 // Sent by both server and client to update a character's model.y rotation
-func NewRotateCharacter(rotationY float64) Payload {
+func NewRotateCharacter(rotationY float64, awaitRotation bool) Payload {
 	return &Packet_RotateCharacter{
 		RotateCharacter: &RotateCharacter{
-			RotationY: rotationY,
+			RotationY:     rotationY,
+			AwaitRotation: awaitRotation,
 		},
 	}
 }
@@ -213,13 +214,19 @@ func NewLowerWeapon() Payload {
 }
 
 // Sent by the client to fire the equipped weapon towards the direction specified
-func NewFireWeapon(dirX, dirY, dirZ float32, rotationY float64) Payload {
+func NewFireWeapon(hit *Hit) Payload {
 	return &Packet_FireWeapon{
 		FireWeapon: &FireWeapon{
-			X:         dirX,
-			Y:         dirY,
-			Z:         dirZ,
-			RotationY: rotationY,
+			Hit: hit,
+		},
+	}
+}
+
+// Sent by the client to fire the equipped weapon towards the direction specified with multiple hits
+func NewFireWeaponMultiple(hits []*Hit) Payload {
+	return &Packet_FireWeaponMultiple{
+		FireWeaponMultiple: &FireWeaponMultiple{
+			Hits: hits,
 		},
 	}
 }
@@ -231,37 +238,15 @@ func NewToggleFireMode() Payload {
 	}
 }
 
-// Sent by the client to initiate full auto weapon fire
-func NewStartFiringWeapon(rotationY float64, ammo uint64) Payload {
-	return &Packet_StartFiringWeapon{
-		StartFiringWeapon: &StartFiringWeapon{
-			RotationY: rotationY,
-			Ammo:      ammo,
-		},
-	}
-}
-
-// Sent by the client to cease full auto weapon fire
-func NewStopFiringWeapon(rotationY float64, shotsFired uint64) Payload {
-	return &Packet_StopFiringWeapon{
-		StopFiringWeapon: &StopFiringWeapon{
-			RotationY:  rotationY,
-			ShotsFired: shotsFired,
-		},
-	}
-}
-
 // Sent by the server to report a player got damaged
-func NewApplyPlayerDamage(attackerId, targetId, damage uint64, damage_type string, x, y, z float32) Payload {
+func NewApplyPlayerDamage(attackerId, targetId, damage uint64, damageType string, isCritical bool) Payload {
 	return &Packet_ApplyPlayerDamage{
 		ApplyPlayerDamage: &ApplyPlayerDamage{
 			AttackerId: attackerId,
 			TargetId:   targetId,
 			Damage:     damage,
-			DamageType: damage_type,
-			X:          x,
-			Y:          y,
-			Z:          z,
+			DamageType: damageType,
+			IsCritical: isCritical,
 		},
 	}
 }

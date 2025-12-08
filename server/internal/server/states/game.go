@@ -15,16 +15,17 @@ import (
 
 // Simple weapon damage dictionary
 var weaponDamages = map[string]struct {
-	MinDamage uint64
-	MaxDamage uint64
+	MinDamage   uint64
+	MaxDamage   uint64
+	Projectiles int // Number of projects per shot
 }{
 	// player_equipment.gd add_weapon_to_slot()
 	// Rifles
-	"unarmed":   {MinDamage: 1, MaxDamage: 2},
-	"m16_rifle": {MinDamage: 10, MaxDamage: 20},
-	"akm_rifle": {MinDamage: 12, MaxDamage: 24},
+	"unarmed":   {MinDamage: 1, MaxDamage: 2, Projectiles: 0},
+	"m16_rifle": {MinDamage: 10, MaxDamage: 20, Projectiles: 1},
+	"akm_rifle": {MinDamage: 12, MaxDamage: 24, Projectiles: 1},
 	// Shotguns
-	"remington870_shotgun": {MinDamage: 25, MaxDamage: 50}, // FIX THIS: it has to be damage per pellet
+	"remington870_shotgun": {MinDamage: 5, MaxDamage: 10, Projectiles: 9}, // Damage per pellet
 }
 
 // Rolls damage for a weapon
@@ -251,21 +252,17 @@ func (state *Game) HandlePacket(senderId uint64, payload packets.Payload) {
 		case *packets.Packet_RotateCharacter:
 			state.HandleRotateCharacter(casted_payload.RotateCharacter)
 
-		// FIRE WEAPON
+		// FIRE WEAPON (single shot)
 		case *packets.Packet_FireWeapon:
 			state.HandleFireWeapon(casted_payload.FireWeapon)
+
+		// FIRE WEAPON MULTIPLE
+		case *packets.Packet_FireWeaponMultiple:
+			state.HandleFireWeaponMultiple(casted_payload.FireWeaponMultiple)
 
 		// TOGGLE FIRE MODE
 		case *packets.Packet_ToggleFireMode:
 			state.HandleToggleFireMode(casted_payload.ToggleFireMode)
-
-		// START FIRING WEAPON
-		case *packets.Packet_StartFiringWeapon:
-			state.HandleStartFiringWeapon(casted_payload.StartFiringWeapon)
-
-		// STOP FIRING WEAPON
-		case *packets.Packet_StopFiringWeapon:
-			state.HandleStopFiringWeapon(casted_payload.StopFiringWeapon)
 
 		// REPORT PLAYER DAMAGE
 		case *packets.Packet_ReportPlayerDamage:
@@ -492,15 +489,21 @@ func (state *Game) HandleLowerWeapon() {
 func (state *Game) HandleRotateCharacter(payload *packets.RotateCharacter) {
 	// Get the rotation from the packet
 	newRotation := payload.GetRotationY()
+	awaitRotation := payload.GetAwaitRotation()
 	// Overwrite this character's rotation
 	state.player.SetRotation(newRotation)
 	// Broadcast to everyone in the region
-	state.client.Broadcast(packets.NewRotateCharacter(newRotation))
+	state.client.Broadcast(packets.NewRotateCharacter(newRotation, awaitRotation))
 }
 
 func (state *Game) HandleFireWeapon(payload *packets.FireWeapon) {
-	// Get the target position and attacker's rotation from the packet and broadcast to everyone in the region
-	state.client.Broadcast(packets.NewFireWeapon(payload.GetX(), payload.GetY(), payload.GetZ(), payload.GetRotationY()))
+	// Get the hit position from the packet and broadcast to everyone in the region
+	state.client.Broadcast(packets.NewFireWeapon(payload.GetHit()))
+}
+
+func (state *Game) HandleFireWeaponMultiple(payload *packets.FireWeaponMultiple) {
+	// Get the hits from the packet and broadcast to everyone in the region
+	state.client.Broadcast(packets.NewFireWeaponMultiple(payload.GetHits()))
 }
 
 func (state *Game) HandleToggleFireMode(payload *packets.ToggleFireMode) {
@@ -510,21 +513,9 @@ func (state *Game) HandleToggleFireMode(payload *packets.ToggleFireMode) {
 	state.client.Broadcast(packets.NewToggleFireMode())
 }
 
-func (state *Game) HandleStartFiringWeapon(payload *packets.StartFiringWeapon) {
-	// Get the attacker's rotation and available ammo from the packet and broadcast to everyone in the region
-	state.client.Broadcast(packets.NewStartFiringWeapon(payload.GetRotationY(), payload.GetAmmo()))
-}
-
-func (state *Game) HandleStopFiringWeapon(payload *packets.StopFiringWeapon) {
-	// Get the attacker's rotation and how many shots were fired from the packet and broadcast to everyone in the region
-	state.client.Broadcast(packets.NewStopFiringWeapon(payload.GetRotationY(), payload.GetShotsFired()))
-}
-
 func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage) {
 	// Validate the target exists
 	targetId := payload.GetTargetId()
-
-	// targetClient, exists
 	targetClient, exists := state.client.GetRegion().Clients.Get(targetId)
 	if !exists {
 		state.logger.Printf("Invalid target ID %d in damage report packet", targetId)
@@ -544,27 +535,42 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 		return
 	}
 
-	// Calculate damage based on weapon name
-	var damage uint64 = getWeaponDamage(attackerWeapon.WeaponName)
-
-	// If was critical damage, then do double damage
-	if payload.GetIsCritical() {
-		damage = damage * 2
+	// Get hits from the packet
+	hits := payload.GetHits()
+	if len(hits) == 0 {
+		return
 	}
 
-	// Apply damage to target
-	targetPlayer.DecreaseHealth(damage)
+	// CAUTION ADD THIS
+	// Make sure we don't exploit the projectile count
+	// if len(hits) > max number of projectiles for the equipped weapon
+
+	// Calculate total damage from all hits
+	var totalDamage uint64 = 0
+	var anyCritical bool = false
+
+	// Calculate damage for each hit
+	for _, hit := range hits {
+		var damage uint64 = getWeaponDamage(attackerWeapon.WeaponName)
+		// Apply critical multipler if this hit was critical
+		if hit.GetIsCritical() {
+			damage = damage * 2
+			anyCritical = true
+		}
+
+		totalDamage += damage
+	}
+
+	// Apply total damage to target
+	targetPlayer.DecreaseHealth(totalDamage)
 
 	// Send the damage packet after applying damage
-	// Create apply damage packet and load it
 	applyDamagePacket := packets.NewApplyPlayerDamage(
 		state.client.GetId(),
 		targetId,
-		damage,
+		totalDamage,
 		"bullet",
-		payload.GetX(),
-		payload.GetY(),
-		payload.GetZ(),
+		anyCritical,
 	)
 
 	// Tell everyone to apply the damage (including the attacker)

@@ -73,10 +73,8 @@ func process_next_action() -> void:
 			_process_lower_weapon_action()
 		"single_fire":
 			_process_single_fire_action(_current_action.action_data)
-		"start_firing":
-			_process_start_firing_action(_current_action.action_data)
-		"stop_firing":
-			_process_stop_firing_action(_current_action.action_data)
+		"multiple_fire":
+			_process_multiple_fire_action(_current_action.action_data)
 		"reload_weapon":
 			_process_reload_weapon_action(_current_action.action_data)
 		"toggle_fire_mode":
@@ -115,11 +113,8 @@ func queue_lower_weapon_action() -> void:
 func queue_single_fire_action(target: Vector3) -> void:
 	add_action("single_fire", target)
 
-func queue_start_firing_action(ammo: int) -> void:
-	add_action("start_firing", ammo)
-
-func queue_stop_firing_action(server_shots_fired: int) -> void:
-	add_action("stop_firing", server_shots_fired)
+func queue_multiple_fire_action(hit_positions: Array[Vector3]) -> void:
+	add_action("multiple_fire", hit_positions)
 
 func queue_reload_weapon_action(amount: int) -> void:
 	add_action("reload_weapon", {"amount": amount})
@@ -130,8 +125,8 @@ func queue_toggle_fire_mode_action() -> void:
 func queue_switch_weapon_action(slot: int) -> void:
 	add_action("switch_weapon", slot)
 
-func queue_rotate_action(rotation_y: float) -> void:
-	add_action("rotate", rotation_y)
+func queue_rotate_action(packet: Packets.RotateCharacter) -> void:
+	add_action("rotate", packet)
 
 func queue_enter_crouch_action() -> void:
 	add_action("enter_crouch")
@@ -271,6 +266,16 @@ func _process_raise_weapon_action() -> void:
 		# After local validation, we send the packet
 		player.player_packets.send_raise_weapon_packet()
 	
+	# Get the current state
+	var current_state: BaseState = player.player_state_machine.get_current_state()
+	if not current_state:
+		return
+		
+	# Check if our weapon is already raised, if so, ignore
+	if current_state.is_weapon_aim_idle_state():
+		complete_action()
+		return
+	
 	# Perform local actions
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
@@ -313,18 +318,28 @@ func _process_lower_weapon_action() -> void:
 		# After local validation, we send the packet
 		player.player_packets.send_lower_weapon_packet()
 	
+	# Get the current state
+	var current_state: BaseState = player.player_state_machine.get_current_state()
+	if not current_state:
+		return
+		
+	# Check if our weapon is already down, if so, ignore
+	if current_state.is_weapon_down_idle_state():
+		complete_action()
+		return
+	
 	# Perform local actions
 	player.is_aim_rotating = false # Disable aim rotation
 	
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
-	var current_state: String = player.player_state_machine.get_current_state_name()
+	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
 	# Determine animation and next state based on current state
 	var animation_type: String
 	var target_state_name: String
 	
-	match current_state:
+	match current_state_name:
 		"rifle_aim_idle", "shotgun_aim_idle":
 			animation_type = "aim_to_down"
 			target_state_name = weapon_type + "_down_idle"
@@ -332,12 +347,9 @@ func _process_lower_weapon_action() -> void:
 			animation_type = "crouch_aim_to_crouch_down"
 			target_state_name = weapon_type + "_crouch_down_idle"
 		_:
-			push_error("Error in match current_state inside _process_lower_weapon_action()")
-	
-	if animation_type == "":
-		push_error("Error in _process_lower_weapon_action(), animation_type empty")
-		complete_action()
-		return
+			push_error("Error in match current_state inside _process_lower_weapon_action(), current_state_name: ", current_state_name, ", weapon_type: ", weapon_type)
+			complete_action()
+			return
 	
 	await player.player_animator.play_weapon_animation_and_await(
 		animation_type,
@@ -365,6 +377,18 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	var amount: int = data["amount"]
 	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	
+	# Get the current state
+	var current_state: BaseState = player.player_state_machine.get_current_state()
+	if not current_state:
+		return
+	
+	# If we are in one of the weapon down states, we need to queue a raise weapon action
+	if current_state.is_weapon_down_idle_state():
+		queue_raise_weapon_action()
+		queue_reload_weapon_action(amount)
+		complete_action()
+		return
+	
 	if player.is_local_player:
 		# After local validation, we send the packet
 		player.player_packets.send_reload_weapon_packet(weapon_slot, amount)
@@ -383,8 +407,10 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 		"rifle_crouch_aim_idle", "shotgun_crouch_aim_idle":
 			reload_animation = "crouch_reload"
 		"_":
-			push_error("Error in match current_state_name inside _process_reload_weapon_action()")
-	
+			push_error("Error inside _process_reload_weapon_action for animation: ", reload_animation, ", weapon_type: ", weapon_type, ", current_state: ", current_state_name)
+			complete_action()
+			return
+		
 	await player.player_animator.play_weapon_animation_and_await(
 		reload_animation,
 		weapon_type
@@ -429,8 +455,114 @@ func _process_single_fire_action(target: Vector3) -> void:
 			complete_action()
 			return
 		
-		# After local validation, we send the packet
-		player.player_packets.send_fire_weapon_packet(target, player.player_movement.rotation_target)
+		# Only calculate projectiles if we have ammo
+		var hit_positions: Array[Vector3] = []
+		# Check if we have ammo
+		if player.player_equipment.can_fire_weapon():
+			# Calculate recoil first and get the actual hit position
+			hit_positions = player.player_equipment.calculate_weapon_hit_positions(target)
+			
+			# Store the hit positions in our player equipment
+			player.player_equipment.set_next_hit_positions(hit_positions)
+			
+			# Process hits for damage reporting
+			var hits_by_target = player.player_equipment.process_hits_for_damage()
+		
+			# For rifles/pistols, send single hit position
+			if hit_positions.size() > 0:
+				player.player_packets.send_fire_weapon_packet(hit_positions[0])
+				
+				# Send damage report if we hit a target
+				for target_id in hits_by_target:
+					var hits = hits_by_target[target_id]
+					if hits.size() > 0:
+						var hit = hits[0]
+						player.player_packets.send_report_player_damage_packet(target_id, hit.position, hit.is_critical)
+		
+		# Send the packet only for the dry fire effect
+		else:
+			player.player_packets.send_fire_weapon_packet()
+	
+	# Remote players
+	else:
+		# Store the hit position that came from the server (with recoil already applied)
+		player.player_equipment.set_next_hit_positions([target])
+		# Check if we have ammo
+		if player.player_equipment.can_fire_weapon():
+			# Process the hits for damage so we spawn SFX and sounds
+			player.player_equipment.process_hits_for_damage()
+	
+	# Perform local actions
+	# Get weapon data
+	var weapon = player.player_equipment.equipped_weapon
+	var anim_name: String = weapon.get_animation()
+	var play_rate: float = weapon.get_animation_play_rate()
+	
+	# Check if we have ammo
+	var has_ammo: bool = player.player_equipment.can_fire_weapon()
+	
+	# Adjust for dry fire
+	if not has_ammo:
+		play_rate = weapon.semi_fire_rate
+		player.dry_fired = true
+
+	# Ammo decrement happens from player_equipment.weapon_fire()
+	await player.player_animator.play_animation_and_await(anim_name, play_rate)
+	
+	complete_action()
+
+
+func _process_multiple_fire_action(hit_positions: Array[Vector3]) -> void:
+# Only validate local player
+	if player.is_local_player:
+		# If hit_positions is empty
+		if hit_positions.size() == 0:
+			complete_action()
+			return
+		
+		# Check if we can fire regardless of ammo count
+		if not player.can_fire_weapon():
+			complete_action()
+			return
+		
+		# If the muzzle is inside geometry (walls), don't fire
+		if player.player_equipment.equipped_weapon.is_weapon_inside_wall():
+			complete_action()
+			return
+		
+		# Only calculate projectiles if we have ammo
+		var local_hit_positions: Array[Vector3] = []
+		# Check if we have ammo
+		if player.player_equipment.can_fire_weapon():
+			# Calculate recoil first and get the actual hit position using our target
+			local_hit_positions = player.player_equipment.calculate_weapon_hit_positions(hit_positions[0])
+			
+			# Store the hit positions in our player equipment
+			player.player_equipment.set_next_hit_positions(local_hit_positions)
+			
+			# Process hits for damage reporting
+			var hits_by_target = player.player_equipment.process_hits_for_damage()
+			
+			# For shotguns, send all hit positions
+			player.player_packets.send_fire_weapon_multiple_packet(local_hit_positions)
+			
+			# Send damage reports for each target
+			for target_id in hits_by_target:
+				var hits = hits_by_target[target_id]
+				player.player_packets.send_report_player_damage_multiple_packet(target_id, hits)
+		
+		# Send the packet only for the dry fire effect
+		else:
+			player.player_packets.send_fire_weapon_packet()
+	
+	# Remote players
+	else:
+		# Store the hit positions that came from the server
+		player.player_equipment.set_next_hit_positions(hit_positions)
+		# Check if we have ammo
+		if player.player_equipment.can_fire_weapon():
+			# Process the hits for damage so we spawn SFX and sounds
+			player.player_equipment.process_hits_for_damage()
 	
 	# Perform local actions
 	# Get weapon data
@@ -520,129 +652,6 @@ func _process_switch_weapon_action(slot: int) -> void:
 	complete_action()
 
 
-func _process_start_firing_action(ammo: int) -> void:
-	# Only validate local player
-	if player.is_local_player:
-		# Check if we can start firing
-		if not player.can_start_firing():
-			complete_action()
-			return
-		
-		# If the muzzle is inside geometry (walls), don't fire
-		if player.player_equipment.equipped_weapon.is_weapon_inside_wall():
-			complete_action()
-			return
-		
-		# After local validation, we send the packet
-		player.player_packets.send_start_firing_weapon_packet(
-			player.player_movement.rotation_target,
-			player.player_equipment.get_current_ammo()
-		)
-	
-	# Get the current state
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	if not current_state:
-		complete_action()
-		return
-	
-	# If we are in a weapon down state, we need to raise the weapon first
-	if current_state.is_weapon_down_idle_state():
-		# Queue a raise weapon action first
-		add_action("raise_weapon")
-		# Requeue the start firing action
-		add_action("start_firing", ammo)
-		complete_action()
-		return
-	
-	if not player.is_local_player:
-		player.player_equipment.set_current_ammo(ammo)
-	
-	# Perform local actions
-	player.shots_fired = 0
-	player.is_auto_firing = true
-	
-	# For remote players, we need to track the expected shot count
-	if not player.is_local_player:
-		player.expected_shots_fired = -1 # Unknown until we get stop_firing
-	
-	# Start firing immediately
-	current_state.next_automatic_fire()
-	
-	# Wait one frame to ensure the automatic firing loop has started
-	await get_tree().process_frame
-	
-	complete_action()
-
-
-func _process_stop_firing_action(server_shots_fired: int) -> void:
-	# Get the current state
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	if not current_state:
-		complete_action()
-		return
-	
-	# Only validate local player
-	if player.is_local_player:
-		# Check if we are firing, if not, abort
-		if not player.is_auto_firing:
-			complete_action()
-			return
-		
-		# After local validation, we send the packet
-		player.player_packets.send_stop_firing_weapon_packet(
-			player.player_movement.rotation_target,
-			player.shots_fired
-		)
-		
-		player.is_auto_firing = false
-		player.dry_fired = false
-	
-	# For remote players
-	if not player.is_local_player:
-		# Store the server's shot count
-		player.expected_shots_fired = server_shots_fired
-		
-		# Stop any current firing loop
-		player.is_auto_firing = false
-		
-		# If we've already fired more shots than the server says, reimburse ammo
-		if player.shots_fired > player.expected_shots_fired:
-			var ammo_difference: int = player.shots_fired - player.expected_shots_fired
-			var ammo_to_reimburse: int = player.player_equipment.get_current_ammo() + ammo_difference
-			# Reimburse the ammo
-			player.player_equipment.set_current_ammo(ammo_to_reimburse)
-			player.shots_fired = player.expected_shots_fired
-		
-		# If we haven't fired enough shots, fire them now
-		elif player.shots_fired < player.expected_shots_fired:
-			var shots_to_fire = player.expected_shots_fired - player.shots_fired
-			
-			# Ensure we're in the weapon aim state
-			if not player.is_in_weapon_aim_state():
-				await _ensure_weapon_raised()
-			
-			# We'll assume we're in the right state here
-			# Fire all remaining shots
-			for i in range(shots_to_fire):
-				# Fire one shot
-				var weapon = player.player_equipment.equipped_weapon
-				var anim_name: String = weapon.get_animation()
-				var play_rate: float = weapon.get_animation_play_rate()
-			
-				# Check ammo for this shot
-				var has_ammo: bool = player.player_equipment.can_fire_weapon()
-				if not has_ammo:
-					play_rate = weapon.semi_fire_rate
-				
-				await player.player_animator.play_animation_and_await(anim_name, play_rate)
-				player.shots_fired += 1
-		
-		# Reset count for next time
-		player.expected_shots_fired = -1
-	
-	complete_action()
-
-
 # Helper function to ensure the weapon is raised before firing
 func _ensure_weapon_raised() -> void:
 	# If we're already in a weapon aim state, we're good
@@ -669,27 +678,31 @@ func _ensure_weapon_raised() -> void:
 			player.player_state_machine.change_state(target_state_name)
 
 
-func _process_rotate_action(rotation_y: float) -> void:
+func _process_rotate_action(packet: Packets.RotateCharacter) -> void:
+	var rotation_y: float = packet.get_rotation_y()
+	var await_rotation: bool = packet.get_await_rotation()
+	
 	# Set the rotation target
 	player.player_movement.rotation_target = rotation_y
 	player.player_movement.is_rotating = true
 	
-	# Wait for the rotation to complete
-	var rotation_threshold = 0.1 # Radians (about 6 degrees)
-	while abs(player.model.rotation.y - rotation_y) > rotation_threshold:
-		await get_tree().process_frame
+	if await_rotation:
+		# Wait for the rotation to complete
+		var rotation_threshold = 0.1 # Radians (about 6 degrees)
+		while abs(player.model.rotation.y - rotation_y) > rotation_threshold:
+			await get_tree().process_frame
 	
-	# CAUTION
-	# We don't send packets from this action since we are sending them from base_state.gd
+	# NOTE We don't send packets from this action since we are sending them from base_state.gd
 	
 	complete_action()
 
 
 func _process_apply_damage_action(data: Dictionary) -> void:
+	# var attacker_id: int = data["attacker_id"]
 	var target_id: int = data["target_id"]
 	var damage: int = data["damage"]
 	# var damage_type: String = data["damage_type"]
-	var damage_position: Vector3 = data["damage_position"]
+	# var is_critical: bool = data["is_critical"]
 	
 	# Only process if the target still exists and is alive
 	if GameManager.is_player_valid(target_id):
@@ -698,6 +711,11 @@ func _process_apply_damage_action(data: Dictionary) -> void:
 			if target_player.is_alive():
 				# Reduce health for local victim (with HUD update)
 				target_player.decrease_health(damage, true)
+				
+				# Get the target's world position and spawn the damage there
+				var damage_position: Vector3 = Vector3(target_player.position)
+				damage_position.y += target_player.DAMAGE_ORIGIN
+				
 				# Regular damage, reduce health inside _aggregate_damage
 				_aggregate_damage(target_id, damage, damage_position)
 			else:
