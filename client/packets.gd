@@ -2114,7 +2114,12 @@ class WeaponSlot:
 		service.field = __ammo
 		data[__ammo.tag] = service
 		
-		__fire_mode = PBField.new("fire_mode", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__reserve_ammo = PBField.new("reserve_ammo", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 6, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __reserve_ammo
+		data[__reserve_ammo.tag] = service
+		
+		__fire_mode = PBField.new("fire_mode", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 7, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
 		service.field = __fire_mode
 		data[__fire_mode.tag] = service
@@ -2186,6 +2191,19 @@ class WeaponSlot:
 	func set_ammo(value : int) -> void:
 		__ammo.value = value
 	
+	var __reserve_ammo: PBField
+	func has_reserve_ammo() -> bool:
+		if __reserve_ammo.value != null:
+			return true
+		return false
+	func get_reserve_ammo() -> int:
+		return __reserve_ammo.value
+	func clear_reserve_ammo() -> void:
+		data[6].state = PB_SERVICE_STATE.UNFILLED
+		__reserve_ammo.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_reserve_ammo(value : int) -> void:
+		__reserve_ammo.value = value
+	
 	var __fire_mode: PBField
 	func has_fire_mode() -> bool:
 		if __fire_mode.value != null:
@@ -2194,7 +2212,7 @@ class WeaponSlot:
 	func get_fire_mode() -> int:
 		return __fire_mode.value
 	func clear_fire_mode() -> void:
-		data[6].state = PB_SERVICE_STATE.UNFILLED
+		data[7].state = PB_SERVICE_STATE.UNFILLED
 		__fire_mode.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
 	func set_fire_mode(value : int) -> void:
 		__fire_mode.value = value
@@ -2229,10 +2247,15 @@ class ReloadWeapon:
 		service.field = __slot
 		data[__slot.tag] = service
 		
-		__amount = PBField.new("amount", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		__magazine_ammo = PBField.new("magazine_ammo", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 2, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
 		service = PBServiceField.new()
-		service.field = __amount
-		data[__amount.tag] = service
+		service.field = __magazine_ammo
+		data[__magazine_ammo.tag] = service
+		
+		__reserve_ammo = PBField.new("reserve_ammo", PB_DATA_TYPE.UINT64, PB_RULE.OPTIONAL, 3, true, DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64])
+		service = PBServiceField.new()
+		service.field = __reserve_ammo
+		data[__reserve_ammo.tag] = service
 		
 	var data = {}
 	
@@ -2249,18 +2272,31 @@ class ReloadWeapon:
 	func set_slot(value : int) -> void:
 		__slot.value = value
 	
-	var __amount: PBField
-	func has_amount() -> bool:
-		if __amount.value != null:
+	var __magazine_ammo: PBField
+	func has_magazine_ammo() -> bool:
+		if __magazine_ammo.value != null:
 			return true
 		return false
-	func get_amount() -> int:
-		return __amount.value
-	func clear_amount() -> void:
+	func get_magazine_ammo() -> int:
+		return __magazine_ammo.value
+	func clear_magazine_ammo() -> void:
 		data[2].state = PB_SERVICE_STATE.UNFILLED
-		__amount.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
-	func set_amount(value : int) -> void:
-		__amount.value = value
+		__magazine_ammo.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_magazine_ammo(value : int) -> void:
+		__magazine_ammo.value = value
+	
+	var __reserve_ammo: PBField
+	func has_reserve_ammo() -> bool:
+		if __reserve_ammo.value != null:
+			return true
+		return false
+	func get_reserve_ammo() -> int:
+		return __reserve_ammo.value
+	func clear_reserve_ammo() -> void:
+		data[3].state = PB_SERVICE_STATE.UNFILLED
+		__reserve_ammo.value = DEFAULT_VALUES_3[PB_DATA_TYPE.UINT64]
+	func set_reserve_ammo(value : int) -> void:
+		__reserve_ammo.value = value
 	
 	func _to_string() -> String:
 		return PBPacker.message_to_string(data)

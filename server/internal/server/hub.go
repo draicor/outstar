@@ -451,11 +451,51 @@ func (h *Hub) CreateUser(username, nickname, passwordHash, gender string) (db.Us
 
 	// Step 4: Initialize and save default weapon slots
 	defaultSlots := []*objects.WeaponSlot{
-		{WeaponName: "unarmed", WeaponType: "unarmed", DisplayName: "Empty", Ammo: 0, FireMode: 0},
-		{WeaponName: "akm_rifle", WeaponType: "rifle", DisplayName: "AKM Rifle", Ammo: 30, FireMode: 0},
-		{WeaponName: "m16_rifle", WeaponType: "rifle", DisplayName: "M16 Rifle", Ammo: 30, FireMode: 0},
-		{WeaponName: "remington870_shotgun", WeaponType: "shotgun", DisplayName: "Remington 870 Shotgun", Ammo: 6, FireMode: 0},
-		{WeaponName: "unarmed", WeaponType: "unarmed", DisplayName: "Empty", Ammo: 0, FireMode: 0},
+		{
+			WeaponName:  "unarmed",
+			WeaponType:  "unarmed",
+			DisplayName: "Empty",
+			Chambered:   false,
+			Ammo:        0,
+			ReserveAmmo: 0,
+			FireMode:    0,
+		},
+		{
+			WeaponName:  "akm_rifle",
+			WeaponType:  "rifle",
+			DisplayName: "AKM Rifle",
+			Chambered:   true,
+			Ammo:        31,
+			ReserveAmmo: 90,
+			FireMode:    0,
+		},
+		{
+			WeaponName:  "m16_rifle",
+			WeaponType:  "rifle",
+			DisplayName: "M16 Rifle",
+			Chambered:   true,
+			Ammo:        31,
+			ReserveAmmo: 90,
+			FireMode:    0,
+		},
+		{
+			WeaponName:  "remington870_shotgun",
+			WeaponType:  "shotgun",
+			DisplayName: "Remington 870 Shotgun",
+			Chambered:   true,
+			Ammo:        7,
+			ReserveAmmo: 24,
+			FireMode:    0,
+		},
+		{
+			WeaponName:  "unarmed",
+			WeaponType:  "unarmed",
+			DisplayName: "Empty",
+			Chambered:   false,
+			Ammo:        0,
+			ReserveAmmo: 0,
+			FireMode:    0,
+		},
 	}
 
 	// Step 5: Execute bulk upsert using helper function
@@ -572,6 +612,7 @@ func (h *Hub) GetFullCharacterData(characterId int64) (*db.GetFullCharacterDataR
 	return &character, weapons, nil
 }
 
+// Get the weapon this character has from the database
 func (h *Hub) LoadWeaponSlots(characterId int64) (*[]*objects.WeaponSlot, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -582,25 +623,39 @@ func (h *Hub) LoadWeaponSlots(characterId int64) (*[]*objects.WeaponSlot, error)
 	}
 
 	slots := make([]*objects.WeaponSlot, 5)
-	// Initialize empty slots
+	// Initialize all slots to empty first in the server
 	for i := 0; i < 5; i++ {
 		slots[i] = &objects.WeaponSlot{
 			WeaponName:  "unarmed",
 			WeaponType:  "unarmed",
 			DisplayName: "Empty",
+			Chambered:   false,
 			Ammo:        0,
+			ReserveAmmo: 0,
 			FireMode:    0,
 		}
 	}
 
+	// For each weapon slot, overwrite the empty server data with the data from the database
 	for _, row := range rows {
 		slotIndex := row.SlotIndex
 		if slotIndex < 5 {
+			// Calculate chambered state and ammo
+			chambered := false
+			totalAmmo := uint64(row.Ammo)
+
+			// If weapon has ammo and it's not "unarmed", chamber one
+			if totalAmmo > 0 && row.WeaponName != "unarmed" {
+				chambered = true
+			}
+
 			slots[slotIndex] = &objects.WeaponSlot{
 				WeaponName:  row.WeaponName,
 				WeaponType:  row.WeaponType,
 				DisplayName: row.DisplayName,
+				Chambered:   chambered,
 				Ammo:        uint64(row.Ammo),
+				ReserveAmmo: uint64(row.ReserveAmmo),
 				FireMode:    uint64(row.FireMode),
 			}
 		}

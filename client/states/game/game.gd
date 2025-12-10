@@ -299,6 +299,7 @@ func _spawn_new_player(player_id: int, spawn_character_packet: Packets.SpawnChar
 			"weapon_type": weapon_slot.get_weapon_type(),
 			"display_name": weapon_slot.get_display_name(),
 			"ammo": weapon_slot.get_ammo(),
+			"reserve_ammo": weapon_slot.get_reserve_ammo(),
 			"fire_mode": weapon_slot.get_fire_mode()
 		})
 	

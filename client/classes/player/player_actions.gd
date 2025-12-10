@@ -116,8 +116,8 @@ func queue_single_fire_action(target: Vector3) -> void:
 func queue_multiple_fire_action(hit_positions: Array[Vector3]) -> void:
 	add_action("multiple_fire", hit_positions)
 
-func queue_reload_weapon_action(amount: int) -> void:
-	add_action("reload_weapon", {"amount": amount})
+func queue_reload_weapon_action(slot: int) -> void:
+	add_action("reload_weapon", {"slot": slot})
 
 func queue_toggle_fire_mode_action() -> void:
 	add_action("toggle_fire_mode")
@@ -366,34 +366,69 @@ func _process_lower_weapon_action() -> void:
 
 
 func _process_reload_weapon_action(data: Dictionary) -> void:
-	# Only validate local player
+	# Only validate if local player can reload
 	if player.is_local_player:
-		# Check if we can reload
 		if not player.can_reload_weapon():
 			complete_action()
 			return
 	
-	var weapon_slot: int = player.player_equipment.current_slot
-	var amount: int = data["amount"]
-	var current_state_name: String = player.player_state_machine.get_current_state_name()
+		# If the current weapon doesn't match the weapon in the data, abort
+		var weapon_slot: int = data["slot"]
+		if weapon_slot != player.player_equipment.get_current_weapon_slot():
+			complete_action()
+			return
+		
+		# Get the current state
+		var current_state: BaseState = player.player_state_machine.get_current_state()
+		if not current_state:
+			return
+		
+		# If we are in one of the weapon down states,
+		# we need to queue a raise weapon action before we process this action
+		if current_state.is_weapon_down_idle_state():
+			queue_raise_weapon_action()
+			queue_reload_weapon_action(weapon_slot)
+			complete_action()
+			return
+		
+		# If we don't have all of the data, meaning the packet is incomplete (because its local),
+		# and this is the local player, then we send a packet to the server to request to reload
+		if not data.has("magazine_ammo") and not data.has("reserve_ammo"):
+			# After local validation, we send the packet
+			player.player_packets.send_reload_weapon_packet(weapon_slot)
+			
+			# And now we just play the local reload animation,
+			# Once the packet returns from the server, we update the ammo numbers
+			await _reload_weapon_locally_and_await()
+			
+			# If we are still holding right click after reloading
+			if Input.is_action_pressed("right_click"):
+				# Enable aim rotation
+				player.is_aim_rotating = true
+			# If we released the right click
+			else:
+				# Queue lowering the rifle
+				queue_lower_weapon_action()
+			
+			complete_action()
+			return
 	
-	# Get the current state
-	var current_state: BaseState = player.player_state_machine.get_current_state()
-	if not current_state:
-		return
+	# For remote players
+	else:
+		await _reload_weapon_locally_and_await()
 	
-	# If we are in one of the weapon down states, we need to queue a raise weapon action
-	if current_state.is_weapon_down_idle_state():
-		queue_raise_weapon_action()
-		queue_reload_weapon_action(amount)
+	# Both local and remote players, if the packet has data to reload from the server
+	# If we got the ammo values from the server, then update the stats
+	if data.has("magazine_ammo") and data.has("reserve_ammo"):
+		var magazine_ammo: int = data["magazine_ammo"]
+		var reserve_ammo: int = data["reserve_ammo"]
+		# Update local state
+		player.player_equipment.reload_equipped_weapon(magazine_ammo, reserve_ammo)
 		complete_action()
-		return
-	
-	if player.is_local_player:
-		# After local validation, we send the packet
-		player.player_packets.send_reload_weapon_packet(weapon_slot, amount)
-	
-	# Perform local actions
+
+
+# Perform local actions to reload
+func _reload_weapon_locally_and_await() -> void:
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
 	# Disable aim rotation
@@ -401,6 +436,7 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	
 	# Determine reload animation based on state
 	var reload_animation: String
+	var current_state_name: String = player.player_state_machine.get_current_state_name()
 	match current_state_name:
 		"rifle_aim_idle", "shotgun_aim_idle":
 			reload_animation = "reload"
@@ -421,20 +457,6 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	
 	# Play the appropriate idle animation
 	player.player_animator.switch_animation("idle")
-	# Update local state
-	player.player_equipment.reload_equipped_weapon(amount)
-	
-	if player.is_local_player:
-		# If we are still holding right click after reloading
-		if Input.is_action_pressed("right_click"):
-			# Enable aim rotation
-			player.is_aim_rotating = true
-		# If we released the right click
-		else:
-			# Queue lowering the rifle
-			queue_lower_weapon_action()
-	
-	complete_action()
 
 
 func _process_single_fire_action(target: Vector3) -> void:

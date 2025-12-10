@@ -179,7 +179,8 @@ func unequip_weapon() -> void:
 # Decreases the amount of ammo in our equipped weapon
 func decrement_ammo(amount: int = 1) -> bool:
 	if get_current_ammo() >= amount:
-		set_current_ammo(get_current_ammo() - amount) # Emits signal inside
+		set_current_ammo(get_current_ammo() - amount)
+		update_hud_ammo()
 		return true
 	# If we don't have enough ammo, return false
 	return false
@@ -257,7 +258,7 @@ func calculate_weapon_direction(target_position: Vector3) -> void:
 # fix this after having drop mechanics?
 # It doesn't check against slot already being in use!
 # Assigns a weapon to one of the weapon slots
-func add_weapon_to_slot(slot: int, weapon_name: String, ammo: int = 0, fire_mode: int = 0) -> void:
+func add_weapon_to_slot(slot: int, weapon_name: String, ammo: int = 0, reserve_ammo: int = 0, fire_mode: int = 0) -> void:
 	# Check we didn't pass an invalid slot
 	if slot < 0 or slot >= MAX_WEAPON_SLOTS:
 		push_error("Invalid slot: %d" % slot)
@@ -282,8 +283,13 @@ func add_weapon_to_slot(slot: int, weapon_name: String, ammo: int = 0, fire_mode
 	
 	# Set initial ammo
 	weapon_slots[slot]["ammo"] = ammo
+	weapon_slots[slot]["reserve_ammo"] = reserve_ammo
 	# Set fire mode
 	weapon_slots[slot]["fire_mode"] = fire_mode
+
+
+func get_current_weapon_slot() -> int:
+	return current_slot
 
 
 func switch_weapon_by_slot(slot: int) -> void:
@@ -309,11 +315,16 @@ func get_current_ammo() -> int:
 	return weapon_slots[current_slot]["ammo"]
 
 
-func set_current_ammo(amount: int) -> void:
-	weapon_slots[current_slot]["ammo"] = amount
-	# Do this only for my local character
-	if player.is_local_player:
-		update_hud_ammo()
+func set_current_ammo(ammo: int) -> void:
+	weapon_slots[current_slot]["ammo"] = ammo
+
+
+func get_current_reserve_ammo() -> int:
+	return weapon_slots[current_slot]["reserve_ammo"]
+
+
+func set_current_reserve_ammo(reserve_ammo: int) -> void:
+	weapon_slots[current_slot]["reserve_ammo"] = reserve_ammo
 
 
 # 0 is semi-auto, 1 is full-auto
@@ -349,11 +360,11 @@ func toggle_fire_mode() -> void:
 	if equipped_weapon and equipped_weapon.has_method("set_fire_mode"):
 		equipped_weapon.set_fire_mode(weapon_slots[current_slot]["fire_mode"])
 
-
+# Updates our ammo counter
 func update_hud_ammo() -> void:
-	Signals.ui_update_ammo.emit() # Update our ammo counter
-	# Update our weapon's fire mode too
-	# CAUTION Update our weapon icon too
+	# Do this only for my local character
+	if player.is_local_player:
+		Signals.ui_update_ammo.emit() 
 
 
 func hide_weapon_hud() -> void:
@@ -383,14 +394,15 @@ func update_weapon_at_spawn() -> void:
 	player.player_animator.switch_animation_library(anim_library)
 
 
-# Reloads our ammo based on our weapon type (for now)
-func reload_equipped_weapon(amount: int) -> void:
+# Reloads our current weapon if our weapon name is valid
+func reload_equipped_weapon(ammo: int, reserve_ammo: int) -> void:
 	var weapon_name = weapon_slots[current_slot]["weapon_name"]
 	match weapon_name:
-		"m16_rifle", "akm_rifle":
-			set_current_ammo(amount)
+		"m16_rifle", "akm_rifle",\
 		"remington870_shotgun":
-			set_current_ammo(amount)
+			set_current_ammo(ammo)
+			set_current_reserve_ammo(reserve_ammo)
+			update_hud_ammo()
 		_:
 			return
 
@@ -399,9 +411,9 @@ func get_current_weapon_max_ammo() -> int:
 	var weapon_name = weapon_slots[current_slot]["weapon_name"]
 	match weapon_name:
 		"m16_rifle", "akm_rifle":
-			return 30
+			return 31
 		"remington870_shotgun":
-			return 6
+			return 7
 		_:
 			return 0
 

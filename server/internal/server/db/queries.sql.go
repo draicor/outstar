@@ -286,8 +286,8 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 
 const insertWeaponSlot = `-- name: InsertWeaponSlot :exec
 INSERT INTO character_weapons
-  (character_id, slot_index, weapon_name, weapon_type, display_name, ammo, fire_mode)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+  (character_id, slot_index, weapon_name, weapon_type, display_name, ammo, reserve_ammo, fire_mode)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type InsertWeaponSlotParams struct {
@@ -297,6 +297,7 @@ type InsertWeaponSlotParams struct {
 	WeaponType  string
 	DisplayName string
 	Ammo        int64
+	ReserveAmmo int64
 	FireMode    int64
 }
 
@@ -308,13 +309,14 @@ func (q *Queries) InsertWeaponSlot(ctx context.Context, arg InsertWeaponSlotPara
 		arg.WeaponType,
 		arg.DisplayName,
 		arg.Ammo,
+		arg.ReserveAmmo,
 		arg.FireMode,
 	)
 	return err
 }
 
 const loadWeaponSlots = `-- name: LoadWeaponSlots :many
-SELECT slot_index, weapon_name, weapon_type, display_name, ammo, fire_mode
+SELECT slot_index, weapon_name, weapon_type, display_name, ammo, reserve_ammo, fire_mode
 FROM character_weapons
 WHERE character_id = ?
 `
@@ -325,6 +327,7 @@ type LoadWeaponSlotsRow struct {
 	WeaponType  string
 	DisplayName string
 	Ammo        int64
+	ReserveAmmo int64
 	FireMode    int64
 }
 
@@ -343,6 +346,7 @@ func (q *Queries) LoadWeaponSlots(ctx context.Context, characterID int64) ([]Loa
 			&i.WeaponType,
 			&i.DisplayName,
 			&i.Ammo,
+			&i.ReserveAmmo,
 			&i.FireMode,
 		); err != nil {
 			return nil, err

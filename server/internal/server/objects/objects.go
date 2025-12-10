@@ -22,7 +22,9 @@ type WeaponSlot struct {
 	WeaponName  string
 	WeaponType  string
 	DisplayName string
-	Ammo        uint64
+	Chambered   bool   // Is there a bullet chambered?
+	Ammo        uint64 // Total bullets in weapon (magazine + chambered)
+	ReserveAmmo uint64 // Extra bullets not in weapon
 	FireMode    uint64
 }
 
@@ -46,7 +48,7 @@ type Player struct {
 	health    uint64 // Current health
 	maxHealth uint64 // Maximum health
 	// Weapon state
-	currentWeapon uint64        // Current weapon slot
+	currentWeapon uint64        // Current weapon slot (active weapon)
 	weapons       []*WeaponSlot // Array of weapon slots
 	// Character state
 	isCrouching bool
@@ -126,16 +128,26 @@ func (player *Player) GetWeaponSlot(slot uint64) *WeaponSlot {
 	}
 	return nil
 }
-func (player *Player) SetWeaponSlot(slot uint64, weaponName, weaponType, displayName string, ammo, fireMode uint64) {
+func (player *Player) SetWeaponSlot(slot uint64, weaponName, weaponType, displayName string, chambered bool, ammo, reserveAmmo, fireMode uint64) {
 	if slot < MAX_WEAPON_SLOTS {
 		player.weapons[slot] = &WeaponSlot{
 			WeaponName:  weaponName,
 			WeaponType:  weaponType,
 			DisplayName: displayName,
+			Chambered:   chambered,
 			Ammo:        ammo,
+			ReserveAmmo: reserveAmmo,
 			FireMode:    fireMode,
 		}
 	}
+}
+
+// Get current weapon slot
+func (player *Player) GetCurrentWeaponSlot() *WeaponSlot {
+	if player.currentWeapon < MAX_WEAPON_SLOTS {
+		return player.weapons[player.currentWeapon]
+	}
+	return nil
 }
 
 // Weapons get/set
@@ -146,21 +158,11 @@ func (player *Player) SetWeapons(newWeapons []*WeaponSlot) {
 	player.weapons = newWeapons
 }
 
-// Current weapon ammo get/set
-func (player *Player) GetCurrentWeaponAmmo() uint64 {
-	return player.weapons[player.currentWeapon].Ammo
-}
-func (player *Player) SetCurrentWeaponAmmo(amount uint64) {
-	player.weapons[player.currentWeapon].Ammo = amount
-}
-
 // Current weapon fire mode get/set
 func (player *Player) GetCurrentWeaponFireMode() uint64 {
 	return player.weapons[player.currentWeapon].FireMode
 }
 func (player *Player) SetCurrentWeaponFireMode(newFireMode uint64) {
-	// TO FIX
-	// I'm not checking if the new fire mode number is valid here
 	player.weapons[player.currentWeapon].FireMode = newFireMode
 }
 func (player *Player) ToggleCurrentWeaponFireMode() {
@@ -221,8 +223,18 @@ func (player *Player) IsAlive() bool {
 // Respawn resets the player's stats back to default
 func (player *Player) Respawn(rotation float64) {
 	player.health = player.maxHealth // Back to full health (could respawn with 10%?)
-	player.SetCurrentWeaponAmmo(30)  // FIX THIS -> Back to full ammo
 	player.RotationY = rotation      // Get the rotation from the server respawner
+
+	// Reset all weapons to default ammo
+	for _, weapon := range player.weapons {
+		if weapon != nil {
+			stats, exists := GetWeaponStats(weapon.WeaponName)
+			if exists {
+				// Full magazine plus one bullet chambered
+				player.SetCurrentWeaponAmmo(true, stats.MagazineCapacity+1, stats.ReserveCapacity)
+			}
+		}
+	}
 }
 
 // Returns the default respawn location for this region
@@ -310,4 +322,131 @@ func (player *Player) IsCrouching() bool {
 
 func (player *Player) SetCrouching(crouching bool) {
 	player.isCrouching = crouching
+}
+
+func (player *Player) GetCurrentWeaponStats() (WeaponStats, bool) {
+	weapon := player.GetCurrentWeaponSlot()
+	if weapon == nil {
+		return WeaponStats{}, false
+	}
+	return GetWeaponStats(weapon.WeaponName)
+}
+
+// Gets total ammo in weapon (magazine + chamber)
+func (player *Player) GetTotalAmmoInWeapon() uint64 {
+	weapon := player.weapons[player.currentWeapon]
+	if weapon == nil {
+		return 0
+	}
+	total := weapon.Ammo
+	// If we have a bullet chambered, add 1 to the total
+	if weapon.Chambered {
+		total++
+	}
+	return total
+}
+
+// Calculate bullets in magazine only
+func (player *Player) GetAmmoInMagazine() uint64 {
+	weapon := player.weapons[player.currentWeapon]
+	if weapon == nil {
+		return 0
+	}
+	if weapon.Chambered && weapon.Ammo > 0 {
+		return weapon.Ammo - 1
+	}
+	return weapon.Ammo
+}
+
+// Get reserve ammo
+func (player *Player) GetReserveAmmo() uint64 {
+	weapon := player.weapons[player.currentWeapon]
+	if weapon == nil {
+		return 0
+	}
+	return weapon.ReserveAmmo
+}
+
+// Set current weapon ammo with chambered support
+func (player *Player) SetCurrentWeaponAmmo(chambered bool, totalAmmo, reserveAmmo uint64) {
+	// If we have a valid weapon selected
+	if player.currentWeapon < MAX_WEAPON_SLOTS && player.weapons[player.currentWeapon] != nil {
+		player.weapons[player.currentWeapon].Chambered = chambered
+		player.weapons[player.currentWeapon].Ammo = totalAmmo
+		player.weapons[player.currentWeapon].ReserveAmmo = reserveAmmo
+	}
+}
+
+// Helper to reload current weapon
+func (player *Player) ReloadCurrentWeapon() (bool, uint64, uint64, bool) {
+	weapon := player.weapons[player.currentWeapon]
+	if weapon == nil {
+		return false, 0, 0, false // No weapon equipped
+	}
+
+	stats, exists := GetWeaponStats(weapon.WeaponName)
+	if !exists {
+		return false, 0, 0, false // Invalid weapon name
+	}
+
+	// Check if already at full capacity (ignoring chamber)
+	ammoInMagazine := player.GetAmmoInMagazine() // GetAmmoInMagazine subtracts the chambered bullet
+	if ammoInMagazine >= stats.MagazineCapacity {
+		return false, weapon.Ammo, weapon.ReserveAmmo, weapon.Chambered // Already full
+	}
+
+	// Calculate how many bullets we can take from reserve
+	neededBullets := stats.MagazineCapacity - ammoInMagazine
+	bulletsToReload := min(neededBullets, weapon.ReserveAmmo)
+
+	if bulletsToReload == 0 {
+		return false, weapon.Ammo, weapon.ReserveAmmo, weapon.Chambered // No reserve ammo
+	}
+
+	// Update reserve ammo
+	weapon.ReserveAmmo -= bulletsToReload
+
+	// Add bullets to weapon
+	// If we don't have a bullet chambered, chamber one from the reloaded bullets
+	if !weapon.Chambered {
+		// Chamber one bullet
+		weapon.Chambered = true
+		weapon.Ammo = bulletsToReload // bulletsToReload includes the chambered bullet
+	} else {
+		// Already chambered, just add to magazine
+		weapon.Ammo += bulletsToReload
+	}
+
+	return true, weapon.Ammo, weapon.ReserveAmmo, weapon.Chambered
+}
+
+// Fire weapon (just decrement total ammo)
+func (player *Player) FireCurrentWeapon() bool {
+	weapon := player.weapons[player.currentWeapon]
+	if weapon == nil || weapon.Ammo == 0 {
+		return false // No weapon equipped or out of ammo
+	}
+
+	// Decrement total ammo
+	weapon.Ammo--
+
+	// If we fired the last bullet, no bullet is chambered anymore
+	if weapon.Ammo == 0 {
+		weapon.Chambered = false
+	} else {
+		// Client will auto-chamber next bullet for the next shot
+		// We assume bullet is chambered as long as we have ammo
+		weapon.Chambered = true
+	}
+
+	return true
+}
+
+// Check if we ran out of ammo (no bullets in weapon)
+func (player *Player) IsCurrentWeaponEmpty() bool {
+	weapon := player.weapons[player.currentWeapon]
+	if weapon == nil {
+		return true // No weapon equipped
+	}
+	return weapon.Ammo == 0 // Out of ammo in weapon
 }

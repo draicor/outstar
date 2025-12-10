@@ -13,32 +13,15 @@ import (
 	"server/pkg/packets"
 )
 
-// Simple weapon damage dictionary
-var weaponDamages = map[string]struct {
-	MinDamage   uint64
-	MaxDamage   uint64
-	Projectiles int // Number of projects per shot
-}{
-	// player_equipment.gd add_weapon_to_slot()
-	// Rifles
-	"unarmed":   {MinDamage: 1, MaxDamage: 2, Projectiles: 0},
-	"m16_rifle": {MinDamage: 10, MaxDamage: 20, Projectiles: 1},
-	"akm_rifle": {MinDamage: 12, MaxDamage: 24, Projectiles: 1},
-	// Shotguns
-	"remington870_shotgun": {MinDamage: 5, MaxDamage: 10, Projectiles: 9}, // Damage per pellet
-}
-
 // Rolls damage for a weapon
 func getWeaponDamage(weaponName string) uint64 {
-	if damageRange, exists := weaponDamages[weaponName]; exists {
-		// Calculate random damage between min and max
-		if damageRange.MaxDamage > damageRange.MinDamage {
-			return damageRange.MinDamage + uint64(rand.Intn(int(damageRange.MaxDamage-damageRange.MinDamage)+1))
+	stats, exists := objects.GetWeaponStats(weaponName)
+	if exists {
+		if stats.MaxDamage > stats.MinDamage {
+			return stats.MinDamage + uint64(rand.Intn(int(stats.MaxDamage-stats.MinDamage)+1))
 		}
-		return damageRange.MinDamage
+		return stats.MinDamage
 	}
-
-	// Default damage if weapon is not found
 	return 0
 }
 
@@ -463,17 +446,19 @@ func (state *Game) HandleReloadWeapon(payload *packets.ReloadWeapon) {
 		return // Invalid slot or empty
 	}
 
-	amount := payload.GetAmount()
+	// Perform server-side reload
+	reloaded, newTotalAmmo, newReserveAmmo, _ := state.player.ReloadCurrentWeapon()
 
-	// TO FIX
-	// Add a check here for the amount to reload
-	// Create a way to check in the server for the max amount to reload for each weapon name
+	if reloaded {
+		reloadWeaponPacket := packets.NewReloadWeapon(slot, newTotalAmmo, newReserveAmmo)
 
-	// Update ammo for this weapon
-	state.player.SetCurrentWeaponAmmo(amount) // <-- Trusting the client here, fix this
+		// Broadcast reload to everyone in the region
+		// We send total ammo for HUD display
+		state.client.SendPacket(reloadWeaponPacket)
+		state.client.Broadcast(reloadWeaponPacket)
 
-	// Broadcast weapon reload to everyone in the region
-	state.client.Broadcast(packets.NewReloadWeapon(slot, amount))
+		// We'll assume the client knows about chambered from the total ammo
+	}
 }
 
 func (state *Game) HandleRaiseWeapon() {
@@ -497,11 +482,13 @@ func (state *Game) HandleRotateCharacter(payload *packets.RotateCharacter) {
 }
 
 func (state *Game) HandleFireWeapon(payload *packets.FireWeapon) {
+	state.player.FireCurrentWeapon() // This decreases our ammo in the server
 	// Get the hit position from the packet and broadcast to everyone in the region
 	state.client.Broadcast(packets.NewFireWeapon(payload.GetHit()))
 }
 
 func (state *Game) HandleFireWeaponMultiple(payload *packets.FireWeaponMultiple) {
+	state.player.FireCurrentWeapon() // This decreases our ammo in the server
 	// Get the hits from the packet and broadcast to everyone in the region
 	state.client.Broadcast(packets.NewFireWeaponMultiple(payload.GetHits()))
 }
@@ -529,21 +516,40 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 	}
 
 	// Get attacker's weapon information
-	attackerWeapon := state.player.GetWeaponSlot(state.player.GetCurrentWeapon())
+	attackerWeapon := state.player.GetCurrentWeaponSlot()
 	if attackerWeapon == nil {
 		state.logger.Printf("Attacker has no weapon equipped")
 		return
 	}
 
-	// Get hits from the packet
-	hits := payload.GetHits()
-	if len(hits) == 0 {
+	// Get weapon stats for anti-cheat validation
+	weaponStats, exists := objects.GetWeaponStats(attackerWeapon.WeaponName)
+	if !exists {
+		state.logger.Printf("Weapon %s not found in weapon data", attackerWeapon.WeaponName)
 		return
 	}
 
-	// CAUTION ADD THIS
-	// Make sure we don't exploit the projectile count
-	// if len(hits) > max number of projectiles for the equipped weapon
+	// Get hits from the packet
+	hits := payload.GetHits()
+
+	// ANTI-CHEAT: Validate number of projectiles
+	if weaponStats.Projectiles > 0 && len(hits) > weaponStats.Projectiles {
+		state.logger.Printf("CHEAT DETECTED: Player %d reported %d hits, but weapon %s can only fire %d projectiles per shot. Packet ignored.",
+			state.client.GetId(), len(hits), attackerWeapon.WeaponName, weaponStats.Projectiles)
+		return // Ignore the packet entirely
+	}
+
+	// Additional validation: If weapon fires single projectile, it should have exactly 1 hit
+	if weaponStats.Projectiles == 1 && len(hits) != 1 {
+		state.logger.Printf("CHEAT DETECTED: Player %d reported %d hits for single-projectile weapon %s. Packet ignored.",
+			state.client.GetId(), len(hits), attackerWeapon.WeaponName)
+		return
+	}
+
+	// If no hits reported, abort early
+	if len(hits) == 0 {
+		return
+	}
 
 	// Calculate total damage from all hits
 	var totalDamage uint64 = 0
@@ -569,7 +575,7 @@ func (state *Game) HandleReportPlayerDamage(payload *packets.ReportPlayerDamage)
 		state.client.GetId(),
 		targetId,
 		totalDamage,
-		"bullet",
+		"bullet", // TO FIX -> CAUTION, EACH WEAPON SHOULD HAVE DAMAGE TOO
 		anyCritical,
 	)
 

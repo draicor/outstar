@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS character_weapons (
   weapon_name TEXT NOT NULL DEFAULT 'unarmed',
   weapon_type TEXT NOT NULL DEFAULT 'unarmed',
   ammo INTEGER NOT NULL DEFAULT 0,
+  reserve_ammo INTEGER NOT NULL DEFAULT 0,
   fire_mode INTEGER NOT NULL DEFAULT 0, -- 0: semi, 1: auto
   display_name TEXT NOT NULL DEFAULT 'Empty',
   PRIMARY KEY (character_id, slot_index),

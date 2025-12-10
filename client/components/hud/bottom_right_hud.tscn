@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://b0n3r4pk8tjt6"]
 
 [ext_resource type="Script" uid="uid://q5ub13n47f5r" path="res://components/hud/bottom_right_hud.gd" id="1_ql87q"]
-[ext_resource type="Texture2D" uid="uid://q1mptc0e5q6f" path="res://assets/icons/icon_weapon_m16.png" id="2_t4xdl"]
+[ext_resource type="Texture2D" uid="uid://b11akikuafcgm" path="res://assets/icons/icon_weapon_remington870.png" id="2_t4xdl"]
 
 [node name="BottomRightHud" type="Control"]
 layout_mode = 3
@@ -33,14 +33,15 @@ theme_override_constants/margin_bottom = 8
 
 [node name="VBoxContainer" type="VBoxContainer" parent="WeaponContainer"]
 layout_mode = 2
+size_flags_horizontal = 4
 
 [node name="WeaponIcon" type="TextureRect" parent="WeaponContainer/VBoxContainer"]
-custom_minimum_size = Vector2(60, 20)
+custom_minimum_size = Vector2(80, 20)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 texture = ExtResource("2_t4xdl")
-expand_mode = 3
+expand_mode = 1
 
 [node name="AmmoContainer" type="HBoxContainer" parent="WeaponContainer/VBoxContainer"]
 layout_mode = 2
@@ -57,7 +58,7 @@ layout_mode = 2
 text = " | "
 horizontal_alignment = 1
 
-[node name="TotalAmmoLabel" type="Label" parent="WeaponContainer/VBoxContainer/AmmoContainer"]
+[node name="ReserveAmmoLabel" type="Label" parent="WeaponContainer/VBoxContainer/AmmoContainer"]
 layout_mode = 2
 text = "∞"
 horizontal_alignment = 1

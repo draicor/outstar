@@ -104,9 +104,11 @@ func handle_input(event: InputEvent) -> void:
 	
 	# Reload shotgun
 	elif event.is_action_pressed("weapon_reload"):
-		player.player_actions.queue_reload_weapon_action(
-			player.player_equipment.get_current_weapon_max_ammo()
-		)
+		# Check that we can reload (have spare ammo and we are not already at max ammo)
+		if player.can_reload_weapon():
+			player.player_actions.queue_reload_weapon_action(
+				player.player_equipment.get_current_weapon_slot()
+			)
 	
 	# Crouch toggle (leave crouch)
 	elif event.is_action_pressed("crouch"):
