@@ -30,6 +30,7 @@ type CharacterWeapon struct {
 	WeaponName  string
 	WeaponType  string
 	Ammo        int64
+	ReserveAmmo int64
 	FireMode    int64
 	DisplayName string
 }

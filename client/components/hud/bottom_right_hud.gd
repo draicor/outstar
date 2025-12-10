@@ -1,11 +1,13 @@
 extends Control
 
 @onready var ammo_label: Label = $WeaponContainer/VBoxContainer/AmmoContainer/AmmoLabel
+@onready var reserve_ammo_label: Label = $WeaponContainer/VBoxContainer/AmmoContainer/ReserveAmmoLabel
 @onready var weapon_icon: TextureRect = $WeaponContainer/VBoxContainer/WeaponIcon
 
 # Textures
 const ICON_WEAPON_M16 = preload("res://assets/icons/icon_weapon_m16.png")
 const ICON_WEAPON_AKM = preload("res://assets/icons/icon_weapon_akm.png")
+const ICON_WEAPON_REMINGTON870 = preload("res://assets/icons/icon_weapon_remington870.png")
 
 
 func _init() -> void:
@@ -29,6 +31,7 @@ func _handle_signal_show_buttom_right_hud() -> void:
 
 func _handle_signal_update_ammo() -> void:
 	ammo_label.text = str(GameManager.player_character.player_equipment.get_current_ammo())
+	reserve_ammo_label.text = str(GameManager.player_character.player_equipment.get_current_reserve_ammo())
 
 
 func update_weapon_icon() -> void:
@@ -38,5 +41,7 @@ func update_weapon_icon() -> void:
 			weapon_icon.texture = ICON_WEAPON_M16
 		"akm_rifle":
 			weapon_icon.texture = ICON_WEAPON_AKM
+		"remington870_shotgun":
+			weapon_icon.texture = ICON_WEAPON_REMINGTON870
 		"_":
 			weapon_icon.texture = null

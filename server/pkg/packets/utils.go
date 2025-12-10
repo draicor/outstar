@@ -106,7 +106,8 @@ func convertWeaponsToProto(weapons []*objects.WeaponSlot) []*WeaponSlot {
 				WeaponName:  weapon.WeaponName,
 				WeaponType:  weapon.WeaponType,
 				DisplayName: weapon.DisplayName,
-				Ammo:        weapon.Ammo,
+				Ammo:        weapon.Ammo,        // Total ammo in weapon
+				ReserveAmmo: weapon.ReserveAmmo, // Extra ammo not inside weapon
 				FireMode:    weapon.FireMode,
 			})
 		}
@@ -189,12 +190,13 @@ func NewSwitchWeapon(slot uint64) Payload {
 	}
 }
 
-// Sent by both client and server to broadcast reload weapon
-func NewReloadWeapon(slot, amount uint64) Payload {
+// Sent by the client to request reload and by the server to broadcast amount reloaded
+func NewReloadWeapon(slot, magazineAmmo, reserveAmmo uint64) Payload {
 	return &Packet_ReloadWeapon{
 		ReloadWeapon: &ReloadWeapon{
-			Slot:   slot,
-			Amount: amount,
+			Slot:         slot,
+			MagazineAmmo: magazineAmmo,
+			ReserveAmmo:  reserveAmmo,
 		},
 	}
 }

@@ -62,10 +62,10 @@ DELETE FROM character_weapons WHERE character_id = ?;
 
 -- name: InsertWeaponSlot :exec
 INSERT INTO character_weapons
-  (character_id, slot_index, weapon_name, weapon_type, display_name, ammo, fire_mode)
-VALUES (?, ?, ?, ?, ?, ?, ?);
+  (character_id, slot_index, weapon_name, weapon_type, display_name, ammo, reserve_ammo, fire_mode)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: LoadWeaponSlots :many
-SELECT slot_index, weapon_name, weapon_type, display_name, ammo, fire_mode
+SELECT slot_index, weapon_name, weapon_type, display_name, ammo, reserve_ammo, fire_mode
 FROM character_weapons
 WHERE character_id = ?

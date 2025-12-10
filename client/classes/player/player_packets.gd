@@ -241,11 +241,10 @@ func create_switch_weapon_packet(weapon_slot: int) -> Packets.Packet:
 
 
 # Creates and returns a reload_weapon packet
-func create_reload_weapon_packet(weapon_slot: int, amount: int) -> Packets.Packet:
+func create_reload_weapon_packet(weapon_slot: int) -> Packets.Packet:
 	var packet: Packets.Packet = Packets.Packet.new()
 	var reload_weapon_packet := packet.new_reload_weapon()
 	reload_weapon_packet.set_slot(weapon_slot)
-	reload_weapon_packet.set_amount(amount)
 	return packet
 
 
@@ -385,9 +384,9 @@ func send_switch_weapon_packet(weapon_slot: int) -> void:
 	WebSocket.send(packet)
 
 
-# Creates and sends a packet to the server to inform we reloaded our weapon
-func send_reload_weapon_packet(weapon_slot: int, amount: int) -> void:
-	var packet: Packets.Packet = create_reload_weapon_packet(weapon_slot, amount)
+# Creates and sends a packet to the server to inform we want to reload our weapon
+func send_reload_weapon_packet(weapon_slot: int) -> void:
+	var packet: Packets.Packet = create_reload_weapon_packet(weapon_slot)
 	WebSocket.send(packet)
 
 
@@ -531,7 +530,7 @@ func _process_switch_weapon_packet(packet: Packets.SwitchWeapon) -> void:
 
 
 func _process_reload_weapon_packet(packet: Packets.ReloadWeapon) -> void:
-	route_packet_to_action_queue("reload_weapon", {"amount": packet.get_amount()})
+	route_packet_to_action_queue("reload_weapon", {"slot": packet.get_slot(), "magazine_ammo": packet.get_magazine_ammo(), "reserve_ammo": packet.get_reserve_ammo()})
 
 
 func _process_raise_weapon_packet() -> void:

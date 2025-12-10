@@ -654,7 +654,14 @@ func can_reload_weapon() -> bool:
 	if is_busy:
 		return false
 	
-	# CAUTION update this to check if we ammo available
+	# If we don't have any more spare ammo, don't reload
+	if player_equipment.get_current_reserve_ammo() <= 0:
+		return false
+	
+	# If our current ammo matches our max ammo (including chambered bullet), don't reload
+	if player_equipment.get_current_ammo() >= player_equipment.get_current_weapon_max_ammo():
+		return false
+	
 	return true
 
 

@@ -84,12 +84,14 @@ message WeaponSlot {
   string weapon_type = 3;
   string display_name = 4;
   uint64 ammo = 5;
-  uint64 fire_mode = 6;
+  uint64 reserve_ammo = 6;
+  uint64 fire_mode = 7;
 }
 // Reload weapon slot
 message ReloadWeapon {
   uint64 slot = 1; // Weapon slot being reloaded
-  uint64 amount = 2; // Amount of ammo to reload
+  uint64 magazine_ammo = 2; // Ammo in our weapon (including chamber)
+  uint64 reserve_ammo = 3; // Remaining ammo for this weapon
 }
 message RaiseWeapon {}
 message LowerWeapon {}
