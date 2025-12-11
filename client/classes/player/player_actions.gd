@@ -169,7 +169,7 @@ func _process_move_character_action(new_destination: Vector2i) -> void:
 			complete_action()
 			return
 		
-		# If we are idling, we start movement locally
+		# If we are idling, we start local movement
 		if not player.player_movement.in_motion:
 			player.player_movement.start_movement_towards(
 				player.player_movement.immediate_grid_destination,
@@ -266,6 +266,13 @@ func _process_raise_weapon_action() -> void:
 		# After local validation, we send the packet
 		player.player_packets.send_raise_weapon_packet()
 	
+	# Both local and remote players
+	await _local_raise_weapon_and_await()
+	complete_action()
+
+
+# Perform local actions to raise weapon
+func _local_raise_weapon_and_await() -> void:
 	# Get the current state
 	var current_state: BaseState = player.player_state_machine.get_current_state()
 	if not current_state:
@@ -273,7 +280,6 @@ func _process_raise_weapon_action() -> void:
 		
 	# Check if our weapon is already raised, if so, ignore
 	if current_state.is_weapon_aim_idle_state():
-		complete_action()
 		return
 	
 	# Perform local actions
@@ -293,7 +299,8 @@ func _process_raise_weapon_action() -> void:
 			animation_type = "crouch_down_to_crouch_aim"
 			target_state_name = weapon_type + "_crouch_aim_idle"
 		_:
-			push_error("Error in match current_state_name inside _process_raise_weapon_action()")
+			push_error("Error in match current_state inside _local_raise_weapon_and_await(), current_state_name: ", current_state_name, ", weapon_type: ", weapon_type)
+			return
 	
 	await player.player_animator.play_weapon_animation_and_await(
 		animation_type,
@@ -303,8 +310,6 @@ func _process_raise_weapon_action() -> void:
 	# If we are not already in the same state
 	if target_state_name != player.player_state_machine.get_current_state_name():
 		player.player_state_machine.change_state(target_state_name)
-	
-	complete_action()
 
 
 func _process_lower_weapon_action() -> void:
@@ -318,6 +323,12 @@ func _process_lower_weapon_action() -> void:
 		# After local validation, we send the packet
 		player.player_packets.send_lower_weapon_packet()
 	
+	# Both local and remote players
+	await _local_lower_weapon_and_await()
+	complete_action()
+
+
+func _local_lower_weapon_and_await() -> void:
 	# Get the current state
 	var current_state: BaseState = player.player_state_machine.get_current_state()
 	if not current_state:
@@ -325,7 +336,6 @@ func _process_lower_weapon_action() -> void:
 		
 	# Check if our weapon is already down, if so, ignore
 	if current_state.is_weapon_down_idle_state():
-		complete_action()
 		return
 	
 	# Perform local actions
@@ -347,8 +357,7 @@ func _process_lower_weapon_action() -> void:
 			animation_type = "crouch_aim_to_crouch_down"
 			target_state_name = weapon_type + "_crouch_down_idle"
 		_:
-			push_error("Error in match current_state inside _process_lower_weapon_action(), current_state_name: ", current_state_name, ", weapon_type: ", weapon_type)
-			complete_action()
+			push_error("Error in match current_state inside _local_lower_weapon_and_await(), current_state_name: ", current_state_name, ", weapon_type: ", weapon_type)
 			return
 	
 	await player.player_animator.play_weapon_animation_and_await(
@@ -361,8 +370,6 @@ func _process_lower_weapon_action() -> void:
 		# If we are not already in the same state
 		if target_state_name != player.player_state_machine.get_current_state_name():
 			player.player_state_machine.change_state(target_state_name)
-	
-	complete_action()
 
 
 func _process_reload_weapon_action(data: Dictionary) -> void:
@@ -399,7 +406,7 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 			
 			# And now we just play the local reload animation,
 			# Once the packet returns from the server, we update the ammo numbers
-			await _reload_weapon_locally_and_await()
+			await _local_reload_weapon_and_await()
 			
 			# If we are still holding right click after reloading
 			if Input.is_action_pressed("right_click"):
@@ -415,9 +422,10 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 	
 	# For remote players
 	else:
-		await _reload_weapon_locally_and_await()
+		await _local_raise_weapon_and_await()
+		await _local_reload_weapon_and_await()
 	
-	# Both local and remote players, if the packet has data to reload from the server
+	# Both local and remote players
 	# If we got the ammo values from the server, then update the stats
 	if data.has("magazine_ammo") and data.has("reserve_ammo"):
 		var magazine_ammo: int = data["magazine_ammo"]
@@ -428,23 +436,41 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 
 
 # Perform local actions to reload
-func _reload_weapon_locally_and_await() -> void:
+func _local_reload_weapon_and_await() -> void:
 	# Get the weapon type and play its animation
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
 	# Disable aim rotation
 	player.is_aim_rotating = false
 	
-	# Determine reload animation based on state
+	# Determine reload animation based on state and magazine ammo
 	var reload_animation: String
 	var current_state_name: String = player.player_state_machine.get_current_state_name()
+	
+	# Check if magazine is empty (0 ammo) to decide between slow/fast reload
+	var is_magazine_empty: bool = (player.player_equipment.get_current_ammo() == 0)
+	
 	match current_state_name:
-		"rifle_aim_idle", "shotgun_aim_idle":
+		# Choose between slow or fast reload based on magazine ammo
+		"rifle_aim_idle":
+			if is_magazine_empty:
+				reload_animation = "reload_slow"
+			else:
+				reload_animation = "reload_fast"
+		"rifle_crouch_aim_idle":
+			if is_magazine_empty:
+				reload_animation = "crouch_reload_slow"
+			else:
+				reload_animation = "crouch_reload_fast"
+		
+		# Shotgun has a different reload system
+		"shotgun_aim_idle":
 			reload_animation = "reload"
-		"rifle_crouch_aim_idle", "shotgun_crouch_aim_idle":
+		"shotgun_crouch_aim_idle":
 			reload_animation = "crouch_reload"
+		
+		# Error handling
 		"_":
 			push_error("Error inside _process_reload_weapon_action for animation: ", reload_animation, ", weapon_type: ", weapon_type, ", current_state: ", current_state_name)
-			complete_action()
 			return
 		
 	await player.player_animator.play_weapon_animation_and_await(
@@ -457,6 +483,7 @@ func _reload_weapon_locally_and_await() -> void:
 	
 	# Play the appropriate idle animation
 	player.player_animator.switch_animation("idle")
+
 
 
 func _process_single_fire_action(target: Vector3) -> void:
@@ -817,6 +844,42 @@ func _process_respawn_action(spawn_character_packet: Packets.SpawnCharacter) -> 
 	target_player.spawn_rotation = spawn_character_packet.get_rotation_y()
 	target_player.player_movement.setup_movement_data_at_spawn()
 	target_player.model.rotation.y = target_player.spawn_rotation # Snap the rotation to the new spawn rotation
+	
+	# Update weapon slots from the packet (just like initial spawn)
+	var weapon_slots: Array[Dictionary] = []
+	var spawn_weapons = spawn_character_packet.get_weapons()
+	
+	# Initialize with empty slots
+	for i in range(target_player.player_equipment.MAX_WEAPON_SLOTS):
+		weapon_slots.append({
+			"weapon_name": "unarmed",
+			"weapon_type": "unarmed",
+			"display_name": "Empty",
+			"ammo": 0,
+			"reserve_ammo": 0,
+			"fire_mode": 0
+		})
+	
+	# Extract weapon slots from the packet
+	for i in range(spawn_weapons.size()):
+		var weapon_slot = spawn_weapons[i]
+		var slot_index = weapon_slot.get_slot_index()
+		if slot_index < target_player.player_equipment.MAX_WEAPON_SLOTS:
+			weapon_slots[slot_index] = {
+				"weapon_name": weapon_slot.get_weapon_name(),
+				"weapon_type": weapon_slot.get_weapon_type(),
+				"display_name": weapon_slot.get_display_name(),
+				"ammo": weapon_slot.get_ammo(),
+				"reserve_ammo": weapon_slot.get_reserve_ammo(),
+				"fire_mode": weapon_slot.get_fire_mode()
+			}
+	
+	# Update the player's weapon slots
+	target_player.player_equipment.weapon_slots = weapon_slots
+	target_player.player_equipment.current_slot = spawn_character_packet.get_current_weapon()
+	
+	# Update the equipped weapon
+	target_player.player_equipment.update_equipped_weapon()
 	
 	# Call the player's respawn handler
 	target_player.handle_respawn()

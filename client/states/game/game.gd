@@ -289,19 +289,32 @@ func _spawn_new_player(player_id: int, spawn_character_packet: Packets.SpawnChar
 	# Get the spawn position from the packet
 	var spawn_position: Vector2i = Vector2i(spawn_character_packet.get_position().get_x(), spawn_character_packet.get_position().get_z())
 	var weapon_slots: Array[Dictionary] = []
+	# Initialize with empty slots first
+	for i in range(PlayerEquipment.MAX_WEAPON_SLOTS):
+		weapon_slots.append({
+			"weapon_name": "unarmed",
+			"weapon_type": "unarmed", 
+			"display_name": "Empty",
+			"ammo": 0,
+			"reserve_ammo": 0,
+			"fire_mode": 0
+		})
+	
 	# Get the spawn weapons from the packet
 	var spawn_weapons = spawn_character_packet.get_weapons()
 	# Extract weapon slots from the packet
 	for i in range(spawn_weapons.size()):
 		var weapon_slot = spawn_weapons[i]
-		weapon_slots.insert(weapon_slot.get_slot_index(), {
-			"weapon_name": weapon_slot.get_weapon_name(),
-			"weapon_type": weapon_slot.get_weapon_type(),
-			"display_name": weapon_slot.get_display_name(),
-			"ammo": weapon_slot.get_ammo(),
-			"reserve_ammo": weapon_slot.get_reserve_ammo(),
-			"fire_mode": weapon_slot.get_fire_mode()
-		})
+		var slot_index = weapon_slot.get_slot_index()
+		if slot_index < PlayerEquipment.MAX_WEAPON_SLOTS:
+			weapon_slots[slot_index] = {
+				"weapon_name": weapon_slot.get_weapon_name(),
+				"weapon_type": weapon_slot.get_weapon_type(),
+				"display_name": weapon_slot.get_display_name(),
+				"ammo": weapon_slot.get_ammo(),
+				"reserve_ammo": weapon_slot.get_reserve_ammo(),
+				"fire_mode": weapon_slot.get_fire_mode()
+			}
 	
 	# Grab all of the data from the server and use it to create this player character
 	var new_player: Player = Player.instantiate(

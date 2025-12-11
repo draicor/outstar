@@ -84,19 +84,31 @@ var animation_events: Dictionary[String, Array] = {
 		{"time": 0.05, "method": "_call_player_audio_method", "args": ["play_weapon_fire_single"]}, # Has to fire BEFORE decrement ammo
 		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["weapon_fire"]},
 	],
-	"rifle/rifle_aim_reload_fast": [
+	"rifle/rifle_aim_reload_slow": [
 		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
 		{"time": 0.5, "method": "_call_player_audio_method", "args": ["play_weapon_remove_magazine"]},
 		{"time": 1.05, "method": "_call_player_audio_method", "args": ["play_weapon_insert_magazine"]},
 		{"time": 1.42, "method": "_call_player_audio_method", "args": ["play_weapon_charging_handle"]},
 		{"time": 1.8, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
 	],
-	"rifle/rifle_crouch_aim_reload_fast": [
+	"rifle/rifle_aim_reload_fast": [
+		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
+		{"time": 0.5, "method": "_call_player_audio_method", "args": ["play_weapon_remove_magazine"]},
+		{"time": 1.05, "method": "_call_player_audio_method", "args": ["play_weapon_insert_magazine"]},
+		{"time": 1.45, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
+	],
+	"rifle/rifle_crouch_aim_reload_slow": [
 		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
 		{"time": 0.35, "method": "_call_player_audio_method", "args": ["play_weapon_remove_magazine"]},
 		{"time": 1.9, "method": "_call_player_audio_method", "args": ["play_weapon_insert_magazine"]},
 		{"time": 2.95, "method": "_call_player_audio_method", "args": ["play_weapon_charging_handle"]},
 		{"time": 4.1, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
+	],
+	"rifle/rifle_crouch_aim_reload_fast": [
+		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
+		{"time": 0.35, "method": "_call_player_audio_method", "args": ["play_weapon_remove_magazine"]},
+		{"time": 1.9, "method": "_call_player_audio_method", "args": ["play_weapon_insert_magazine"]},
+		{"time": 3.55, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
 	],
 	"rifle/rifle_equip": [
 		{"time": 0.95, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
@@ -158,11 +170,19 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 			animation = "rifle/rifle_unequip",
 			play_rate = 1.0
 		},
-		"reload": {
+		"reload_slow": {
+			animation = "rifle/rifle_aim_reload_slow",
+			play_rate = 0.7
+		},
+		"reload_fast": {
 			animation = "rifle/rifle_aim_reload_fast",
 			play_rate = 0.7
 		},
-		"crouch_reload": {
+		"crouch_reload_slow": {
+			animation = "rifle/rifle_crouch_aim_reload_slow",
+			play_rate = 1.3
+		},
+		"crouch_reload_fast": {
 			animation = "rifle/rifle_crouch_aim_reload_fast",
 			play_rate = 1.3
 		},

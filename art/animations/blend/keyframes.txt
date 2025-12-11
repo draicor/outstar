@@ -23,8 +23,8 @@ rifle_aim_fire_single_fast (10) 1-9
 rifle_aim_fire_single_slow (30) 1-29
 rifle_aim_idle (95) 1-94 loop
 rifle_aim_jog (26) 1-25 loop
-rifle_aim_reload_fast (68) 1-67
-rifle_aim_reload_slow (148) 1-147
+rifle_aim_reload_fast (46) 1-46
+rifle_aim_reload_slow (68) 1-67
 rifle_aim_to_rifle_crouch_aim (18) 1-17
 rifle_aim_to_rifle_down (47) 1-46
 rifle_aim_walk (32) 1-30 loop
@@ -32,8 +32,8 @@ rifle_crouch_aim_fire_single_high_recoil (39) 1-38
 rifle_crouch_aim_fire_single_low_recoil (15) 1-14
 rifle_crouch_aim_fire_single_mid_recoil (23) 1-22
 rifle_crouch_aim_idle (131) 1-130 loop
-rifle_crouch_aim_reload_fast (157) 1-156
-rifle_crouch_aim_reload_slow (208) 1-207
+rifle_crouch_aim_reload_fast (112) 1-112
+rifle_crouch_aim_reload_slow (157) 1-156
 rifle_crouch_aim_to_rifle_aim (18) 1-17
 rifle_crouch_aim_to_rifle_crouch_down (18) 1-17
 rifle_crouch_death (50) 1-49

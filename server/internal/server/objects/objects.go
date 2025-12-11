@@ -226,12 +226,14 @@ func (player *Player) Respawn(rotation float64) {
 	player.RotationY = rotation      // Get the rotation from the server respawner
 
 	// Reset all weapons to default ammo
-	for _, weapon := range player.weapons {
+	for index, weapon := range player.weapons {
 		if weapon != nil {
 			stats, exists := GetWeaponStats(weapon.WeaponName)
 			if exists {
-				// Full magazine plus one bullet chambered
-				player.SetCurrentWeaponAmmo(true, stats.MagazineCapacity+1, stats.ReserveCapacity)
+				// Respawn with full magazine plus one bullet chambered
+				player.weapons[index].Chambered = true
+				player.weapons[index].Ammo = stats.MagazineCapacity + 1
+				player.weapons[index].ReserveAmmo = stats.ReserveCapacity
 			}
 		}
 	}

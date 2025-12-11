@@ -797,14 +797,11 @@ func handle_respawn() -> void:
 			if current_state_name != target_state_name:
 				player_state_machine.change_state(target_state_name)
 	
-	if player_equipment:
-		if player_equipment.equipped_weapon:
-			player_equipment.set_current_ammo(30) # CAUTION TODO fix this magic number
-	
 	# Update the HUD for local player
 	if is_local_player:
 		Signals.ui_update_health.emit(health)
 		Signals.ui_update_max_health.emit(max_health)
+		Signals.ui_update_ammo.emit()
 
 
 func disable_collisions() -> void:
