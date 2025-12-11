@@ -49,15 +49,27 @@ rifle_equip (33) 1-32
 rifle_unequip (37) 1-36
 
 SHOTGUN
-shotgun_aim_fire (40) 1-38
+shotgun_aim_fire (19) 1-19
 shotgun_aim_idle (134) 1-132 loop
-shotgun_aim_reload (74) 1-72
+shotgun_aim_pump (25) 1-24
+
+shotgun_aim_reload (74) 1-74
+shotgun_aim_reload_end (19) 1-19
+shotgun_aim_reload_loop (9) 1-9
+shotgun_aim_reload_start (21) 1-21
+
 shotgun_aim_to_shotgun_crouch_aim (47) 1-46
 shotgun_aim_to_shotgun_down (47) 1-46
 shotgun_aim_walk (37) 1-35 loop
-shotgun_crouch_aim_fire (40) 1-39
+shotgun_crouch_aim_fire (19) 1-19
 shotgun_crouch_aim_idle (167) 1-165 loop
+shotgun_crouch_aim_pump (25) 1-25
+
 shotgun_crouch_aim_reload (74)	1-72
+shotgun_crouch_aim_reload_end (19) 1-19
+shotgun_crouch_aim_reload_loop (9) 1-9
+shotgun_crouch_aim_reload_start (21) 1-21
+
 shotgun_crouch_aim_to_shotgun_aim (47) 1-46
 shotgun_crouch_aim_to_shotgun_crouch_down (47) 1-45
 shotgun_crouch_down_idle (134) 1-132 loop

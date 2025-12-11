@@ -264,7 +264,6 @@ func get_animation_play_rate() -> float:
 	
 	return fire_rates[current_fire_mode][stance]["play_rate"]
 
-
 # Traverses up the tree to find the player node
 func get_weapon_owner() -> Player:
 	var node = get_parent()
@@ -339,3 +338,16 @@ func process_hits_for_damage(hit_positions: Array[Vector3]) -> Dictionary:
 				AudioManager.play_bullet_impact_concrete(hit.position)
 	
 	return hits_by_target
+
+
+func get_fire_animation() -> String:
+	return "shotgun/shotgun_aim_fire"
+
+func get_crouch_fire_animation() -> String:
+	return "shotgun/shotgun_crouch_aim_fire"
+
+func get_pump_animation() -> String:
+	return "shotgun/shotgun_aim_pump"
+
+func get_crouch_pump_animation() -> String:
+	return "shotgun/shotgun_crouch_aim_pump"

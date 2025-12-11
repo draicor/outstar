@@ -437,7 +437,7 @@ func _process_reload_weapon_action(data: Dictionary) -> void:
 
 # Perform local actions to reload
 func _local_reload_weapon_and_await() -> void:
-	# Get the weapon type and play its animation
+	# Get weapon data
 	var weapon_type: String = player.player_equipment.get_current_weapon_type()
 	# Disable aim rotation
 	player.is_aim_rotating = false
@@ -463,16 +463,58 @@ func _local_reload_weapon_and_await() -> void:
 				reload_animation = "crouch_reload_fast"
 		
 		# Shotgun has a different reload system
-		"shotgun_aim_idle":
-			reload_animation = "reload"
-		"shotgun_crouch_aim_idle":
-			reload_animation = "crouch_reload"
+		"shotgun_aim_idle", "shotgun_crouch_aim_idle":
+			var is_crouching: bool = "crouch" in current_state_name
+			
+			# Calculate how many shells to load
+			var current_ammo: int = player.player_equipment.get_current_ammo()
+			var max_ammo: int
+			if current_ammo == 0:
+				max_ammo = 6
+			else:
+				max_ammo = player.player_equipment.get_current_weapon_max_ammo()
+			var reserve_ammo: int = player.player_equipment.get_current_reserve_ammo()
+			var shells_to_load: int = min(max_ammo - current_ammo, reserve_ammo)
+			
+			if shells_to_load <= 0:
+				# No shells to load, just exit
+				return
+			
+			# Prepare the animation names
+			var reload_start_anim: String = "reload_start"
+			var reload_shell_anim: String = "reload_shell"
+			var reload_end_anim: String = "reload_end"
+			
+			if is_crouching:
+				reload_start_anim = "crouch_reload_start"
+				reload_shell_anim = "crouch_reload_shell"
+				reload_end_anim = "crouch_reload_end"
+			
+			# Start reloading
+			await player.player_animator.play_weapon_animation_and_await(reload_start_anim, weapon_type)
+			# Loop over the load shell anim
+			for i in range(shells_to_load):
+				await player.player_animator.play_weapon_animation_and_await(reload_shell_anim, weapon_type)
+				# Update local ammo as we load each shell (for visual feedback)
+				player.player_equipment.set_current_ammo(current_ammo + i + 1)
+				player.player_equipment.set_current_reserve_ammo(reserve_ammo - i - 1)
+				player.player_equipment.update_hud_ammo()
+			
+			# Play the reload end animation
+			await player.player_animator.play_weapon_animation_and_await(reload_end_anim, weapon_type)
+			
+			# Enable aim rotation after reload
+			player.is_aim_rotating = true
+			# Play the appropriate idle animation after
+			player.player_animator.switch_animation("idle")
+			
+			return # We break early
 		
 		# Error handling
 		"_":
 			push_error("Error inside _process_reload_weapon_action for animation: ", reload_animation, ", weapon_type: ", weapon_type, ", current_state: ", current_state_name)
 			return
-		
+	
 	await player.player_animator.play_weapon_animation_and_await(
 		reload_animation,
 		weapon_type
@@ -480,10 +522,8 @@ func _local_reload_weapon_and_await() -> void:
 	
 	# Enable aim rotation after reload
 	player.is_aim_rotating = true
-	
-	# Play the appropriate idle animation
+	# Play the appropriate idle animation after
 	player.player_animator.switch_animation("idle")
-
 
 
 func _process_single_fire_action(target: Vector3) -> void:
@@ -558,6 +598,9 @@ func _process_single_fire_action(target: Vector3) -> void:
 	# Ammo decrement happens from player_equipment.weapon_fire()
 	await player.player_animator.play_animation_and_await(anim_name, play_rate)
 	
+	# Play the appropriate idle animation after
+	player.player_animator.switch_animation("idle")
+	
 	complete_action()
 
 
@@ -616,19 +659,32 @@ func _process_multiple_fire_action(hit_positions: Array[Vector3]) -> void:
 	# Perform local actions
 	# Get weapon data
 	var weapon = player.player_equipment.equipped_weapon
-	var anim_name: String = weapon.get_animation()
-	var play_rate: float = weapon.get_animation_play_rate()
-	
-	# Check if we have ammo
+	var is_crouching = "crouch" in player.player_state_machine.get_current_state_name()
 	var has_ammo: bool = player.player_equipment.can_fire_weapon()
+	var firing_animation: String = ""
+	var pump_animation: String = ""
+	var play_rate: float = weapon.get_animation_play_rate()
 	
 	# Adjust for dry fire
 	if not has_ammo:
 		play_rate = weapon.semi_fire_rate
 		player.dry_fired = true
-
-	# Ammo decrement happens from player_equipment.weapon_fire()
-	await player.player_animator.play_animation_and_await(anim_name, play_rate)
+	
+	# For shotguns, handle fire + pump sequence
+	if player.player_equipment.get_current_weapon_type() == "shotgun":
+		if is_crouching:
+			firing_animation = weapon.get_crouch_fire_animation()
+			pump_animation = weapon.get_crouch_pump_animation()
+		else:
+			firing_animation = weapon.get_fire_animation()
+			pump_animation = weapon.get_pump_animation()
+	
+		# Ammo decrement happens from player_equipment.weapon_fire()
+		await player.player_animator.play_animation_and_await(firing_animation, play_rate)
+		
+		# If we had ammo (not dry fire), play the pump animation
+		if has_ammo:
+			await player.player_animator.play_animation_and_await(pump_animation, play_rate)
 	
 	complete_action()
 
