@@ -66,21 +66,17 @@ func _initialize_fire_rates() -> void:
 	fire_rates = {
 		FireModes.SEMI: {
 			"standing": {
-				"animation": "shotgun/shotgun_aim_fire",
 				"play_rate": semi_fire_rate
 			},
 			"crouching": {
-				"animation": "shotgun/shotgun_crouch_aim_fire",
 				"play_rate": semi_fire_rate
 			}
 		},
 		FireModes.AUTO: {
 			"standing": {
-				"animation": "shotgun/shotgun_aim_fire",
 				"play_rate": auto_fire_rate
 			},
 			"crouching": {
-				"animation": "shotgun/shotgun_crouch_aim_fire",
 				"play_rate": auto_fire_rate
 			}
 		}
@@ -233,36 +229,10 @@ func set_fire_mode(mode: int) -> void:
 	calculate_recoil()
 
 
-# Returns the appropriate animation based on stance and fire mode
-func get_animation() -> String:
-	var owner_player: Player = get_weapon_owner()
-	if not owner_player:
-		return fire_rates[FireModes.SEMI]["standing"]["animation"]
-	
-	var current_state: String = owner_player.player_state_machine.get_current_state_name()
-	var stance: String = "standing"
-	
-	# Check if we are in crouch aim state
-	if current_state == "shotgun_crouch_aim_idle":
-		stance = "crouching"
-	
-	return fire_rates[current_fire_mode][stance]["animation"]
-
-
 # Returns the appropriate animation play rate based on stance and fire mode
-func get_animation_play_rate() -> float:
-	var owner_player: Player = get_weapon_owner()
-	if not owner_player:
-		return fire_rates[FireModes.SEMI]["standing"]["play_rate"]
-	
-	var current_state: String = owner_player.player_state_machine.get_current_state_name()
-	var stance: String = "standing"
-	
-	# Check if we are in crouch aim state
-	if current_state == "shotgun_crouch_aim_idle":
-		stance = "crouching"
-	
+func get_animation_play_rate(stance: String) -> float:
 	return fire_rates[current_fire_mode][stance]["play_rate"]
+
 
 # Traverses up the tree to find the player node
 func get_weapon_owner() -> Player:
@@ -338,16 +308,3 @@ func process_hits_for_damage(hit_positions: Array[Vector3]) -> Dictionary:
 				AudioManager.play_bullet_impact_concrete(hit.position)
 	
 	return hits_by_target
-
-
-func get_fire_animation() -> String:
-	return "shotgun/shotgun_aim_fire"
-
-func get_crouch_fire_animation() -> String:
-	return "shotgun/shotgun_crouch_aim_fire"
-
-func get_pump_animation() -> String:
-	return "shotgun/shotgun_aim_pump"
-
-func get_crouch_pump_animation() -> String:
-	return "shotgun/shotgun_crouch_aim_pump"

@@ -155,6 +155,7 @@ var animation_events: Dictionary[String, Array] = {
 	],
 }
 
+# All the actions we can call and their asociated animations
 var weapon_animations: Dictionary[String, Dictionary] = {
 	"unarmed": {
 		"down_to_crouch_down": {
@@ -223,6 +224,14 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 		"down_to_crouch_down": {
 			animation = "rifle/rifle_down_to_rifle_crouch_down",
 			play_rate = 1.3
+		},
+		"fire_single": {
+			animation = "rifle/rifle_aim_fire_single_fast",
+			play_rate = 1.0 # Get overriden by each weapon
+		},
+		"crouch_fire_single": {
+			animation = "rifle/rifle_crouch_aim_fire_single_low_recoil",
+			play_rate = 1.0  # Get overriden by each weapon
 		},
 	},
 	"shotgun": {
@@ -297,6 +306,14 @@ var weapon_animations: Dictionary[String, Dictionary] = {
 		"down_to_crouch_down": {
 			animation = "shotgun/shotgun_down_to_shotgun_crouch_down",
 			play_rate = 2.0
+		},
+		"fire_single": {
+			animation = "shotgun/shotgun_aim_fire",
+			play_rate = 1.0 # Get overriden by each weapon
+		},
+		"crouch_fire_single": {
+			animation = "shotgun/shotgun_crouch_aim_fire",
+			play_rate = 1.0  # Get overriden by each weapon
 		},
 	}
 	# Add more weapon types here
@@ -591,7 +608,7 @@ func switch_animation(anim_state: String) -> void:
 	
 	# If we are already playing this animation, ignore
 	if animation_player.current_animation == anim_name:
-		# Update speed if it changed (like running to job state using the same anim)
+		# Update speed if it changed (like running to jog state using the same anim)
 		animation_player.speed_scale = settings.play_rate
 		return
 	

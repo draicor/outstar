@@ -75,21 +75,17 @@ func _initialize_fire_rates() -> void:
 	fire_rates = {
 		FireModes.SEMI: {
 			"standing": {
-				"animation": "rifle/rifle_aim_fire_single_fast",
 				"play_rate": semi_fire_rate
 			},
 			"crouching": {
-				"animation": "rifle/rifle_crouch_aim_fire_single_low_recoil",
 				"play_rate": semi_fire_rate * 1.556 # To match shooting standing speed
 			}
 		},
 		FireModes.AUTO: {
 			"standing": {
-				"animation": "rifle/rifle_aim_fire_single_fast",
 				"play_rate": auto_fire_rate
 			},
 			"crouching": {
-				"animation": "rifle/rifle_crouch_aim_fire_single_low_recoil",
 				"play_rate": auto_fire_rate * 1.556 # To match shooting standing speed
 			}
 		}
@@ -124,10 +120,11 @@ func is_weapon_inside_wall() -> bool:
 	
 		var results: Array[Dictionary] = get_world_3d().direct_space_state.intersect_shape(query)
 		
-		# Debug visualization
-		#if DebugDraw3D:
-			#var color: Color = Color.RED if results.size() > 0 else Color.GREEN
-			#DebugDraw3D.draw_sphere(check_position, 0.04, color, 0.2)
+		# Debug visualization if active
+		if debug:
+			if DebugDraw3D:
+				var color: Color = Color.RED if results.size() > 0 else Color.GREEN
+				DebugDraw3D.draw_sphere(check_position, 0.04, color, 0.2)
 		
 		if results.size() > 0:
 			return true
@@ -174,9 +171,11 @@ func fire(hits: Array[Vector3]) -> void:
 	get_tree().current_scene.add_child(tracer)
 	tracer.initialize(muzzle_position, hit_position)
 	
+	# Debug visualization if active
 	if debug:
-		var debug_color = Color.GREEN
-		DebugDraw3D.draw_line(muzzle_position, hit_position, debug_color, debug_duration)
+		if DebugDraw3D:
+			var debug_color = Color.GREEN
+			DebugDraw3D.draw_line(muzzle_position, hit_position, debug_color, debug_duration)
 
 
 func weapon_raycast(origin: Vector3, direction: Vector3) -> Dictionary:
@@ -226,35 +225,8 @@ func set_fire_mode(mode: int) -> void:
 	calculate_recoil()
 
 
-# Returns the appropriate animation based on stance and fire mode
-func get_animation() -> String:
-	var owner_player: Player = get_weapon_owner()
-	if not owner_player:
-		return fire_rates[FireModes.SEMI]["standing"]["animation"]
-	
-	var current_state: String = owner_player.player_state_machine.get_current_state_name()
-	var stance: String = "standing"
-	
-	# Check if we are in crouch aim state
-	if current_state == "rifle_crouch_aim_idle":
-		stance = "crouching"
-	
-	return fire_rates[current_fire_mode][stance]["animation"]
-
-
 # Returns the appropriate animation play rate based on stance and fire mode
-func get_animation_play_rate() -> float:
-	var owner_player: Player = get_weapon_owner()
-	if not owner_player:
-		return fire_rates[FireModes.SEMI]["standing"]["play_rate"]
-	
-	var current_state: String = owner_player.player_state_machine.get_current_state_name()
-	var stance: String = "standing"
-	
-	# Check if we are in crouch aim state
-	if current_state == "rifle_crouch_aim_idle":
-		stance = "crouching"
-	
+func get_animation_play_rate(stance: String) -> float:
 	return fire_rates[current_fire_mode][stance]["play_rate"]
 
 
