@@ -6,6 +6,12 @@
 
 [node name="remington870_shotgun" instance=ExtResource("1_np8d2")]
 script = ExtResource("2_3nsi8")
+spread_angle = 2.0
+debug = true
+weapon_max_distance = 35.0
+horizontal_recoil = 0.0
+vertical_recoil = 0.0
+lower_vertical_recoil = 0.0
 
 [node name="Mesh" parent="." index="0"]
 transform = Transform3D(3.3993274e-05, 0.9999981, -0.0019481423, -0.034845077, 0.0019481439, 0.99939084, 0.99939275, 3.3903867e-05, 0.034845077, -0.01, 0.14, 0.05)
