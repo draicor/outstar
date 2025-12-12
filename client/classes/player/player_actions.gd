@@ -526,6 +526,62 @@ func _local_reload_weapon_and_await() -> void:
 	player.player_animator.switch_animation("idle")
 
 
+# Perform local actions for single fire or multiple fire weapon
+func _local_fire_weapon_and_await() -> void:
+	# Get weapon data
+	var weapon = player.player_equipment.equipped_weapon
+	var is_crouching = "crouch" in player.player_state_machine.get_current_state_name()
+	var has_ammo: bool = player.player_equipment.can_fire_weapon()
+	var firing_animation: String = ""
+	var pump_animation: String = ""
+	var play_rate: float = weapon.get_animation_play_rate()
+	
+	# Adjust for dry fire
+	if not has_ammo:
+		play_rate = weapon.semi_fire_rate
+		player.dry_fired = true
+	
+	# For shotguns, handle fire + pump sequence
+	if player.player_equipment.get_current_weapon_type() == "shotgun":
+		if is_crouching:
+			firing_animation = weapon.get_crouch_fire_animation()
+			pump_animation = weapon.get_crouch_pump_animation()
+		else:
+			firing_animation = weapon.get_fire_animation()
+			pump_animation = weapon.get_pump_animation()
+	
+		# Ammo decrement happens from player_equipment.weapon_fire()
+		await player.player_animator.play_animation_and_await(firing_animation, play_rate)
+		
+		# If we had ammo (not dry fire), play the pump animation
+		if has_ammo:
+			await player.player_animator.play_animation_and_await(pump_animation, play_rate)
+	
+	# For all other weapons
+	else:
+		# Get weapon data
+		firing_animation = weapon.get_animation()
+		play_rate = weapon.get_animation_play_rate()
+		
+		# Check if we have ammo, adjust for dry fire
+		if not has_ammo:
+			play_rate = weapon.semi_fire_rate
+			player.dry_fired = true
+
+		# Ammo decrement happens from player_equipment.weapon_fire()
+		await player.player_animator.play_animation_and_await(firing_animation, play_rate)
+	
+	# After firing, we switch back to idle
+	# Switch to the appropiate idle state based on our current locomotion
+	var target_state_name: String = player.player_animator.get_aim_state_name()
+	# If we are not already in the same state (switching from one rifle to another rifle for example)
+	if target_state_name != player.player_state_machine.get_current_state_name():
+		player.player_state_machine.change_state(target_state_name)
+	
+	# Play the appropriate idle animation after
+	player.player_animator.switch_animation("idle")
+
+
 func _process_single_fire_action(target: Vector3) -> void:
 	# Only validate local player
 	if player.is_local_player:
@@ -581,26 +637,8 @@ func _process_single_fire_action(target: Vector3) -> void:
 			# Process the hits for damage so we spawn SFX and sounds
 			player.player_equipment.process_hits_for_damage()
 	
-	# Perform local actions
-	# Get weapon data
-	var weapon = player.player_equipment.equipped_weapon
-	var anim_name: String = weapon.get_animation()
-	var play_rate: float = weapon.get_animation_play_rate()
-	
-	# Check if we have ammo
-	var has_ammo: bool = player.player_equipment.can_fire_weapon()
-	
-	# Adjust for dry fire
-	if not has_ammo:
-		play_rate = weapon.semi_fire_rate
-		player.dry_fired = true
-
-	# Ammo decrement happens from player_equipment.weapon_fire()
-	await player.player_animator.play_animation_and_await(anim_name, play_rate)
-	
-	# Play the appropriate idle animation after
-	player.player_animator.switch_animation("idle")
-	
+	# Perform local actions for both local and remote players
+	_local_fire_weapon_and_await()
 	complete_action()
 
 
@@ -656,36 +694,8 @@ func _process_multiple_fire_action(hit_positions: Array[Vector3]) -> void:
 			# Process the hits for damage so we spawn SFX and sounds
 			player.player_equipment.process_hits_for_damage()
 	
-	# Perform local actions
-	# Get weapon data
-	var weapon = player.player_equipment.equipped_weapon
-	var is_crouching = "crouch" in player.player_state_machine.get_current_state_name()
-	var has_ammo: bool = player.player_equipment.can_fire_weapon()
-	var firing_animation: String = ""
-	var pump_animation: String = ""
-	var play_rate: float = weapon.get_animation_play_rate()
-	
-	# Adjust for dry fire
-	if not has_ammo:
-		play_rate = weapon.semi_fire_rate
-		player.dry_fired = true
-	
-	# For shotguns, handle fire + pump sequence
-	if player.player_equipment.get_current_weapon_type() == "shotgun":
-		if is_crouching:
-			firing_animation = weapon.get_crouch_fire_animation()
-			pump_animation = weapon.get_crouch_pump_animation()
-		else:
-			firing_animation = weapon.get_fire_animation()
-			pump_animation = weapon.get_pump_animation()
-	
-		# Ammo decrement happens from player_equipment.weapon_fire()
-		await player.player_animator.play_animation_and_await(firing_animation, play_rate)
-		
-		# If we had ammo (not dry fire), play the pump animation
-		if has_ammo:
-			await player.player_animator.play_animation_and_await(pump_animation, play_rate)
-	
+	# Perform local actions for both local and remote players
+	_local_fire_weapon_and_await()
 	complete_action()
 
 
