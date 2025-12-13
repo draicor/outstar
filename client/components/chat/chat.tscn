@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://c0e51fcsnsimq"]
+[gd_scene load_steps=3 format=3 uid="uid://c0e51fcsnsimq"]
 
 [ext_resource type="Script" uid="uid://b6ydwib42upx" path="res://components/chat/chat.gd" id="1_6nsy3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k5lin"]
+bg_color = Color(0, 0, 0, 0)
 
 [node name="Chat" type="Control"]
 clip_contents = true
@@ -32,11 +35,13 @@ theme_override_constants/separation = 0
 [node name="HistoryCheckButton" type="CheckButton" parent="ChatContainer/ChatButtonRow"]
 layout_mode = 2
 size_flags_horizontal = 0
+button_pressed = true
 
 [node name="ChatHistory" type="PanelContainer" parent="ChatContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_k5lin")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="ChatContainer/ChatHistory"]
 layout_direction = 3

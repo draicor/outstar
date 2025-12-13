@@ -18,10 +18,16 @@ var chat_visible: bool = false
 
 
 func _ready() -> void:
-	# Start with the whole chat hidden
-	chat_container.visible = false
-	# When the chat window opens, the chat history will be hidden by default
-	chat_history.visible = false
+	# Start with the whole chat visible
+	chat_container.visible = true
+	# Chat history is always visible now
+	chat_history.visible = true
+	# Hide chat input and button row by default
+	chat_input.visible = false
+	chat_button_row.visible = false
+	
+	# Make the history_check_button toggeable by default
+	history_check_button.toggle_mode = true
 	
 	# Disable focus for the toggle button
 	history_check_button.focus_mode = Control.FOCUS_NONE
@@ -30,7 +36,7 @@ func _ready() -> void:
 	# Disable right click menu
 	chat_input.context_menu_enabled = false
 	# Semi-transparent scrollbar
-	scroll_container.get_v_scroll_bar().modulate.a = 0.7
+	scroll_container.get_v_scroll_bar().modulate.a = 0.5
 	
 	# Connect the UI and Chat signals
 	Signals.ui_chat_input_toggle.connect(_on_ui_chat_input_toggle) # main.gd triggers this
@@ -132,7 +138,8 @@ func _on_history_check_button_toggled(toggled_on: bool) -> void:
 func _on_ui_chat_input_toggle() -> void:
 	# Toggle the chat UI visibility
 	chat_visible = !chat_visible
-	chat_container.visible = chat_visible
+	chat_input.visible = chat_visible
+	chat_button_row.visible = chat_visible
 	GameManager.is_player_typing = chat_visible # Prevents camera rotation
 	
 	# If our chat is visible now after updating
@@ -149,6 +156,8 @@ func _on_ui_chat_input_toggle() -> void:
 	
 	if chat_visible and history_check_button.button_pressed:
 		_scroll_to_bottom()
+	
+	_toggle_chat_history_background(chat_visible)
 
 
 # If we submit a message in our chat_input
@@ -184,3 +193,11 @@ func _create_chat_bubble_packet(is_active: bool) -> packets.Packet:
 	var chat_bubble_packet := packet.new_chat_bubble()
 	chat_bubble_packet.set_is_active(is_active)
 	return packet
+
+
+func _toggle_chat_history_background(is_active: bool) -> void:
+	if is_active:
+		print("reveal it")
+	else:
+		print("hide!")
+	
