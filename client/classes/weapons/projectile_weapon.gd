@@ -21,8 +21,9 @@ var min_pitch_recoil: float
 var max_pitch_recoil: float
 
 # References
-@onready var muzzle_marker_3d: Marker3D = $MuzzleMarker3D
-@onready var projectile_muzzle_flash: Node3D = $MuzzleMarker3D/ProjectileMuzzleFlash
+@onready var muzzle_marker_3d: Marker3D = $Mesh/MuzzleMarker3D
+@onready var projectile_muzzle_flash: Node3D = $Mesh/MuzzleMarker3D/ProjectileMuzzleFlash
+@onready var left_hand_marker_3d: Marker3D = $Mesh/LeftHandMarker3D
 
 # Preload scenes
 const BULLET_TRACER = preload("res://sfx/projectile/bullet_tracer.tscn")
@@ -271,4 +272,14 @@ func _spawn_bullet_tracer(from_position: Vector3, to_position: Vector3) -> void:
 		if DebugDraw3D:
 			var debug_color = Color.GREEN
 			DebugDraw3D.draw_line(from_position, to_position, debug_color, debug_duration)
-			
+
+
+# Functions to return the internal variables from the scene tree
+func get_muzzle_marker() -> Marker3D:
+	return muzzle_marker_3d
+
+func get_muzzle_flash() -> Node:
+	return projectile_muzzle_flash
+
+func get_left_hand_marker() -> Marker3D:
+	return left_hand_marker_3d

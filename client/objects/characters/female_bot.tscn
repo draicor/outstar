@@ -1,7 +1,6 @@
-[gd_scene load_steps=8 format=3 uid="uid://csrvdvxq0lapq"]
+[gd_scene load_steps=7 format=3 uid="uid://csrvdvxq0lapq"]
 
 [ext_resource type="PackedScene" uid="uid://d0r280h3aimw4" path="res://assets/models/characters/female_bot.glb" id="1_wm4mk"]
-[ext_resource type="PackedScene" uid="uid://dokksjejpmbe2" path="res://objects/weapons/remington870_shotgun.tscn" id="4_248ij"]
 [ext_resource type="AnimationLibrary" uid="uid://cmtogh3gnb0o5" path="res://assets/animations/rifle.glb" id="4_d8d5i"]
 [ext_resource type="AnimationLibrary" uid="uid://do4sr606ckwja" path="res://assets/animations/unarmed.glb" id="4_hscu1"]
 [ext_resource type="AnimationLibrary" uid="uid://rkmxwth3qq42" path="res://assets/animations/shotgun.glb" id="5_yoqgj"]
@@ -81,24 +80,15 @@ bones/52/rotation = Quaternion(0.0081213815, 0.98910433, 0.14129452, 0.040526703
 
 [node name="RightHandTest" type="BoneAttachment3D" parent="Armature/GeneralSkeleton" index="2"]
 transform = Transform3D(-0.116743684, -0.019109339, 0.9929781, 0.9931508, -0.007013336, 0.116629034, 0.004735574, 0.9997928, 0.019797117, -0.20022306, 0.9012345, 0.24032053)
+visible = false
 bone_name = "RightHand"
 bone_idx = 10
-
-[node name="remington870_shotgun" parent="Armature/GeneralSkeleton/RightHandTest" index="0" instance=ExtResource("4_248ij")]
-visible = false
-
-[node name="Mesh" parent="Armature/GeneralSkeleton/RightHandTest/remington870_shotgun" index="0"]
-transform = Transform3D(3.3993274e-05, 0.9999981, -0.0019481423, -0.034845077, 0.0019481439, 0.99939084, 0.99939275, 3.3903867e-05, 0.034845077, -0.00999999, 0.14000008, 0.04999999)
-
-[node name="LeftHandMarker3D" parent="Armature/GeneralSkeleton/RightHandTest/remington870_shotgun" index="1"]
-transform = Transform3D(0.021270653, -0.153447, 0.9879285, -0.7053493, 0.6980009, 0.1236015, -0.70854133, -0.6994634, -0.093386754, -0.007895589, 0.4277994, 0.10755879)
 
 [node name="LeftHandTest" type="SkeletonIK3D" parent="Armature/GeneralSkeleton" index="3"]
 transform = Transform3D(0.118473, 0.0981278, -0.988097, -0.895587, 0.440309, -0.063654, 0.428822, 0.892467, 0.140047, -0.0732116, 1.36527, 0.636934)
 visible = false
 root_bone = &"LeftShoulder"
 tip_bone = &"LeftHand"
-target_node = NodePath("../RightHandTest/remington870_shotgun/LeftHandMarker3D")
 
 [node name="AnimationPlayer" parent="." index="1"]
 libraries = {
@@ -107,5 +97,3 @@ libraries = {
 &"shotgun": ExtResource("5_yoqgj"),
 &"unarmed": ExtResource("4_hscu1")
 }
-
-[editable path="Armature/GeneralSkeleton/RightHandTest/remington870_shotgun"]

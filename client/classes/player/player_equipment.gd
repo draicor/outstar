@@ -149,9 +149,9 @@ func equip_weapon(weapon_name: String) -> void:
 			equipped_weapon_name = weapon_name
 			equipped_weapon_type = weapon_types[weapon_name]
 			# If our equipped weapon has a valid left hand target
-			if equipped_weapon.get_node("LeftHandMarker3D"):
+			if equipped_weapon.get_left_hand_marker():
 				# Update our left hand target and start calculating IK
-				set_left_hand_ik_target(equipped_weapon.get_node("LeftHandMarker3D"))
+				set_left_hand_ik_target(equipped_weapon.get_left_hand_marker())
 			
 			# Display the weapon hud after spawning the weapon
 			show_weapon_hud()
@@ -221,36 +221,25 @@ func weapon_fire() -> void:
 
 # Returns the muzzle position for firearms
 func get_muzzle_position() -> Vector3:
-	if equipped_weapon and equipped_weapon.has_node("MuzzleMarker3D"):
-		return equipped_weapon.get_node("MuzzleMarker3D").global_position
+	if equipped_weapon:
+		return equipped_weapon.get_muzzle_marker().global_position
 	# Fallback if the node is not set
 	push_error("MuzzleMarker3D not set")
 	return player.global_position
 
 
-# Calculate accurate firing direction using our weapon's muzzle marker 3d
 func calculate_weapon_direction(target_position: Vector3) -> void:
 	if not equipped_weapon:
 		return
-	
-	# Get weapon's natural forward direction using the muzzle position as the start position
+
+	# Get weapon's muzzle position
 	var muzzle_position: Vector3 = get_muzzle_position()
-	var weapon_forward: Vector3 = -equipped_weapon.muzzle_marker_3d.global_transform.basis.z
-	# Calculate vector to target
-	var to_target: Vector3 = target_position - muzzle_position
-	
-	# Calculate angle between weapon forward and target direction
-	var angle: float = weapon_forward.angle_to(to_target)
-	
-	# If target is within correction cone, use exact target direction
-	if angle < max_correction_angle:
-		equipped_weapon.target_direction = to_target
-	else:
-		# Otherwise, blend toward max allowed angle
-		equipped_weapon.target_direction = weapon_forward.slerp(
-			to_target,
-			max_correction_angle / angle
-		)
+
+	# Calculate vector from muzzle to target (this is all we need!)
+	var to_target: Vector3 = (target_position - muzzle_position).normalized()
+
+	# Set the weapon's target direction
+	equipped_weapon.target_direction = to_target
 
 
 # CAUTION this should be replaced with a packet from the server to assign a weapon to this slot

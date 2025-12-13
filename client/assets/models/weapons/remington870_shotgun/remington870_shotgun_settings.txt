@@ -16,32 +16,27 @@ x: -88.0°
 y: -3.2°
 z: -86.8°
 
-LeftHandMarker3D as child of the weapon root node:
+LeftHandMarker3D as child of the Mesh node:
 LeftHandMarker3D Position:
-x: -0.008m
-y: 0.428m
-z: 0.108m
+x: 0.048m
+y: 0.003m
+z: 0.29m
 
 LeftHandMarker3D Rotation:
-x: -7.1°
-y: 95.4°
-z: -45.3°
+x: -81.2°
+y: -39.5°
+z: 172.6°
 
-MuzzleMarker3D as child of weapon root node:
+MuzzleMarker3D as child of Mesh node:
 MuzzleMarker3D Position:
-x: 0.058m
-y: 0.774m
-z: 0.072m
-
-MuzzleMarker3D Rotation:
-x: 93.0°
-y: 0.0°
-z: 0.0°
+x: 0.0m
+y: 0.069m
+z: 0.634m
 
 ProjectileMuzzleFlash as child of MuzzleMarker3D:
 ProjectileMuzzleFlash Rotation:
 x: 0.0°
-y: -176.5°
+y: 0.0°
 z: 0.0°
 
 root_bone: LeftShoulder

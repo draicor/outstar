@@ -68,10 +68,10 @@ func calculate_hit_positions(direction: Vector3 = Vector3.ZERO) -> Array[Vector3
 	# Get weapon muzzle position
 	var muzzle_position: Vector3 = muzzle_marker_3d.global_position
 	
-	# If we forgot to set this, at least it will fire in the same direction
-	if direction == Vector3.ZERO:
+	# Set target direction if provided
+	if direction != Vector3.ZERO:
 		# Create horizontal direction (ignoring weapon's vertical angle)
-		target_direction = -muzzle_marker_3d.global_transform.basis.z
+		target_direction = direction.normalized()
 	
 	var target: Vector3 = _apply_recoil(target_direction)
 

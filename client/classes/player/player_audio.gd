@@ -19,7 +19,7 @@ const AKM_RIFLE_INSERT_MAGAZINE = preload("res://assets/sounds/sfx/rifle/akm_rif
 const AKM_RIFLE_REMOVE_MAGAZINE = preload("res://assets/sounds/sfx/rifle/akm_rifle/akm_rifle_remove_magazine.wav")
 # SHOTGUN #
 # REMINGTON870 shotgun sounds
-const REMINGTON870_SHOTGUN_COCK = preload("res://assets/sounds/sfx/shotgun/remington870_shotgun/remington870_shotgun_cock.wav")
+const REMINGTON870_SHOTGUN_PUMP = preload("res://assets/sounds/sfx/shotgun/remington870_shotgun/remington870_shotgun_pump.wav")
 const REMINGTON870_SHOTGUN_DRY_FIRE = preload("res://assets/sounds/sfx/shotgun/remington870_shotgun/remington870_shotgun_dry_fire.wav")
 const REMINGTON870_SHOTGUN_FIRE = preload("res://assets/sounds/sfx/shotgun/remington870_shotgun/remington870_shotgun_fire.wav")
 const REMINGTON870_SHOTGUN_LOAD_BULLET = preload("res://assets/sounds/sfx/shotgun/remington870_shotgun/remington870_shotgun_load_bullet.wav")
@@ -39,7 +39,7 @@ var current_weapon_load_bullet_single_index: int = 0
 var remove_magazine_audio_player_3d: AudioStreamPlayer3D
 var insert_magazine_audio_player_3d: AudioStreamPlayer3D
 var charging_handle_audio_player_3d: AudioStreamPlayer3D
-var shotgun_cock_audio_player_3d: AudioStreamPlayer3D
+var shotgun_pump_audio_player_3d: AudioStreamPlayer3D
 # AudioStreamPlayer mode selector audio player
 var fire_mode_selector_audio_player: AudioStreamPlayer3D
 
@@ -191,7 +191,7 @@ func _initialize_remington870_weapon_audio_players() -> void:
 		current_weapon_load_bullet_single_audio_pool.append(weapon_load_bullet_single_audio_player)
 	
 	# Create reload audio players
-	shotgun_cock_audio_player_3d = create_single_audio_player_3d(REMINGTON870_SHOTGUN_COCK, 8.0, SOUND_DISTANCE_MID, "SFX")
+	shotgun_pump_audio_player_3d = create_single_audio_player_3d(REMINGTON870_SHOTGUN_PUMP, 8.0, SOUND_DISTANCE_MID, "SFX")
 	# Reset indexes
 	current_weapon_fire_single_index = 0
 	current_weapon_dry_fire_single_index = 0
@@ -286,9 +286,9 @@ func play_weapon_load_bullet() -> void:
 	current_weapon_load_bullet_single_index = (current_weapon_load_bullet_single_index + 1) % POOL_SIZE
 
 
-func play_weapon_shotgun_cock() -> void:
-	if shotgun_cock_audio_player_3d.playing:
+func play_weapon_shotgun_pump() -> void:
+	if shotgun_pump_audio_player_3d.playing:
 		return # Don't interrupt ongoing sound
 	
-	shotgun_cock_audio_player_3d.pitch_scale = randf_range(0.95, 1.05)
-	shotgun_cock_audio_player_3d.play()
+	shotgun_pump_audio_player_3d.pitch_scale = randf_range(0.95, 1.05)
+	shotgun_pump_audio_player_3d.play()

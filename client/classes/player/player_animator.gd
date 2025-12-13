@@ -123,7 +123,7 @@ var animation_events: Dictionary[String, Array] = {
 	],
 	"shotgun/shotgun_aim_pump": [
 		{"time": 0.1, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
-		{"time": 0.15, "method": "_call_player_audio_method", "args": ["play_weapon_shotgun_cock"]},
+		{"time": 0.15, "method": "_call_player_audio_method", "args": ["play_weapon_shotgun_pump"]},
 		{"time": 0.6, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
 	],
 	"shotgun/shotgun_crouch_aim_fire": [
@@ -132,7 +132,7 @@ var animation_events: Dictionary[String, Array] = {
 	],
 	"shotgun/shotgun_crouch_aim_pump": [
 		{"time": 0.2, "method": "_call_player_equipment_method", "args": ["disable_left_hand_ik"]},
-		{"time": 0.3, "method": "_call_player_audio_method", "args": ["play_weapon_shotgun_cock"]},
+		{"time": 0.3, "method": "_call_player_audio_method", "args": ["play_weapon_shotgun_pump"]},
 		{"time": 0.7, "method": "_call_player_equipment_method", "args": ["enable_left_hand_ik"]},
 	],
 	"shotgun/shotgun_aim_reload_start": [

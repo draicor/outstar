@@ -4,10 +4,9 @@
 [ext_resource type="Script" uid="uid://baeunrx5eb2b7" path="res://classes/weapons/projectile_shotgun.gd" id="2_3nsi8"]
 [ext_resource type="PackedScene" uid="uid://cb5es8vr13ukq" path="res://sfx/projectile/projectile_muzzle_flash.tscn" id="3_eo6jo"]
 
-[node name="remington870_shotgun" instance=ExtResource("1_np8d2")]
+[node name="Remington870Shotgun" instance=ExtResource("1_np8d2")]
 script = ExtResource("2_3nsi8")
 spread_angle = 2.0
-debug = true
 weapon_max_distance = 35.0
 horizontal_recoil = 0.0
 vertical_recoil = 0.0
@@ -16,11 +15,10 @@ lower_vertical_recoil = 0.0
 [node name="Mesh" parent="." index="0"]
 transform = Transform3D(3.3993274e-05, 0.9999981, -0.0019481423, -0.034845077, 0.0019481439, 0.99939084, 0.99939275, 3.3903867e-05, 0.034845077, -0.01, 0.14, 0.05)
 
-[node name="LeftHandMarker3D" type="Marker3D" parent="." index="1"]
-transform = Transform3D(0.021270685, -0.15344688, 0.9879279, -0.70534897, 0.698001, 0.123601474, -0.708541, -0.69946307, -0.09338665, -0.008, 0.428, 0.108)
+[node name="LeftHandMarker3D" type="Marker3D" parent="Mesh" index="0"]
+transform = Transform3D(-0.683532, -0.7233654, -0.097603254, 0.019872498, -0.15211052, 0.9881637, -0.72964984, 0.6735019, 0.11834749, 0.047929466, 0.0025630281, 0.28984168)
 
-[node name="MuzzleMarker3D" type="Marker3D" parent="." index="2"]
-transform = Transform3D(1, 0, 0, 0, -0.05233594, -0.9986295, 0, 0.9986295, -0.05233594, 0.05755561, 0.7742262, 0.07186699)
+[node name="MuzzleMarker3D" type="Marker3D" parent="Mesh" index="1"]
+transform = Transform3D(1.0000001, 0, 0, 0, 1.0000001, 0, 0, 0, 1.0000001, -0.00024364516, 0.068791784, 0.6344702)
 
-[node name="ProjectileMuzzleFlash" parent="MuzzleMarker3D" index="0" instance=ExtResource("3_eo6jo")]
-transform = Transform3D(-0.9981348, 0, -0.061048582, 0, 1, 0, 0.061048582, 0, -0.9981348, 0, 0, 0)
+[node name="ProjectileMuzzleFlash" parent="Mesh/MuzzleMarker3D" index="0" instance=ExtResource("3_eo6jo")]
